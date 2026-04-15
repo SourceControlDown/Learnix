@@ -6,4 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Learnix.Application\Learnix.Application.csproj" />
+    <ProjectReference Include="..\Learnix.Infrastructure\Learnix.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
