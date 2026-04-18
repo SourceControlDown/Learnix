@@ -8,4 +8,8 @@
 	<WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="8.0.26" />
+  </ItemGroup>
+
 </Project>
