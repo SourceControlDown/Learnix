@@ -1,7 +1,13 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path="../ARCHITECTURE.md" />
+    <File Path="../CLAUDE.md" />
+    <File Path="../DATA_MODEL.md" />
+    <File Path="../DECISIONS.md" />
     <File Path="../docker-compose.yml" />
+    <File Path="../FEATURES.md" />
     <File Path="../README.md" />
+    <File Path="../TODO.md" />
   </Folder>
   <Project Path="Learnix.API/Learnix.API.csproj" />
   <Project Path="Learnix.Application/Learnix.Application.csproj" />
