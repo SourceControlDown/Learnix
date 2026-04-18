@@ -1,4 +1,5 @@
-﻿using Learnix.Application.Common.Interfaces;
+﻿using Learnix.Application.Auth.Constants;
+using Learnix.Application.Common.Interfaces;
 using Learnix.Application.Common.Settings;
 using Learnix.Domain.Entities;
 using Learnix.Infrastructure.Identity;
