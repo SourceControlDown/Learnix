@@ -1,11 +1,12 @@
 using Learnix.API.Middleware;
 using Learnix.Application;
 using Learnix.Infrastructure;
+using Learnix.Infrastructure.Persistence;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -------- Serilog --------
+// Serilog
 builder.Host.UseSerilog((context, loggerConfiguration) =>
 {
     loggerConfiguration
@@ -14,13 +15,24 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
         .WriteTo.Console();
 });
 
-// -------- Services --------
+// Services
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddProblemDetails();
+
+// Swagger
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new()
+    {
+        Title = "Learnix API",
+        Version = "v1",
+        Description = "Learning Management System — REST API"
+    });
+});
 
 // CORS
 var allowedOrigins = builder.Configuration
@@ -37,8 +49,20 @@ builder.Services.AddCors(options =>
             .AllowCredentials());
 });
 
-// -------- Pipeline --------
+// Pipeline
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    await app.ApplyMigrationsAsync();
+
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Learnix API v1");
+        options.RoutePrefix = "swagger";
+    });
+}
 
 app.UseSerilogRequestLogging();
 
@@ -61,4 +85,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
