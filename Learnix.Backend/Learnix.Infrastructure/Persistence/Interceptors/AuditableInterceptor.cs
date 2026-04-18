@@ -4,29 +4,30 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Learnix.Infrastructure.Persistence.Interceptors;
 
-public sealed class AuditableInterceptor : SaveChangesInterceptor
+public class AuditableInterceptor : SaveChangesInterceptor
 {
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
-        DbContextEventData eventData,
-        InterceptionResult<int> result,
+        DbContextEventData eventData, 
+        InterceptionResult<int> result, 
         CancellationToken cancellationToken = default)
     {
         var context = eventData.Context;
-        if (context is null)
+        
+        if (context is null) 
             return base.SavingChangesAsync(eventData, result, cancellationToken);
 
         var now = DateTime.UtcNow;
 
-        foreach (var entry in context.ChangeTracker.Entries<BaseEntity>())
+        foreach (var entry in context.ChangeTracker.Entries<IAuditable>())
         {
             if (entry.State == EntityState.Added)
             {
-                entry.Property(nameof(BaseEntity.CreatedAt)).CurrentValue = now;
-                entry.Property(nameof(BaseEntity.UpdatedAt)).CurrentValue = now;
+                entry.Property(nameof(IAuditable.CreatedAt)).CurrentValue = now;
+                entry.Property(nameof(IAuditable.UpdatedAt)).CurrentValue = now;
             }
             else if (entry.State == EntityState.Modified)
             {
-                entry.Property(nameof(BaseEntity.UpdatedAt)).CurrentValue = now;
+                entry.Property(nameof(IAuditable.UpdatedAt)).CurrentValue = now;
             }
         }
 

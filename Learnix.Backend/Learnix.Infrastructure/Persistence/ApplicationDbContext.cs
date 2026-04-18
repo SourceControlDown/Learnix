@@ -1,56 +1,48 @@
-﻿using System.Linq.Expressions;
-using Learnix.Application.Common.Interfaces;
+﻿// Learnix.Infrastructure/Persistence/ApplicationDbContext.cs
 using Learnix.Application.Common.Events;
+using Learnix.Application.Common.Interfaces;
 using Learnix.Domain.Common;
+using Learnix.Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Learnix.Infrastructure.Persistence;
 
-public class ApplicationDbContext : DbContext, IUnitOfWork
+public class ApplicationDbContext(
+    DbContextOptions<ApplicationDbContext> options,
+    IPublisher publisher)
+    : IdentityDbContext<User, IdentityRole<Guid>, Guid>(options), IUnitOfWork
 {
-    private readonly IPublisher _publisher;
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
-    public ApplicationDbContext(
-        DbContextOptions<ApplicationDbContext> options,
-        IPublisher publisher) : base(options)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        _publisher = publisher;
-    }
+        base.OnModelCreating(builder);
 
-    // DbSet<...> з'являться поступово:
-    //   Phase 2 — User, RefreshToken
-    //   Phase 3 — Category, Course, Section, Lesson, Question, ...
+        builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        // Apply all IEntityTypeConfiguration from this assembly
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+        var softDeletableTypes = builder.Model.GetEntityTypes()
+            .Select(e => e.ClrType)
+            .Where(type => typeof(ISoftDeletable).IsAssignableFrom(type));
 
-        ApplySoftDeleteQueryFilter(modelBuilder);
-
-        base.OnModelCreating(modelBuilder);
-    }
-
-    private static void ApplySoftDeleteQueryFilter(ModelBuilder modelBuilder)
-    {
-        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        foreach (var type in softDeletableTypes)
         {
-            if (!typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
-                continue;
+            var parameter = Expression.Parameter(type, "e");
+            var property = Expression.Property(parameter, nameof(ISoftDeletable.IsDeleted));
+            var filter = Expression.Lambda(Expression.Not(property), parameter);
 
-            var parameter = Expression.Parameter(entityType.ClrType, "e");
-            var isDeletedProperty = Expression.Property(parameter, nameof(ISoftDeletable.IsDeleted));
-            var filter = Expression.Lambda(Expression.Not(isDeletedProperty), parameter);
-
-            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
+            builder.Entity(type).HasQueryFilter(filter);
         }
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var entitiesWithEvents = ChangeTracker
-            .Entries<BaseEntity>()
+            .Entries<IHasDomainEvents>()
             .Where(e => e.Entity.DomainEvents.Count > 0)
             .Select(e => e.Entity)
             .ToList();
@@ -61,13 +53,11 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
 
         var result = await base.SaveChangesAsync(cancellationToken);
 
-        // Публікуємо тільки ПІСЛЯ успішного збереження
         foreach (var domainEvent in domainEvents)
         {
             var notificationType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
             var notification = Activator.CreateInstance(notificationType, domainEvent)!;
-
-            await _publisher.Publish(notification, cancellationToken);
+            await publisher.Publish(notification, cancellationToken);
         }
 
         foreach (var entity in entitiesWithEvents)
