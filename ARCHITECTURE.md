@@ -92,6 +92,20 @@ GetCourseByIdResponse.cs          — DTO returned to controller
 - Throw exceptions — only for unexpected infrastructure failures
 - Never return domain entities from handlers — always map to DTOs (see ADR-012)
 
+### Naming & file paths convention
+
+| Element | Pattern | Example |
+|---|---|---|
+| Feature folder | `Application/{Feature}/` | `Application/Auth/` |
+| Command folder | `Application/{Feature}/Commands/{Name}/` | `Application/Auth/Commands/Register/` |
+| Query folder | `Application/{Feature}/Queries/{Name}/` | `Application/Courses/Queries/GetCourseById/` |
+| Validator | `{Name}Validator.cs` (alongside command/query) | `RegisterValidator.cs` |
+| Handler | `{Name}CommandHandler.cs` / `{Name}QueryHandler.cs` | `RegisterCommandHandler.cs` |
+| Response/DTO | `{Name}Response.cs` (для queries) або в файлі команди (для commands) | `GetCourseByIdResponse.cs` |
+| Specifications | `Application/{Feature}/Specifications/{Name}Specification.cs` | `Application/Courses/Specifications/PublishedCoursesSpecification.cs` |
+
+**Без проміжної папки `Features/`** — feature names напряму під `Application/`. Поряд з ними лежить `Application/Common/` (інфраструктура шару). Це канонічний .NET підхід (eShopOnWeb, Jason Taylor template).
+
 ---
 
 ## Result Pattern (FluentResults)
@@ -158,6 +172,20 @@ return Ok(result.Value);
 ```
 
 Error responses use ProblemDetails (RFC 7807) — see ADR-017.
+
+### HTTP status code mapping (стандарт для всіх контролерів)
+
+| FluentResults error type | HTTP status | Body |
+|---|---|---|
+| `ValidationError` | 400 Bad Request | `ValidationProblemDetails` з `errors` dictionary |
+| `NotFoundError` | 404 Not Found | `ProblemDetails` |
+| `ConflictError` | 409 Conflict | `ProblemDetails` |
+| `ForbiddenError` | 403 Forbidden | `ProblemDetails` |
+| Інша `Error` (без типу) | 400 Bad Request | `ProblemDetails` з агрегованими повідомленнями |
+| `Result.IsSuccess` без значення | 204 No Content | empty |
+| `Result<T>.IsSuccess` зі значенням | 200 OK / 201 Created | DTO |
+
+Кожен новий контролер дотримується цієї таблиці. У майбутньому (B-16 polish pass) — винесемо в `result.ToActionResult()` extension method для DRY.
 
 ---
 
@@ -254,13 +282,44 @@ public class LoggingBehavior<TRequest, TResponse>
 
 ## Domain Entities
 
-### BaseEntity
-All PostgreSQL entities inherit from `BaseEntity`. Provides identity, audit fields, and domain events.
-Audit fields are set automatically via `AuditableInterceptor` (see ADR-014).
+### Domain primitives — інтерфейси
+
+Domain layer розділяє три ортогональних concerns на окремі інтерфейси:
+
+```csharp
+// Learnix.Domain/Common/IAuditable.cs
+public interface IAuditable
+{
+    DateTime CreatedAt { get; }
+    DateTime UpdatedAt { get; }
+}
+```
+
+```csharp
+// Learnix.Domain/Common/IHasDomainEvents.cs
+public interface IHasDomainEvents
+{
+    IReadOnlyList<IDomainEvent> DomainEvents { get; }
+    void ClearDomainEvents();
+}
+```
+
+```csharp
+// Learnix.Domain/Common/ISoftDeletable.cs
+public interface ISoftDeletable
+{
+    bool IsDeleted { get; }
+    DateTime? DeletedAt { get; }
+}
+```
+
+Інтерфейси використовуються EF interceptors і `ApplicationDbContext` для уніфікованої обробки cross-cutting concerns без прив'язки до конкретного базового класу. Див. ADR-023.
+
+### BaseEntity — sugar для більшості entities
 
 ```csharp
 // Learnix.Domain/Common/BaseEntity.cs
-public abstract class BaseEntity
+public abstract class BaseEntity : IAuditable, IHasDomainEvents
 {
     private readonly List<IDomainEvent> _domainEvents = [];
 
@@ -273,36 +332,53 @@ public abstract class BaseEntity
     protected void RaiseDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
     public void ClearDomainEvents() => _domainEvents.Clear();
 }
-
-// Learnix.Domain/Common/IDomainEvent.cs
-// Marker interface — intentionally NOT depending on MediatR (Domain must be infrastructure-free).
-// MediatR integration happens in Learnix.Application via DomainEventNotification<T> adapter.
-public interface IDomainEvent
-{
-    Guid EventId => Guid.NewGuid();
-    DateTime OccurredOnUtc => DateTime.UtcNow;
-}
 ```
 
-### ISoftDeletable
-Entities that support soft delete implement this interface (see ADR-016).
+Усі звичайні entities (Course, Section, Lesson, Enrollment, RefreshToken, ...) наслідують `BaseEntity` — отримують `Id`, audit fields і domain events механізм за замовчуванням.
+
+### User — окремий випадок (наслідує IdentityUser)
+
+`User` не може наслідувати `BaseEntity`, бо `IdentityUser<Guid>` уже надає `Id`. Тому `User` імплементує два інтерфейси вручну:
 
 ```csharp
-// Learnix.Domain/Common/ISoftDeletable.cs
-public interface ISoftDeletable
+// Learnix.Domain/Entities/User.cs
+public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents
 {
-    bool IsDeleted { get; }
-    DateTime? DeletedAt { get; }
+    private readonly List<IDomainEvent> _domainEvents = [];
+
+    public string FirstName { get; private set; } = null!;
+    public string LastName { get; private set; } = null!;
+    public string? AvatarUrl { get; private set; }
+    public string? Bio { get; private set; }
+    public string? GoogleId { get; private set; }
+
+    public DateTime CreatedAt { get; private set; }
+    public DateTime UpdatedAt { get; private set; }
+
+    public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+    protected void RaiseDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
+    public void ClearDomainEvents() => _domainEvents.Clear();
+
+    // Business methods (UpdateProfile, SetAvatar, ...) and event triggers
+    // ...
 }
 ```
 
-Soft-deletable entities (User, Course) implement `ISoftDeletable` with `private set`.
-`SoftDeleteInterceptor` sets `IsDeleted` / `DeletedAt` automatically on `Delete()`.
+Цей дубль `IHasDomainEvents`/`IAuditable` коду в `User` — свідома ціна за можливість мати один клас на User замість двох сутностей (Domain User + Identity User з синхронізацією). Див. ADR-018, ADR-023.
 
-### Entity design conventions (ADR-015)
-- Properties have `private set` — no public setters
-- State changes through domain methods that represent business operations
-- One method = one business action (not one method per property)
+### Soft delete
+
+Entities що підтримують soft delete (User, Course) додатково імплементують `ISoftDeletable`. Інтерсептор + global query filter автоматично:
+- При `Remove()` — встановлює `IsDeleted = true`, `DeletedAt = UtcNow` замість фізичного видалення (`SoftDeleteInterceptor`)
+- При читанні — глобально виключає soft-deleted записи (query filter в `OnModelCreating`)
+
+Для адмін-панелі чи службових сценаріїв — `.IgnoreQueryFilters()` на конкретному запиті. Див. ADR-016.
+
+### Конвенції дизайну entities (ADR-015)
+
+- Properties з `private set` — без публічних setter'ів
+- Зміна стану — через методи що відображають бізнес-операції
+- Один метод = одна бізнес-дія
 
 ```csharp
 // Learnix.Domain/Entities/Course.cs
@@ -310,7 +386,7 @@ public class Course : BaseEntity, ISoftDeletable
 {
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
-    
+
     // Good: one method per business operation
     public void UpdateDetails(string title, string description, decimal price, Guid categoryId) { ... }
     public void Publish() { ... }
@@ -321,7 +397,8 @@ public class Course : BaseEntity, ISoftDeletable
 }
 ```
 
-### Domain event example
+### Domain event приклад
+
 ```csharp
 // Learnix.Domain/Entities/Enrollment.cs
 public class Enrollment : BaseEntity
@@ -334,6 +411,19 @@ public class Enrollment : BaseEntity
     }
 }
 ```
+
+Diff'и в Identity flow (де `UserManager.CreateAsync` персистить юзера до того як handler може повернути control) — допускається публічний `RaiseXxx` метод на entity, що викликається з Application layer **після** успішного створення в Identity. Це локальне відхилення, документоване в коментарях `User`. Див. також B-34.6 у TODO (плановий рефакторинг разом з міграцією на MassTransit).
+
+### Конвенція констант
+
+Обмеження entities (max length полів, тощо) розділені за рівнем:
+
+- **Domain** (`Learnix.Domain/Constants/{Entity}Constants.cs`) — інваріанти сутності. Споживаються EF configurations та Application validators. Single source of truth для "що entity вважає валідним станом".
+- **Application** (`Learnix.Application/{Feature}/Constants/{Feature}ValidationConstants.cs`) — feature-специфічні валідаційні політики (password complexity, RFC stadards). Не стосуються інваріантів сутності.
+
+Приклад: `UserConstants.FirstNameMaxLength = 100` живе в Domain (інваріант User), `AuthValidationConstants.PasswordMinLength = 8` — в Application (політика реєстрації, не інваріант User бо User зберігає лише hash).
+
+Що **НЕ** виноситься в константи: одноразові regex'и, повідомлення помилок (до появи локалізації). Див. ADR-027.
 
 ---
 
@@ -374,28 +464,40 @@ public class SendCertificateHandler
 ## EF Core Interceptors
 
 ### AuditableInterceptor (ADR-014)
-Sets `CreatedAt` / `UpdatedAt` automatically for all entities inheriting `BaseEntity`.
+Sets `CreatedAt` / `UpdatedAt` automatically for all entities inheriting `IAuditable`.
+
+Інтерсептор реагує на IAuditable, не на BaseEntity, тому покриває і User (який наслідує IdentityUser<Guid>, не BaseEntity), і всіх нащадків BaseEntity. Див. ADR-023.
 
 ```csharp
 // Learnix.Infrastructure/Persistence/Interceptors/AuditableInterceptor.cs
 public class AuditableInterceptor : SaveChangesInterceptor
 {
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
-        DbContextEventData eventData, InterceptionResult<int> result, CancellationToken ct = default)
+        DbContextEventData eventData, 
+        InterceptionResult<int> result, 
+        CancellationToken cancellationToken = default)
     {
         var context = eventData.Context;
-        if (context is null) return base.SavingChangesAsync(eventData, result, ct);
+        
+        if (context is null) 
+            return base.SavingChangesAsync(eventData, result, cancellationToken);
 
-        foreach (var entry in context.ChangeTracker.Entries<BaseEntity>())
+        var now = DateTime.UtcNow;
+
+        foreach (var entry in context.ChangeTracker.Entries<IAuditable>())
         {
             if (entry.State == EntityState.Added)
-                entry.Property(nameof(BaseEntity.CreatedAt)).CurrentValue = DateTime.UtcNow;
-
-            if (entry.State is EntityState.Added or EntityState.Modified)
-                entry.Property(nameof(BaseEntity.UpdatedAt)).CurrentValue = DateTime.UtcNow;
+            {
+                entry.Property(nameof(IAuditable.CreatedAt)).CurrentValue = now;
+                entry.Property(nameof(IAuditable.UpdatedAt)).CurrentValue = now;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Property(nameof(IAuditable.UpdatedAt)).CurrentValue = now;
+            }
         }
 
-        return base.SavingChangesAsync(eventData, result, ct);
+        return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 }
 ```
@@ -451,35 +553,36 @@ To query soft-deleted entities (e.g. admin panel): use `.IgnoreQueryFilters()`.
 ## Domain Event Dispatching
 
 Events публікуються **після** успішного `SaveChangesAsync` безпосередньо в `ApplicationDbContext` (який реалізує `IUnitOfWork` — див. ADR-021). Кожен `IDomainEvent` обгортається в `DomainEventNotification<T>` через reflection, щоб MediatR міг знайти відповідні handlers.
+Публікація domain events працює через IHasDomainEvents, не BaseEntity — те ж обґрунтування що й для AuditableInterceptor.
 
 ```csharp
 // Learnix.Infrastructure/Persistence/ApplicationDbContext.cs
-public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-{
-    var entitiesWithEvents = ChangeTracker
-        .Entries<BaseEntity>()
-        .Where(e => e.Entity.DomainEvents.Count > 0)
-        .Select(e => e.Entity)
-        .ToList();
-
-    var domainEvents = entitiesWithEvents
-        .SelectMany(e => e.DomainEvents)
-        .ToList();
-
-    var result = await base.SaveChangesAsync(cancellationToken);
-
-    foreach (var domainEvent in domainEvents)
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var notificationType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
-        var notification = Activator.CreateInstance(notificationType, domainEvent)!;
-        await _publisher.Publish(notification, cancellationToken);
+        var entitiesWithEvents = ChangeTracker
+            .Entries<IHasDomainEvents>()
+            .Where(e => e.Entity.DomainEvents.Count > 0)
+            .Select(e => e.Entity)
+            .ToList();
+
+        var domainEvents = entitiesWithEvents
+            .SelectMany(e => e.DomainEvents)
+            .ToList();
+
+        var result = await base.SaveChangesAsync(cancellationToken);
+
+        foreach (var domainEvent in domainEvents)
+        {
+            var notificationType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
+            var notification = Activator.CreateInstance(notificationType, domainEvent)!;
+            await publisher.Publish(notification, cancellationToken);
+        }
+
+        foreach (var entity in entitiesWithEvents)
+            entity.ClearDomainEvents();
+
+        return result;
     }
-
-    foreach (var entity in entitiesWithEvents)
-        entity.ClearDomainEvents();
-
-    return result;
-}
 ```
 
 > **Відомий ризик:** якщо процес впаде між `SaveChangesAsync` і `Publish`, event втратиться. Свідомо прийнятний на поточному етапі (див. ADR-022). Заміняється Outbox pattern перед Phase 6 (TODO: B-34.5).
@@ -781,21 +884,92 @@ Requests taking >3 seconds are logged as warnings.
 
 ## Application Settings
 
-Конфігураційні секції з `appsettings.json` мапляться на типізовані POCO в `Application/Common/Settings/`. Реєструються через `services.Configure<T>(configuration.GetSection("..."))` в `Infrastructure/DependencyInjection.cs`. Споживаються через `IOptions<T>` в handlers / services.
+Конфігураційні секції з `appsettings.json` мапляться на типізовані POCO в `Application/Common/Settings/{Name}Settings.cs`. Реєструються через `services.Configure<T>(configuration.GetSection("..."))` в `Infrastructure/DependencyInjection.cs`. Споживаються в handlers / services через `IOptions<T>`.
 
-**Приклад:**
-- `appsettings.json` → секція `"App": { "ClientBaseUrl": "..." }`
-- `Application/Common/Settings/AppSettings.cs` → `class AppSettings { public string ClientBaseUrl { get; init; } }`
-- Інʼєкція: `IOptions<AppSettings>` у конструктор handler'а
+### Приклад
 
-**Чому через IOptions, а не статичний клас:**
-- Тестабельність — можна підмінити `IOptions<AppSettings>` через `Options.Create(new AppSettings { ... })`
-- Hot reload — `IOptionsMonitor<T>` дає reload при зміні файлу (зараз не використовуємо, на майбутнє)
-- Уникаємо знання Application шару про IConfiguration / Microsoft.Extensions.Configuration
+```csharp
+// Learnix.Application/Common/Settings/AppSettings.cs
+public class AppSettings
+{
+    public string ClientBaseUrl { get; init; } = null!;
+}
+```
 
-**Конвенція ключів конфігурації:**
-- ConnectionString для Postgres → `"ConnectionStrings:Postgres"` (не `"Default"`)
-- Iноді змінних — у README та `.env.example`, не дублюються в архітектурному документі
+```json
+// appsettings.json
+{
+  "App": {
+    "ClientBaseUrl": "http://localhost:5173"
+  }
+}
+```
+
+```csharp
+// Реєстрація
+services.Configure<AppSettings>(configuration.GetSection("App"));
+
+// Споживання
+public class SomeHandler(IOptions<AppSettings> appSettings)
+{
+    private readonly AppSettings _settings = appSettings.Value;
+    // ...
+}
+```
+
+### Конвенції
+
+- POCO settings лежать у `Application/Common/Settings/` — Application шар знає про конфігурацію типізовано, не знає про `IConfiguration` напряму
+- Реєстрація через `Configure<T>` — тільки в `Infrastructure/DependencyInjection.cs`
+- Connection strings — окремо у `ConnectionStrings:Postgres`, `ConnectionStrings:Mongo`, `ConnectionStrings:Redis` (стандарт ASP.NET)
+- Імена секцій конфігурації документуються у `.env.example` і README, **не дублюються в архітектурному документі**
+- Кожна нова інтеграція (Stripe, Anthropic, Azure Blob, ...) → новий `{Service}Settings` POCO + секція в `appsettings.json`
+
+### Чому через IOptions, а не статичні класи / `IConfiguration` напряму
+
+- Тестабельність: `Options.Create(new AppSettings { ... })` для unit-тестів handler'ів
+- Перевірка при старті: `services.AddOptions<AppSettings>().ValidateDataAnnotations().ValidateOnStart()` (поки не використовуємо, але двері відкриті)
+- Уникаємо знання Application шару про конкретну реалізацію конфігурації
+
+---
+
+## Database Migrations
+
+EF Core Code-First. Міграції живуть в `Learnix.Infrastructure/Persistence/Migrations/`.
+
+### Створення нової міграції
+
+```bash
+dotnet ef migrations add {Name} \
+    --project Learnix.Infrastructure \
+    --startup-project Learnix.API \
+    --output-dir Persistence/Migrations
+```
+
+Назва — PascalCase, описує **що** змінилось (`AddCoursesAndSections`, `AddInstructorApplications`). Не `Update1`, `Update2`.
+
+### Застосування
+
+- **Development:** автоматично при старті API (`app.ApplyMigrationsAsync()` під `if IsDevelopment()`). Розробник підняв `docker compose up -d` і `dotnet run` — БД готова. Див. ADR-029.
+- **Staging / Production:** окремий контрольований крок CI/CD або ручний `dotnet ef database update` з міграційного хоста. Авто-міграції в prod заборонені (race condition при scale-out, ризик руйнівних змін без review).
+
+### Rollback
+
+```bash
+# Відкат до конкретної міграції
+dotnet ef database update {PreviousMigrationName} --project Learnix.Infrastructure --startup-project Learnix.API
+
+# Видалення останньої незастосованої міграції
+dotnet ef migrations remove --project Learnix.Infrastructure --startup-project Learnix.API
+```
+
+Видалена міграція що вже застосована до БД — спершу `database update {Previous}`, потім `migrations remove`.
+
+### Що НЕ робити
+
+- Не редагувати застосовані міграції вручну — створюй нову коригувальну міграцію
+- Не комітити міграції з `dotnet ef migrations add Test` без переглянутого `Up()` / `Down()`
+- Не міксувати схему від `EnsureCreated()` з міграціями — обирай одне (у Learnix — тільки міграції)
 
 ---
 
@@ -843,3 +1017,25 @@ Learnix.API/
 ├── Middleware/          ← ExceptionHandlingMiddleware, SecurityHeadersMiddleware
 └── Extensions/
 ```
+
+---
+
+## Testing Strategy
+
+Тести у v1 свідомо відкладені до завершення Phase 5 (Payments) — пріоритет на feature delivery. Архітектурне місце зарезервоване:
+
+```
+Learnix.Backend/
+├── Learnix.Domain/
+├── Learnix.Application/
+├── Learnix.Infrastructure/
+├── Learnix.API/
+└── tests/
+├── Learnix.Domain.UnitTests/        — entity behavior, domain methods
+├── Learnix.Application.UnitTests/   — handlers (mock IRepository, IIdentityService, ...)
+└── Learnix.Integration.Tests/       — full HTTP flow з testcontainers (Postgres, Mongo, Redis)
+```
+
+Stack: xUnit + FluentAssertions + NSubstitute (mocks) + Testcontainers (integration).
+
+Unit-тести для handlers — мокати інтерфейси з Application/Common/Interfaces. Integration — піднімати реальний Postgres/Mongo через Testcontainers, ходити через `WebApplicationFactory<Program>`.

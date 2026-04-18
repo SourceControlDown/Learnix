@@ -27,6 +27,7 @@
 | B-08 | ASP.NET Core Identity setup (User entity, role seeding) | done | |
 | B-09 | Register command (+ validator + handler + email verification event) | done | |
 | B-10 | Login command (JWT generation + refresh token creation) | not started | |
+B-10.5: документувати Authentication pipeline в ARCHITECTURE.md
 | B-11 | Refresh token endpoint (rotation + revocation logic) | not started | |
 | B-12 | Email confirmation flow (confirm endpoint + resend) | done (mock confirmation with console) | |
 | B-13 | Password reset flow (forgot + reset endpoints) | not started | |
