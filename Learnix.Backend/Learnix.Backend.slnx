@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="../docker-compose.yml" />
+    <File Path="../README.md" />
+  </Folder>
   <Project Path="Learnix.API/Learnix.API.csproj" />
   <Project Path="Learnix.Application/Learnix.Application.csproj" />
   <Project Path="Learnix.Domain/Learnix.Domain.csproj" />
