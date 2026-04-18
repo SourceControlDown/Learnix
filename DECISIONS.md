@@ -423,6 +423,155 @@ Instructor-specific дані — НЕ в claims.
 
 ---
 
+## ADR-023: Розщеплення BaseEntity на IAuditable + IHasDomainEvents
+
+**Рішення:** `BaseEntity` декомпозовано на два інтерфейси: `IAuditable` (CreatedAt, UpdatedAt) і `IHasDomainEvents` (DomainEvents, ClearDomainEvents). `BaseEntity` тепер просто абстрактний клас що імплементує обидва + дає `Id : Guid`. `User : IdentityUser<Guid>` імплементує обидва інтерфейси вручну, бо не може успадкувати `BaseEntity` через конфлікт `Id` з `IdentityUser<Guid>`.
+
+**Чому:**
+- `User` не може жити з двох баз (`IdentityUser<Guid>` і `BaseEntity` — обидва дають `Id`)
+- Дублювати audit/events код в `User` вручну — антипатерн, копіпаста
+- `AuditableInterceptor` тепер ловить будь-який `IAuditable` (і `BaseEntity`-нащадків, і `User`), domain events публікація — будь-який `IHasDomainEvents`. Один уніфікований механізм
+- Решта entities (Course, Enrollment, …) продовжують успадковувати `BaseEntity` — для них API не змінюється
+
+**Альтернативи:**
+- Лишити `BaseEntity` як абстрактний клас, дублювати audit/events у `User` вручну — працює, але копіпаста полів і методів. При додаванні нового аудит-поля треба міняти і `BaseEntity`, і `User`
+- `User` без audit і events — втрачаємо trace коли юзер створений/оновлений
+
+**Наслідки:**
+- ARCHITECTURE.md: секція "Domain Entities" — додати опис інтерфейсів і пояснення для `User`
+- ARCHITECTURE.md: `AuditableInterceptor` — `Entries<BaseEntity>()` → `Entries<IAuditable>()`
+- ARCHITECTURE.md: `ApplicationDbContext.SaveChangesAsync` — `Entries<BaseEntity>()` → `Entries<IHasDomainEvents>()`
+
+---
+
+## ADR-024: Чисті Identity ролі замість UserRole enum
+
+**Рішення:** Видалено `UserRole` enum з Domain. Ролі (Student / Instructor / Admin) живуть тільки в Identity (`AspNetRoles` + `AspNetUserRoles`). `Domain.Constants.Roles` — статичний клас з string-константами для типобезпечного посилання.
+
+**Чому:**
+- Дублювання enum-поля на User + Identity ролей — два источника правди, неминучий розсинхрон
+- `[Authorize(Roles = "Instructor")]` працює з Identity з коробки
+- JWT claims автоматично заповнюються Identity з ролей
+- Менше коду, менше шансів на помилку
+
+**Альтернативи:**
+- Тільки enum на User, без Identity ролей — втрачаємо `[Authorize(Roles=...)]` і вбудовану підтримку, треба писати свій authorization handler
+- Гібрид: enum + Identity, синхронізація через domain method — попередня рекомендація, відкинуто, бо дублювання навіть для 3 значень не вартує. Якщо додасться 4-та роль — треба міняти в двох місцях
+
+**Наслідки:**
+- DATA_MODEL.md: поле `Role: UserRole` на User → видалити, додати note "Roles managed by ASP.NET Identity (AspNetRoles, AspNetUserRoles)"
+- `Learnix.Domain/Enums/UserRole.cs` — видалити
+- `Learnix.Domain/Constants/Roles.cs` — додати з `Student`, `Instructor`, `Admin`, `All`
+
+---
+
+## ADR-025: IIdentityService як абстракція над UserManager
+
+**Рішення:** Інтерфейс `IIdentityService` живе в Application, реалізація `IdentityService` в Infrastructure. Application handlers не знають про `UserManager<User>` — викликають тільки `IIdentityService`.
+
+**Чому:**
+- `UserManager<User>` залежить від `IUserStore` → EF Core → це Infrastructure concern
+- Прямий виклик `UserManager` з handler у Application — порушення Clean Architecture (Application залежить від Infrastructure через MS.AspNetCore.Identity.EntityFrameworkCore)
+- Інтерфейс дає чітку межу: Application говорить "зареєструй / підтверди email", Infrastructure знає як саме (через Identity або інакше)
+
+**Альтернативи:**
+- Прямий виклик `UserManager` з handler — простіше, але порушує dependency rule
+- Загорнути Identity в окремий "Auth module" — overengineering для одного сервісу
+
+**Наслідки:**
+- Усі auth-related handlers викликають `IIdentityService`, не `UserManager` напряму
+- Тестування handlers — мокаємо `IIdentityService`, не Identity інфраструктуру
+
+---
+
+## ADR-026: IEmailSender + console implementation як тимчасове рішення
+
+**Рішення:** Інтерфейс `IEmailSender` в Application, console-реалізація `ConsoleEmailSender` в Infrastructure (логує лист через `ILogger`). Domain event handlers викликають `IEmailSender` напряму (in-process), без MassTransit.
+
+**Чому:**
+- Phase 6 (MassTransit + Azure Service Bus, B-35..B-38) ще не реалізована
+- Phase 2 потребує email flow для register/confirm/reset — не може чекати Phase 6
+- Console implementation достатня для dev: бачимо що "лист відправлено" в логах, копіюємо link з логу для confirm
+
+**Заміна в Phase 6:**
+- `ConsoleEmailSender` → `SmtpEmailSender` (або інша реальна реалізація)
+- Domain event handler → публікує integration event (`UserRegisteredIntegrationEvent`) через MassTransit
+- Consumer (`SendVerificationEmailConsumer`) викликає `IEmailSender`
+- Інтерфейс `IEmailSender` лишається таким самим — нульова зміна для handlers
+
+**Альтернативи:**
+- Підключити MassTransit одразу заради одного email — overkill для Phase 2, розтягує scope
+- Не реалізовувати email до Phase 6 — Phase 2 не зможе підтвердити email юзера, login не пускатиме нікого
+
+---
+
+## ADR-027: Гібридний поділ констант — Domain для інваріантів entity, Application для політик валідації
+
+**Рішення:** Константи розділені за рівнем і змістом:
+- **Domain** (`Learnix.Domain/Constants/{Entity}Constants.cs`) — обмеження які є інваріантами сутності (FirstName max length, Bio max length). Використовуються EF configuration, domain методами (якщо потрібно), Application validators.
+- **Application** (`Learnix.Application/{Feature}/Constants/{Feature}ValidationConstants.cs`) — обмеження які є політикою валідації входу: довжина пароля, regex вимоги, технічні стандарти типу email RFC 5321 max length. Використовуються тільки валідаторами в межах фічі.
+
+**Що НЕ виноситься в константи взагалі:**
+- Унікальні regex які зустрічаються один раз (`[A-Z]`, `[a-z]` в password validator)
+- Повідомлення помилок (`WithMessage("...")`) — лишаються inline до появи локалізації
+- Деталі реалізації Identity (PasswordHash length, etc.) — Identity сама керує
+
+**Чому:**
+- Single source of truth: max length у валідаторі і в EF configuration читаються з одної константи. Зміна — в одному місці. Розсинхрон неможливий.
+- Розділення Domain/Application відображає дві різні відповідальності: "що entity вважає валідним станом" (Domain) vs "що ми готові прийняти на вході в систему" (Application)
+- Email max length — не інваріант User, а обмеження SMTP стандарту → Application. Password constraints — не інваріант User (зберігається hash), а політика безпеки реєстрації → Application
+
+**Альтернативи:**
+- Усі константи в Application — простіше, але втрачає DDD-аргумент про інваріанти. Для проєкту з 30+ entities стане плутаниною
+- Усі константи в Domain — погано: затягує знання про SMTP, password policy в Domain, який має бути про бізнес
+- Inline magic numbers — категорично ні, синхронізація валідатор↔EF↔domain метод стає неможливою
+
+**Наслідки:**
+- Нова конвенція: створюючи нову entity — створювати `{Entity}Constants` у Domain з усіма обмеженнями що використовуються EF configuration
+- Створюючи нову feature з валідацією — створювати `{Feature}ValidationConstants` в Application якщо є feature-specific обмеження (інакше — лишити inline)
+- Domain методи не дублюють валідацію (свідоме спрощення — див. вище)
+
+---
+
+## ADR-028: Infrastructure отримує FrameworkReference на Microsoft.AspNetCore.App
+
+**Рішення:** `Learnix.Infrastructure.csproj` декларує `<FrameworkReference Include="Microsoft.AspNetCore.App" />`. Це дає доступ до ASP.NET Core shared framework збірок (`Microsoft.AspNetCore.Identity`, `Microsoft.AspNetCore.Authentication.*`, etc.) які потрібні для реалізації auth-related сервісів.
+
+**Чому:**
+- `AddIdentity<,>()` extension method живе у `Microsoft.AspNetCore.Identity` збірці що є частиною shared framework, а не окремого NuGet
+- Class library на `Microsoft.NET.Sdk` (не `.Web`) не має доступу до shared framework за замовчуванням, навіть якщо встановлені пакети `Microsoft.AspNetCore.Identity.EntityFrameworkCore`
+- `FrameworkReference` — стандартний механізм отримання доступу до shared framework з не-Web проектів (документований Microsoft підхід)
+
+**Альтернативи:**
+- Винести Identity-related код у окремий проект `Learnix.Infrastructure.Identity` з `Sdk="Microsoft.NET.Sdk.Web"` — штучне розділення, EF configurations User логічно належать до основної Infrastructure, додає DI complexity без користі
+- Перенести Identity setup у API проект (де `Sdk` вже Web) — порушує "Infrastructure реалізує всі технічні концерни", розмазує auth логіку між шарами
+
+**Наслідки:**
+- `Learnix.Infrastructure` тепер транзитивно має доступ до всього `Microsoft.AspNetCore.App` (MVC, SignalR, Authentication middleware). Це формальне розширення scope, але реально використовуємо тільки Identity та (у майбутньому) JWT bearer authentication
+- Runtime overhead нульовий — shared framework вже присутній на хості завдяки API проекту
+- Той самий компроміс що й ADR-018 (User : IdentityUser): формально менш чисто, прагматично необхідно
+
+---
+
+## ADR-029: Авто-міграції тільки в Development
+
+**Рішення:** `Database.MigrateAsync()` викликається при старті API через extension `app.ApplyMigrationsAsync()` тільки коли `app.Environment.IsDevelopment()`. У staging/prod міграції застосовуються окремим контрольованим кроком (CI/CD або ручний `dotnet ef database update`).
+
+**Чому:**
+- Dev: розробник підняв `docker compose up -d` і `dotnet run` — БД готова без додаткових команд. Прискорення feedback loop.
+- Prod: авто-міграції створюють race condition при scale-out (декілька instance стартують одночасно), помилка міграції = API не піднімається, руйнівні зміни схеми проходять без human review.
+
+**Альтернативи:**
+- Завжди авто-міграції — небезпечно в prod (див. вище).
+- Ніколи авто-міграції, навіть в dev — кожен `git pull` з новою міграцією потребує ручного `dotnet ef database update`. Тертя у щоденній роботі.
+- `Database.EnsureCreatedAsync()` — несумісно з міграціями, годиться тільки для тестових БД що створюються з нуля.
+
+**Наслідки:**
+- Phase D (Deploy): додати окремий CI step для застосування міграцій у staging/prod, або генерувати idempotent SQL script через `dotnet ef migrations script --idempotent` і застосовувати через міграційний tool (Flyway/власний).
+- Розробник має бути готовий що при першому `dotnet run` після `git pull` міграції запустяться автоматично — побачить це в консолі через `LogInformation`.
+
+---
+
 ## Шаблон для нових записів
 
 ```

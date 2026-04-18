@@ -779,6 +779,26 @@ Requests taking >3 seconds are logged as warnings.
 
 ---
 
+## Application Settings
+
+Конфігураційні секції з `appsettings.json` мапляться на типізовані POCO в `Application/Common/Settings/`. Реєструються через `services.Configure<T>(configuration.GetSection("..."))` в `Infrastructure/DependencyInjection.cs`. Споживаються через `IOptions<T>` в handlers / services.
+
+**Приклад:**
+- `appsettings.json` → секція `"App": { "ClientBaseUrl": "..." }`
+- `Application/Common/Settings/AppSettings.cs` → `class AppSettings { public string ClientBaseUrl { get; init; } }`
+- Інʼєкція: `IOptions<AppSettings>` у конструктор handler'а
+
+**Чому через IOptions, а не статичний клас:**
+- Тестабельність — можна підмінити `IOptions<AppSettings>` через `Options.Create(new AppSettings { ... })`
+- Hot reload — `IOptionsMonitor<T>` дає reload при зміні файлу (зараз не використовуємо, на майбутнє)
+- Уникаємо знання Application шару про IConfiguration / Microsoft.Extensions.Configuration
+
+**Конвенція ключів конфігурації:**
+- ConnectionString для Postgres → `"ConnectionStrings:Postgres"` (не `"Default"`)
+- Iноді змінних — у README та `.env.example`, не дублюються в архітектурному документі
+
+---
+
 ## Project Structure Reference
 
 ```

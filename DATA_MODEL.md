@@ -12,6 +12,8 @@
 ### User
 Primary identity entity. Managed by ASP.NET Core Identity (`IdentityUser<Guid>` base).
 
+NOTE: Roles managed by ASP.NET Identity tables (AspNetRoles, AspNetUserRoles); access via UserManager.GetRolesAsync()
+
 | Field | Type | Notes |
 |---|---|---|
 | `Id` | `Guid` | PK |
@@ -22,7 +24,6 @@ Primary identity entity. Managed by ASP.NET Core Identity (`IdentityUser<Guid>` 
 | `LastName` | `string` | Required |
 | `AvatarUrl` | `string?` | Azure Blob URL |
 | `Bio` | `string?` | Max 500 chars |
-| `Role` | `UserRole` (enum) | Student / Instructor / Admin |
 | `IsEmailConfirmed` | `bool` | Default: false |
 | `GoogleId` | `string?` | For OAuth users |
 | `CreatedAt` | `DateTime` | UTC |
@@ -391,7 +392,6 @@ In-course chat between Student and Instructor.
 ## Enums
 
 ```csharp
-public enum UserRole          { Student, Instructor, Admin }
 public enum ApplicationStatus { Pending, Approved, Rejected }
 public enum CourseStatus      { Draft, Published, Archived }
 public enum LessonType        { Video, Post, Test }

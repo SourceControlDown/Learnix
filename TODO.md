@@ -16,7 +16,7 @@
 | B-02 | Domain layer: BaseEntity, IDomainEvent, Enums | done | |
 | B-03 | Application layer: Constants, Result<T> (FluentResults), Specification<T> base, pipeline behaviors (Validation, Logging) | done | |
 | B-04 | Infrastructure: ApplicationDbContext, UnitOfWork, SpecificationEvaluator | done | |
-| B-05 | Infrastructure: перша EF міграція (User, RefreshToken) | not started | |
+| B-05 | Infrastructure: перша EF міграція (User, RefreshToken) | done | |
 | B-06 | API: Program.cs (DI, middleware pipeline), ExceptionHandlingMiddleware, SecurityHeadersMiddleware | done | |
 | B-07 | Docker Compose: PostgreSQL + MongoDB + Redis для локальної розробки | done | |
 
@@ -24,11 +24,11 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| B-08 | ASP.NET Core Identity setup (User entity, role seeding) | not started | |
-| B-09 | Register command (+ validator + handler + email verification event) | not started | |
+| B-08 | ASP.NET Core Identity setup (User entity, role seeding) | done | |
+| B-09 | Register command (+ validator + handler + email verification event) | done | |
 | B-10 | Login command (JWT generation + refresh token creation) | not started | |
 | B-11 | Refresh token endpoint (rotation + revocation logic) | not started | |
-| B-12 | Email confirmation flow (confirm endpoint + resend) | not started | |
+| B-12 | Email confirmation flow (confirm endpoint + resend) | done (mock confirmation with console) | |
 | B-13 | Password reset flow (forgot + reset endpoints) | not started | |
 | B-14 | Google OAuth integration | not started | |
 | B-15 | Rate limiting middleware (auth endpoints) | not started | |
@@ -67,6 +67,7 @@
 | B-33 | Stripe webhook handler (payment completed → activate enrollment) | not started | |
 | B-34 | Payment history queries | not started | |
 | B-34.5 | Outbox pattern: OutboxMessage entity + EF config + background publisher worker (замінити пряму публікацію domain events в ApplicationDbContext) | not started | Передумова для надійної асинхронної обробки в Phase 6 |
+| B-34.6 | Розділити `UserRegisteredDomainEvent` на два events: `UserRegistered` (raised в Register flow) і `EmailConfirmationRequested` (raised в Resend flow). Поточна реалізація використовує `RaiseUserRegistered` в обох місцях — семантичний запах. Рефакторити одночасно з міграцією email на integration events через MassTransit (B-36). | not started | Залежить від B-35 |
 
 ### Phase 6 — Async Processing (MassTransit)
 
