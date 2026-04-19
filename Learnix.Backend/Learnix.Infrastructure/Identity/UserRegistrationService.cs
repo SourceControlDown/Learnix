@@ -1,22 +1,24 @@
-﻿using FluentResults;
+﻿// Learnix.Infrastructure/Identity/UserRegistrationService.cs
+using FluentResults;
+using Learnix.Application.Auth.Abstractions;
+using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Errors;
-using Learnix.Application.Common.Interfaces;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 
 namespace Learnix.Infrastructure.Identity;
 
-internal sealed class IdentityService(
+internal sealed class UserRegistrationService(
     UserManager<User> userManager,
     IUnitOfWork unitOfWork)
-    : IIdentityService
+    : IUserRegistrationService
 {
     public async Task<Result<(Guid UserId, string EmailConfirmationToken)>> RegisterAsync(
         string email, 
         string password, 
         string firstName, 
-        string lastName, 
+        string lastName,
         CancellationToken ct = default)
     {
         var existing = await userManager.FindByEmailAsync(email);
@@ -35,7 +37,6 @@ internal sealed class IdentityService(
 
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
 
-        // Raise domain event AFTER user is persisted by Identity, so handler can act on existing user
         user.RaiseUserRegistered(token);
         await unitOfWork.SaveChangesAsync(ct);
 
@@ -49,17 +50,14 @@ internal sealed class IdentityService(
             return Result.Fail(new NotFoundError("User not found."));
 
         var result = await userManager.ConfirmEmailAsync(user, token);
-        if (!result.Succeeded)
-            return Result.Fail(result.Errors.Select(e => (IError)new Error(e.Description)).ToList());
-
-        return Result.Ok();
+        return result.Succeeded
+            ? Result.Ok()
+            : Result.Fail(result.Errors.Select(e => (IError)new Error(e.Description)).ToList());
     }
 
     public async Task<Result> ResendConfirmationEmailAsync(string email, CancellationToken ct = default)
     {
         var user = await userManager.FindByEmailAsync(email);
-
-        // Anti-enumeration: same Ok response whether user exists or not
         if (user is null || user.EmailConfirmed)
             return Result.Ok();
 
