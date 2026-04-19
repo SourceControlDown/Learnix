@@ -1,4 +1,4 @@
-﻿using Learnix.Application.Common.Interfaces;
+﻿using Learnix.Application.Common.Abstractions.Messaging;
 using Microsoft.Extensions.Logging;
 
 namespace Learnix.Infrastructure.Services;
