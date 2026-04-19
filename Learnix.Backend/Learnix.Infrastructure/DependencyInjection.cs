@@ -28,6 +28,7 @@ public static class DependencyInjection
         // App settings
         services.Configure<AppSettings>(configuration.GetSection("App"));
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
+        services.Configure<GoogleSettings>(configuration.GetSection("Google"));
 
         // EF Core + interceptors
         services.AddSingleton<AuditableInterceptor>();
@@ -102,11 +103,19 @@ public static class DependencyInjection
 
         services.AddAuthorization();
 
+        // Fail-fast validation
+        var googleSettings = configuration.GetSection("Google").Get<GoogleSettings>()
+            ?? throw new InvalidOperationException("Missing 'Google' configuration section.");
+
+        if (string.IsNullOrWhiteSpace(googleSettings.ClientId))
+            throw new InvalidOperationException("Google OAuth Client ID is not configured.");
+
         // Auth services
         services.AddScoped<IUserRegistrationService, UserRegistrationService>();
         services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
+        services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
         services.AddSingleton<IEmailSender, ConsoleEmailSender>();
 
         // Background services

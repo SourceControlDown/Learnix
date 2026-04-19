@@ -1,6 +1,7 @@
 ﻿using Learnix.API.Extensions;
 using Learnix.Application.Auth.Commands.ConfirmEmail;
 using Learnix.Application.Auth.Commands.ForgotPassword;
+using Learnix.Application.Auth.Commands.GoogleLogin;
 using Learnix.Application.Auth.Commands.Login;
 using Learnix.Application.Auth.Commands.Logout;
 using Learnix.Application.Auth.Commands.RefreshToken;
@@ -79,7 +80,7 @@ public sealed class AuthController(ISender sender) : ControllerBase
     {
         var result = await sender.Send(command, ct);
 
-        return result.ToActionResult(response =>
+        return result.ToActionResult(onSuccess: response =>
         {
             SetRefreshTokenCookie(response.RefreshToken, response.RefreshTokenExpiresAt);
 
@@ -111,7 +112,7 @@ public sealed class AuthController(ISender sender) : ControllerBase
             ClearRefreshTokenCookie();
         }
 
-        return result.ToActionResult(response =>
+        return result.ToActionResult(onSuccess: response =>
         {
             SetRefreshTokenCookie(response.RefreshToken, response.RefreshTokenExpiresAt);
 
@@ -119,6 +120,22 @@ public sealed class AuthController(ISender sender) : ControllerBase
             {
                 response.AccessToken,
                 response.AccessTokenExpiresAt
+            });
+        });
+    }
+
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginCommand command, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        
+        return result.ToActionResult(onSuccess: value =>
+        {
+            SetRefreshTokenCookie(value.RefreshToken, value.RefreshTokenExpiresAt);
+            return Ok(new
+            {
+                value.AccessToken,
+                value.AccessTokenExpiresAt
             });
         });
     }

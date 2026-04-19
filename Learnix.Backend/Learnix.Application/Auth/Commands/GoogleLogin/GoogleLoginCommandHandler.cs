@@ -1,0 +1,56 @@
+﻿using FluentResults;
+using Learnix.Application.Auth.Abstractions;
+using Learnix.Application.Auth.Commands.Login;
+using Learnix.Application.Common.Abstractions.Persistence;
+using Learnix.Domain.Entities;
+using MediatR;
+using RefreshTokenEntity = Learnix.Domain.Entities.RefreshToken;
+
+namespace Learnix.Application.Auth.Commands.GoogleLogin;
+
+internal sealed class GoogleLoginCommandHandler(
+    IGoogleTokenValidator googleTokenValidator,
+    IUserRegistrationService userRegistrationService,
+    IUserAuthenticationService userAuthenticationService,
+    ITokenService tokenService,
+    IRefreshTokenRepository refreshTokenRepository,
+    IUnitOfWork unitOfWork)
+    : IRequestHandler<GoogleLoginCommand, Result<LoginResponse>>
+{
+    public async Task<Result<LoginResponse>> Handle(GoogleLoginCommand request, CancellationToken cancellationToken)
+    {
+        // 1. Validate the Google ID token (signature, audience, expiry, email_verified)
+        var validateResult = await googleTokenValidator.ValidateAsync(request.IdToken, cancellationToken);
+        if (validateResult.IsFailed)
+            return Result.Fail<LoginResponse>(validateResult.Errors);
+
+        var googleUser = validateResult.Value;
+
+        // 2. Find-or-create the local user
+        var findOrCreateResult = await userRegistrationService.FindOrCreateGoogleUserAsync(googleUser, cancellationToken);
+        if (findOrCreateResult.IsFailed)
+            return Result.Fail<LoginResponse>(findOrCreateResult.Errors);
+
+        var userId = findOrCreateResult.Value;
+
+        // 3. Load auth info (email + name + roles) for token generation
+        var authInfoResult = await userAuthenticationService.GetAuthenticationInfoAsync(userId, cancellationToken);
+        if (authInfoResult.IsFailed)
+            return Result.Fail<LoginResponse>(authInfoResult.Errors);
+
+        var authInfo = authInfoResult.Value;
+
+        // 4. Generate tokens (same flow as regular Login)
+        var access = tokenService.GenerateAccessToken(
+            authInfo.UserId, authInfo.Email, authInfo.FirstName, authInfo.LastName, authInfo.Roles);
+        var refresh = tokenService.GenerateRefreshToken();
+
+        await refreshTokenRepository.AddAsync(
+            new RefreshTokenEntity(authInfo.UserId, refresh.TokenHash, refresh.ExpiresAt), cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Ok(new LoginResponse(
+            access.Token, access.ExpiresAt,
+            refresh.PlainToken, refresh.ExpiresAt));
+    }
+}

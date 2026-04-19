@@ -44,6 +44,25 @@ public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents
     public void SetAvatar(string avatarUrl) => AvatarUrl = avatarUrl;
     public void SetGoogleId(string googleId) => GoogleId = googleId;
 
+    /// <summary>
+    /// Takeover scenario: existing account with unconfirmed email is being claimed via Google OAuth.
+    /// Google has now verified ownership of this email, so we wipe any pre-existing password
+    /// (possibly set by an attacker who registered the email but never confirmed it), 
+    /// mark the email as confirmed, and link the Google account.
+    /// </summary>
+    public void ClaimViaGoogle(string googleId)
+    {
+        GoogleId = googleId;
+        PasswordHash = null;
+        EmailConfirmed = true;
+    }
+
+    /// <summary>
+    /// Confirm email based on a verified external provider (e.g., Google email_verified claim).
+    /// Skips the standard email token flow because ownership is already proven.
+    /// </summary>
+    public void ConfirmEmailFromGoogle() => EmailConfirmed = true;
+
     /// <summary>Raise domain event from outside the entity (e.g. from a command handler after UserManager creates user).</summary>
     /// <remarks>Required because UserManager.CreateAsync persists immediately, before handler can raise events through normal flow.</remarks>
     public void RaiseUserRegistered(string emailConfirmationToken)
