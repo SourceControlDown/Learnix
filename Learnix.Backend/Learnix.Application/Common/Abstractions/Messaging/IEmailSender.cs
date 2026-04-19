@@ -1,4 +1,4 @@
-﻿namespace Learnix.Application.Common.Interfaces;
+﻿namespace Learnix.Application.Common.Abstractions.Messaging;
 
 public interface IEmailSender
 {
