@@ -1,5 +1,5 @@
-﻿using Learnix.Application.Common.Events;
-using Learnix.Application.Common.Interfaces;
+﻿using Learnix.Application.Common.Abstractions.Messaging;
+using Learnix.Application.Common.Events;
 using Learnix.Application.Common.Settings;
 using Learnix.Domain.Events;
 using MediatR;
