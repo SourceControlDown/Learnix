@@ -103,8 +103,13 @@ GetCourseByIdResponse.cs          — DTO returned to controller
 | Handler | `{Name}CommandHandler.cs` / `{Name}QueryHandler.cs` | `RegisterCommandHandler.cs` |
 | Response/DTO | `{Name}Response.cs` (для queries) або в файлі команди (для commands) | `GetCourseByIdResponse.cs` |
 | Specifications | `Application/{Feature}/Specifications/{Name}Specification.cs` | `Application/Courses/Specifications/PublishedCoursesSpecification.cs` |
+| Abstractions (cross-cutting) | `Application/Common/Abstractions/{Category}/I{Name}.cs` | `Application/Common/Abstractions/Persistence/IUnitOfWork.cs` |
+| Abstractions (feature) | `Application/{Feature}/Abstractions/I{Name}.cs` | `Application/Auth/Abstractions/ITokenService.cs` |
+| Models (feature) | `Application/{Feature}/Models/{Name}.cs` | `Application/Auth/Models/UserAuthenticationInfo.cs` |
 
 **Без проміжної папки `Features/`** — feature names напряму під `Application/`. Поряд з ними лежить `Application/Common/` (інфраструктура шару). Це канонічний .NET підхід (eShopOnWeb, Jason Taylor template).
+
+**Правило для нових інтерфейсів:** "Цей інтерфейс має сенс поза однією фічею?" Так → `Common/Abstractions/{Category}/`. Ні → `{Feature}/Abstractions/`. Див. ADR-030.
 
 ---
 
@@ -711,6 +716,10 @@ Application/{Feature}/Specifications/{Name}Specification.cs
 
 Specific repository per aggregate root. No generic repository.
 
+### Auth-related repositories
+
+`IRefreshTokenRepository` — тонкий repository поверх `RefreshToken` entity. Інтерфейс живе в `Auth/Abstractions/` (feature-scoped, ADR-030), реалізація в `Infrastructure/Persistence/Repositories/`. Використовується тільки з Auth handlers.
+
 ### Interface (Application layer)
 ```csharp
 // Learnix.Application/Common/Interfaces/ICourseRepository.cs
@@ -852,10 +861,9 @@ No EF Core. Uses `MongoDB.Driver` directly in Infrastructure.
 
 ## Security
 
-- JWT access token: 15 min expiry (see ADR-003)
-- Refresh token: HttpOnly cookie, 7 day expiry, rotation on each use
-- Refresh token stored in PostgreSQL (hashed), invalidated on use
-- Replay attack protection: reuse of revoked token → revoke ALL user tokens
+- Auth-flow повністю описаний у секції "Authentication" вище. Стисло: JWT 15 min + refresh 7d з rotation + replay protection + HttpOnly cookie (ADR-003, ADR-033, ADR-034).
+- Refresh tokens — SHA-256 hash в PostgreSQL. Plain token живе тільки у клієнтській cookie. Витік БД не компрометує сесії.
+- Background cleanup: `RefreshTokenCleanupHostedService` видаляє revoked/expired токени старші `ExpiresAt + 7d` раз на добу (B-11.5).
 - Google OAuth via ASP.NET Core Identity external login (see ADR-018)
 - Rate limiting on: `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/ai/chat`
 - Security headers applied via `SecurityHeadersMiddleware`: CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
@@ -879,6 +887,60 @@ Sinks:
 
 `LoggingBehavior` in MediatR pipeline logs every request name and duration automatically.
 Requests taking >3 seconds are logged as warnings.
+
+---
+
+## Authentication
+
+### Token strategy
+
+| Token | Lifetime | Storage | Transport |
+|---|---|---|---|
+| Access (JWT) | 15 min | Client memory | `Authorization: Bearer` header |
+| Refresh | 7 days | HttpOnly cookie + PostgreSQL (SHA-256 hash) | Cookie auto-sent on `/api/auth/*` |
+
+### Flow
+
+```
+Login                           Refresh                         Logout
+─────                           ───────                         ──────
+POST /auth/login                POST /auth/refresh              POST /auth/logout
+  ↓                               ↓ (cookie auto-attached)        ↓ (cookie auto-attached)
+ValidateCredentials             Find token by SHA-256 hash      Find token by SHA-256 hash
+  ↓                               ↓                               ↓
+Generate JWT + refresh          IsRevoked → REPLAY              Revoke if active
+  ↓                               → revoke ALL active            ↓
+Store refresh hash in DB        → 401 + clear cookie            Clear cookie
+  ↓                               ↓                               ↓
+Set HttpOnly cookie             Else: revoke old, issue new    204
+  ↓                             pair, store, set cookie         
+Return access in body           Return access in body
+```
+
+### Replay attack protection
+
+Якщо клієнт надсилає refresh token з полем `IsRevoked = true` — це сигнал що токен було перехоплено і вже використано легітимною сесією (або навпаки). Реакція: revoke **усіх** активних refresh tokens для цього юзера, інцидент логується як warning з `UserId`. Юзер вилогінюється з усіх пристроїв і має заново ввести креденшели. Див. ADR-033.
+
+### Cookie configuration
+
+```csharp
+new CookieOptions
+{
+    HttpOnly = true,                   // not readable from JS — XSS-resistant
+    Secure = Request.IsHttps,          // HTTPS-only in production
+    SameSite = SameSiteMode.Strict,    // not sent on cross-site requests — CSRF-resistant
+    Path = "/api/auth",                // not sent with non-auth requests — least exposure
+    Expires = refreshTokenExpiresAt
+}
+```
+
+### JWT configuration
+
+`AddJwtBearer` validates: issuer, audience, lifetime, signing key. `ClockSkew = 30s` — толерантність до розсинхронізації годинників. `MapInboundClaims = false` — claims у коді мають ті ж імена що й у JWT. Див. ADR-034 для повного списку claims.
+
+### Controller responsibility
+
+Контролер відповідає за HTTP-специфіку (читання cookie → передача рядка в команду; запис cookie з результату). Application handlers оперують голими рядками — нічого не знають про HTTP.
 
 ---
 
@@ -924,6 +986,25 @@ public class SomeHandler(IOptions<AppSettings> appSettings)
 - Connection strings — окремо у `ConnectionStrings:Postgres`, `ConnectionStrings:Mongo`, `ConnectionStrings:Redis` (стандарт ASP.NET)
 - Імена секцій конфігурації документуються у `.env.example` і README, **не дублюються в архітектурному документі**
 - Кожна нова інтеграція (Stripe, Anthropic, Azure Blob, ...) → новий `{Service}Settings` POCO + секція в `appsettings.json`
+
+### Приклад: JWT секрет (ADR-031)
+
+```csharp
+// Learnix.Application/Common/Settings/JwtSettings.cs
+public sealed class JwtSettings
+{
+    public string Issuer { get; init; } = null!;
+    public string Audience { get; init; } = null!;
+    public string Secret { get; init; } = null!;
+    public int AccessTokenExpiryMinutes { get; init; }
+    public int RefreshTokenExpiryDays { get; init; }
+}
+```
+
+Стратегія значень:
+- `appsettings.json` — `Secret = ""` (placeholder, fail-fast валідація на старті)
+- `appsettings.Development.json` — статичний dev-секрет (>32 байт), безпечний бо ніколи не йде в production-білд
+- Production — `JWT__Secret` env var (double underscore = nested key в .NET configuration)
 
 ### Чому через IOptions, а не статичні класи / `IConfiguration` напряму
 
@@ -977,7 +1058,8 @@ dotnet ef migrations remove --project Learnix.Infrastructure --startup-project L
 
 ```
 Learnix.Domain/
-├── Common/             ← BaseEntity, ISoftDeletable, IDomainEvent
+├── Common/             ← BaseEntity, IAuditable, IHasDomainEvents, ISoftDeletable, IDomainEvent
+├── Constants/          ← Roles, UserConstants, etc.
 ├── Entities/
 ├── Documents/          ← MongoDB models
 ├── Events/             ← IDomainEvent implementations
@@ -985,17 +1067,25 @@ Learnix.Domain/
 
 Learnix.Application/
 ├── Common/
+│   ├── Abstractions/
+│   │   ├── Persistence/    ← IUnitOfWork
+│   │   ├── Caching/        ← ICacheable, ICacheService
+│   │   ├── Messaging/      ← IEmailSender
+│   │   └── Time/           ← (later: IDateTimeProvider)
 │   ├── Behaviors/      ← ValidationBehavior, LoggingBehavior, CachingBehavior (later)
 │   ├── Constants/      ← CacheKeys
 │   ├── Errors/         ← NotFoundError, ConflictError, ForbiddenError, ValidationError
 │   ├── Events/         ← IDomainEventNotification<T>, DomainEventNotification<T>
-│   ├── Interfaces/     ← IUnitOfWork, ICacheable
 │   ├── Pagination/     ← PaginatedResult<T>, PaginationRequest
+│   ├── Settings/       ← AppSettings, JwtSettings
 │   └── Specifications/ ← Specification<T> base class
-├── {Feature}/
+├── Auth/
+│   ├── Abstractions/   ← IUserRegistrationService, IUserAuthenticationService, ITokenService, IRefreshTokenRepository
 │   ├── Commands/{Name}/
-│   ├── Queries/{Name}/
-│   └── Specifications/
+│   ├── Constants/      ← AuthValidationConstants
+│   ├── Models/         ← UserAuthenticationInfo, AccessTokenResult, RefreshTokenResult
+│   └── Specifications/ ← RefreshTokenByHashSpecification, ActiveRefreshTokensByUserSpecification
+└── {Feature}/          ← same structure (Abstractions/Commands/Queries/Models/Specifications)
 
 Learnix.Infrastructure/
 ├── Persistence/
@@ -1008,13 +1098,14 @@ Learnix.Infrastructure/
 ├── MongoDB/
 │   ├── MongoDbContext.cs
 │   └── Repositories/
-├── Consumers/          ← MassTransit consumers
-├── Services/           ← Cache, Blob, Email, AI, Payment
-└── Identity/
+├── Identity/           ← UserRegistrationService, UserAuthenticationService, JwtTokenService
+├── Consumers/          ← MassTransit consumers (later)
+├── Services/           ← Cache, Blob, Email, AI, Payment + RefreshTokenCleanupHostedService, RoleSeederHostedService
+└── Extensions/
 
 Learnix.API/
 ├── Controllers/
-├── Middleware/          ← ExceptionHandlingMiddleware, SecurityHeadersMiddleware
+├── Middleware/         ← ExceptionHandlingMiddleware, SecurityHeadersMiddleware
 └── Extensions/
 ```
 

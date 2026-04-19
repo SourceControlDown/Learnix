@@ -26,9 +26,10 @@
 |---|---|---|---|
 | B-08 | ASP.NET Core Identity setup (User entity, role seeding) | done | |
 | B-09 | Register command (+ validator + handler + email verification event) | done | |
-| B-10 | Login command (JWT generation + refresh token creation) | not started | |
-B-10.5: документувати Authentication pipeline в ARCHITECTURE.md
-| B-11 | Refresh token endpoint (rotation + revocation logic) | not started | |
+| B-10 | Login command (JWT generation + refresh token creation) | done | |
+| B-10.5 | документувати Authentication pipeline в ARCHITECTURE.md | done | |
+| B-11 | Refresh token endpoint (rotation + revocation logic) | done | |
+| B-11.5 | Refresh token cleanup background service (видаляє токени старші expiry + 7 днів) | done | |
 | B-12 | Email confirmation flow (confirm endpoint + resend) | done (mock confirmation with console) | |
 | B-13 | Password reset flow (forgot + reset endpoints) | not started | |
 | B-14 | Google OAuth integration | not started | |
@@ -234,7 +235,7 @@ B-10.5: документувати Authentication pipeline в ARCHITECTURE.md
 
 | Section | Total | Done | Remaining |
 |---|---|---|---|
-| Backend | 54 | 6 | 48 |
+| Backend | 54 | 12 | 42 |
 | Frontend | 36 | 0 | 36 |
 | Deploy | 15 | 0 | 15 |
 | **Total** | **104** | **0** | **104** |

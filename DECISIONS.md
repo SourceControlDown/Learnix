@@ -3,6 +3,10 @@
 > Формат: що вирішили → чому → які альтернативи відкинули.
 > Оновлюється після кожного чату, де приймались архітектурні рішення.
 
+## Конвенція статусів
+
+ADR не видаляються. Якщо рішення переглянуто — старий ADR помічається `Superseded by ADR-XXX`, новий — `Supersedes ADR-YYY`. Це зберігає історію мислення і показує як архітектура еволюціонувала.
+
 ---
 
 ## ADR-001: Clean Architecture + CQRS через MediatR
@@ -39,7 +43,6 @@
 - Command handlers повертають `Result` або `Result<T>`
 - Query handlers повертають `Result<TResponse>`
 - Controllers маплять `result.IsFailed` → BadRequest, `result.IsSuccess` → Ok
-- ARCHITECTURE.md потребує оновлення секції Result<T>
 
 ---
 
@@ -172,7 +175,6 @@
 - Повертати Result з middleware (catch → Result.Fail) — косметичне рішення, exception все одно кидається
 
 **Наслідки:**
-- ARCHITECTURE.md: секція "Validation Pipeline" потребує повного переписування
 - ExceptionHandlingMiddleware залишається тільки для непередбачених збоїв (DB down, null ref, тощо)
 - Всі Command/Query handlers мають повертати тип що наслідує ResultBase
 
@@ -359,10 +361,6 @@ Instructor-specific дані — НЕ в claims.
 - `IDomainEvent : INotification` (як в ARCHITECTURE.md) — простіше, але порушує dependency rule
 - Власний `IDomainEventDispatcher` без MediatR взагалі — більше коду, втрата in-process pub/sub фіч MediatR
 
-**Наслідки:**
-- ARCHITECTURE.md: секція "Domain Entities" — прибрати `public interface IDomainEvent : INotification { }`
-- ARCHITECTURE.md: секція "Domain Event Dispatching" потребує оновлення (див. нижче)
-
 ---
 
 ## ADR-020: CacheKeys в Application layer, не Domain
@@ -375,9 +373,6 @@ Instructor-specific дані — НЕ в claims.
 
 **Альтернативи:**
 - Лишити в Domain (як було в ARCHITECTURE.md) — працює, але змішує рівні абстракції
-
-**Наслідки:**
-- ARCHITECTURE.md: секція "Caching Strategy (Redis)" — шлях файлу `Application/Common/Constants/CacheKeys.cs`
 
 ---
 
@@ -392,9 +387,6 @@ Instructor-specific дані — НЕ в claims.
 
 **Альтернативи:**
 - Окремий `UnitOfWork` клас (як в ARCHITECTURE.md) — канонічний підхід, але додає шар без функціональної цінності
-
-**Наслідки:**
-- ARCHITECTURE.md: секція "Repository Pattern" / "Unit of Work" — прибрати окремий клас UnitOfWork
 
 ---
 
@@ -418,7 +410,6 @@ Instructor-specific дані — НЕ в claims.
 - Не робити outbox взагалі — неприпустимо для production-claim платформи (платежі → сертифікати → email)
 
 **Наслідки:**
-- TODO.md: новий таск B-34.5 (або в окрему секцію tech debt)
 - Не документуємо outbox в ARCHITECTURE.md зараз — додамо разом з реалізацією
 
 ---
@@ -437,11 +428,6 @@ Instructor-specific дані — НЕ в claims.
 - Лишити `BaseEntity` як абстрактний клас, дублювати audit/events у `User` вручну — працює, але копіпаста полів і методів. При додаванні нового аудит-поля треба міняти і `BaseEntity`, і `User`
 - `User` без audit і events — втрачаємо trace коли юзер створений/оновлений
 
-**Наслідки:**
-- ARCHITECTURE.md: секція "Domain Entities" — додати опис інтерфейсів і пояснення для `User`
-- ARCHITECTURE.md: `AuditableInterceptor` — `Entries<BaseEntity>()` → `Entries<IAuditable>()`
-- ARCHITECTURE.md: `ApplicationDbContext.SaveChangesAsync` — `Entries<BaseEntity>()` → `Entries<IHasDomainEvents>()`
-
 ---
 
 ## ADR-024: Чисті Identity ролі замість UserRole enum
@@ -458,14 +444,11 @@ Instructor-specific дані — НЕ в claims.
 - Тільки enum на User, без Identity ролей — втрачаємо `[Authorize(Roles=...)]` і вбудовану підтримку, треба писати свій authorization handler
 - Гібрид: enum + Identity, синхронізація через domain method — попередня рекомендація, відкинуто, бо дублювання навіть для 3 значень не вартує. Якщо додасться 4-та роль — треба міняти в двох місцях
 
-**Наслідки:**
-- DATA_MODEL.md: поле `Role: UserRole` на User → видалити, додати note "Roles managed by ASP.NET Identity (AspNetRoles, AspNetUserRoles)"
-- `Learnix.Domain/Enums/UserRole.cs` — видалити
-- `Learnix.Domain/Constants/Roles.cs` — додати з `Student`, `Instructor`, `Admin`, `All`
-
 ---
 
 ## ADR-025: IIdentityService як абстракція над UserManager
+
+> **Status:** Superseded by ADR-032 (2026-04-19). Оригінальний принцип "Application не знає про UserManager" лишається в силі, але реалізований через три окремі інтерфейси замість одного `IIdentityService`. Цей ADR лишається для історичного контексту.
 
 **Рішення:** Інтерфейс `IIdentityService` живе в Application, реалізація `IdentityService` в Infrastructure. Application handlers не знають про `UserManager<User>` — викликають тільки `IIdentityService`.
 
@@ -569,6 +552,144 @@ Instructor-specific дані — НЕ в claims.
 **Наслідки:**
 - Phase D (Deploy): додати окремий CI step для застосування міграцій у staging/prod, або генерувати idempotent SQL script через `dotnet ef migrations script --idempotent` і застосовувати через міграційний tool (Flyway/власний).
 - Розробник має бути готовий що при першому `dotnet run` після `git pull` міграції запустяться автоматично — побачить це в консолі через `LogInformation`.
+
+---
+
+## ADR-030: Структура папок Application — гібрид feature-first + cross-cutting Common/Abstractions
+
+**Рішення:** Інтерфейси Application шару групуються за **областю використання**:
+
+- **Cross-cutting** (використовується більше ніж однією фічею) → `Common/Abstractions/{Category}/`. Категорії: `Persistence`, `Caching`, `Messaging`, `Time` (за потреби), `Identity` (загальні концепти типу `ICurrentUserService`).
+- **Feature-specific** (живе в межах однієї фічі) → `{Feature}/Abstractions/`. Приклади: `IUserRegistrationService`, `IUserAuthenticationService`, `ITokenService`, `IRefreshTokenRepository` — усі в `Auth/Abstractions/`.
+
+Папка називається `Abstractions`, не `Interfaces`, бо може містити не тільки інтерфейси (абстрактні класи, делегати).
+
+`Models/` (record-и які повертаються/приймаються інтерфейсами) — теж feature-scoped: `Auth/Models/`, `Courses/Models/`. Cross-cutting `Common/Models/` створюється тільки якщо з'явиться модель яку реально використовують з кількох фіч.
+
+Категоризація в `Common/Abstractions/` створюється одразу (навіть з одним файлом у папці) — переїжджати один файл легко, переїжджати десять болісно після того як папка перетворилась на смітник.
+
+**Правило для нових інтерфейсів:** "Цей інтерфейс має сенс поза однією фічею?"
+- Так → `Common/Abstractions/{Category}/`
+- Ні → `{Feature}/Abstractions/`
+
+**Чому:**
+- Локальність змін: фіча — самодостатня папка зверху донизу. Auth feature видаляється однією операцією
+- Зрозумілий dependency graph: `using Learnix.Application.Auth.Abstractions` всередині `Courses/` — явний червоний прапор
+- Категорії в `Common/Abstractions/` доповнюють групування за роллю — щоб `IUnitOfWork` (persistence) і `IEmailSender` (messaging) не лежали в одному кошику
+
+**Альтернативи:**
+- Flat `Common/Interfaces/` — простіше зараз, ламається на 20+ файлах, неможливо відрізнити репозиторій від зовнішнього сервісу від pipeline marker без відкриття файлу
+- Тільки feature-grouping без `Common/Abstractions/` — не вирішує куди класти truly cross-cutting (`IUnitOfWork`, `IEmailSender`)
+- Тільки `Common/Abstractions/{Category}/` без feature-folders для інтерфейсів — порушує локальність, ламає правило "одна фіча = одна папка"
+
+---
+
+## ADR-031: JWT секрет — placeholder в base + dev-секрет в Development + env var в production
+
+**Рішення:** `appsettings.json` містить `Jwt.Secret = ""` (placeholder, валідація на старті падає якщо він порожній). `appsettings.Development.json` перевизначає його статичним рандомним рядком (>32 байт). У production значення передається через змінну оточення `JWT__Secret` (double underscore = nested config key в .NET configuration).
+
+**Чому:**
+- Розробник підняв `dotnet run` без зайвих кроків — БД мігрується автоматично (ADR-029), JWT не падає на старті
+- `appsettings.Development.json` ніколи не йде в production билд — низький ризик витоку
+- Production-секрет ніколи не торкається диска чи git — тільки runtime env var (Azure Key Vault → App Service config → env var)
+- Перевірка `string.IsNullOrWhiteSpace(jwtSettings.Secret)` в `AddInfrastructure` — fail fast, краще впасти на старті ніж випустити токени підписані порожнім ключем
+
+**Альтернативи:**
+- Завжди через env var (включно з dev) — кожен новий розробник має окремо налаштувати `.env` чи user-secrets перед першим запуском. Тертя в onboarding
+- User Secrets (`dotnet user-secrets`) для dev — канонічний MS-підхід, але ховає секрет в окремому місці що ускладнює дебаг "звідки взялось значення"
+- Hardcoded fallback у коді (`?? "default-dev-secret"`) — небезпечно, легко проґавити в production-збірці
+
+**Наслідки:**
+- `appsettings.json`: секція `Jwt` з порожнім `Secret`
+- `appsettings.Development.json`: перевизначення `Jwt.Secret` рандомним рядком
+- `.env.example`: рядок `JWT__Secret=<generate 64+ char secret>` з коментарем "production only"
+- `AddInfrastructure`: явна перевірка наявності секрету з `InvalidOperationException` при порожньому
+- README: секція "Environment Variables" — пояснити double-underscore convention для nested keys
+
+---
+
+## ADR-032: Декомпозиція Identity сервісу на три ролі за принципом "одна причина змінитись"
+
+> **Supersedes:** ADR-025 (one IIdentityService → three interfaces)
+
+**Рішення:** Замість одного `IIdentityService` — три інтерфейси:
+- `IUserRegistrationService` — реєстрація + email-підтвердження (CRUD-life-cycle юзера)
+- `IUserAuthenticationService` — валідація креденшелів + вибірка info для побудови токена
+- `ITokenService` — генерація JWT + refresh token + хешування (чиста функція без знання про БД чи Identity)
+
+Усі три живуть у `Auth/Abstractions/` (ADR-030). Реалізації — в `Infrastructure/Identity/`.
+
+**Чому:**
+- **Different reasons to change.** Заміниш Identity provider (на Auth0/IdentityServer) — переписуєш `UserRegistration` + `UserAuthentication`, `TokenService` не знає. Поміняєш JWT на PASETO або змінити claims — переписуєш `TokenService`, решта не торкається. Single Responsibility у дії
+- **Тестабельність.** Login handler у unit-тесті мокаєш три легких інтерфейси, а не один товстий
+- **Читабельність handler.** `LoginCommandHandler` явно показує оркестрацію: validate → generate token pair → persist refresh → save. Кожен крок — окрема залежність
+
+**Альтернативи:**
+- Один `IIdentityService` з усіма методами — простіше менше файлів, але товстий контракт що змінюється з кожної причини
+- `IUserAuthenticationService.LoginAsync` повертає одразу JWT — змішує валідацію credentials з token generation, два різних concern в одному методі
+
+**Наслідки:**
+- 3 окремих DI-реєстрації в `AddInfrastructure`
+- `IdentityService.cs` (старий) видалено, на його місці `UserRegistrationService.cs` + `UserAuthenticationService.cs` + `JwtTokenService.cs`
+- Старі handlers (Register, ConfirmEmail, ResendConfirmationEmail) оновлено — параметр конструктора з `IIdentityService` на `IUserRegistrationService`
+
+---
+
+## ADR-033: Refresh token rotation з replay-attack protection
+
+**Рішення:** При кожному успішному `/api/auth/refresh` — старий refresh token revoked (не видаляється), новий створюється і повертається. Якщо приходить запит з токеном що **уже revoked** — це сигнал компрометації: всі активні токени юзера примусово revoked, юзер вилогінюється з усіх пристроїв, інцидент логується як warning з UserId.
+
+Refresh tokens зберігаються в PostgreSQL у вигляді SHA-256 хешу (`TokenHash`, унікальний індекс). Plain-токен існує тільки в HttpOnly cookie клієнта. Витік БД ≠ компрометація сесій.
+
+Refresh token передається через HttpOnly + Secure + SameSite=Strict cookie з `Path = "/api/auth"`. Контролер відповідає за читання/запис cookie; handlers оперують голим рядком — Application шар нічого не знає про HTTP.
+
+**Чому:**
+- Rotation робить вікно компрометації мінімальним — токен живе один запит
+- Replay protection ловить сценарій "токен украли, обидва (атакувальник і юзер) ним користуються" — перший хто refresh-ить отримує новий, другий приходить зі старим (revoked) → всіх кидає в logout
+- Хешування в БД — захист від витоку дампа БД
+- Path-обмежений cookie не відправляється з кожним запитом до API, тільки до auth-endpoints — менше експозиції
+
+**Альтернативи:**
+- Refresh без rotation (один довгоживучий токен) — простіше, але втрачаємо replay-detection
+- Refresh tokens у Redis — швидше, але втрачаємо durability (перезапуск Redis = всі юзери вилогінено)
+- JWT як refresh теж — symmetric з access, але втрачаємо центральний контроль revocation (JWT не можна "забрати назад")
+
+**Наслідки:**
+- `RefreshToken` entity з `TokenHash`, `ExpiresAt`, `IsRevoked`, `RevokedAt`
+- `IRefreshTokenRepository` + специфікації `RefreshTokenByHashSpecification`, `ActiveRefreshTokensByUserSpecification`
+- `RefreshTokenCleanupHostedService` (B-11.5) — фонова задача чистить токени старші `ExpiresAt + 7 днів` раз на 24h
+- Контролер `AuthController` керує cookie (`SetRefreshTokenCookie`, `ClearRefreshTokenCookie`) — handlers ні
+
+---
+
+## ADR-034: JWT claims — стандартні OIDC + custom для ролей
+
+**Рішення:** Access token містить:
+- `sub` — User Id (Guid)
+- `email` — User email
+- `jti` — унікальний id токена (для трейсингу/blacklist у майбутньому)
+- `given_name` — FirstName
+- `family_name` — LastName
+- `name` — `"{FirstName} {LastName}"` (повне ім'я для display)
+- `role` — повторюваний claim для кожної ролі юзера
+
+`MapInboundClaims = false` у `AddJwtBearer` — щоб у коді API ми бачили claim names такими ж як у JWT (не перетворені на `ClaimTypes.NameIdentifier` тощо). `NameClaimType = "name"`, `RoleClaimType = "role"` — щоб `User.Identity.Name` і `[Authorize(Roles = "Instructor")]` працювали з нашими custom-claim-names.
+
+**Чому:**
+- Стандартні OIDC claims (`sub`, `email`, `given_name`, `family_name`, `name`) — фронтенд або сторонні системи що очікують OIDC отримають що очікують
+- Окремі `given_name` + `family_name` + composite `name` — фронт може взяти будь-яке поле без додаткового парсингу
+- `role` як повторюваний claim — стандартний механізм Identity, працює з `[Authorize(Roles = ...)]` за замовчуванням
+- `MapInboundClaims = false` — узгодженість: те що у JWT == те що бачимо у коді. Дебаг простіший
+
+**Альтернативи:**
+- Тільки `name` без розбиття — фронту доводиться парсити "First Last", ламається на іменах з пробілами/множинних
+- Власні короткі claim names (`uid`, `r`) для зменшення розміру токена — економія мінімальна, втрата сумісності з OIDC tooling
+- `ClaimTypes.*` URI-based claim names (.NET default) — multi-kilobyte токени, погана читабельність
+
+**Наслідки:**
+- `JwtTokenService.GenerateAccessToken` приймає `firstName, lastName` (не тільки `firstName` як в першій ітерації)
+- `UserAuthenticationInfo` містить обидва імені
+- `AddJwtBearer` сконфігурований з `MapInboundClaims = false`, `NameClaimType`, `RoleClaimType`
 
 ---
 
