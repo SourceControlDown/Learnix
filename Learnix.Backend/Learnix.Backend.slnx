@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path="../.env.example" />
     <File Path="../ARCHITECTURE.md" />
     <File Path="../CLAUDE.md" />
     <File Path="../DATA_MODEL.md" />
