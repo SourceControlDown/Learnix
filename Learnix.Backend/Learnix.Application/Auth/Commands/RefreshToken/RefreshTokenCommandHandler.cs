@@ -42,6 +42,7 @@ internal sealed class RefreshTokenCommandHandler(
                 t.Revoke();
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
+
             return Result.Fail<LoginResponse>(
                 new ForbiddenError("Refresh token reuse detected. All sessions terminated."));
         }
@@ -50,6 +51,7 @@ internal sealed class RefreshTokenCommandHandler(
             return Result.Fail<LoginResponse>(new ForbiddenError("Refresh token expired."));
 
         var userInfoResult = await authService.GetAuthenticationInfoAsync(presented.UserId, cancellationToken);
+
         if (userInfoResult.IsFailed)
             return Result.Fail<LoginResponse>(userInfoResult.Errors);
 
@@ -58,15 +60,26 @@ internal sealed class RefreshTokenCommandHandler(
         // Rotate: revoke old, issue new pair.
         presented.Revoke();
 
-        var access = tokenService.GenerateAccessToken(user.UserId, user.Email, user.FirstName, user.Roles);
+        var access = tokenService.GenerateAccessToken(
+            user.UserId, 
+            user.Email, 
+            user.FirstName, 
+            user.LastName, 
+            user.Roles);
+
         var newRefresh = tokenService.GenerateRefreshToken();
 
-        await refreshTokenRepository.AddAsync(
-            new RefreshTokenEntity(user.UserId, newRefresh.TokenHash, newRefresh.ExpiresAt), cancellationToken);
+        await refreshTokenRepository.AddAsync(new RefreshTokenEntity(
+                user.UserId,
+                newRefresh.TokenHash,
+                newRefresh.ExpiresAt), cancellationToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok(new LoginResponse(
-            access.Token, access.ExpiresAt,
-            newRefresh.PlainToken, newRefresh.ExpiresAt));
+            access.Token, 
+            access.ExpiresAt,
+            newRefresh.PlainToken, 
+            newRefresh.ExpiresAt));
     }
 }

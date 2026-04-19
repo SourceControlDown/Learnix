@@ -1,8 +1,8 @@
 ﻿using FluentResults;
 using Learnix.Application.Auth.Abstractions;
 using Learnix.Application.Common.Abstractions.Persistence;
-using Learnix.Domain.Entities;
 using MediatR;
+using RefreshTokenEntity = Learnix.Domain.Entities.RefreshToken;
 
 namespace Learnix.Application.Auth.Commands.Login;
 
@@ -15,17 +15,31 @@ internal sealed class LoginCommandHandler(
 {
     public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var authResult = await authService.ValidateCredentialsAsync(request.Email, request.Password, cancellationToken);
+        var authResult = await authService.ValidateCredentialsAsync(
+            request.Email, 
+            request.Password, 
+            cancellationToken);
+        
         if (authResult.IsFailed)
             return Result.Fail<LoginResponse>(authResult.Errors);
 
         var user = authResult.Value;
 
-        var access = tokenService.GenerateAccessToken(user.UserId, user.Email, user.FirstName, user.Roles);
+        var access = tokenService.GenerateAccessToken(
+            user.UserId, 
+            user.Email, 
+            user.FirstName, 
+            user.LastName, 
+            user.Roles);
+        
         var refresh = tokenService.GenerateRefreshToken();
 
         await refreshTokenRepository.AddAsync(
-            new RefreshToken(user.UserId, refresh.TokenHash, refresh.ExpiresAt), cancellationToken);
+            new RefreshTokenEntity(
+                user.UserId, 
+                refresh.TokenHash, 
+                refresh.ExpiresAt), cancellationToken);
+        
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok(new LoginResponse(

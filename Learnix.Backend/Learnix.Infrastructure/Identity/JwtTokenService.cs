@@ -16,7 +16,7 @@ internal sealed class JwtTokenService(IOptions<JwtSettings> jwtSettings) : IToke
     private readonly JwtSettings _settings = jwtSettings.Value;
 
     public AccessTokenResult GenerateAccessToken(
-        Guid userId, string email, string firstName, IReadOnlyList<string> roles)
+        Guid userId, string email, string firstName, string lastName, IReadOnlyList<string> roles)
     {
         var now = DateTime.UtcNow;
         var expires = now.AddMinutes(_settings.AccessTokenExpiryMinutes);
@@ -26,7 +26,7 @@ internal sealed class JwtTokenService(IOptions<JwtSettings> jwtSettings) : IToke
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.Email, email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new("name", firstName),
+            new("name", $"{firstName} {lastName}"),
         };
         claims.AddRange(roles.Select(r => new Claim("role", r)));
 
