@@ -1,12 +1,12 @@
 ﻿using FluentResults;
-using Learnix.Application.Common.Interfaces;
+using Learnix.Application.Auth.Abstractions;
 using MediatR;
 
 namespace Learnix.Application.Auth.Commands.ResendConfirmationEmail;
 
-internal sealed class ResendConfirmationEmailCommandHandler(IIdentityService identityService)
+internal sealed class ResendConfirmationEmailCommandHandler(IUserRegistrationService registrationService)
     : IRequestHandler<ResendConfirmationEmailCommand, Result>
 {
     public Task<Result> Handle(ResendConfirmationEmailCommand request, CancellationToken cancellationToken)
-        => identityService.ResendConfirmationEmailAsync(request.Email, cancellationToken);
+        => registrationService.ResendConfirmationEmailAsync(request.Email, cancellationToken);
 }
