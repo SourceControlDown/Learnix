@@ -106,6 +106,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRegistrationService, UserRegistrationService>();
         services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IPasswordResetService, PasswordResetService>();
         services.AddSingleton<IEmailSender, ConsoleEmailSender>();
 
         // Background services

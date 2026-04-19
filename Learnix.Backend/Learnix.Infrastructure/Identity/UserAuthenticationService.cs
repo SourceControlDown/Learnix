@@ -17,21 +17,21 @@ internal sealed class UserAuthenticationService(
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user is null)
-            return Result.Fail<UserAuthenticationInfo>(new ForbiddenError("Invalid credentials."));
+            return Result.Fail<UserAuthenticationInfo>(new AuthenticationError("Invalid credentials."));
 
-        // SignInManager handles lockout counter and RequireConfirmedEmail = true policy.
+        // SignInManager handles lockout counter and RequireConfirmedEmail = true policy
         var signIn = await signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
 
         if (signIn.IsLockedOut)
             return Result.Fail<UserAuthenticationInfo>(
-                new ForbiddenError("Account is locked. Please try again later."));
+                new AuthenticationError("Account is locked. Please try again later."));
 
         if (signIn.IsNotAllowed)
             return Result.Fail<UserAuthenticationInfo>(
-                new ForbiddenError("Email address not confirmed."));
+                new AuthenticationError("Email address not confirmed."));
 
         if (!signIn.Succeeded)
-            return Result.Fail<UserAuthenticationInfo>(new ForbiddenError("Invalid credentials."));
+            return Result.Fail<UserAuthenticationInfo>(new AuthenticationError("Invalid credentials."));
 
         var roles = await userManager.GetRolesAsync(user);
         return Result.Ok(new UserAuthenticationInfo(
