@@ -1,4 +1,5 @@
 ﻿using Learnix.API.Extensions;
+using Learnix.API.RateLimiting;
 using Learnix.Application.Auth.Commands.ConfirmEmail;
 using Learnix.Application.Auth.Commands.ForgotPassword;
 using Learnix.Application.Auth.Commands.GoogleLogin;
@@ -11,6 +12,7 @@ using Learnix.Application.Auth.Commands.ResetPassword;
 using Learnix.Application.Common.Errors;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Learnix.API.Controllers;
 
@@ -25,6 +27,7 @@ public sealed class AuthController(ISender sender) : ControllerBase
     // =================================
 
     [HttpPost("register")]
+    [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
     public async Task<IActionResult> Register([FromBody] RegisterCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
@@ -34,6 +37,7 @@ public sealed class AuthController(ISender sender) : ControllerBase
     }
 
     [HttpPost("confirm-email")]
+    [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
     public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
@@ -42,6 +46,7 @@ public sealed class AuthController(ISender sender) : ControllerBase
     }
 
     [HttpPost("resend-confirmation")]
+    [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
     public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationEmailCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
@@ -59,6 +64,7 @@ public sealed class AuthController(ISender sender) : ControllerBase
     // Password reset
     // =================================
     [HttpPost("forgot-password")]
+    [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
@@ -66,6 +72,7 @@ public sealed class AuthController(ISender sender) : ControllerBase
     }
 
     [HttpPost("reset-password")]
+    [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
@@ -76,6 +83,7 @@ public sealed class AuthController(ISender sender) : ControllerBase
     // =================================
 
     [HttpPost("login")]
+    [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
     public async Task<IActionResult> Login([FromBody] LoginCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
@@ -125,6 +133,7 @@ public sealed class AuthController(ISender sender) : ControllerBase
     }
 
     [HttpPost("google")]
+    [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
     public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
