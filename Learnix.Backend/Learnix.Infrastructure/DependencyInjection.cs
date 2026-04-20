@@ -1,9 +1,10 @@
-﻿using System.Text;
-using Learnix.Application.Auth.Abstractions;
+﻿using Learnix.Application.Auth.Abstractions;
 using Learnix.Application.Auth.Constants;
+using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Settings;
+using Learnix.Application.Courses.Abstractions;
 using Learnix.Domain.Entities;
 using Learnix.Infrastructure.Identity;
 using Learnix.Infrastructure.Persistence;
@@ -16,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Learnix.Infrastructure;
 
@@ -117,9 +119,16 @@ public static class DependencyInjection
         services.AddScoped<IPasswordResetService, PasswordResetService>();
         services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
         services.AddSingleton<IEmailSender, ConsoleEmailSender>();
+        services.AddHttpContextAccessor();
+
+        // Course services
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<ICourseRepository, CourseRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
 
         // Background services
         services.AddHostedService<RoleSeederHostedService>();
+        services.AddHostedService<CategorySeederHostedService>();
         services.AddHostedService<RefreshTokenCleanupHostedService>();
 
         return services;
