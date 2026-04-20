@@ -120,38 +120,23 @@ Application layer uses [FluentResults](https://github.com/altmann/FluentResults)
 ### Typed errors (ADR-010)
 ```csharp
 // Learnix.Application/Common/Errors/...
+// Use next signature:
 
-public class NotFoundError : Error
-{
-    public NotFoundError(string message) : base(message) { }
-}
+NotFoundError(string message)
 
-public class ConflictError : Error
-{
-    public ConflictError(string message) : base(message) { }
-}
+public ConflictError(string message)
 
-public class ForbiddenError : Error
-{
-    public ForbiddenError(string message) : base(message) { }
-}
+public ForbiddenError(string message)
 
-public sealed class AuthenticationError : Error
-{
-    public AuthenticationError(string message) : base(message) { }
-}
+public AuthenticationError(string message)
 
 public sealed class ValidationError : Error
 {
     public ValidationResult ValidationResult { get; }
 
     public ValidationError(ValidationResult validationResult)
-        : base("One or more validation errors occurred.")
-    {
-        ValidationResult = validationResult;
-    }
 
-    public IReadOnlyDictionary<string, string[]> ToDictionary()
+    public Dictionary<string, string[]> ToDictionary()
         => ValidationResult.Errors
             .GroupBy(f => f.PropertyName)
             .ToDictionary(g => g.Key, g => g.Select(f => f.ErrorMessage).ToArray());
@@ -179,7 +164,7 @@ public async Task Register([FromBody] RegisterCommand command, CancellationToken
         ClearRefreshTokenCookie();
     }
 
-    return result.ToActionResult(value => CreatedAtAction(nameof(Register), value));
+    return result.ToActionResult(onSuccess: value => CreatedAtAction(nameof(Register), value));
 }
 ```
 
