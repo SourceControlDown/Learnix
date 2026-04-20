@@ -657,9 +657,18 @@ public abstract class Specification<T>
     public bool AsNoTracking { get; protected set; } = true;
 
     protected void AddInclude(Expression<Func<T, object>> include) => Includes.Add(include);
+    protected void AddInclude(string includeString) => IncludeStrings.Add(includeString);
     protected void ApplyOrderBy(Expression<Func<T, object>> orderBy) => OrderBy = orderBy;
     protected void ApplyOrderByDescending(Expression<Func<T, object>> orderBy) => OrderByDescending = orderBy;
-    protected void ApplyPaging(int skip, int take) { Skip = skip; Take = take; IsPagingEnabled = true; }
+
+    protected void ApplyPaging(int skip, int take)
+    {
+        Skip = skip;
+        Take = take;
+        IsPagingEnabled = true;
+    }
+
+    protected void DisableTracking() => AsNoTracking = false;
 }
 ```
 
@@ -1088,6 +1097,7 @@ Learnix.Application/
 ├── Common/
 │   ├── Abstractions/
 │   │   ├── Persistence/    ← IUnitOfWork
+|   |   ├── Identity/       ← ICurrentUserService
 │   │   ├── Caching/        ← ICacheable, ICacheService
 │   │   ├── Messaging/      ← IEmailSender
 │   │   └── Time/           ← (later: IDateTimeProvider)
@@ -1098,6 +1108,11 @@ Learnix.Application/
 │   ├── Pagination/     ← PaginatedResult<T>, PaginationRequest
 │   ├── Settings/       ← AppSettings, JwtSettings
 │   └── Specifications/ ← Specification<T> base class
+├── Courses/
+│   ├── Abstractions/   ← ICourseRepository, ICategoryRepository
+│   ├── Commands/{Name}/
+│   ├── Queries/{Name}/
+│   └── Specifications/
 ├── Auth/
 │   ├── Abstractions/   ← IUserRegistrationService, IUserAuthenticationService, ITokenService, IRefreshTokenRepository, IGoogleTokenValidator, IPasswordResetService
 │   ├── Commands/{Name}/

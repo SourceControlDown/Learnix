@@ -358,7 +358,7 @@ Instructor-specific дані — НЕ в claims.
 - Handlers в Application пишуться як `INotificationHandler<DomainEventNotification<EnrollmentCompletedDomainEvent>>` — трохи більше boilerplate, але явно видно що це reaction on domain event
 
 **Альтернативи:**
-- `IDomainEvent : INotification` (як в ARCHITECTURE.md) — простіше, але порушує dependency rule
+- `IDomainEvent : INotification` — простіше, але порушує dependency rule
 - Власний `IDomainEventDispatcher` без MediatR взагалі — більше коду, втрата in-process pub/sub фіч MediatR
 
 ---
@@ -372,7 +372,7 @@ Instructor-specific дані — НЕ в claims.
 - Domain має залишатись максимально чистим від крос-cutting concerns
 
 **Альтернативи:**
-- Лишити в Domain (як було в ARCHITECTURE.md) — працює, але змішує рівні абстракції
+- Лишити в Domain — працює, але змішує рівні абстракції
 
 ---
 
@@ -386,7 +386,7 @@ Instructor-specific дані — НЕ в claims.
 - Менше файлів, менше DI-реєстрацій, менше шансів облажатись з scopes
 
 **Альтернативи:**
-- Окремий `UnitOfWork` клас (як в ARCHITECTURE.md) — канонічний підхід, але додає шар без функціональної цінності
+- Окремий `UnitOfWork` клас — канонічний підхід, але додає шар без функціональної цінності
 
 ---
 
@@ -604,7 +604,6 @@ Instructor-specific дані — НЕ в claims.
 - `appsettings.Development.json`: перевизначення `Jwt.Secret` рандомним рядком
 - `.env.example`: рядок `JWT__Secret=<generate 64+ char secret>` з коментарем "production only"
 - `AddInfrastructure`: явна перевірка наявності секрету з `InvalidOperationException` при порожньому
-- README: секція "Environment Variables" — пояснити double-underscore convention для nested keys
 
 ---
 
@@ -778,7 +777,119 @@ Refresh token передається через HttpOnly + Secure + SameSite=Str
 **Наслідки:**
 - In-memory counters — **при scale-out лічильники розсинхронізовані**. Атакувальник може отримати 5×N спроб на N instance. Документований трейд-оф, поки один instance — не критично.
 - `HttpContext.Connection.RemoteIpAddress` за reverse proxy повертає IP проксі, не клієнта. При деплої в Azure App Service / Container Apps **обов'язково** додати `UseForwardedHeaders()` — інакше всі юзери отримують один partition key і rate limit стає одним глобальним лічильником. Задача D-06.5 у TODO.
-- Зміна політики (5→10, 15→30 хв) — редагується в одному місці: `RateLimitingExtensions.AddLearnixRateLimiting`.
+
+---
+
+## ADR-039: Authorization checks live in handlers, not controllers
+
+**Рішення:** Перевірки "чи може поточний користувач виконати цю операцію над цим ресурсом" (owner check, role check) виконуються в command/query handlers через `ICurrentUserService`. Контролер не бере на себе цю відповідальність — він робить тільки HTTP-речі (read body, return ToActionResult).
+
+**Чому:**
+- Контролер не знає про `course.InstructorId` без fetch'у через repository. Якщо контролер робить fetch — він уже фактично робить частину роботи handler'а → порушення SRP
+- ASP.NET `[Authorize(Policy = ...)]` добре працює для статичних правил (роль у claims, claim value). Owner-check вимагає fetch resource → resource-based authorization → динамічно → природне місце — handler
+- Handler повертає `Result.Fail(new ForbiddenError(...))` → `ToActionResult()` маппить на 403. Узгоджено з існуючим pipeline (ADR-002, ADR-035)
+- Одне місце для look — усі business rules видно в одному шарі
+
+**Альтернативи:**
+- Authorization в контролері через кастомний `IAuthorizationRequirement + AuthorizationHandler` — офіційний ASP.NET підхід для resource-based auth. Відкинуто: додає шар непрямої взаємодії без виграшу для соло-проекту з одним типом owner-check (`InstructorId`)
+- Authorization в domain entity методі (`course.UpdateDetails(..., requestingUserId)`) — змішує знання про identity з бізнес-логікою entity, порушує SRP
+
+**Наслідки:**
+- Кожен mutating handler робить 2 перевірки: `currentUser.UserId is null` (401) + owner/admin (403)
+- Один додатковий fetch на mutation для entity що й так буде fetched — прийнятний трейд-оф
+- При зростанні кількості handler'ів можна винести в extension method: `ResultExtensions.EnsureOwnership(Guid resourceOwnerId, ICurrentUserService user)` — cosmetic refactor, не blocker
+
+---
+
+## ADR-040: Course lifecycle — three states + invariants for Publish
+
+**Рішення:** Course має три видимих стани + один службовий:
+- `Draft` — default на Create; може бути оновлений, secteur'и/уроки додаються; не видно нікому окрім власника і Admin
+- `Published` — видно всім, можна enroll'итись
+- `Archived` — видно власнику і Admin (read-only), не можна enroll; переходи в інший стан заборонені через Unpublish (тільки Draft ↔ Published + будь-який → Archived)
+- soft-deleted (через `ISoftDeletable`) — лише власник і Admin можуть бачити через `IgnoreQueryFilters`
+
+Інваріанти Publish (перевіряються в handler і в domain методі як last-line defence):
+1. `CoverImageUrl` != null
+2. Має щонайменше одну секцію
+3. Хоча б одна секція має щонайменше один урок
+
+Переходи:
+- Create → Draft (автоматично)
+- Draft → Published (`Publish()`, всі інваріанти)
+- Published → Draft (`Unpublish()`, без інваріантів)
+- Будь-який → Archived (`Archive()`, без інваріантів)
+- Будь-який → soft-deleted (`Delete`, без інваріантів, навіть з активними enrollments — ADR-041 cont.)
+
+**Чому:**
+- Без інваріантів Publish — порожні курси з'являться в пошуку. Поганий UX, погана репутація платформи
+- `CoverImageUrl` опціональний на Create (драфт без обкладинки — нормально), обов'язковий на Publish. Інструктор може працювати над контентом, потім підключити обкладинку
+- Archive без інваріантів — це "прибрати з пошуку, залишити для власника". Не має бути обмежень що блокують це
+
+**Альтернативи:**
+- Publish без інваріантів — пробіг по бізнес-правилу, швидко, але платформа показує порожні курси. Не беру.
+- Інваріанти як DB CHECK constraint — unenforceable для "хоча б одна секція з хоча б одним уроком" без триггерів. Відкинуто.
+
+**Наслідки:**
+- Handler Publish fetch'ить course з повною структурою (`CourseByIdWithStructureSpecification`), інші mutations — тільки course без nav
+- До реалізації Section/Lesson CRUD (наступні чати) Publish завжди падає з `ConflictError("Course cannot be published without at least one section.")`. Це очікувана проміжна поведінка
+- FEATURES.md оновлено з lifecycle-таблицею
+
+---
+
+## ADR-041: EnrollmentsCount — денормалізоване поле, стратегія оновлення TBD
+
+**Рішення:** `Course.EnrollmentsCount` існує як колонка в БД з default 0. Поле **не оновлюється** в Phase 3. Стратегія оновлення (event handler vs nightly job vs raw SQL update) обирається в Phase 4 разом з реалізацією Enrollment (B-26) — коли буде конкретний сценарій навантаження.
+
+**Чому зараз так:**
+- Додавання поля зараз = одна міграція. Додавання пізніше = ще одна міграція + backfill всіх існуючих записів. Дешевше закласти зараз.
+- Рішення про стратегію оновлення потребує знання: скільки очікувано enrollments per course per day, чи допустима затримка в отображенні, чи буде sort by EnrollmentsCount в hot path. Це все стане ясно в Phase 4.
+
+**Альтернативи для майбутньої розмови (Phase 4):**
+1. **Event handler (in-process) після EnrollInCourse**: синхронно інкрементує колонку через raw SQL `UPDATE "Courses" SET "EnrollmentsCount" = "EnrollmentsCount" + 1 WHERE "Id" = ...`. Плюс: завжди актуально. Мінус: write amplification, тупик при race condition якщо не атомарно.
+2. **Integration event через MassTransit** (Phase 6+): async consumer оновлює через raw SQL. Плюс: не блокує enrollment. Мінус: eventual consistency (user щойно enroll'ився — counter ще старий)
+3. **Nightly job** (Hangfire / IHostedService): один `UPDATE ... SET EnrollmentsCount = (SELECT COUNT(*) FROM Enrollments WHERE ...)` вночі. Плюс: простий, один запит, завжди correct. Мінус: максимальна затримка 24h у counter.
+4. **COUNT() on read**: без денормалізованого поля взагалі. Відкидаємо — сенсу в полі нема.
+
+**Наслідки:**
+- Запит `GetCourseById` повертає `EnrollmentsCount = 0` для всіх курсів до реалізації в Phase 4
+- Якщо Phase 4 обере варіант 3 (nightly job) — треба записати інтервал і допустиму затримку у цей ADR як update, або супер-ADR (не створювати новий)
+- Sort by EnrollmentsCount в B-21 (list with sorting) — використовуватиме це поле в readonly режимі
+
+---
+
+## ADR-042: Category.IsSystem flag — захист seeded категорій від видалення/перейменування
+
+**Рішення:** `Category` має поле `IsSystem: bool`. Seeded через `CategorySeederHostedService` категорії створюються з `IsSystem = true`. Domain метод `Category.Rename` кидає `InvalidOperationException` якщо `IsSystem`. Майбутній `DeleteCategoryCommand` валідуватиме `!IsSystem` перед видаленням. Admin UI приховує кнопки edit/delete для системних.
+
+**Чому:**
+- Seeded категорії — частина domain data platform'и. Їх видалення має бути неможливим, не тільки UI-приховуванням
+- Flag на entity = перевірка в одному місці (domain), не розмазана по UI + API validation
+- Admin міг випадково зробити DELETE через Swagger/curl — flag захищає
+
+**Альтернативи:**
+- Окрема таблиця `SystemCategories` — overkill для однобітового концепта
+- Hardcoded list seeded slugs у коді + перевірка проти нього — працює, але розсинхрон між seeder і validator можливий
+- Без захисту взагалі, "Admin не тупий" — не беру, explicit > implicit
+
+**Наслідки:**
+- Додатковий bit per row — незначно
+- Категорія яка була створена як user-level (`IsSystem = false`) і її slug потім додали в seeder — залишиться IsSystem=false (seeder пропускає дублікати). Документовано: щоб "підвищити" категорію — треба ручний UPDATE
+
+---
+
+## ADR-043: IsFree як computed property на DTO, не окреме поле на entity
+
+**Рішення:** `Course` має тільки поле `Price: decimal`. Семантика "free course" = `Price == 0`. Жодного окремого `IsFree: bool` на entity. У `CourseDetailDto` є computed поле `IsFree => Price == 0m` для зручності фронтенду.
+
+**Чому:**
+- Два поля що мають узгоджуватись — гарантований розсинхрон у довгій перспективі (Price = 10, IsFree = true — баг легкий, ціна виправлення висока)
+- Price як single source of truth — явний і прозорий
+- Фронтенд все одно рендерить "Free" на основі price, окреме поле не дає value
+
+**Альтернативи:**
+- Поле `IsFree: bool` на entity — обмежений upside (швидший фільтр за вільними курсами в SQL — можна додати індекс по Price, стане дешево), гарантований downside (розсинхрон)
+- Computed column в DB `IsFree AS (CASE WHEN Price = 0 THEN TRUE ELSE FALSE END)` — можливо у майбутньому, якщо фільтр "тільки безкоштовні" стане hot path. Поки що — не треба.
 
 ---
 

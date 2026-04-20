@@ -40,10 +40,11 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| B-17 | Domain entities: Category, Course, Section, Lesson (TPH), Question, QuestionOption, TextAnswerConfig | not started | |
-| B-18 | EF Configurations + міграція для course-related entities | not started | |
-| B-19 | Category CRUD (seed initial categories) | not started | |
-| B-20 | Course CRUD (create/edit/delete/publish/archive) — Instructor only | not started | |
+| B-17 | Domain entities: Category, Course, Section, Lesson (TPH), Question, QuestionOption, TextAnswerConfig | done (part: Category, Course, Section, Lesson TPH — Question-related deferred to Test-subsystem chat) | |
+| B-17.1 | Domain: Question, QuestionOption, TextAnswerConfig, TestAttempt, TestAttemptAnswer entities | not started | Feeds B-29 |
+| B-18 | EF Configurations + міграція для course-related entities | done | |
+| B-19 | Category CRUD (seed initial categories) | done | |
+| B-20 | Course CRUD (create/edit/delete/publish/archive) — Instructor only | done | |
 | B-21 | Course queries: list (with filters, pagination, sorting), get by id | not started | |
 | B-22 | Section CRUD + reordering | not started | |
 | B-23 | Lesson CRUD (Video/Post/Test) + reordering | not started | |

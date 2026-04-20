@@ -83,6 +83,7 @@ Student submits to become an Instructor. Admin reviews.
 | `Id` | `Guid` | PK |
 | `Name` | `string` | Required, Unique |
 | `Slug` | `string` | URL-friendly, Unique |
+| `IsSystem` | `bool` | True for seeded categories — cannot be renamed or deleted |
 
 **Relations:**
 - Has many `Course`
@@ -109,7 +110,7 @@ Many-to-many between User and Category for recommendation tuning.
 | `Title` | `string` | Required, max 200 chars |
 | `Description` | `string` | Markdown supported |
 | `CoverImageUrl` | `string?` | Azure Blob URL |
-| `Price` | `decimal` | 0 = free |
+| `Price` | `decimal` | 0 = free (no separate IsFree flag — see ADR-043) |
 | `Status` | `CourseStatus` (enum) | Draft / Published / Archived |
 | `EnrollmentsCount` | `int` | Denormalized for sorting, updated on enroll |
 | `Tags` | `string[]` | PostgreSQL array |
