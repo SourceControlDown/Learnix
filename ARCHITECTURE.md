@@ -119,25 +119,28 @@ Application layer uses [FluentResults](https://github.com/altmann/FluentResults)
 
 ### Typed errors (ADR-010)
 ```csharp
-// Learnix.Application/Common/Errors/NotFoundError.cs
+// Learnix.Application/Common/Errors/...
+
 public class NotFoundError : Error
 {
     public NotFoundError(string message) : base(message) { }
 }
 
-// Learnix.Application/Common/Errors/ConflictError.cs
 public class ConflictError : Error
 {
     public ConflictError(string message) : base(message) { }
 }
 
-// Learnix.Application/Common/Errors/ForbiddenError.cs
 public class ForbiddenError : Error
 {
     public ForbiddenError(string message) : base(message) { }
 }
 
-// Learnix.Application/Common/Errors/ValidationError.cs
+public sealed class AuthenticationError : Error
+{
+    public AuthenticationError(string message) : base(message) { }
+}
+
 public sealed class ValidationError : Error
 {
     public ValidationResult ValidationResult { get; }
@@ -161,19 +164,23 @@ public sealed class ValidationError : Error
 - Throw exceptions — only for unexpected infrastructure failures (DB unavailable, etc.)
 
 ### Controller mapping
-```csharp
-var result = await _mediator.Send(command);
 
-if (result.HasError<ValidationError>(out var validationErrors))
+Маппінг централізований в `Learnix.API/Extensions/ResultExtensions.cs` — `result.ToActionResult()` для `Result` та `result.ToActionResult(onSuccess)` для `Result<T>`. Кожен action делегує в extension:
+
+```csharp
+[HttpPost("register")]
+public async Task Register([FromBody] RegisterCommand command, CancellationToken ct)
 {
-    var problem = new ValidationProblemDetails(validationErrors.First().ToDictionary());
-    return BadRequest(problem);
+    var result = await sender.Send(command, ct);
+
+    // Addition logic example
+    if (result.HasError<AuthenticationError>())
+    {
+        ClearRefreshTokenCookie();
+    }
+
+    return result.ToActionResult(value => CreatedAtAction(nameof(Register), value));
 }
-if (result.HasError<NotFoundError>()) return NotFound();
-if (result.HasError<ConflictError>()) return Conflict();
-if (result.HasError<ForbiddenError>()) return Forbid();
-if (result.IsFailed) return BadRequest(result.Errors);
-return Ok(result.Value);
 ```
 
 Error responses use ProblemDetails (RFC 7807) — see ADR-017.
@@ -185,6 +192,7 @@ Error responses use ProblemDetails (RFC 7807) — see ADR-017.
 | `ValidationError` | 400 Bad Request | `ValidationProblemDetails` з `errors` dictionary |
 | `NotFoundError` | 404 Not Found | `ProblemDetails` |
 | `ConflictError` | 409 Conflict | `ProblemDetails` |
+| `AuthenticationError` | 401 Unauthorized | `ProblemDetails` |
 | `ForbiddenError` | 403 Forbidden | `ProblemDetails` |
 | Інша `Error` (без типу) | 400 Bad Request | `ProblemDetails` з агрегованими повідомленнями |
 | `Result.IsSuccess` без значення | 204 No Content | empty |
@@ -865,7 +873,7 @@ No EF Core. Uses `MongoDB.Driver` directly in Infrastructure.
 - Refresh tokens — SHA-256 hash в PostgreSQL. Plain token живе тільки у клієнтській cookie. Витік БД не компрометує сесії.
 - Background cleanup: `RefreshTokenCleanupHostedService` видаляє revoked/expired токени старші `ExpiresAt + 7d` раз на добу (B-11.5).
 - Google OAuth via ASP.NET Core Identity external login (see ADR-018)
-- Rate limiting on: `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/ai/chat`
+- Rate limiting on auth endpoints via `Microsoft.AspNetCore.RateLimiting` — **5 requests / 15 min per IP**, FixedWindow, `QueueLimit = 0`. Policy `auth-strict` застосована через `[EnableRateLimiting]` атрибут на: `register`, `login`, `google`, `forgot-password`, `reset-password`, `resend-confirmation`, `confirm-email`. Refresh і logout не лімітовані (див. ADR-038). AI chat ліміт буде додано у Phase 8.
 - Security headers applied via `SecurityHeadersMiddleware`: CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
 - File upload validation: allowed MIME types whitelist + max size enforced in middleware
 - Input validation: FluentValidation (backend) + Zod (frontend)
@@ -920,6 +928,32 @@ Return access in body           Return access in body
 ### Replay attack protection
 
 Якщо клієнт надсилає refresh token з полем `IsRevoked = true` — це сигнал що токен було перехоплено і вже використано легітимною сесією (або навпаки). Реакція: revoke **усіх** активних refresh tokens для цього юзера, інцидент логується як warning з `UserId`. Юзер вилогінюється з усіх пристроїв і має заново ввести креденшели. Див. ADR-033.
+
+### External providers (Google OAuth)
+
+Google OAuth реалізовано через **Google Identity Services (GIS)** — фронтенд отримує ID token через Google SDK, бек валідує його через `Google.Apis.Auth` і видає свої JWT+refresh (ту саму `LoginResponse` що й regular login). Authorization Code flow / Client Secret / redirect_uri на беці **не використовуються**. Див. ADR-036.
+
+**Flow:**
+
+```
+Frontend (Google SDK) → id_token
+↓
+POST /api/auth/google { idToken }
+↓
+IGoogleTokenValidator.ValidateAsync(idToken)   — signature, iss, aud, exp, email_verified
+↓
+IUserRegistrationService.FindOrCreateGoogleUserAsync(googleUser)
+├── GoogleId знайдено → existing user
+├── Email знайдено, EmailConfirmed → link GoogleId
+├── Email знайдено, !EmailConfirmed → takeover (wipe password, confirm, link)
+└── Нічого не знайдено → create new (PasswordHash null, EmailConfirmed true, Student role)
+↓
+Generate access + refresh (same path as LoginCommandHandler) → HttpOnly cookie + body
+```
+
+**Linkage storage:** `User.GoogleId` (`string?`, unique index) — денормалізоване поле, не `AspNetUserLogins`. Обмежено однопровайдерним сценарієм; додавання другого external provider вимагатиме переходу на `UserManager.AddLoginAsync`. Див. ADR-037.
+
+**Takeover scenario:** якщо email уже зареєстрований через email+password але **не підтверджений**, Google OAuth вважається доказом володіння (Google's `email_verified = true`). Аккаунт "відбирається" від попереднього неавтентифікованого реєстратора: `PasswordHash` скидається в null, `EmailConfirmed = true`, `GoogleId` лінкується. Це безпечно: справжній власник email'у отримує контроль.
 
 ### Cookie configuration
 
@@ -1074,13 +1108,13 @@ Learnix.Application/
 │   │   └── Time/           ← (later: IDateTimeProvider)
 │   ├── Behaviors/      ← ValidationBehavior, LoggingBehavior, CachingBehavior (later)
 │   ├── Constants/      ← CacheKeys
-│   ├── Errors/         ← NotFoundError, ConflictError, ForbiddenError, ValidationError
+│   ├── Errors/         ← NotFoundError, ConflictError, ForbiddenError, AuthenticationError, ValidationError
 │   ├── Events/         ← IDomainEventNotification<T>, DomainEventNotification<T>
 │   ├── Pagination/     ← PaginatedResult<T>, PaginationRequest
 │   ├── Settings/       ← AppSettings, JwtSettings
 │   └── Specifications/ ← Specification<T> base class
 ├── Auth/
-│   ├── Abstractions/   ← IUserRegistrationService, IUserAuthenticationService, ITokenService, IRefreshTokenRepository
+│   ├── Abstractions/   ← IUserRegistrationService, IUserAuthenticationService, ITokenService, IRefreshTokenRepository, IGoogleTokenValidator, IPasswordResetService
 │   ├── Commands/{Name}/
 │   ├── Constants/      ← AuthValidationConstants
 │   ├── Models/         ← UserAuthenticationInfo, AccessTokenResult, RefreshTokenResult
@@ -1105,8 +1139,10 @@ Learnix.Infrastructure/
 
 Learnix.API/
 ├── Controllers/
+├── Extensions/         ← ResultExtensions
 ├── Middleware/         ← ExceptionHandlingMiddleware, SecurityHeadersMiddleware
-└── Extensions/
+├── Extensions/
+└── RateLimiting/       ← RateLimitPolicies
 ```
 
 ---

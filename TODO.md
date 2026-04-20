@@ -31,10 +31,10 @@
 | B-11 | Refresh token endpoint (rotation + revocation logic) | done | |
 | B-11.5 | Refresh token cleanup background service (видаляє токени старші expiry + 7 днів) | done | |
 | B-12 | Email confirmation flow (confirm endpoint + resend) | done (mock confirmation with console) | |
-| B-13 | Password reset flow (forgot + reset endpoints) | not started | |
-| B-14 | Google OAuth integration | not started | |
-| B-15 | Rate limiting middleware (auth endpoints) | not started | |
-| B-16 | Auth controllers (thin, delegate to MediatR) | not started | |
+| B-13 | Password reset flow (forgot + reset endpoints) | done | |
+| B-14 | Google OAuth integration | done | |
+| B-15 | Rate limiting middleware (auth endpoints) | done | |
+| B-16 | Auth controllers (thin, delegate to MediatR) | done | |
 
 ### Phase 3 — Core Domain (Courses + Lessons)
 
@@ -219,6 +219,7 @@
 | # | Task | Status | Notes |
 |---|---|---|---|
 | D-06 | Azure Container Apps (або App Service) для API | not started | |
+| D-06.5 | Configure ForwardedHeaders for rate limiting partition-by-real-IP behind reverse proxy | not started | Prerequisite for rate limiter to work correctly in Azure |
 | D-07 | Azure Static Web Apps (або Container App) для frontend | not started | |
 | D-08 | Azure Database for PostgreSQL (Flexible Server) | not started | |
 | D-09 | Azure Cosmos DB for MongoDB API | not started | |
@@ -235,7 +236,7 @@
 
 | Section | Total | Done | Remaining |
 |---|---|---|---|
-| Backend | 54 | 12 | 42 |
+| Backend | 54 | 16 | 38 |
 | Frontend | 36 | 0 | 36 |
 | Deploy | 15 | 0 | 15 |
 | **Total** | **104** | **0** | **104** |

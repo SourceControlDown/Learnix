@@ -693,6 +693,95 @@ Refresh token передається через HttpOnly + Secure + SameSite=Str
 
 ---
 
+## ADR-035: Розділення `AuthenticationError` (401) і `ForbiddenError` (403)
+
+**Рішення:** Створено окремий typed error `AuthenticationError : Error` для 401 Unauthorized.
+`ForbiddenError` тепер семантично відповідає 403 Forbidden — "автентифікований, але не має прав".
+
+- `AuthenticationError` — invalid credentials, expired/replay refresh token, missing/invalid access token, locked out, unconfirmed email при логіні. Мапиться на 401.
+- `ForbiddenError` — юзер автентифікований, але не має права на операцію (наприклад, Student намагається редагувати чужий курс). Мапиться на 403.
+
+**Чому:**
+- HTTP 401 і 403 семантично різні. RFC 9110 розділяє їх чітко: 401 = "treba автентифікуватись", 403 = "автентифікація є, але не допомагає"
+- Попередня реалізація мапила `ForbiddenError` на 401 у контролері — це працювало, але плутало читача (ім'я типу → 403, маппінг → 401)
+- Окремі типи дозволяють `result.ToActionResult()` extension працювати однозначно без перевизначень на рівні action
+
+**Альтернативи:**
+- Залишити один `ForbiddenError` і мапити на різні коди залежно від контексту — магія у mapping, сервіс не знає який код поверне його помилка
+- Error codes (enum) в одному типі — менш виразно, втрачає compile-time check
+
+**Наслідки:**
+- `ResultExtensions.ToActionResult` має окремі гілки для обох типів
+- Існуючі handlers (`UserAuthenticationService`, `RefreshTokenCommandHandler`) мігровано на `AuthenticationError`
+- Майбутні authorization checks (роль-базовані) використовуватимуть `ForbiddenError`
+
+---
+
+## ADR-036: Google OAuth через Google Identity Services (ID token) замість OAuth code flow
+
+**Рішення:** Фронтенд отримує Google ID token через Google Identity Services (GIS) SDK прямо в браузері. Бек отримує token на `POST /api/auth/google`, валідує через `Google.Apis.Auth` (`GoogleJsonWebSignature.ValidateAsync`) і видає свої JWT+refresh. Authorization Code flow з redirect_uri на беці і Client Secret **не використовуємо**.
+
+**Чому:**
+- GIS — sanctioned Google's підхід для SPA з 2022+. Простіший, менше рухомих частин.
+- Client Secret не потрібен — ID token це self-contained JWT підписаний Google private key, бек валідує публічним ключем з JWKS. Secret потрібен тільки для обміну authorization code.
+- Немає redirect endpoint на беці → нема окремої машинерії для callback, state parameter, CSRF protection на callback.
+- ID token уже містить `email`, `email_verified`, `given_name`, `family_name`, `sub` — все що нам треба для find-or-create. Додаткових запитів на Google userinfo endpoint не робимо.
+
+**Альтернативи:**
+- **Authorization Code flow** — класика, "виглядає стандартніше" на інтерв'ю, але для SPA це anti-pattern у 2026. Потребує Client Secret, redirect endpoint, обміну code → tokens.
+- **Implicit flow** — deprecated Google'ом, не обговорюється.
+
+**Наслідки:**
+- `GoogleSettings.ClientId` — єдине що треба сконфігурувати. `ClientId` публічний (виявиться в front-end коді), не secret.
+- Endpoint `POST /api/auth/google` приймає `{ idToken }` → валідує → видає пару токенів (та сама `LoginResponse` як regular login).
+- Якщо Google колись deprecates GIS — треба буде переписати на Authorization Code flow. Ризик низький: GIS — це їх стратегічний напрямок.
+
+---
+
+## ADR-037: `GoogleId` як денормалізоване поле на User замість `AspNetUserLogins`
+
+**Рішення:** External provider linkage зберігається як `User.GoogleId` (nullable `string?`), не через Identity таблицю `AspNetUserLogins` / `UserManager.AddLoginAsync`.
+
+**Чому:**
+- У v1 Learnix тільки один external provider (Google). `AspNetUserLogins` — це таблиця для N провайдерів `(Provider, ProviderKey)`. Для одного — overhead без користі.
+- `WHERE GoogleId = ?` — один простий lookup без join на `AspNetUserLogins`.
+- Менше EF-конфігурації, менше рухомих частин у Identity schema.
+
+**Альтернативи:**
+- **`AspNetUserLogins` через `UserManager.AddLoginAsync`** — канонічний Identity шлях. Переваги: масштабується на N провайдерів з нульовими змінами коду (GitHub, Microsoft). Недолік: join на кожному Google login lookup.
+- **Гібрид: `GoogleId` для швидкого lookup + запис в `AspNetUserLogins`** — дублювання, розсинхрон можливий.
+
+**Наслідки:**
+- Додавання другого external provider (GitHub, Microsoft) — це міграція `string? GoogleId` → `AspNetUserLogins`-based flow. Помітна робота: нова міграція схеми, перенесення даних, переписування `FindOrCreateGoogleUserAsync` на polymorphic `FindOrCreateExternalUserAsync`.
+- Обмежено однопровайдерним сценарієм — документовано як свідомий tradeoff.
+
+**Future work:** при додаванні другого провайдера — рефакторити на `UserManager.AddLoginAsync` + `FindByLoginAsync`. Задача в TODO як `B-XX` (поза v1).
+
+---
+
+## ADR-038: Rate limiting — in-memory FixedWindow per IP, один strict policy
+
+**Рішення:** Sensitive auth endpoints (register, login, google login, forgot-password, reset-password, resend-confirmation, confirm-email) лімітовані вбудованим `Microsoft.AspNetCore.RateLimiting` — **5 запитів на 15 хвилин per IP**, FixedWindowLimiter, `QueueLimit = 0`. Refresh, logout не лімітовані. Перевищення → 429 `ProblemDetails` + `Retry-After` header.
+
+**Чому:**
+- `Microsoft.AspNetCore.RateLimiting` — вбудований у .NET 8, нуль додаткових NuGet, підтримується Microsoft. AspNetCoreRateLimit — це legacy з часів .NET Core 2.
+- FixedWindow — найпрозоріший для юзера ("5 спроб на 15 хв, потім reset"). SlidingWindow і TokenBucket не дають переваг для sensitive auth де нам треба **strict cap**, а не smooth rate.
+- `QueueLimit = 0` — юзер що перебрав ліміт одразу отримує 429, не зависає у черзі.
+- Refresh без лімітування — легітимний клієнт з 3 вкладками може зробити 3 одночасних refresh при wake з sleep; strict ліміт створював би false positives без security-переваги (replay detection і так працює в `RefreshTokenCommandHandler` через ADR-033).
+- Per-IP партиціонування (не per IP+email) — простіше, достатньо для портфоліо. Per-user партиціонування потребує юзер знайдений на цій стадії — але rate limit застосовується **до** auth, коли юзера ще нема.
+
+**Альтернативи:**
+- **AspNetCoreRateLimit (NuGet)** — legacy, більше коду, менше підтримки.
+- **Redis-backed distributed rate limiter** — правильно для scale-out. Поза scope v1: монолітний деплой на одному Container App instance → in-memory достатньо. Додавати при переході на multi-instance (Phase 10+).
+- **Per IP+email для login** — захищає конкретний акаунт від brute force при розподіленій атаці з багатьох IP. Trade-off: складніше, вимагає нестандартного partitioning key (email з body). Для v1 не виправдано.
+
+**Наслідки:**
+- In-memory counters — **при scale-out лічильники розсинхронізовані**. Атакувальник може отримати 5×N спроб на N instance. Документований трейд-оф, поки один instance — не критично.
+- `HttpContext.Connection.RemoteIpAddress` за reverse proxy повертає IP проксі, не клієнта. При деплої в Azure App Service / Container Apps **обов'язково** додати `UseForwardedHeaders()` — інакше всі юзери отримують один partition key і rate limit стає одним глобальним лічильником. Задача D-06.5 у TODO.
+- Зміна політики (5→10, 15→30 хв) — редагується в одному місці: `RateLimitingExtensions.AddLearnixRateLimiting`.
+
+---
+
 ## Шаблон для нових записів
 
 ```
