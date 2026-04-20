@@ -1,0 +1,65 @@
+﻿using Learnix.Domain.Constants;
+using Learnix.Domain.Entities;
+using Learnix.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Learnix.Infrastructure.Persistence.Configurations;
+
+public sealed class LessonConfiguration : IEntityTypeConfiguration<Lesson>
+{
+    public void Configure(EntityTypeBuilder<Lesson> builder)
+    {
+        builder.ToTable("Lessons");
+        builder.HasKey(l => l.Id);
+
+        builder.Property(l => l.Title)
+            .IsRequired()
+            .HasMaxLength(LessonConstants.TitleMaxLength);
+
+        builder.Property(l => l.Order).IsRequired();
+
+        // TPH: single Lessons table with LessonType discriminator (ADR-008).
+        builder.HasDiscriminator(l => l.LessonType)
+            .HasValue<VideoLesson>(LessonType.Video)
+            .HasValue<PostLesson>(LessonType.Post)
+            .HasValue<TestLesson>(LessonType.Test);
+
+        builder.HasIndex(l => new { l.SectionId, l.Order }).IsUnique();
+    }
+}
+
+public sealed class VideoLessonConfiguration : IEntityTypeConfiguration<VideoLesson>
+{
+    public void Configure(EntityTypeBuilder<VideoLesson> builder)
+    {
+        // NOTE: TPH tradeoff — VideoUrl is required by domain but nullable at DB level
+        // because PostLesson / TestLesson rows won't have it.
+        // Domain constructors + UpdateVideo enforce invariant; no DB CHECK constraint by choice.
+        builder.Property(v => v.VideoUrl)
+            .HasMaxLength(LessonConstants.VideoUrlMaxLength);
+
+        builder.Property(v => v.Description)
+            .HasMaxLength(LessonConstants.DescriptionMaxLength);
+    }
+}
+
+public sealed class PostLessonConfiguration : IEntityTypeConfiguration<PostLesson>
+{
+    public void Configure(EntityTypeBuilder<PostLesson> builder)
+    {
+        builder.Property(p => p.Content)
+            .HasMaxLength(LessonConstants.ContentMaxLength);
+    }
+}
+
+public sealed class TestLessonConfiguration : IEntityTypeConfiguration<TestLesson>
+{
+    public void Configure(EntityTypeBuilder<TestLesson> builder)
+    {
+        builder.Property(t => t.Description)
+            .HasMaxLength(LessonConstants.DescriptionMaxLength);
+
+        builder.Property(t => t.PassingThreshold).IsRequired();
+    }
+}

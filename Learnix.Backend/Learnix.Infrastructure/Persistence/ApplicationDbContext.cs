@@ -17,6 +17,10 @@ public class ApplicationDbContext(
     : IdentityDbContext<User, IdentityRole<Guid>, Guid>(options), IUnitOfWork
 {
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Course> Courses => Set<Course>();
+    public DbSet<Section> Sections => Set<Section>();
+    public DbSet<Lesson> Lessons => Set<Lesson>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
