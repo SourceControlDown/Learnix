@@ -5,10 +5,18 @@ namespace Learnix.Application.Courses.Specifications;
 
 public sealed class CourseByIdSpecification : Specification<Course>, ISingleResultSpecification<Course>
 {
-    public CourseByIdSpecification(Guid id)
+    public CourseByIdSpecification(Guid id, bool includeSections = false,  bool forUpdate = false)
     {
-        Query
-            .Where(c => c.Id == id)
-            .AsNoTracking();
+        Query.Where(c => c.Id == id);
+
+        if (includeSections)
+        {
+            Query.Include(c => c.Sections);
+        }
+
+        if (!forUpdate)
+        {
+            Query.AsNoTracking();
+        }
     }
 }
