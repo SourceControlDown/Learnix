@@ -1,4 +1,4 @@
-﻿namespace Learnix.Application.Courses.Queries.GetCourseById;
+namespace Learnix.Application.Courses.Queries.GetCourseById;
 
 public sealed record CourseDetailDto(
     Guid Id,
@@ -9,7 +9,6 @@ public sealed record CourseDetailDto(
     string? CoverImageUrl,
     decimal Price,
     bool IsFree,
-    string Status,
     int EnrollmentsCount,
     IReadOnlyList<string> Tags,
     IReadOnlyList<SectionDto> Sections,
