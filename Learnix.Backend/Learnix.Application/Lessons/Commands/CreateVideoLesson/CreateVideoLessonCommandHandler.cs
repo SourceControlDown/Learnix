@@ -1,42 +1,35 @@
-﻿using FluentResults;
+using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
-using Learnix.Application.Common.Errors;
+using Learnix.Application.Common.Commands;
 using Learnix.Application.Courses.Abstractions;
-using Learnix.Application.Courses.Specifications;
-using Learnix.Domain.Constants;
-using MediatR;
+using Learnix.Application.Lessons.Abstractions;
+using Learnix.Domain.Entities;
 
 namespace Learnix.Application.Lessons.Commands.CreateVideoLesson;
 
 internal sealed class CreateVideoLessonCommandHandler(
     ICourseRepository courseRepository,
+    ILessonRepository lessonRepository,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
-    : IRequestHandler<CreateVideoLessonCommand, Result<Guid>>
+    : CourseSectionCommandHandler<CreateVideoLessonCommand, Result<Guid>>(courseRepository, currentUser)
 {
-    public async Task<Result<Guid>> Handle(CreateVideoLessonCommand request, CancellationToken cancellationToken)
+    protected override async Task<Result<Guid>> HandleAsync(
+        CreateVideoLessonCommand request, Course course, CancellationToken ct)
     {
-        if (currentUser.UserId is null)
-            return Result.Fail(new AuthenticationError("Not authenticated."));
+        var displayOrder = await lessonRepository.GetMaxDisplayOrderAsync(request.SectionId, ct) + 1;
 
-        var course = await courseRepository.FirstOrDefaultAsync(
-            new CourseByIdWithStructureSpecification(request.CourseId, forUpdate: true), cancellationToken);
-
-        if (course is null)
-            return Result.Fail(new NotFoundError($"Course {request.CourseId} not found."));
-
-        if (course.InstructorId != currentUser.UserId && !currentUser.IsInRole(Roles.Admin))
-            return Result.Fail(new ForbiddenError("You are not the owner of this course."));
-
-        var lesson = course.AddVideoLesson(
+        var lesson = VideoLesson.Create(
             request.SectionId,
             request.Title,
+            displayOrder,
             request.VideoUrl,
             request.Description,
             request.DurationSeconds);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        await lessonRepository.AddAsync(lesson, ct);
+        await unitOfWork.SaveChangesAsync(ct);
 
         return Result.Ok(lesson.Id);
     }
