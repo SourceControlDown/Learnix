@@ -24,7 +24,7 @@ public class VideoLesson : Lesson
     public string? Description { get; private set; }
     public int? DurationSeconds { get; private set; }
 
-    internal static VideoLesson Create(
+    public static VideoLesson Create(
         Guid sectionId,
         string title,
         int order,
@@ -33,7 +33,9 @@ public class VideoLesson : Lesson
         int? durationSeconds = null)
         => new(sectionId, title, order, videoUrl, description, durationSeconds);
 
-    internal void UpdateVideo(string title, string videoUrl, string? description, int? durationSeconds)
+    public override bool IsPublishReady() => !string.IsNullOrWhiteSpace(VideoUrl);
+
+    public void UpdateVideo(string title, string videoUrl, string? description, int? durationSeconds)
     {
         UpdateTitle(title);
         VideoUrl = videoUrl;
