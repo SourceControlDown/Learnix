@@ -1,0 +1,6 @@
+Placeholder for starting a test attempt.
+
+Likely responsibilities:
+- validate lesson/test exists and is visible for the student
+- enforce attempt limit and cooldown
+- create a new attempt/session
