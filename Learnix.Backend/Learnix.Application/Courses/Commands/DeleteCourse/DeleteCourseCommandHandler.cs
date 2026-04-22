@@ -1,39 +1,35 @@
-﻿using FluentResults;
+using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
-using Learnix.Application.Common.Errors;
+using Learnix.Application.Common.Commands;
 using Learnix.Application.Courses.Abstractions;
-using Learnix.Application.Courses.Specifications;
-using Learnix.Domain.Constants;
-using MediatR;
+using Learnix.Domain.Entities;
 
 namespace Learnix.Application.Courses.Commands.DeleteCourse;
 
-public sealed class DeleteCourseCommandHandler(
-    ICurrentUserService currentUser,
-    ICourseRepository courseRepository,
-    IUnitOfWork unitOfWork)
-    : IRequestHandler<DeleteCourseCommand, Result>
+public sealed class DeleteCourseCommandHandler
+    : CourseCommandHandler<DeleteCourseCommand, Result>
 {
-    public async Task<Result> Handle(DeleteCourseCommand request, CancellationToken cancellationToken)
+    private readonly ICourseRepository _courseRepository;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DeleteCourseCommandHandler(
+        ICurrentUserService currentUser,
+        ICourseRepository courseRepository,
+        IUnitOfWork unitOfWork)
+        : base(courseRepository, currentUser)
     {
-        if (currentUser.UserId is null)
-            return Result.Fail(new AuthenticationError("User is not authenticated."));
+        _courseRepository = courseRepository;
+        _unitOfWork = unitOfWork;
+    }
 
-        var course = await courseRepository.FirstOrDefaultAsync(
-            new CourseByIdForUpdateSpecification(request.CourseId), cancellationToken);
-
-        if (course is null)
-            return Result.Fail(new NotFoundError($"Course '{request.CourseId}' was not found."));
-
-        if (course.InstructorId != currentUser.UserId.Value && !currentUser.IsInRole(Roles.Admin))
-            return Result.Fail(new ForbiddenError("You are not allowed to delete this course."));
-
-        // Raise event BEFORE repository.Delete — ChangeTracker dispatches from the entry
-        // (even after SoftDeleteInterceptor flips state Deleted → Modified, the entry survives).
+    protected override async Task<Result> HandleAsync(
+        DeleteCourseCommand request, Course course, CancellationToken ct)
+    {
         course.MarkForDeletion();
-        courseRepository.Delete(course);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await _courseRepository.DeleteAsync(course, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
 
         return Result.Ok();
     }
