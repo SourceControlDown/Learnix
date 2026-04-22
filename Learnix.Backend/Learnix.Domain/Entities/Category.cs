@@ -18,7 +18,7 @@ public class Category : BaseEntity
     public string Slug { get; private set; } = null!;
 
     /// <summary>
-    /// System categories are seeded on startup and cannot be renamed or deleted.
+    /// System categories are seeded on startup and cannot be deleted.
     /// </summary>
     public bool IsSystem { get; private set; }
 
@@ -30,10 +30,6 @@ public class Category : BaseEntity
 
     public void Rename(string name, string slug)
     {
-        if (IsSystem)
-            throw new DomainException(
-                $"Cannot rename system category '{Name}'.");
-
         Name = name;
         Slug = slug;
     }
