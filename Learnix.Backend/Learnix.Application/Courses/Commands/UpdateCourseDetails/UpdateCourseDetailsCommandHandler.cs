@@ -1,11 +1,12 @@
-﻿using FluentResults;
+using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
+using Learnix.Application.Common.Commands;
+using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Courses.Specifications;
-using Learnix.Domain.Constants;
-using MediatR;
+using Learnix.Domain.Entities;
 
 namespace Learnix.Application.Courses.Commands.UpdateCourseDetails;
 
@@ -14,24 +15,13 @@ public sealed class UpdateCourseDetailsCommandHandler(
     ICourseRepository courseRepository,
     ICategoryRepository categoryRepository,
     IUnitOfWork unitOfWork)
-    : IRequestHandler<UpdateCourseDetailsCommand, Result>
+    : CourseCommandHandler<UpdateCourseDetailsCommand, Result>(courseRepository, currentUser)
 {
-    public async Task<Result> Handle(UpdateCourseDetailsCommand request, CancellationToken cancellationToken)
+    protected override async Task<Result> HandleAsync(
+        UpdateCourseDetailsCommand request, Course course, CancellationToken ct)
     {
-        if (currentUser.UserId is null)
-            return Result.Fail(new AuthenticationError("User is not authenticated."));
-
-        var course = await courseRepository.FirstOrDefaultAsync(
-            new CourseByIdForUpdateSpecification(request.CourseId), cancellationToken);
-
-        if (course is null)
-            return Result.Fail(new NotFoundError($"Course '{request.CourseId}' was not found."));
-
-        if (course.InstructorId != currentUser.UserId.Value && !currentUser.IsInRole(Roles.Admin))
-            return Result.Fail(new ForbiddenError("You are not allowed to edit this course."));
-
-        if (!await categoryRepository.AnyAsync(new CategoryByIdSpecification(request.CategoryId), cancellationToken))
-            return Result.Fail(new NotFoundError($"Category '{request.CategoryId}' was not found."));
+        if (!await categoryRepository.AnyAsync(new CategoryByIdSpecification(request.CategoryId), ct))
+            return Result.Fail(new NotFoundError(CommonMessages.CourseCategoryNotFound(request.CategoryId)));
 
         var normalizedTags = request.Tags
             .Select(t => t.Trim())
@@ -48,7 +38,7 @@ public sealed class UpdateCourseDetailsCommandHandler(
 
         course.SetCoverImage(request.CoverImageUrl);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        await unitOfWork.SaveChangesAsync(ct);
 
         return Result.Ok();
     }
