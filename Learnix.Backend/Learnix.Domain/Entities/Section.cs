@@ -3,7 +3,7 @@ using Learnix.Domain.Common.Exceptions;
 
 namespace Learnix.Domain.Entities;
 
-public class Section : BaseEntity
+public class Section : BaseEntity, IOrderable
 {
     private readonly List<Lesson> _lessons = [];
 
@@ -13,12 +13,12 @@ public class Section : BaseEntity
     {
         CourseId = courseId;
         Title = title;
-        Order = order;
+        DisplayOrder = order;
     }
 
     public Guid CourseId { get; private set; }
     public string Title { get; private set; } = null!;
-    public int Order { get; private set; }
+    public int DisplayOrder { get; private set; }
 
     public IReadOnlyCollection<Lesson> Lessons => _lessons.AsReadOnly();
 
@@ -28,9 +28,9 @@ public class Section : BaseEntity
     // All mutators are internal — only Course (same assembly) can orchestrate changes.
     // This keeps Course as the single entry point for structure mutations.
 
-    internal void UpdateTitle(string title) => Title = title;
+    public void UpdateTitle(string title) => Title = title;
 
-    internal void SetOrder(int order) => Order = order;
+    internal void SetOrder(int order) => DisplayOrder = order;
 
     internal void AddLesson(Lesson lesson) => _lessons.Add(lesson);
 
@@ -46,7 +46,7 @@ public class Section : BaseEntity
             ?? throw new DomainException($"Lesson {lessonId} not found in section {Id}.");
 
     internal int NextLessonOrder()
-        => _lessons.Count == 0 ? 0 : _lessons.Max(l => l.Order) + 1;
+        => _lessons.Count == 0 ? 0 : _lessons.Max(l => l.DisplayOrder) + 1;
 
     internal void ReorderLessons(IReadOnlyList<(Guid Id, int Order)> pairs)
     {

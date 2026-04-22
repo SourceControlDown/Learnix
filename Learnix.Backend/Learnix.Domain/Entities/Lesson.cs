@@ -1,9 +1,10 @@
 ﻿using Learnix.Domain.Common;
+using Learnix.Domain.Common.Exceptions;
 using Learnix.Domain.Enums;
 
 namespace Learnix.Domain.Entities;
 
-public abstract class Lesson : BaseEntity
+public abstract class Lesson : BaseEntity, IOrderable
 {
     protected Lesson() { }
 
@@ -11,15 +12,33 @@ public abstract class Lesson : BaseEntity
     {
         SectionId = sectionId;
         Title = title;
-        Order = order;
+        DisplayOrder = order;
         LessonType = lessonType;
     }
 
     public Guid SectionId { get; private set; }
     public string Title { get; private set; } = null!;
-    public int Order { get; private set; }
+    public int DisplayOrder { get; private set; }
+    public bool IsHidden { get; protected set; } = true;
     public LessonType LessonType { get; private set; }
 
     internal void UpdateTitle(string title) => Title = title;
-    internal void SetOrder(int order) => Order = order;
+    internal void SetOrder(int order) => DisplayOrder = order;
+    public abstract bool IsPublishReady();
+
+    public void SetVisibility(bool isHidden)
+    {
+        if (!isHidden && !IsPublishReady())
+            throw new DomainException("Cannot make this lesson visible");
+
+        IsHidden = isHidden;
+    }
+
+    protected void EvaluateVisibility()
+    {
+        if (!IsPublishReady())
+        {
+            IsHidden = true;
+        }
+    }
 }
