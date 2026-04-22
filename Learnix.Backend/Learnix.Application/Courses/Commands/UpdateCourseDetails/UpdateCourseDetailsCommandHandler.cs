@@ -30,7 +30,7 @@ public sealed class UpdateCourseDetailsCommandHandler(
         if (course.InstructorId != currentUser.UserId.Value && !currentUser.IsInRole(Roles.Admin))
             return Result.Fail(new ForbiddenError("You are not allowed to edit this course."));
 
-        if (!await categoryRepository.ExistsAsync(request.CategoryId, cancellationToken))
+        if (!await categoryRepository.AnyAsync(new CategoryByIdSpecification(request.CategoryId), cancellationToken))
             return Result.Fail(new NotFoundError($"Category '{request.CategoryId}' was not found."));
 
         var normalizedTags = request.Tags

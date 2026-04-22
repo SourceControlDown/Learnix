@@ -3,9 +3,9 @@ using Learnix.Domain.Entities;
 
 namespace Learnix.Application.Courses.Specifications;
 
-public sealed class CourseByIdForUpdateSpecification : Specification<Course>, ISingleResultSpecification<Course>
+public sealed class CategoryByIdSpecification : Specification<Category>, ISingleResultSpecification<Category>
 {
-    public CourseByIdForUpdateSpecification(Guid id)
+    public CategoryByIdSpecification(Guid id)
     {
         Query.Where(c => c.Id == id);
     }

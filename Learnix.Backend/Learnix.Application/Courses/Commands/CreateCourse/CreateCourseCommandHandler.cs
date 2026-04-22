@@ -3,6 +3,7 @@ using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
+using Learnix.Application.Courses.Specifications;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Entities;
 using MediatR;
@@ -26,7 +27,7 @@ public sealed class CreateCourseCommandHandler(
         if (!currentUser.IsInRole(Roles.Instructor) && !currentUser.IsInRole(Roles.Admin))
             return Result.Fail(new ForbiddenError("Only instructors can create courses."));
 
-        if (!await categoryRepository.ExistsAsync(request.CategoryId, cancellationToken))
+        if (!await categoryRepository.AnyAsync(new CategoryByIdSpecification(request.CategoryId), cancellationToken))
             return Result.Fail(new NotFoundError($"Category '{request.CategoryId}' was not found."));
 
         var normalizedTags = NormalizeTags(request.Tags);

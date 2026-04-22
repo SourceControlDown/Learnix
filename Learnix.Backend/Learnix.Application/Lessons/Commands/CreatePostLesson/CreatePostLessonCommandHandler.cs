@@ -31,6 +31,11 @@ internal sealed class CreatePostLessonCommandHandler(
 
         var lesson = course.AddPostLesson(request.SectionId, request.Title, request.Content);
 
+        if (course.Status != Domain.Enums.CourseStatus.Published)
+        {
+            lesson.SetVisibilitySafe(true);
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
         
         return Result.Ok(lesson.Id);

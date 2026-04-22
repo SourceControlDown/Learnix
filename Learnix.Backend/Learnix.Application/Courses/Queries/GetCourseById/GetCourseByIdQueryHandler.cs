@@ -48,14 +48,14 @@ public sealed class GetCourseByIdQueryHandler(
         EnrollmentsCount: course.EnrollmentsCount,
         Tags: course.Tags.ToList(),
         Sections: course.Sections
-            .OrderBy(s => s.Order)
+            .OrderBy(s => s.DisplayOrder)
             .Select(s => new SectionDto(
                 s.Id,
                 s.Title,
-                s.Order,
+                s.DisplayOrder,
                 s.Lessons
-                    .OrderBy(l => l.Order)
-                    .Select(l => new LessonSummaryDto(l.Id, l.Title, l.Order, l.LessonType.ToString()))
+                    .OrderBy(l => l.DisplayOrder)
+                    .Select(l => new LessonSummaryDto(l.Id, l.Title, l.DisplayOrder, l.LessonType.ToString()))
                     .ToList()))
             .ToList(),
         CreatedAt: course.CreatedAt,

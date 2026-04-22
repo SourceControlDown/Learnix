@@ -1,13 +1,12 @@
-﻿using Learnix.Application.Common.Specifications;
+﻿using Ardalis.Specification;
 using Learnix.Domain.Entities;
 
 namespace Learnix.Application.Auth.Specifications;
 
-public sealed class RefreshTokenByHashSpecification : Specification<RefreshToken>
+public sealed class RefreshTokenByHashSpecification : Specification<RefreshToken>, ISingleResultSpecification<RefreshToken>
 {
     public RefreshTokenByHashSpecification(string tokenHash)
     {
-        Criteria = x => x.TokenHash == tokenHash;
-        AsNoTracking = false; // we mutate on find (revoke)
+        Query.Where(x => x.TokenHash == tokenHash);
     }
 }

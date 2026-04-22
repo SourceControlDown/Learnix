@@ -2,7 +2,6 @@
 using Learnix.Application.Auth.Abstractions;
 using Learnix.Application.Auth.Commands.Login;
 using Learnix.Application.Common.Abstractions.Persistence;
-using Learnix.Domain.Entities;
 using MediatR;
 using RefreshTokenEntity = Learnix.Domain.Entities.RefreshToken;
 

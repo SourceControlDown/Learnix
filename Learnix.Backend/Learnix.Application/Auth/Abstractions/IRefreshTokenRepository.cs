@@ -1,11 +1,8 @@
-﻿using Learnix.Application.Common.Specifications;
+﻿using Ardalis.Specification;
 using Learnix.Domain.Entities;
 
 namespace Learnix.Application.Auth.Abstractions;
 
-public interface IRefreshTokenRepository
+public interface IRefreshTokenRepository : IRepositoryBase<RefreshToken>
 {
-    Task<RefreshToken?> FirstOrDefaultAsync(Specification<RefreshToken> spec, CancellationToken ct = default);
-    Task<List<RefreshToken>> ListAsync(Specification<RefreshToken> spec, CancellationToken ct = default);
-    Task AddAsync(RefreshToken refreshToken, CancellationToken ct = default);
 }
