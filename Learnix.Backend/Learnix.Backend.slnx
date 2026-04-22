@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path="../.env.example" />
+    <File Path="../.github/workflows/backend-ci.yml" />
     <File Path="../ARCHITECTURE.md" />
     <File Path="../CLAUDE.md" />
     <File Path="../DATA_MODEL.md" />
@@ -12,6 +13,7 @@
   </Folder>
   <Project Path="Learnix.API/Learnix.API.csproj" />
   <Project Path="Learnix.Application/Learnix.Application.csproj" />
+  <Project Path="Learnix.Domain.UnitTests/Learnix.Domain.UnitTests.csproj" Id="80bf070d-5c6e-4948-be28-a149e4600aca" />
   <Project Path="Learnix.Domain/Learnix.Domain.csproj" />
   <Project Path="Learnix.Infrastructure/Learnix.Infrastructure.csproj" />
 </Solution>

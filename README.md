@@ -1,5 +1,18 @@
 # Learnix
 
+<div align="center">
+
+[![Backend CI](https://github.com/USERNAME/Learnix/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/USERNAME/Learnix/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/USERNAME/Learnix/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/Learnix/actions/workflows/ci.yml)
+
+![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)
+![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?logo=postgresql&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white)
+
+</div>
+
 Full-featured online learning platform (LMS) built as a portfolio project.
 
 Students browse and purchase courses, Instructors create and manage content, Admins moderate the platform.
