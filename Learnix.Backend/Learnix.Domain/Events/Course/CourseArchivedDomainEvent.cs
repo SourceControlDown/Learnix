@@ -1,5 +1,5 @@
 ﻿using Learnix.Domain.Common;
 
-namespace Learnix.Domain.Events;
+namespace Learnix.Domain.Events.Course;
 
 public sealed record CourseArchivedDomainEvent(Guid CourseId) : DomainEvent;

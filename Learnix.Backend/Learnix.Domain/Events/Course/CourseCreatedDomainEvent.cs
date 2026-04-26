@@ -1,6 +1,6 @@
 ﻿using Learnix.Domain.Common;
 
-namespace Learnix.Domain.Events;
+namespace Learnix.Domain.Events.Course;
 
 public sealed record CourseCreatedDomainEvent(
     Guid CourseId,
