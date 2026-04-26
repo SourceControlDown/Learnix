@@ -7,12 +7,14 @@ public sealed class CreateVideoLessonValidator : AbstractValidator<CreateVideoLe
 {
     public CreateVideoLessonValidator()
     {
-        RuleFor(x => x.CourseId).NotEmpty();
-        RuleFor(x => x.SectionId).NotEmpty();
+        RuleFor(x => x.CourseId)
+            .NotEmpty();
+        RuleFor(x => x.SectionId)
+            .NotEmpty();
         RuleFor(x => x.Title)
             .NotEmpty()
             .MaximumLength(LessonConstants.TitleMaxLength);
-        RuleFor(x => x.VideoUrl)
+        RuleFor(x => x.VideoBlobPath)
             .NotEmpty()
             .MaximumLength(LessonConstants.VideoUrlMaxLength);
         RuleFor(x => x.Description)

@@ -1,6 +1,7 @@
 using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
+using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Commands;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Lessons.Abstractions;
@@ -11,6 +12,7 @@ namespace Learnix.Application.Lessons.Commands.CreateVideoLesson;
 internal sealed class CreateVideoLessonCommandHandler(
     ICourseRepository courseRepository,
     ILessonRepository lessonRepository,
+    IBlobStorageService blobStorage,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
     : CourseSectionCommandHandler<CreateVideoLessonCommand, Result<Guid>>(courseRepository, currentUser)
@@ -18,17 +20,24 @@ internal sealed class CreateVideoLessonCommandHandler(
     protected override async Task<Result<Guid>> HandleAsync(
         CreateVideoLessonCommand request, Course course, CancellationToken ct)
     {
+        var validateResult = await blobStorage.ValidateAsync(
+            request.VideoBlobPath, UploadTarget.LessonVideo, ct);
+
+        if (validateResult.IsFailed)
+            return Result.Fail(validateResult.Errors);
+
         var displayOrder = await lessonRepository.GetMaxDisplayOrderAsync(request.SectionId, ct) + 1;
 
         var lesson = VideoLesson.Create(
             request.SectionId,
             request.Title,
             displayOrder,
-            request.VideoUrl,
+            request.VideoBlobPath,
             request.Description,
             request.DurationSeconds);
 
         await lessonRepository.AddAsync(lesson, ct);
+
         await unitOfWork.SaveChangesAsync(ct);
 
         return Result.Ok(lesson.Id);

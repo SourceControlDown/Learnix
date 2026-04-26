@@ -17,7 +17,7 @@ public sealed class PublishCourseCommandHandler(
     protected override async Task<Result> HandleAsync(
         PublishCourseCommand request, Course course, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(course.CoverImageUrl))
+        if (string.IsNullOrWhiteSpace(course.CoverBlobPath))
             return Result.Fail(new ConflictError("Course cannot be published without a cover image."));
 
         if (course.Sections.Count == 0)

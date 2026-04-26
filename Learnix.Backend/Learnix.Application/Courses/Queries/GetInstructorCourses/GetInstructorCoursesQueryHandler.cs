@@ -45,7 +45,7 @@ public sealed class GetInstructorCoursesQueryHandler(
                 c.CategoryId,
                 c.Title,
                 c.Description,
-                c.CoverImageUrl,
+                c.CoverBlobPath,
                 c.Price,
                 c.Price == 0m,
                 c.Status.ToString(),

@@ -21,7 +21,8 @@ internal sealed class DeleteLessonCommandHandler(
     protected override async Task<Result> HandleAsync(
         DeleteLessonCommand request, Course course, CancellationToken ct)
     {
-        var lesson = await lessonRepository.FirstOrDefaultAsync(new LessonByIdSpecification(request.LessonId, forUpdate: true), ct);
+        var lesson = await lessonRepository.FirstOrDefaultAsync(
+            new LessonByIdSpecification(request.LessonId, forUpdate: true), ct);
 
         if (lesson is null)
             return Result.Fail(new NotFoundError(CommonMessages.LessonNotFound(request.LessonId)));
@@ -29,7 +30,10 @@ internal sealed class DeleteLessonCommandHandler(
         if (!course.SectionExists(lesson.SectionId))
             return Result.Fail(new NotFoundError(CommonMessages.LessonNotFound(request.LessonId)));
 
+        lesson.PrepareForDeletion();
+
         await lessonRepository.DeleteAsync(lesson, ct);
+
         await unitOfWork.SaveChangesAsync(ct);
 
         return Result.Ok();

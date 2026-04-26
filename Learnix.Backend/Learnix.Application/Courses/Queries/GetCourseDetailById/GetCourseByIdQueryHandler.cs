@@ -26,7 +26,7 @@ public sealed class GetCourseByIdQueryHandler(ICourseRepository courseRepository
             course.CategoryId,
             course.Title,
             course.Description,
-            course.CoverImageUrl,
+            course.CoverBlobPath,
             course.Price,
             course.Price == 0m,
             course.EnrollmentsCount,

@@ -8,6 +8,6 @@ public sealed record UpdateVideoLessonCommand(
     Guid CourseId,
     Guid LessonId,
     string Title,
-    string VideoUrl,
+    string VideoBlobPath,
     string? Description,
     int? DurationSeconds) : IRequest<Result>, ICommandWithCourseId;

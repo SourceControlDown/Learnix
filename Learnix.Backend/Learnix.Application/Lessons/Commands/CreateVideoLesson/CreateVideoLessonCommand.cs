@@ -8,6 +8,6 @@ public sealed record CreateVideoLessonCommand(
     Guid CourseId,
     Guid SectionId,
     string Title,
-    string VideoUrl,
+    string VideoBlobPath,
     string? Description,
     int? DurationSeconds) : IRequest<Result<Guid>>, ICommandWithCourseAndSectionId;
