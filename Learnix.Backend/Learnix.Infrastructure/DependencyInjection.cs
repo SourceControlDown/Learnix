@@ -1,10 +1,12 @@
 ﻿using Ardalis.Specification;
 using Ardalis.Specification.EntityFrameworkCore;
+using Azure.Storage.Blobs;
 using Learnix.Application.Auth.Abstractions;
 using Learnix.Application.Auth.Constants;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Application.Common.Abstractions.Persistence;
+using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Settings;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Domain.Entities;
@@ -13,6 +15,7 @@ using Learnix.Infrastructure.Persistence;
 using Learnix.Infrastructure.Persistence.Interceptors;
 using Learnix.Infrastructure.Persistence.Repositories;
 using Learnix.Infrastructure.Services;
+using Learnix.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -33,10 +36,12 @@ public static class DependencyInjection
         services.Configure<AppSettings>(configuration.GetSection("App"));
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
         services.Configure<GoogleSettings>(configuration.GetSection("Google"));
+        services.Configure<BlobStorageOptions>(configuration.GetSection("BlobStorage"));
 
         // EF Core + interceptors
         services.AddSingleton<AuditableInterceptor>();
         services.AddSingleton<SoftDeleteInterceptor>();
+        services.AddSingleton<DomainEventsInterceptor>();
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
@@ -47,7 +52,8 @@ public static class DependencyInjection
                 .UseNpgsql(connectionString)
                 .AddInterceptors(
                     sp.GetRequiredService<AuditableInterceptor>(),
-                    sp.GetRequiredService<SoftDeleteInterceptor>());
+                    sp.GetRequiredService<SoftDeleteInterceptor>(),
+                    sp.GetRequiredService<DomainEventsInterceptor>());
         });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
@@ -133,9 +139,19 @@ public static class DependencyInjection
         services.AddScoped(typeof(IRepositoryBase<>), typeof(RepositoryBase<>));
         services.AddScoped(typeof(IReadRepositoryBase<>), typeof(RepositoryBase<>));
 
+        // Storage
+        services.AddSingleton(sp =>
+        {
+            var connectionString = configuration.GetConnectionString("AzureBlobStorage")
+                ?? throw new InvalidOperationException("AzureBlobStorage connection string is missing");
+            return new BlobServiceClient(connectionString);
+        });
+        services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
+
         // Background services
         services.AddHostedService<RoleSeederHostedService>();
         services.AddHostedService<CategorySeederHostedService>();
+        services.AddHostedService<BlobStorageBootstrapper>();
         services.AddHostedService<RefreshTokenCleanupHostedService>();
 
         return services;
