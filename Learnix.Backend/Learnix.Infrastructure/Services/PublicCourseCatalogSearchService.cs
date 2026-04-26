@@ -14,6 +14,7 @@ internal sealed class PublicCourseCatalogSearchService(ApplicationDbContext cont
         string? search,
         PaginationRequest pagination,
         Guid? categoryId,
+        Guid? instructorId,
         CancellationToken ct)
     {
         var query = context.Courses
@@ -23,6 +24,11 @@ internal sealed class PublicCourseCatalogSearchService(ApplicationDbContext cont
         if (categoryId.HasValue)
         {
             query = query.Where(c => c.CategoryId == categoryId.Value);
+        }
+
+        if (instructorId.HasValue)
+        {
+            query = query.Where(c => c.InstructorId == instructorId.Value);
         }
 
         if (!string.IsNullOrWhiteSpace(search))

@@ -30,9 +30,10 @@ public sealed class CoursesController(ISender sender) : ControllerBase
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
         [FromQuery] Guid? categoryId = null,
+        [FromQuery] Guid? instructorId = null,
         CancellationToken ct = default)
     {
-        var result = await sender.Send(new GetPublicCoursesQuery(search, skip, take, categoryId), ct);
+        var result = await sender.Send(new GetPublicCoursesQuery(search, skip, take, categoryId, instructorId), ct);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 

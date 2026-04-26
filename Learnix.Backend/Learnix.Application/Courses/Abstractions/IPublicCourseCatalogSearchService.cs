@@ -9,5 +9,6 @@ public interface IPublicCourseCatalogSearchService
         string? search,
         PaginationRequest pagination,
         Guid? categoryId,
+        Guid? instructorId,
         CancellationToken ct);
 }

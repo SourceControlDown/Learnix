@@ -8,4 +8,5 @@ public sealed record GetPublicCoursesQuery(
     string? Search,
     int Skip,
     int Take,
-    Guid? CategoryId) : IRequest<Result<PaginatedResult<PublicCourseCardDto>>>;
+    Guid? CategoryId,
+    Guid? InstructorId) : IRequest<Result<PaginatedResult<PublicCourseCardDto>>>;

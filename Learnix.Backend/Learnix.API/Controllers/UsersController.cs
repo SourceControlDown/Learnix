@@ -1,6 +1,7 @@
 using Learnix.API.Extensions;
 using Learnix.Application.Users.Commands.UpdateProfile;
 using Learnix.Application.Users.Queries.GetMyProfile;
+using Learnix.Application.Users.Queries.GetUserProfile;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,5 +25,13 @@ public sealed class UsersController(ISender sender) : ControllerBase
     {
         var result = await sender.Send(command, ct);
         return result.ToActionResult();
+    }
+
+    [HttpGet("{userId:guid}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetUserProfile(Guid userId, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetUserProfileQuery(userId), ct);
+        return result.ToActionResult(onSuccess: value => Ok(value));
     }
 }
