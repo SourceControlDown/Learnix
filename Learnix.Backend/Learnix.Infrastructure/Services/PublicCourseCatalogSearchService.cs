@@ -57,7 +57,7 @@ internal sealed class PublicCourseCatalogSearchService(ApplicationDbContext cont
                 c.CategoryId,
                 c.Title,
                 c.Description,
-                c.CoverImageUrl,
+                c.CoverBlobPath,
                 c.Price,
                 c.Price == 0m,
                 c.EnrollmentsCount,

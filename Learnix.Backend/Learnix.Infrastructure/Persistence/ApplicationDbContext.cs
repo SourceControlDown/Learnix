@@ -1,8 +1,7 @@
 ﻿using Learnix.Application.Common.Abstractions.Persistence;
-using Learnix.Application.Common.Events;
 using Learnix.Domain.Common;
 using Learnix.Domain.Entities;
-using MediatR;
+using Learnix.Infrastructure.Outbox;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -12,8 +11,7 @@ using System.Reflection;
 namespace Learnix.Infrastructure.Persistence;
 
 public class ApplicationDbContext(
-    DbContextOptions<ApplicationDbContext> options,
-    IPublisher publisher)
+    DbContextOptions<ApplicationDbContext> options)
     : IdentityDbContext<User, IdentityRole<Guid>, Guid>(options), IUnitOfWork
 {
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -21,6 +19,7 @@ public class ApplicationDbContext(
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Section> Sections => Set<Section>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -48,32 +47,5 @@ public class ApplicationDbContext(
 
             builder.Entity(type).HasQueryFilter(filter);
         }
-    }
-
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        var entitiesWithEvents = ChangeTracker
-            .Entries<IHasDomainEvents>()
-            .Where(e => e.Entity.DomainEvents.Count > 0)
-            .Select(e => e.Entity)
-            .ToList();
-
-        var domainEvents = entitiesWithEvents
-            .SelectMany(e => e.DomainEvents)
-            .ToList();
-
-        var result = await base.SaveChangesAsync(cancellationToken);
-
-        foreach (var domainEvent in domainEvents)
-        {
-            var notificationType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
-            var notification = Activator.CreateInstance(notificationType, domainEvent)!;
-            await publisher.Publish(notification, cancellationToken);
-        }
-
-        foreach (var entity in entitiesWithEvents)
-            entity.ClearDomainEvents();
-
-        return result;
     }
 }
