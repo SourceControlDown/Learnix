@@ -1,0 +1,35 @@
+using FluentResults;
+using Learnix.Application.Common.Abstractions.Identity;
+using Learnix.Application.Common.Errors;
+using Learnix.Application.Users.Abstractions;
+using Learnix.Application.Users.Specifications;
+using MediatR;
+
+namespace Learnix.Application.Users.Queries.GetMyProfile;
+
+internal sealed class GetMyProfileQueryHandler(
+    IUserRepository userRepository,
+    ICurrentUserService currentUser)
+    : IRequestHandler<GetMyProfileQuery, Result<MyProfileResponse>>
+{
+    public async Task<Result<MyProfileResponse>> Handle(GetMyProfileQuery request, CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Result.Fail<MyProfileResponse>(new AuthenticationError("Not authenticated."));
+
+        var user = await userRepository.FirstOrDefaultAsync(
+            new UserByIdSpecification(currentUser.UserId.Value),
+            cancellationToken);
+
+        if (user is null)
+            return Result.Fail<MyProfileResponse>(new NotFoundError("User not found."));
+
+        return Result.Ok(new MyProfileResponse(
+            user.Id,
+            user.Email!,
+            user.FirstName,
+            user.LastName,
+            user.Bio,
+            user.AvatarBlobPath));
+    }
+}

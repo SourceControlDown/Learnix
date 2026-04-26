@@ -1,5 +1,6 @@
 ﻿using Learnix.Domain.Common;
 using Learnix.Domain.Events;
+using Learnix.Domain.Events.User;
 using Microsoft.AspNetCore.Identity;
 
 namespace Learnix.Domain.Entities;
@@ -41,7 +42,14 @@ public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents
         Bio = bio;
     }
 
-    public void SetAvatar(string avatarBlobPath) => AvatarBlobPath = avatarBlobPath;
+    public void SetAvatar(string newBlobPath)
+    {
+        if (AvatarBlobPath is not null)
+            RaiseDomainEvent(new UserAvatarRemovedDomainEvent(Id, AvatarBlobPath));
+
+        AvatarBlobPath = newBlobPath;
+        RaiseDomainEvent(new UserAvatarSetDomainEvent(Id, newBlobPath));
+    }
     public void SetGoogleId(string googleId) => GoogleId = googleId;
 
     /// <summary>

@@ -9,6 +9,7 @@ using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Settings;
 using Learnix.Application.Courses.Abstractions;
+using Learnix.Application.Users.Abstractions;
 using Learnix.Domain.Entities;
 using Learnix.Infrastructure.Identity;
 using Learnix.Infrastructure.Persistence;
@@ -133,6 +134,7 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ICourseRepository, CourseRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPublicCourseCatalogSearchService, PublicCourseCatalogSearchService>();
 
         // Repositories
