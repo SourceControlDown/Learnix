@@ -1,4 +1,3 @@
-# docker-compose.yml
 services:
   postgres:
     image: postgres:16-alpine
@@ -51,7 +50,25 @@ services:
       timeout: 3s
       retries: 5
 
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: learnix-azurite
+    restart: unless-stopped
+    command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data --skipApiVersionCheck"
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - azurite_data:/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "10000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
   mongo_data:
   redis_data:
+  azurite_data:
