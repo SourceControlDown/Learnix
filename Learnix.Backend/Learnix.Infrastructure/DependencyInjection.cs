@@ -9,9 +9,12 @@ using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Settings;
 using Learnix.Application.Courses.Abstractions;
+using Learnix.Application.InstructorApplications.Abstractions;
+using Learnix.Application.Lessons.Abstractions;
 using Learnix.Application.Users.Abstractions;
 using Learnix.Domain.Entities;
 using Learnix.Infrastructure.Identity;
+using Learnix.Infrastructure.Outbox;
 using Learnix.Infrastructure.Persistence;
 using Learnix.Infrastructure.Persistence.Interceptors;
 using Learnix.Infrastructure.Persistence.Repositories;
@@ -122,24 +125,27 @@ public static class DependencyInjection
             throw new InvalidOperationException("Google OAuth Client ID is not configured.");
 
         // Auth services
+        services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
         services.AddScoped<IUserRegistrationService, UserRegistrationService>();
         services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
-        services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
-        services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
+        services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IUserRoleService, UserRoleService>();
+        services.AddScoped<OutboxDbContextHolder>();
         services.AddSingleton<IEmailSender, ConsoleEmailSender>();
         services.AddHttpContextAccessor();
 
         // Course services
         services.AddScoped<ICurrentUserService, CurrentUserService>();
-        services.AddScoped<ICourseRepository, CourseRepository>();
-        services.AddScoped<ICategoryRepository, CategoryRepository>();
-        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPublicCourseCatalogSearchService, PublicCourseCatalogSearchService>();
 
         // Repositories
-        services.AddScoped(typeof(IRepositoryBase<>), typeof(RepositoryBase<>));
-        services.AddScoped(typeof(IReadRepositoryBase<>), typeof(RepositoryBase<>));
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<ICourseRepository, CourseRepository>();
+        services.AddScoped<ILessonRepository, LessonRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IInstructorApplicationRepository, InstructorApplicationRepository>();
 
         // Storage
         services.AddSingleton(sp =>
@@ -155,6 +161,7 @@ public static class DependencyInjection
         services.AddHostedService<CategorySeederHostedService>();
         services.AddHostedService<BlobStorageBootstrapper>();
         services.AddHostedService<RefreshTokenCleanupHostedService>();
+        services.AddHostedService<OutboxProcessorService>();
 
         return services;
     }

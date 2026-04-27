@@ -1,5 +1,6 @@
-﻿using Learnix.Application.Common.Events;
+using Learnix.Application.Common.Events;
 using Learnix.Domain.Common;
+using Learnix.Infrastructure.Outbox;
 using MediatR;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,8 +16,8 @@ public class DomainEventsInterceptor(IServiceProvider serviceProvider) : SaveCha
         CancellationToken ct = default)
     {
         var dbContext = eventData.Context;
-        
-        if (dbContext is null) 
+
+        if (dbContext is null)
             return await base.SavingChangesAsync(eventData, result, ct);
 
         var entities = dbContext.ChangeTracker
@@ -25,13 +26,17 @@ public class DomainEventsInterceptor(IServiceProvider serviceProvider) : SaveCha
             .ToList();
 
         var events = entities.SelectMany(e => e.Entity.DomainEvents).ToList();
-        
-        foreach (var entry in entities) 
+
+        foreach (var entry in entities)
             entry.Entity.ClearDomainEvents();
 
-        // Resolve publisher per save (interceptor scoped, but be safe)
         using var scope = serviceProvider.CreateScope();
-        
+
+        // Give Infrastructure event handlers access to the same DbContext so their
+        // outbox writes land in the same transaction as the entity changes.
+        var holder = scope.ServiceProvider.GetRequiredService<OutboxDbContextHolder>();
+        holder.DbContext = dbContext as Persistence.ApplicationDbContext;
+
         var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<DomainEventsInterceptor>>();
 

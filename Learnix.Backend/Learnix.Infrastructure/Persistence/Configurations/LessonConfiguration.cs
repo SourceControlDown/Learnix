@@ -61,5 +61,23 @@ public sealed class TestLessonConfiguration : IEntityTypeConfiguration<TestLesso
             .HasMaxLength(LessonConstants.DescriptionMaxLength);
 
         builder.Property(t => t.PassingThreshold).IsRequired();
+
+        builder.OwnsMany(t => t.Questions, qb =>
+        {
+            qb.ToJson();
+
+            qb.Ignore(q => q.Id);
+
+            qb.OwnsOne(q => q.TextAnswer);
+            qb.OwnsMany(q => q.Options, ob =>
+            {
+                ob.Ignore(o => o.Id);
+            });
+        });
+
+        // Instruct EF Core to write directly to the private _questions field
+        builder.Navigation(t => t.Questions)
+            .HasField("_questions")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

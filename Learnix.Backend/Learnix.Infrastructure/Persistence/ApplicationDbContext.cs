@@ -19,6 +19,7 @@ public class ApplicationDbContext(
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Section> Sections => Set<Section>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
+    public DbSet<InstructorApplication> InstructorApplications => Set<InstructorApplication>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)

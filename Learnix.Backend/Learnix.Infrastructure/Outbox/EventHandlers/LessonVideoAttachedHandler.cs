@@ -1,12 +1,11 @@
-﻿using Learnix.Application.Common.Events;
+using Learnix.Application.Common.Events;
 using Learnix.Domain.Events.Lessons;
-using Learnix.Infrastructure.Persistence;
 using MediatR;
 using System.Text.Json;
 
 namespace Learnix.Infrastructure.Outbox.EventHandlers;
 
-internal sealed class LessonVideoAttachedHandler(ApplicationDbContext db)
+internal sealed class LessonVideoAttachedHandler(OutboxDbContextHolder holder)
     : INotificationHandler<DomainEventNotification<LessonVideoAttachedDomainEvent>>
 {
     public Task Handle(
@@ -15,11 +14,11 @@ internal sealed class LessonVideoAttachedHandler(ApplicationDbContext db)
     {
         var e = notification.DomainEvent;
 
-        db.Set<OutboxMessage>().Add(new OutboxMessage
+        holder.DbContext!.OutboxMessages.Add(new OutboxMessage
         {
             Id = e.EventId,
             Type = OutboxMessageTypes.MarkBlobConfirmed,
-            Payload = JsonSerializer.Serialize(new { e.AttachedBlobPath }),
+            Payload = JsonSerializer.Serialize(new MarkBlobConfirmedPayload(e.AttachedBlobPath)),
             OccurredAt = DateTime.UtcNow,
             NextRetryAt = DateTime.UtcNow,
         });

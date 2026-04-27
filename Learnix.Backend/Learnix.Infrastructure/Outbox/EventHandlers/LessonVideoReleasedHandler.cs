@@ -1,11 +1,11 @@
-﻿using Learnix.Application.Common.Events;
+using Learnix.Application.Common.Events;
 using Learnix.Domain.Events.Lessons;
-using Learnix.Infrastructure.Outbox;
-using Learnix.Infrastructure.Persistence;
 using MediatR;
 using System.Text.Json;
 
-internal sealed class LessonVideoReleasedHandler(ApplicationDbContext db)
+namespace Learnix.Infrastructure.Outbox.EventHandlers;
+
+internal sealed class LessonVideoReleasedHandler(OutboxDbContextHolder holder)
     : INotificationHandler<DomainEventNotification<LessonVideoReleasedDomainEvent>>
 {
     public Task Handle(
@@ -14,11 +14,11 @@ internal sealed class LessonVideoReleasedHandler(ApplicationDbContext db)
     {
         var e = notification.DomainEvent;
 
-        db.Set<OutboxMessage>().Add(new OutboxMessage
+        holder.DbContext!.OutboxMessages.Add(new OutboxMessage
         {
             Id = e.EventId,
             Type = OutboxMessageTypes.DeleteBlob,
-            Payload = JsonSerializer.Serialize(new { e.ReleasedBlobPath }),
+            Payload = JsonSerializer.Serialize(new DeleteBlobPayload(e.ReleasedBlobPath)),
             OccurredAt = DateTime.UtcNow,
             NextRetryAt = DateTime.UtcNow,
         });
