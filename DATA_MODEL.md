@@ -1,7 +1,8 @@
 # Learnix — Data Model
 
-> **Note:** This is a living document. Fields and relations will evolve during implementation.
-> PostgreSQL entities are mapped via EF Core. MongoDB documents via MongoDB.Driver.
+> **Note:** This is a living document. Updated to reflect the codebase as of Phase 3.
+> PostgreSQL entities are mapped via EF Core. MongoDB documents via MongoDB.Driver (planned Phase 7+).
+> Entities marked **[Planned]** are not yet implemented in Domain/Infrastructure.
 
 ---
 
@@ -11,61 +12,93 @@
 
 ### User
 Primary identity entity. Managed by ASP.NET Core Identity (`IdentityUser<Guid>` base).
+Implements `IAuditable`, `IHasDomainEvents` directly (cannot inherit `BaseEntity` due to `IdentityUser<Guid>` conflict — see ADR-023).
 
-NOTE: Roles managed by ASP.NET Identity tables (AspNetRoles, AspNetUserRoles); access via UserManager.GetRolesAsync()
+NOTE: Roles managed by ASP.NET Identity tables (AspNetRoles, AspNetUserRoles); access via `UserManager.GetRolesAsync()`.
 
 | Field | Type | Notes |
 |---|---|---|
-| `Id` | `Guid` | PK |
+| `Id` | `Guid` | PK (from `IdentityUser<Guid>`) |
 | `Email` | `string` | Unique, required |
-| `NormalizedEmail` | `string` | Identity |
+| `NormalizedEmail` | `string` | Identity-managed |
+| `UserName` | `string` | Mirrors Email |
 | `PasswordHash` | `string?` | Null for Google-only accounts |
-| `FirstName` | `string` | Required |
-| `LastName` | `string` | Required |
-| `AvatarUrl` | `string?` | Azure Blob URL |
+| `EmailConfirmed` | `bool` | Default: false |
+| `FirstName` | `string` | Required, max 100 |
+| `LastName` | `string` | Required, max 100 |
+| `AvatarBlobPath` | `string?` | Azure Blob path (not a full URL) |
 | `Bio` | `string?` | Max 500 chars |
-| `IsEmailConfirmed` | `bool` | Default: false |
-| `GoogleId` | `string?` | For OAuth users |
-| `CreatedAt` | `DateTime` | UTC |
-| `UpdatedAt` | `DateTime` | UTC |
+| `GoogleId` | `string?` | For Google OAuth accounts (see ADR-037) |
+| `CreatedAt` | `DateTime` | UTC, set by `AuditableInterceptor` |
+| `UpdatedAt` | `DateTime` | UTC, set by `AuditableInterceptor` |
+
+**Domain methods:** `UpdateProfile()`, `SetAvatar()`, `SetGoogleId()`, `ClaimViaGoogle()`, `ConfirmEmailFromGoogle()`, `RaiseUserRegistered()`, `RaisePasswordResetRequested()`
 
 **Relations:**
 - Has many `Enrollment`
 - Has many `LessonProgress`
-- Has many `LessonLike`
-- Has many `Payment`
-- Has many `UserAchievement`
-- Has many `Notification`
-- Has many `Message` (as sender)
-- Has one `InstructorApplication`
+- Has many `TestAttempt`
+- Has many `Certificate`
+- Has many `CourseReview`
 - Has many `Course` (as instructor)
 - Has many `RefreshToken`
-- Has many `UserPreference` → via `UserCategoryPreference`
+- Has many `LessonLike` **[Planned]**
+- Has many `Payment` **[Planned]**
+- Has many `Notification` **[Planned]**
+- Has many `UserAchievement` **[Planned]**
+- Has one `InstructorApplication` **[Planned]**
+- Has many `UserCategoryPreference` **[Planned]**
 
 ---
 
 ### RefreshToken
-Stored refresh tokens for JWT rotation.
+Stored hashed refresh tokens for JWT rotation (see ADR-033).
 
 | Field | Type | Notes |
 |---|---|---|
 | `Id` | `Guid` | PK |
 | `UserId` | `Guid` | FK → User |
-| `TokenHash` | `string` | Hashed, never stored plain |
+| `TokenHash` | `string` | SHA-256 hash, never stored plain |
 | `ExpiresAt` | `DateTime` | UTC |
 | `IsRevoked` | `bool` | Default: false |
+| `RevokedAt` | `DateTime?` | UTC, set on revocation |
 | `CreatedAt` | `DateTime` | UTC |
-| `RevokedAt` | `DateTime?` | UTC |
+| `UpdatedAt` | `DateTime` | UTC |
+
+Computed: `IsActive => !IsRevoked && ExpiresAt > DateTime.UtcNow`
 
 ---
 
-### InstructorApplication
+### OutboxMessage
+Reliable blob-storage operation queue. Written in the same transaction as entity changes; processed by a background worker (see ADR-047).
+
+| Field | Type | Notes |
+|---|---|---|
+| `Id` | `Guid` | PK |
+| `Type` | `string` | `DeleteBlob` / `MarkBlobConfirmed` (max 100) |
+| `Payload` | `string` | JSON payload, stored as JSONB |
+| `OccurredAt` | `DateTime` | UTC |
+| `ProcessedAt` | `DateTime?` | UTC, set on successful processing |
+| `AttemptCount` | `int` | Default: 0 |
+| `LastAttemptAt` | `DateTime?` | UTC |
+| `LastError` | `string?` | Last error message (max 2000) |
+| `NextRetryAt` | `DateTime?` | UTC, exponential backoff |
+
+**Index:** `IX_OutboxMessages_Processing` on `(ProcessedAt, NextRetryAt, OccurredAt)` — used by polling worker to find unprocessed messages.
+
+Payload types:
+- `DeleteBlobPayload(string BlobPath)` — blob to delete
+- `MarkBlobConfirmedPayload(string BlobPath)` — blob to confirm after entity persisted
+
+---
+
+### InstructorApplication **[Planned — Phase 5]**
 Student submits to become an Instructor. Admin reviews.
 
 | Field | Type | Notes |
 |---|---|---|
 | `Id` | `Guid` | PK |
-| `UserId` | `Guid` | FK → User, Unique (one active at a time) |
+| `UserId` | `Guid` | FK → User, Unique |
 | `MotivationText` | `string` | Required, max 2000 chars |
 | `PortfolioUrl` | `string?` | Optional link |
 | `Status` | `ApplicationStatus` (enum) | Pending / Approved / Rejected |
@@ -83,14 +116,16 @@ Student submits to become an Instructor. Admin reviews.
 | `Id` | `Guid` | PK |
 | `Name` | `string` | Required, Unique |
 | `Slug` | `string` | URL-friendly, Unique |
-| `IsSystem` | `bool` | True for seeded categories — cannot be renamed or deleted |
+| `IsSystem` | `bool` | True for seeded categories — protected from rename/delete (see ADR-042) |
+| `CreatedAt` | `DateTime` | UTC |
+| `UpdatedAt` | `DateTime` | UTC |
 
 **Relations:**
 - Has many `Course`
 
 ---
 
-### UserCategoryPreference
+### UserCategoryPreference **[Planned]**
 Many-to-many between User and Category for recommendation tuning.
 
 | Field | Type | Notes |
@@ -109,33 +144,40 @@ Many-to-many between User and Category for recommendation tuning.
 | `CategoryId` | `Guid` | FK → Category |
 | `Title` | `string` | Required, max 200 chars |
 | `Description` | `string` | Markdown supported |
-| `CoverImageUrl` | `string?` | Azure Blob URL |
-| `Price` | `decimal` | 0 = free (no separate IsFree flag — see ADR-043) |
+| `CoverBlobPath` | `string?` | Azure Blob path — required before Publish |
+| `Price` | `decimal` | 0 = free (no separate `IsFree` flag — see ADR-043) |
 | `Status` | `CourseStatus` (enum) | Draft / Published / Archived |
-| `EnrollmentsCount` | `int` | Denormalized for sorting, updated on enroll |
+| `EnrollmentsCount` | `int` | Denormalized for sorting (see ADR-041) |
 | `Tags` | `string[]` | PostgreSQL array |
+| `IsDeleted` | `bool` | Soft delete flag |
+| `DeletedAt` | `DateTime?` | UTC, set on soft delete |
 | `CreatedAt` | `DateTime` | UTC |
 | `UpdatedAt` | `DateTime` | UTC |
+
+**Aggregate root.** All structural operations (sections, lessons) go through `Course` methods. Publishes domain events on lifecycle transitions.
 
 **Relations:**
 - Belongs to `User` (instructor)
 - Belongs to `Category`
 - Has many `Section`
 - Has many `Enrollment`
-- Has many `Payment`
-- Has many `Message`
+- Has many `CourseReview`
+- Has many `LessonProgress`
+- Has many `Payment` **[Planned]**
 
 ---
 
 ### Section
-Groups lessons within a course.
+Groups lessons within a course. Part of the Course aggregate — all mutations via `Course` methods (see ADR-044).
 
 | Field | Type | Notes |
 |---|---|---|
 | `Id` | `Guid` | PK |
 | `CourseId` | `Guid` | FK → Course |
 | `Title` | `string` | Required |
-| `Order` | `int` | Display order within course |
+| `DisplayOrder` | `int` | Display order within course |
+| `CreatedAt` | `DateTime` | UTC |
+| `UpdatedAt` | `DateTime` | UTC |
 
 **Relations:**
 - Belongs to `Course`
@@ -144,14 +186,15 @@ Groups lessons within a course.
 ---
 
 ### Lesson
-**TPH (Table Per Hierarchy)** — single `Lessons` table with `LessonType` discriminator.
+**TPH (Table Per Hierarchy)** — single `Lessons` table with `LessonType` discriminator. Part of the Course aggregate.
 
 | Field | Type | Notes |
 |---|---|---|
 | `Id` | `Guid` | PK |
 | `SectionId` | `Guid` | FK → Section |
-| `Title` | `string` | Required, always rendered bold |
-| `Order` | `int` | Display order within section |
+| `Title` | `string` | Required |
+| `DisplayOrder` | `int` | Display order within section |
+| `IsHidden` | `bool` | Defaults true; set to false when lesson is ready |
 | `LessonType` | `LessonType` (enum) | Video / Post / Test — EF discriminator |
 | `CreatedAt` | `DateTime` | UTC |
 | `UpdatedAt` | `DateTime` | UTC |
@@ -159,14 +202,16 @@ Groups lessons within a course.
 #### VideoLesson (extends Lesson)
 | Field | Type | Notes |
 |---|---|---|
-| `VideoUrl` | `string` | Azure Blob URL |
+| `VideoBlobPath` | `string` | Azure Blob path |
 | `Description` | `string?` | Markdown |
 | `DurationSeconds` | `int?` | Optional metadata |
+
+Raises `LessonVideoAttachedDomainEvent` when video is set, `LessonVideoReleasedDomainEvent` when replaced.
 
 #### PostLesson (extends Lesson)
 | Field | Type | Notes |
 |---|---|---|
-| `Content` | `string` | Markdown — supports bold, italic, underline, lists |
+| `Content` | `string` | Markdown — required for `IsPublishReady` |
 
 #### TestLesson (extends Lesson)
 | Field | Type | Notes |
@@ -175,59 +220,54 @@ Groups lessons within a course.
 | `AttemptLimit` | `int?` | Null = unlimited |
 | `CooldownMinutes` | `int?` | Wait time after exhausting attempts |
 | `PassingThreshold` | `int` | Percentage required to pass (e.g. 70) |
+| `Questions` | owned collection | `Question[]` value objects, stored as JSONB |
 
 **Relations (Lesson):**
 - Belongs to `Section`
 - Has many `LessonProgress`
-- Has many `LessonLike`
+- Has many `LessonLike` **[Planned]**
 
 **Relations (TestLesson):**
-- Has many `Question`
 - Has many `TestAttempt`
 
 ---
 
 ### Question
+**Owned type (value object)** — stored as JSONB inside `TestLesson`. Not a separate table.
 
 | Field | Type | Notes |
 |---|---|---|
-| `Id` | `Guid` | PK |
-| `TestLessonId` | `Guid` | FK → Lesson (TestLesson) |
+| `Id` | `Guid` | Auto-generated on creation |
 | `Text` | `string` | Required |
 | `Type` | `QuestionType` (enum) | SingleChoice / MultipleChoice / TextInput |
-| `Order` | `int` | Display order |
-| `Points` | `int` | Default: 1 |
+| `Order` | `int` | Display order within test |
+| `Options` | `QuestionOption[]` | Owned collection (choice types) |
+| `TextAnswer` | `TextAnswerConfig?` | Owned (text input type only) |
 
-**Relations:**
-- Belongs to `TestLesson`
-- Has many `QuestionOption` (for choice types)
-- Has one `TextAnswerConfig` (for text input type)
-- Has many `TestAttemptAnswer`
+Contains scoring logic: `IsAnsweredCorrectly()`, `EvaluateTextAnswer()`, Levenshtein distance for fuzzy matching.
 
 ---
 
 ### QuestionOption
-Options for SingleChoice and MultipleChoice questions.
+**Owned value object** — nested inside `Question.Options`.
 
 | Field | Type | Notes |
 |---|---|---|
-| `Id` | `Guid` | PK |
-| `QuestionId` | `Guid` | FK → Question |
+| `Id` | `Guid` | Auto-generated |
 | `Text` | `string` | Required |
 | `IsCorrect` | `bool` | |
+| `Order` | `int` | Display order |
 
 ---
 
 ### TextAnswerConfig
-Config for TextInput questions.
+**Owned value object** — nested inside `Question.TextAnswer`.
 
 | Field | Type | Notes |
 |---|---|---|
-| `Id` | `Guid` | PK |
-| `QuestionId` | `Guid` | FK → Question, Unique |
 | `CorrectAnswer` | `string` | Expected answer |
 | `IgnoreCase` | `bool` | Default: true |
-| `AllowFuzzy` | `bool` | Allow 1 char diff if length > 1 |
+| `AllowFuzzy` | `bool` | Allow 1-char Levenshtein distance if length > 1 |
 
 ---
 
@@ -236,28 +276,23 @@ Config for TextInput questions.
 | Field | Type | Notes |
 |---|---|---|
 | `Id` | `Guid` | PK |
-| `UserId` | `Guid` | FK → User |
+| `StudentId` | `Guid` | FK → User |
+| `CourseId` | `Guid` | FK → Course |
 | `TestLessonId` | `Guid` | FK → Lesson |
-| `Score` | `int?` | Percentage, filled on completion |
-| `IsPassed` | `bool?` | Filled on completion |
+| `AttemptNumber` | `int` | Sequence per student per test |
 | `StartedAt` | `DateTime` | UTC |
-| `CompletedAt` | `DateTime?` | UTC |
+| `SubmittedAt` | `DateTime?` | UTC, set on submit |
+| `Score` | `int?` | Percentage, filled on submission |
+| `MaxScore` | `int?` | Total possible points |
+| `Passed` | `bool?` | Filled on submission |
+| `Answers` | `StudentAnswer[]` | Owned value objects (JSONB) |
 
-**Relations:**
-- Has many `TestAttemptAnswer`
+Computed: `IsSubmitted => SubmittedAt.HasValue`
 
----
-
-### TestAttemptAnswer
-
-| Field | Type | Notes |
-|---|---|---|
-| `Id` | `Guid` | PK |
-| `AttemptId` | `Guid` | FK → TestAttempt |
-| `QuestionId` | `Guid` | FK → Question |
-| `SelectedOptionIds` | `Guid[]` | PostgreSQL array, for choice questions |
-| `TextAnswer` | `string?` | For text input questions |
-| `IsCorrect` | `bool` | Evaluated on submission |
+#### StudentAnswer (owned value object)
+```csharp
+record StudentAnswer(Guid QuestionId, List<Guid> SelectedOptionIds, string? TextValue);
+```
 
 ---
 
@@ -266,14 +301,17 @@ Config for TextInput questions.
 | Field | Type | Notes |
 |---|---|---|
 | `Id` | `Guid` | PK |
-| `UserId` | `Guid` | FK → User |
+| `StudentId` | `Guid` | FK → User |
 | `CourseId` | `Guid` | FK → Course |
-| `PaymentId` | `Guid?` | FK → Payment, null for free courses |
 | `Status` | `EnrollmentStatus` (enum) | Active / Completed |
+| `PaymentStatus` | `PaymentStatus` (enum) | Pending / Completed / Failed |
+| `PricePaid` | `decimal` | 0 for free courses |
 | `EnrolledAt` | `DateTime` | UTC |
 | `CompletedAt` | `DateTime?` | UTC |
+| `CreatedAt` | `DateTime` | UTC |
+| `UpdatedAt` | `DateTime` | UTC |
 
-**Unique constraint:** `(UserId, CourseId)`
+**Unique constraint:** `(StudentId, CourseId)`
 
 ---
 
@@ -282,16 +320,20 @@ Config for TextInput questions.
 | Field | Type | Notes |
 |---|---|---|
 | `Id` | `Guid` | PK |
-| `UserId` | `Guid` | FK → User |
+| `StudentId` | `Guid` | FK → User |
+| `CourseId` | `Guid` | FK → Course |
 | `LessonId` | `Guid` | FK → Lesson |
 | `IsCompleted` | `bool` | Default: false |
+| `LastAccessedAt` | `DateTime` | UTC |
 | `CompletedAt` | `DateTime?` | UTC |
+| `CreatedAt` | `DateTime` | UTC |
+| `UpdatedAt` | `DateTime` | UTC |
 
-**Unique constraint:** `(UserId, LessonId)`
+**Unique constraint:** `(StudentId, LessonId)`
 
 ---
 
-### LessonLike
+### LessonLike **[Planned]**
 
 | Field | Type | Notes |
 |---|---|---|
@@ -306,21 +348,39 @@ Config for TextInput questions.
 | Field | Type | Notes |
 |---|---|---|
 | `Id` | `Guid` | PK |
-| `UserId` | `Guid` | FK → User |
+| `StudentId` | `Guid` | FK → User |
 | `CourseId` | `Guid` | FK → Course |
 | `EnrollmentId` | `Guid` | FK → Enrollment, Unique |
-| `UniqueCode` | `string` | Public verification code, Unique |
-| `PdfUrl` | `string` | Azure Blob URL |
+| `Code` | `string` | Public verification code, Unique |
+| `FileUrl` | `string?` | Azure Blob URL, attached after PDF generation |
 | `IssuedAt` | `DateTime` | UTC |
+| `CreatedAt` | `DateTime` | UTC |
+| `UpdatedAt` | `DateTime` | UTC |
 
 ---
 
-### Achievement
+### CourseReview
 
 | Field | Type | Notes |
 |---|---|---|
 | `Id` | `Guid` | PK |
-| `Key` | `string` | Unique code e.g. `first_lesson`, `complete_5_courses` |
+| `CourseId` | `Guid` | FK → Course |
+| `StudentId` | `Guid` | FK → User |
+| `Rating` | `int` | 1–5 |
+| `Comment` | `string?` | Optional text |
+| `CreatedAt` | `DateTime` | UTC |
+| `UpdatedAt` | `DateTime` | UTC |
+
+**Unique constraint:** `(StudentId, CourseId)` — one review per student per course
+
+---
+
+### Achievement **[Planned — Phase 6]**
+
+| Field | Type | Notes |
+|---|---|---|
+| `Id` | `Guid` | PK |
+| `Key` | `string` | Unique code e.g. `first_lesson` |
 | `Name` | `string` | Display name |
 | `Description` | `string` | |
 | `IconUrl` | `string?` | |
@@ -330,7 +390,7 @@ Seeded at startup. Not created by users or admins.
 
 ---
 
-### UserAchievement
+### UserAchievement **[Planned — Phase 6]**
 
 | Field | Type | Notes |
 |---|---|---|
@@ -343,7 +403,7 @@ Seeded at startup. Not created by users or admins.
 
 ---
 
-### Payment
+### Payment **[Planned — Phase 5]**
 
 | Field | Type | Notes |
 |---|---|---|
@@ -359,13 +419,13 @@ Seeded at startup. Not created by users or admins.
 
 ---
 
-### Notification
+### Notification **[Planned — Phase 7]**
 
 | Field | Type | Notes |
 |---|---|---|
 | `Id` | `Guid` | PK |
 | `UserId` | `Guid` | FK → User |
-| `Type` | `NotificationType` (enum) | NewMessage / AchievementEarned / EnrollmentConfirmed / CertificateReady / InstructorApproved / InstructorRejected |
+| `Type` | `NotificationType` (enum) | |
 | `Title` | `string` | |
 | `Body` | `string` | |
 | `IsRead` | `bool` | Default: false |
@@ -375,48 +435,56 @@ Seeded at startup. Not created by users or admins.
 
 ---
 
-### Message
-In-course chat between Student and Instructor.
-
-| Field | Type | Notes |
-|---|---|---|
-| `Id` | `Guid` | PK |
-| `CourseId` | `Guid` | FK → Course |
-| `SenderId` | `Guid` | FK → User |
-| `ReceiverId` | `Guid` | FK → User |
-| `Content` | `string` | Plain text, max 2000 chars |
-| `IsRead` | `bool` | Default: false |
-| `SentAt` | `DateTime` | UTC |
-
----
-
 ## Enums
 
 ```csharp
-public enum ApplicationStatus { Pending, Approved, Rejected }
 public enum CourseStatus      { Draft, Published, Archived }
-public enum LessonType        { Video, Post, Test }
-public enum QuestionType      { SingleChoice, MultipleChoice, TextInput }
 public enum EnrollmentStatus  { Active, Completed }
 public enum PaymentStatus     { Pending, Completed, Failed }
-public enum NotificationType
+public enum LessonType        { Video, Post, Test }
+public enum QuestionType      { SingleChoice, MultipleChoice, TextInput }
+public enum ApplicationStatus { Pending, Approved, Rejected }     // [Planned]
+public enum NotificationType  { ... }                              // [Planned]
+
+// Blob storage upload targets
+public enum UploadTarget
 {
-    NewMessage,
-    AchievementEarned,
-    EnrollmentConfirmed,
-    CertificateReady,
-    InstructorApproved,
-    InstructorRejected
+    Avatar,       // 5 MB max, jpeg/png/webp
+    CourseCover,  // 10 MB max, jpeg/png/webp
+    LessonVideo,  // 2 GB max, mp4/webm
+    Certificate   // 5 MB max, pdf
 }
 ```
 
 ---
 
-## MongoDB Documents
+## Domain Events
+
+Events raised by entities and dispatched after `SaveChangesAsync` via `DomainEventsInterceptor`.
+
+| Event | Raised by | Carries |
+|---|---|---|
+| `UserRegisteredDomainEvent` | `User.RaiseUserRegistered()` | UserId, Email, FirstName, EmailConfirmationToken |
+| `PasswordResetRequestedDomainEvent` | `User.RaisePasswordResetRequested()` | UserId, Email, FirstName, Token |
+| `UserAvatarSetDomainEvent` | `User.SetAvatar()` | UserId, BlobPath |
+| `UserAvatarRemovedDomainEvent` | `User.SetAvatar()` (when replacing old) | UserId, ReleasedBlobPath |
+| `CourseCreatedDomainEvent` | `Course.Create()` | CourseId, InstructorId, CategoryId |
+| `CoursePublishedDomainEvent` | `Course.Publish()` | CourseId |
+| `CourseUnpublishedDomainEvent` | `Course.Unpublish()` | CourseId |
+| `CourseArchivedDomainEvent` | `Course.Archive()` | CourseId |
+| `CourseDeletedDomainEvent` | `Course.MarkForDeletion()` | CourseId |
+| `LessonVideoAttachedDomainEvent` | `VideoLesson.ReplaceVideo()` | LessonId, AttachedBlobPath |
+| `LessonVideoReleasedDomainEvent` | `VideoLesson.ReplaceVideo()` | LessonId, ReleasedBlobPath |
+
+All events extend `DomainEvent` abstract record (adds `EventId: Guid`, `OccurredAt: DateTime`).
 
 ---
 
-### ChatSession
+## MongoDB Documents **[Planned — Phase 7+]**
+
+---
+
+### ChatSession **[Planned]**
 AI assistant conversation history per user.
 
 ```json
@@ -435,28 +503,8 @@ AI assistant conversation history per user.
 }
 ```
 
-**Index:** `userId`  
+**Index:** `userId`
 **Collection:** `chat_sessions`
-
----
-
-### CourseReview
-Student review after completing a course.
-
-```json
-{
-  "_id": "ObjectId",
-  "userId": "Guid (string)",
-  "courseId": "Guid (string)",
-  "rating": 1-5,
-  "reviewText": "string | null",
-  "createdAt": "DateTime"
-}
-```
-
-**Index:** `courseId`, `userId`  
-**Unique:** `(userId, courseId)` — one review per student per course  
-**Collection:** `course_reviews`
 
 ---
 
@@ -465,24 +513,27 @@ Student review after completing a course.
 ```
 User ──< Enrollment >── Course
 User ──< LessonProgress >── Lesson
-User ──< LessonLike >── Lesson
 User ──< TestAttempt >── TestLesson
+User ──< Certificate >── Enrollment
+User ──< CourseReview >── Course
+Course ──< Section ──< Lesson
+TestLesson ──< Question (JSONB) ──< QuestionOption (nested)
+TestAttempt ──< StudentAnswer (JSONB)
+
+[Planned]
+User ──< LessonLike >── Lesson
 User ──< UserAchievement >── Achievement
 User ──< UserCategoryPreference >── Category
-User ──< Message >── Course (with Receiver)
-Course ──< Section ──< Lesson
-TestLesson ──< Question ──< QuestionOption
-Question ──── TextAnswerConfig
-TestAttempt ──< TestAttemptAnswer
-Enrollment ──── Certificate
-Payment ──── Enrollment
+User ──< Payment >── Course
 ```
 
 ---
 
 ## Notes
 
-- `EnrollmentsCount` on `Course` is denormalized. Updated via `CourseEnrolledIntegrationEvent` consumer. Avoids COUNT query on every course listing.
-- `Achievement` records are seeded — not managed at runtime. Checking logic lives in `CheckAchievementsConsumer`.
-- `Tags` stored as PostgreSQL array (`string[]`). If filtering by tags becomes complex, consider separate `Tag` + `CourseTag` tables later.
-- `Message` is simple polling-based for v1. Can be upgraded to SignalR without changing the entity.
+- `AvatarBlobPath`, `CoverBlobPath`, `VideoBlobPath` store Azure Blob **paths** (e.g. `avatars/users/{id}/{uploadId}.jpg`), not full SAS URLs. Read URLs are generated on demand via `IBlobStorageService.GenerateReadUrl()`.
+- `EnrollmentsCount` on `Course` is denormalized. Oновлюється в Phase 4 (стратегія TBD — see ADR-041).
+- `Question`, `QuestionOption`, `TextAnswerConfig`, `StudentAnswer` are **value objects** stored as JSONB inside `TestLesson` / `TestAttempt`. No separate tables.
+- `Tags` stored as PostgreSQL array (`string[]`). If filtering by tags becomes complex, consider separate `Tag` + `CourseTag` tables.
+- `CourseReview` lives in PostgreSQL (not MongoDB) — rating+comment are structured, benefit from joins with Course/User.
+- `OutboxMessage` records are written in the same EF transaction as entity changes, ensuring blob operations (confirm/delete) are never lost on process crash (see ADR-047).
