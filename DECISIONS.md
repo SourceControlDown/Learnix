@@ -35,7 +35,7 @@ ADR не видаляються. Якщо рішення переглянуто 
 - Добре інтегрується з FluentValidation
 
 **Альтернативи:**
-- Кастомний `Result<T>` (як описано в ARCHITECTURE.md) — працює, але доведеться розширювати вручну (множинні помилки, metadata, typed errors)
+- Кастомний `Result<T>` — працює, але доведеться розширювати вручну
 - Exceptions для бізнес-помилок — порушує контракт "exceptions = unexpected failures"
 - ErrorOr — теж варіант, але FluentResults має ширший API
 
@@ -1090,6 +1090,27 @@ certificates/{code}.pdf
 - Commands що додатково потребують section context реалізують `ICommandWithCourseAndSectionId`
 - Handler успадковує `CourseCommandHandler` замість прямого `IRequestHandler` — розмір handler файлу скорочується на ~20-30 рядків boilerplate
 - `InternalsVisibleTo` для тестів: base class може знадобитись для unit testing через `CourseCommandHandler` напряму (з mock ICourseRepository)
+
+---
+
+## ADR-050: Асинхронна генерація PDF-сертифікатів через BackgroundService
+
+**Рішення:** PDF сертифікат генерується не в момент завершення курсу, а фоновим сервісом (`CertificatePdfGenerationService`) що опитує таблицю `Certificates` з `FileUrl IS NULL` кожні 30 секунд. Після генерації PDF завантажується в Azure Blob Storage, а `Certificate.FileUrl` оновлюється. Клієнт отримує `IsReady: false` допоки PDF не готовий.
+
+**Чому:**
+- Генерація PDF (QuestPDF) + завантаження в Blob — блокуючі I/O операції, які неприпустимо тримати в HTTP-запиті (типово 200–500ms+)
+- Фоновий сервіс не блокує відповідь `MarkLessonComplete` — студент отримує миттєве підтвердження завершення курсу
+- Простота: не потребує MassTransit (B-35) чи Outbox pattern (B-34.5) — `BackgroundService` з `PeriodicTimer` вже є в кодовій базі
+
+**Альтернативи:**
+- **Inline (sync)** — найпростіше, але ризик таймауту та повільної відповіді API. Відхилено.
+- **MassTransit consumer** — найправильніше архітектурно, але B-35 ще не імплементований. Відкладено.
+- **Outbox pattern** — надійніше (гарантована доставка), але надмірно для поточного етапу. Відкладено разом з B-34.5.
+
+**Наслідки:**
+- `GET /api/certificates/courses/{courseId}` може повернути `IsReady: false` одразу після завершення курсу (вікно ~0–30 сек)
+- Фронтенд має polling або показувати стан "генерується…"
+- При міграції на MassTransit (B-35): замінити `CertificatePdfGenerationService` на consumer, решта коду не змінюється
 
 ---
 

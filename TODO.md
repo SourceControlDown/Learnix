@@ -45,11 +45,11 @@
 | B-18 | EF Configurations + міграція для course-related entities | done | |
 | B-19 | Category CRUD (seed initial categories) | done | |
 | B-20 | Course CRUD (create/edit/delete/publish/archive) — Instructor only | done | |
-| B-21 | Course queries: list (with filters, pagination, sorting), get by id | not started | |
+| B-21 | Course queries: list (with filters, pagination, sorting), get by id | done | |
 | B-22 | Section CRUD + reordering | done | |
-| B-23 | Lesson CRUD (Video/Post) + reordering | done | Test-type lesson CRUD deferred to Test subsystem chat (див. B-17.1 / B-29) |
-| B-24 | File upload service (Azure Blob): video + cover image | not started | |
-| B-25 | Instructor application flow (submit, admin approve/reject) | not started | |
+| B-23 | Lesson CRUD (Video/Post) + reordering | done | |
+| B-24 | File upload service (Azure Blob): video + cover image | done | |
+| B-25 | Instructor application flow (submit, admin approve/reject) | done | |
 
 ### Phase 4 — Student Features
 
@@ -57,9 +57,9 @@
 |---|---|---|---|
 | B-26 | Enrollment (free courses — instant) | done | Mock payment auto-confirms paid courses |
 | B-27 | Lesson progress (mark complete, track per user) | done | |
-| B-28 | Lesson likes | not started | |
-| B-29 | Test system: submit attempt, score calculation, attempt limits + cooldown | not started | |
-| B-30 | Course completion detection + Certificate generation (PDF) | not started | |
+| B-28 | Lesson likes | CANCELED | |
+| B-29 | Test system: submit attempt, score calculation, attempt limits + cooldown | done | Order-based answer matching (not GUID) — EF8 JSON collections require ordinal keys |
+| B-30 | Course completion detection + Certificate generation (PDF) | done | Async PDF gen via BackgroundService (PeriodicTimer 30s); QuestPDF; Azure Blob upload; SAS URL for download |
 | B-31 | Student profile (edit name, avatar, bio, category preferences) | not started | |
 
 ### Phase 5 — Payments
@@ -237,7 +237,7 @@
 
 | Section | Total | Done | Remaining |
 |---|---|---|---|
-| Backend | 54 | 18 | 36 |
+| Backend | 53 | 21 | 32 |
 | Frontend | 36 | 0 | 36 |
 | Deploy | 15 | 0 | 15 |
-| **Total** | **104** | **0** | **104** |
+| **Total** | **104** | **21** | **83** |
