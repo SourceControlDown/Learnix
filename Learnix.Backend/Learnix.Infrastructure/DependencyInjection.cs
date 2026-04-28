@@ -12,6 +12,8 @@ using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.InstructorApplications.Abstractions;
 using Learnix.Application.LessonProgress.Abstractions;
+using Learnix.Application.Certificates.Abstractions;
+using Learnix.Application.TestAttempts.Abstractions;
 using Learnix.Application.Lessons.Abstractions;
 using Learnix.Application.Users.Abstractions;
 using Learnix.Domain.Entities;
@@ -150,6 +152,8 @@ public static class DependencyInjection
         services.AddScoped<IInstructorApplicationRepository, InstructorApplicationRepository>();
         services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
         services.AddScoped<ILessonProgressRepository, LessonProgressRepository>();
+        services.AddScoped<ICertificateRepository, CertificateRepository>();
+        services.AddScoped<ITestAttemptRepository, TestAttemptRepository>();
 
         // Storage
         services.AddSingleton(sp =>
@@ -161,11 +165,14 @@ public static class DependencyInjection
         services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
 
         // Background services
+        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
         services.AddHostedService<RoleSeederHostedService>();
         services.AddHostedService<CategorySeederHostedService>();
         services.AddHostedService<BlobStorageBootstrapper>();
         services.AddHostedService<RefreshTokenCleanupHostedService>();
         services.AddHostedService<OutboxProcessorService>();
+        services.AddHostedService<CertificatePdfGenerationService>();
 
         return services;
     }

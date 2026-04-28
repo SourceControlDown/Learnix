@@ -160,6 +160,19 @@ internal sealed class AzureBlobStorageService(
         }
     }
 
+    public async Task UploadAsync(string blobPath, Stream content, string contentType, CancellationToken ct)
+    {
+        var (container, blobName) = ParseBlobPath(blobPath);
+        var blob = blobServiceClient
+            .GetBlobContainerClient(container)
+            .GetBlobClient(blobName);
+
+        await blob.UploadAsync(content, new BlobUploadOptions
+        {
+            HttpHeaders = new BlobHttpHeaders { ContentType = contentType }
+        }, ct);
+    }
+
     private (string container, string blobName) BuildBlobLocation(UploadTarget target)
     {
         var container = target switch

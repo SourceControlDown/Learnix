@@ -22,6 +22,8 @@ public class ApplicationDbContext(
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<LessonProgress> LessonProgresses => Set<LessonProgress>();
     public DbSet<InstructorApplication> InstructorApplications => Set<InstructorApplication>();
+    public DbSet<Certificate> Certificates => Set<Certificate>();
+    public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
