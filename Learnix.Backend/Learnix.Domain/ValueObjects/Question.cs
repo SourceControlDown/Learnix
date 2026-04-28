@@ -12,16 +12,16 @@ public sealed class Question
     public IReadOnlyList<QuestionOption> Options { get; init; } = [];
     public TextAnswerConfig? TextAnswer { get; init; }
 
-    // Scoring: 1 if correct, 0 otherwise
+    // Scoring: 1 if correct, 0 otherwise. Answers reference options by Order (stable, persisted int).
     public bool IsAnsweredCorrectly(StudentAnswer answer) => Type switch
     {
         QuestionType.SingleChoice =>
-            answer.SelectedOptionIds.Count == 1 &&
-            Options.Single(o => o.IsCorrect).Id == answer.SelectedOptionIds[0],
+            answer.SelectedOptionOrders.Count == 1 &&
+            Options.Single(o => o.IsCorrect).Order == answer.SelectedOptionOrders[0],
 
         QuestionType.MultipleChoice =>
-            answer.SelectedOptionIds.ToHashSet().SetEquals(
-                Options.Where(o => o.IsCorrect).Select(o => o.Id)),
+            answer.SelectedOptionOrders.ToHashSet().SetEquals(
+                Options.Where(o => o.IsCorrect).Select(o => o.Order)),
 
         QuestionType.TextInput =>
             EvaluateTextAnswer(answer.TextValue ?? ""),
@@ -81,4 +81,4 @@ public sealed class TextAnswerConfig
     public bool AllowFuzzy { get; init; }
 }
 
-public sealed record StudentAnswer(Guid QuestionId, List<Guid> SelectedOptionIds, string? TextValue);
+public sealed record StudentAnswer(int QuestionOrder, List<int> SelectedOptionOrders, string? TextValue);

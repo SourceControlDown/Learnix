@@ -53,9 +53,9 @@ public class TestLesson : Lesson
 
     public int Score(IEnumerable<StudentAnswer> answers)
     {
-        var map = answers.ToDictionary(a => a.QuestionId);
+        var map = answers.ToDictionary(a => a.QuestionOrder);
         return _questions.Count(q =>
-            map.TryGetValue(q.Id, out var answer) && q.IsAnsweredCorrectly(answer));
+            map.TryGetValue(q.Order, out var answer) && q.IsAnsweredCorrectly(answer));
     }
 
     public void UpdateTest(
