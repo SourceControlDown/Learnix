@@ -124,6 +124,18 @@ public class Course : SoftDeletableEntity
     public void MarkForDeletion()
         => RaiseDomainEvent(new CourseDeletedDomainEvent(Id));
 
+    public void AdminUnpublish()
+    {
+        if (Status != CourseStatus.Published)
+            return;
+
+        Status = CourseStatus.Draft;
+        RaiseDomainEvent(new CourseAdminUnpublishedDomainEvent(Id, InstructorId));
+    }
+
+    public void AdminDelete()
+        => RaiseDomainEvent(new CourseAdminDeletedDomainEvent(Id, InstructorId));
+
     public void IncrementEnrollmentsCount() => EnrollmentsCount++;
 
     // Section structure (Course as aggregate root, see ADR-044)

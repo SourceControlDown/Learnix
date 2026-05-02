@@ -13,4 +13,5 @@ public sealed record ManageCourseCardDto(
     int EnrollmentsCount,
     IReadOnlyList<string> Tags,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    bool IsDeleted = false);

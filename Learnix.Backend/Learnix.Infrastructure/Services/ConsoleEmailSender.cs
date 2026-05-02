@@ -36,4 +36,45 @@ internal sealed class ConsoleEmailSender(ILogger<ConsoleEmailSender> logger) : I
             toEmail, firstName, rejectionReason ?? "(no reason)");
         return Task.CompletedTask;
     }
+
+    public Task SendUserBannedAsync(string toEmail, string firstName, CancellationToken ct = default)
+    {
+        logger.LogInformation(
+            "EMAIL [UserBanned]: To={ToEmail}, FirstName={FirstName}",
+            toEmail, firstName);
+        return Task.CompletedTask;
+    }
+
+    public Task SendUserUnbannedAsync(string toEmail, string firstName, CancellationToken ct = default)
+    {
+        logger.LogInformation(
+            "EMAIL [UserUnbanned]: To={ToEmail}, FirstName={FirstName}",
+            toEmail, firstName);
+        return Task.CompletedTask;
+    }
+
+    public Task SendUserRoleChangedAsync(string toEmail, string firstName, string role, bool assigned, CancellationToken ct = default)
+    {
+        var action = assigned ? "assigned" : "removed";
+        logger.LogInformation(
+            "EMAIL [UserRoleChanged]: To={ToEmail}, FirstName={FirstName}, Role={Role}, Action={Action}",
+            toEmail, firstName, role, action);
+        return Task.CompletedTask;
+    }
+
+    public Task SendCourseAdminUnpublishedAsync(string toEmail, string instructorFirstName, string courseTitle, CancellationToken ct = default)
+    {
+        logger.LogInformation(
+            "EMAIL [CourseAdminUnpublished]: To={ToEmail}, Instructor={FirstName}, Course={CourseTitle}",
+            toEmail, instructorFirstName, courseTitle);
+        return Task.CompletedTask;
+    }
+
+    public Task SendCourseAdminDeletedAsync(string toEmail, string instructorFirstName, string courseTitle, CancellationToken ct = default)
+    {
+        logger.LogInformation(
+            "EMAIL [CourseAdminDeleted]: To={ToEmail}, Instructor={FirstName}, Course={CourseTitle}",
+            toEmail, instructorFirstName, courseTitle);
+        return Task.CompletedTask;
+    }
 }

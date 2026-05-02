@@ -105,6 +105,36 @@ internal sealed class OutboxProcessorService(
                 await blobStorage.MarkConfirmedAsync(payload.BlobPath, ct);
                 break;
             }
+            case OutboxMessageTypes.UserBannedEmail:
+            {
+                var payload = JsonSerializer.Deserialize<SendUserBannedEmailPayload>(message.Payload)!;
+                await emailSender.SendUserBannedAsync(payload.ToEmail, payload.FirstName, ct);
+                break;
+            }
+            case OutboxMessageTypes.UserUnbannedEmail:
+            {
+                var payload = JsonSerializer.Deserialize<SendUserUnbannedEmailPayload>(message.Payload)!;
+                await emailSender.SendUserUnbannedAsync(payload.ToEmail, payload.FirstName, ct);
+                break;
+            }
+            case OutboxMessageTypes.UserRoleChangedEmail:
+            {
+                var payload = JsonSerializer.Deserialize<SendUserRoleChangedEmailPayload>(message.Payload)!;
+                await emailSender.SendUserRoleChangedAsync(payload.ToEmail, payload.FirstName, payload.Role, payload.Assigned, ct);
+                break;
+            }
+            case OutboxMessageTypes.CourseAdminUnpublishedEmail:
+            {
+                var payload = JsonSerializer.Deserialize<SendCourseAdminActionEmailPayload>(message.Payload)!;
+                await emailSender.SendCourseAdminUnpublishedAsync(payload.ToEmail, payload.InstructorFirstName, payload.CourseTitle, ct);
+                break;
+            }
+            case OutboxMessageTypes.CourseAdminDeletedEmail:
+            {
+                var payload = JsonSerializer.Deserialize<SendCourseAdminActionEmailPayload>(message.Payload)!;
+                await emailSender.SendCourseAdminDeletedAsync(payload.ToEmail, payload.InstructorFirstName, payload.CourseTitle, ct);
+                break;
+            }
             default:
                 throw new InvalidOperationException($"Unknown outbox message type: {message.Type}");
         }
