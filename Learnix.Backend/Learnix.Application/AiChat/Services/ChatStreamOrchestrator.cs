@@ -1,7 +1,8 @@
 ﻿using Learnix.Application.AiChat.Abstractions;
 using Learnix.Application.AiChat.Abstractions.Models;
 using Learnix.Application.AiChat.Tools;
-using Microsoft.Extensions.Configuration;
+using Learnix.Application.Common.Settings;
+using Microsoft.Extensions.Options;
 using System.Runtime.CompilerServices;
 
 namespace Learnix.Application.AiChat.Services;
@@ -12,11 +13,11 @@ public sealed class ChatStreamOrchestrator(
     IChatSessionRepository sessionRepository,
     IAiChatProvider provider,
     IEnumerable<IChatTool> tools,
-    IConfiguration configuration)
+    IOptions<AiChatSettings> aiChatOptions)
 {
     private readonly IReadOnlyList<IChatTool> _tools = tools.ToList();
-    private readonly int _contextWindowSize = configuration.GetValue("AiChat:ContextWindowSize", 20);
-    private readonly int _messagesPerSessionCap = configuration.GetValue("AiChat:MessagesPerSessionCap", 50);
+    private readonly int _contextWindowSize = aiChatOptions.Value.ContextWindowSize;
+    private readonly int _messagesPerSessionCap = aiChatOptions.Value.MessagesPerSessionCap;
 
     public async IAsyncEnumerable<SseEvent> StreamAsync(
         Guid userId,

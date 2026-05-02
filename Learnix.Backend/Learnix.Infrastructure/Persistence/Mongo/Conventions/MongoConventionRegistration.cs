@@ -6,7 +6,7 @@ namespace Learnix.Infrastructure.Persistence.Mongo.Conventions;
 public static class MongoConventionRegistration
 {
     private static bool _registered;
-    private static readonly Lock _lock = new();
+    private static readonly object _lock = new();
 
     public static void Register()
     {

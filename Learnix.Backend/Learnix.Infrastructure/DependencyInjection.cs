@@ -1,6 +1,10 @@
-﻿using Ardalis.Specification;
+﻿using Anthropic.SDK;
+using Ardalis.Specification;
 using Ardalis.Specification.EntityFrameworkCore;
 using Azure.Storage.Blobs;
+using Learnix.Application.AiChat.Abstractions;
+using Learnix.Application.AiChat.Services;
+using Learnix.Application.AiChat.Tools;
 using Learnix.Application.Auth.Abstractions;
 using Learnix.Application.Auth.Constants;
 using Learnix.Application.Common.Abstractions.Identity;
@@ -17,10 +21,15 @@ using Learnix.Application.TestAttempts.Abstractions;
 using Learnix.Application.Lessons.Abstractions;
 using Learnix.Application.Users.Abstractions;
 using Learnix.Domain.Entities;
+using Learnix.Infrastructure.AiChat.Anthropic;
+using Learnix.Infrastructure.AiChat.Gemini;
 using Learnix.Infrastructure.Identity;
 using Learnix.Infrastructure.Outbox;
 using Learnix.Infrastructure.Persistence;
 using Learnix.Infrastructure.Persistence.Interceptors;
+using Learnix.Infrastructure.Persistence.Mongo;
+using Learnix.Infrastructure.Persistence.Mongo.Conventions;
+using Learnix.Infrastructure.Persistence.Mongo.Repositories;
 using Learnix.Infrastructure.Persistence.Repositories;
 using Learnix.Infrastructure.Services;
 using Learnix.Infrastructure.Storage;
@@ -29,7 +38,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Driver;
 using System.Text;
 
 namespace Learnix.Infrastructure;
@@ -164,6 +175,41 @@ public static class DependencyInjection
         });
         services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
 
+        // MongoDB
+        services.Configure<MongoSettings>(configuration.GetSection("Mongo"));
+        services.AddSingleton<IMongoClient>(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<MongoSettings>>().Value;
+            MongoConventionRegistration.Register();
+            return new MongoClient(settings.ConnectionString);
+        });
+        services.AddSingleton<MongoDbContext>();
+        services.AddScoped<IChatSessionRepository, ChatSessionRepository>();
+
+        // AI Chat — provider (swap by changing AiChat:Provider in config)
+        services.Configure<AnthropicSettings>(configuration.GetSection("Anthropic"));
+        services.Configure<GeminiSettings>(configuration.GetSection("Gemini"));
+        services.Configure<AiChatSettings>(configuration.GetSection("AiChat"));
+
+        var aiProvider = configuration["AiChat:Provider"] ?? "Anthropic";
+        if (aiProvider.Equals("Gemini", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddHttpClient<IAiChatProvider, GeminiChatProvider>(client =>
+                client.BaseAddress = new Uri(
+                    configuration["Gemini:BaseUrl"] ?? "https://generativelanguage.googleapis.com"));
+        }
+        else
+        {
+            services.AddSingleton(sp =>
+                new AnthropicClient(new APIAuthentication(
+                    sp.GetRequiredService<IOptions<AnthropicSettings>>().Value.ApiKey)));
+            services.AddScoped<IAiChatProvider, AnthropicChatProvider>();
+        }
+
+        // AI Chat — tools and orchestrator
+        services.AddScoped<IChatTool, SearchCoursesTool>();
+        services.AddScoped<ChatStreamOrchestrator>();
+
         // Background services
         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
@@ -173,6 +219,8 @@ public static class DependencyInjection
         services.AddHostedService<RefreshTokenCleanupHostedService>();
         services.AddHostedService<OutboxProcessorService>();
         services.AddHostedService<CertificatePdfGenerationService>();
+        services.AddHostedService<MongoIndexInitializer>();
+        services.AddHostedService<ChatSessionCleanupService>();
 
         return services;
     }

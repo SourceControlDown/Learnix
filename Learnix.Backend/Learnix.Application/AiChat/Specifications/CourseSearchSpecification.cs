@@ -6,7 +6,7 @@ namespace Learnix.Application.AiChat.Specifications;
 
 public sealed class CourseSearchSpecification : Specification<Course>
 {
-    public CourseSearchSpecification(string query, string? categorySlug, int maxResults)
+    public CourseSearchSpecification(string query, Guid? categoryId, int maxResults)
     {
         Query.Where(c => c.Status == CourseStatus.Published);
 
@@ -17,11 +17,10 @@ public sealed class CourseSearchSpecification : Specification<Course>
                            || c.Description.ToLower().Contains(normalized));
         }
 
-        if (!string.IsNullOrWhiteSpace(categorySlug))
-            Query.Where(c => c.Category!.Slug == categorySlug);
+        if (categoryId.HasValue)
+            Query.Where(c => c.CategoryId == categoryId.Value);
 
         Query
-            .Include(c => c.Category)
             .OrderByDescending(c => c.EnrollmentsCount)
             .ThenByDescending(c => c.UpdatedAt)
             .Take(maxResults)

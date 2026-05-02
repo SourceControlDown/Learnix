@@ -1,48 +1,107 @@
-﻿using Learnix.Application.AiChat.Abstractions;
+using Anthropic.SDK;
+using Anthropic.SDK.Common;
+using Anthropic.SDK.Messaging;
+using AnthropicTool = Anthropic.SDK.Common.Tool;
+using Learnix.Application.AiChat.Abstractions;
 using Learnix.Application.AiChat.Abstractions.Models;
 using Microsoft.Extensions.Options;
-using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Learnix.Infrastructure.AiChat.Anthropic;
 
 internal sealed class AnthropicChatProvider(
-    HttpClient httpClient,
+    AnthropicClient client,
     IOptions<AnthropicSettings> options) : IAiChatProvider
 {
-    private readonly AnthropicSettings _settings = options.Value;
+    private const string SystemPrompt =
+        "You are a helpful learning assistant for Learnix, an online learning platform. " +
+        "You help students find courses and answer questions about learning topics. " +
+        "When a user asks for course recommendations, use the search_courses tool to find relevant courses. " +
+        "Be concise and friendly.";
 
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
         IReadOnlyList<ChatMessage> conversation,
         IReadOnlyList<ToolDefinition> tools,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        var request = AnthropicRequestBuilder.Build(_settings.Model, _settings.MaxTokens, conversation, tools);
-
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/v1/messages");
-        httpRequest.Content = JsonContent.Create(request, options: new JsonSerializerOptions
+        var parameters = new MessageParameters
         {
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        });
+            Model = options.Value.Model,
+            MaxTokens = options.Value.MaxTokens,
+            Stream = true,
+            System = [new SystemMessage(SystemPrompt)],
+            Messages = BuildMessages(conversation),
+            Tools = tools.Count > 0 ? BuildTools(tools) : null
+        };
 
-        using var response = await httpClient.SendAsync(
-            httpRequest,
-            HttpCompletionOption.ResponseHeadersRead,
-            ct);
+        var outputs = new List<MessageResponse>();
 
-        if (!response.IsSuccessStatusCode)
+        await foreach (var res in client.Messages.StreamClaudeMessageAsync(parameters, ct))
         {
-            var errorBody = await response.Content.ReadAsStringAsync(ct);
-            yield return new ProviderErrorEvent(
-                $"Anthropic API error {(int)response.StatusCode}: {errorBody}",
-                "PROVIDER_ERROR");
-            yield break;
+            if (res.Delta?.Text is not null)
+                yield return new TextDeltaEvent(res.Delta.Text);
+            outputs.Add(res);
         }
 
-        var stream = await response.Content.ReadAsStreamAsync(ct);
+        // Tool use blocks are fully accumulated after streaming ends
+        var assistantMsg = new Message(outputs);
+        var toolBlocks = (assistantMsg.Content as IList<ContentBase>)
+            ?.OfType<ToolUseContent>()
+            .ToList() ?? [];
 
-        await foreach (var evt in AnthropicSseParser.ParseAsync(stream, ct))
-            yield return evt;
+        foreach (var tc in toolBlocks)
+        {
+            yield return new ToolUseStartEvent(tc.Id, tc.Name);
+            yield return new ToolUseEndEvent(tc.Id, tc.Name, tc.Input?.ToJsonString() ?? "{}");
+        }
+
+        yield return new MessageEndEvent("end_turn");
     }
+
+    private static List<Message> BuildMessages(IReadOnlyList<ChatMessage> conversation)
+    {
+        var result = new List<Message>(conversation.Count);
+
+        foreach (var msg in conversation)
+        {
+            if (msg.Role == "tool_result")
+            {
+                var blocks = msg.ToolCalls!
+                    .Select(tc => (ContentBase)new ToolResultContent
+                    {
+                        ToolUseId = tc.CallId,
+                        Content = [new TextContent { Text = tc.ResultJson ?? string.Empty }]
+                    })
+                    .ToList();
+                result.Add(new Message { Role = RoleType.User, Content = blocks });
+            }
+            else if (msg.Role == "assistant" && msg.ToolCalls is { Count: > 0 })
+            {
+                var blocks = new List<ContentBase>();
+                if (!string.IsNullOrEmpty(msg.Content))
+                    blocks.Add(new TextContent { Text = msg.Content });
+                foreach (var tc in msg.ToolCalls)
+                    blocks.Add(new ToolUseContent
+                    {
+                        Id = tc.CallId,
+                        Name = tc.ToolName,
+                        Input = JsonNode.Parse(tc.ArgumentsJson)?.AsObject() ?? []
+                    });
+                result.Add(new Message { Role = RoleType.Assistant, Content = blocks });
+            }
+            else
+            {
+                result.Add(new Message(
+                    msg.Role == "assistant" ? RoleType.Assistant : RoleType.User,
+                    msg.Content));
+            }
+        }
+
+        return result;
+    }
+
+    private static List<AnthropicTool> BuildTools(IReadOnlyList<ToolDefinition> tools) =>
+        tools.Select(t => (AnthropicTool)new Function(t.Name, t.Description,
+            JsonNode.Parse(t.ParametersJsonSchema))).ToList();
 }
