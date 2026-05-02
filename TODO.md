@@ -94,10 +94,11 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| B-43 | Student ↔ Instructor messaging (per course, polling) | not started | |
-| B-44 | MongoDB setup: MongoDbContext, repositories | not started | |
-| B-45 | AI chat: Claude API integration (streaming SSE) | not started | |
+| B-43 | Student ↔ Instructor messaging (per course, polling) | NOT IN SCOPE | |
+| B-44 | MongoDB setup: MongoDbContext, repositories | Done | |
+| B-45 | AI chat: Multi-provider integration (Anthropic + Gemini, streaming SSE, tool use) | Done | |
 | B-46 | Chat session persistence (MongoDB) | not started | |
+| B-46.5 | Background job: cleanup closed AI chat sessions older than 30 days | Done | |
 
 ### Phase 9 — Reviews & Recommendations
 
