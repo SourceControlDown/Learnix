@@ -27,16 +27,35 @@ public sealed class GetAdminCoursesQueryHandler(
 
         var pagination = PaginationRequest.FromOffset(request.Skip, request.Take);
 
-        var totalCount = await courseRepository.CountAsync(
-            new CourseListCountSpecification(null, request.Search, request.CategoryId),
-            cancellationToken);
+        long totalCount;
+        IReadOnlyList<Domain.Entities.Course> courses;
 
-        if (totalCount == 0)
-            return Result.Ok(PaginatedResult<ManageCourseCardDto>.Empty(pagination.PageIndex, pagination.PageSize));
+        if (request.IncludeDeleted)
+        {
+            totalCount = await courseRepository.CountAsync(
+                new AdminCourseListCountSpecification(request.Search, request.CategoryId),
+                cancellationToken);
 
-        var courses = await courseRepository.ListAsync(
-            new CourseListSpecification(null, request.Search, request.CategoryId, pagination.Skip, pagination.Take),
-            cancellationToken);
+            if (totalCount == 0)
+                return Result.Ok(PaginatedResult<ManageCourseCardDto>.Empty(pagination.PageIndex, pagination.PageSize));
+
+            courses = await courseRepository.ListAsync(
+                new AdminCourseListSpecification(request.Search, request.CategoryId, pagination.Skip, pagination.Take),
+                cancellationToken);
+        }
+        else
+        {
+            totalCount = await courseRepository.CountAsync(
+                new CourseListCountSpecification(null, request.Search, request.CategoryId),
+                cancellationToken);
+
+            if (totalCount == 0)
+                return Result.Ok(PaginatedResult<ManageCourseCardDto>.Empty(pagination.PageIndex, pagination.PageSize));
+
+            courses = await courseRepository.ListAsync(
+                new CourseListSpecification(null, request.Search, request.CategoryId, pagination.Skip, pagination.Take),
+                cancellationToken);
+        }
 
         var result = PaginatedResult<ManageCourseCardDto>.Create(
             courses.Select(c => new ManageCourseCardDto(
@@ -52,7 +71,8 @@ public sealed class GetAdminCoursesQueryHandler(
                 c.EnrollmentsCount,
                 c.Tags.ToList(),
                 c.CreatedAt,
-                c.UpdatedAt)),
+                c.UpdatedAt,
+                c.IsDeleted)),
             pagination.PageIndex,
             pagination.PageSize,
             totalCount);

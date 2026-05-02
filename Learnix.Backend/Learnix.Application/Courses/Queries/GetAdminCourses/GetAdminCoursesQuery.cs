@@ -9,4 +9,5 @@ public sealed record GetAdminCoursesQuery(
     string? Search,
     int Skip,
     int Take,
-    Guid? CategoryId) : IRequest<Result<PaginatedResult<ManageCourseCardDto>>>;
+    Guid? CategoryId,
+    bool IncludeDeleted = false) : IRequest<Result<PaginatedResult<ManageCourseCardDto>>>;
