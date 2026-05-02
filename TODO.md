@@ -97,15 +97,15 @@
 | B-43 | Student ↔ Instructor messaging (per course, polling) | NOT IN SCOPE | |
 | B-44 | MongoDB setup: MongoDbContext, repositories | Done | |
 | B-45 | AI chat: Multi-provider integration (Anthropic + Gemini, streaming SSE, tool use) | Done | |
-| B-46 | Chat session persistence (MongoDB) | not started | |
+| B-46 | Chat session persistence (MongoDB) | Done | |
 | B-46.5 | Background job: cleanup closed AI chat sessions older than 30 days | Done | |
 
 ### Phase 9 — Reviews & Recommendations
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| B-47 | Course reviews (MongoDB): create, list, average rating | not started | |
-| B-48 | Denormalized rating on Course entity | not started | |
+| B-47 | Course reviews (PostgreSQL): create, list, average rating | done | Decision: PostgreSQL (not MongoDB) — structured data, FK joins, unique constraint. |
+| B-48 | Denormalized rating on Course entity | done | AverageRating (numeric 4,2) + ReviewsCount on Course. Inline arithmetic (AddRating/UpdateRating/RemoveRating). |
 | B-49 | Recommendations engine (based on enrollments, likes, preferences) | not started | Low priority |
 
 ### Phase 10 — Admin & Caching

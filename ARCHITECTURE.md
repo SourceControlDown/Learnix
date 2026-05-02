@@ -1,6 +1,23 @@
 # Learnix — Architecture Specification
 
-> For architectural decision records and rationale, see [DECISIONS.md](./DECISIONS.md).
+> For architectural decision records and rationale, see the `docs/` folder.
+
+## Decision Record Convention
+
+All ADRs (Architectural Decision Records) are written in **English** and use **file-scoped numbering** — each topic file has its own `ADR-<SCOPE>-NNN` sequence starting at `001`:
+
+| File | Scope prefix | Example |
+|---|---|---|
+| `docs/DECISIONS_ARCHITECTURE.md` | `ADR-ARCH-NNN` | `ADR-ARCH-001` |
+| `docs/DECISIONS_AUTH.md` | `ADR-AUTH-NNN` | `ADR-AUTH-001` |
+| `docs/DECISIONS_DOMAIN.md` | `ADR-DOMAIN-NNN` | `ADR-DOMAIN-001` |
+| `docs/DECISIONS_INFRA.md` | `ADR-INFRA-NNN` | `ADR-INFRA-001` |
+| `docs/DECISIONS_CHAT.md` | `ADR-CHAT-NNN` | `ADR-CHAT-001` |
+| `docs/DECISIONS_REVIEWS.md` | `ADR-REVIEW-NNN` | `ADR-REVIEW-001` |
+
+New feature decision files follow the pattern `docs/DECISIONS_<FEATURE>.md` with a matching `ADR-<FEATURE>-NNN` prefix.
+
+ADRs are never deleted. If a decision is superseded, mark the old ADR with `Superseded by ADR-<SCOPE>-NNN` and the new one with `Supersedes ADR-<SCOPE>-NNN`.
 
 ---
 

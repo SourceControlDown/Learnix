@@ -44,6 +44,9 @@ public class Course : SoftDeletableEntity
     /// </summary>
     public int EnrollmentsCount { get; private set; }
 
+    public decimal AverageRating { get; private set; }
+    public int ReviewsCount { get; private set; }
+
     public List<string> Tags { get; private set; } = [];
     public IReadOnlyCollection<Section> Sections => _sections.AsReadOnly();
 
@@ -137,6 +140,26 @@ public class Course : SoftDeletableEntity
         => RaiseDomainEvent(new CourseAdminDeletedDomainEvent(Id, InstructorId));
 
     public void IncrementEnrollmentsCount() => EnrollmentsCount++;
+
+    public void AddRating(int rating)
+    {
+        var newCount = ReviewsCount + 1;
+        AverageRating = Math.Round((AverageRating * ReviewsCount + rating) / newCount, 2);
+        ReviewsCount = newCount;
+    }
+
+    public void UpdateRating(int oldRating, int newRating)
+    {
+        if (ReviewsCount == 0) return;
+        AverageRating = Math.Round((AverageRating * ReviewsCount - oldRating + newRating) / ReviewsCount, 2);
+    }
+
+    public void RemoveRating(int rating)
+    {
+        var newCount = ReviewsCount - 1;
+        AverageRating = newCount == 0 ? 0m : Math.Round((AverageRating * ReviewsCount - rating) / newCount, 2);
+        ReviewsCount = newCount;
+    }
 
     // Section structure (Course as aggregate root, see ADR-044)
     // =========================================================
