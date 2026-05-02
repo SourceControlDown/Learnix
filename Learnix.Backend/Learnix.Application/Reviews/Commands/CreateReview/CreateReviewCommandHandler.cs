@@ -1,0 +1,64 @@
+using FluentResults;
+using Learnix.Application.Common.Abstractions.Identity;
+using Learnix.Application.Common.Abstractions.Persistence;
+using Learnix.Application.Common.Constants;
+using Learnix.Application.Common.Errors;
+using Learnix.Application.Courses.Abstractions;
+using Learnix.Application.Courses.Specifications;
+using Learnix.Application.Enrollments.Abstractions;
+using Learnix.Application.Enrollments.Specifications;
+using Learnix.Application.Reviews.Abstractions;
+using Learnix.Application.Reviews.Specifications;
+using Learnix.Domain.Entities;
+using MediatR;
+
+namespace Learnix.Application.Reviews.Commands.CreateReview;
+
+public sealed class CreateReviewCommandHandler(
+    ICurrentUserService currentUser,
+    ICourseRepository courseRepository,
+    IEnrollmentRepository enrollmentRepository,
+    ICourseReviewRepository reviewRepository,
+    IUnitOfWork unitOfWork)
+    : IRequestHandler<CreateReviewCommand, Result<CreateReviewResponse>>
+{
+    public async Task<Result<CreateReviewResponse>> Handle(
+        CreateReviewCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
+
+        var studentId = currentUser.UserId.Value;
+
+        var course = await courseRepository.FirstOrDefaultAsync(
+            new CourseByIdSpecification(request.CourseId, forUpdate: true), cancellationToken);
+
+        if (course is null)
+            return Result.Fail(new NotFoundError(CommonMessages.CourseNotFound(request.CourseId)));
+
+        if (course.InstructorId == studentId)
+            return Result.Fail(new ForbiddenError("Instructors cannot review their own courses."));
+
+        var isEnrolled = await enrollmentRepository.AnyAsync(
+            new EnrollmentByStudentAndCourseSpecification(studentId, request.CourseId), cancellationToken);
+
+        if (!isEnrolled)
+            return Result.Fail(new ForbiddenError(CommonMessages.NotEnrolledInCourse));
+
+        var alreadyReviewed = await reviewRepository.AnyAsync(
+            new CourseReviewByStudentAndCourseSpecification(studentId, request.CourseId), cancellationToken);
+
+        if (alreadyReviewed)
+            return Result.Fail(new ConflictError("You have already reviewed this course."));
+
+        var review = CourseReview.Create(request.CourseId, studentId, request.Rating, request.Comment);
+        await reviewRepository.AddAsync(review, cancellationToken);
+
+        course.AddRating(request.Rating);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Ok(new CreateReviewResponse(review.Id));
+    }
+}
