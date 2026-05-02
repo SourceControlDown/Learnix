@@ -1,15 +1,15 @@
 # Learnix — ADR: AI Chat
 
-> Формат: що вирішили → чому → які альтернативи відкинули.
-> Покриває Phase 8: B-44 (MongoDB), B-45 (AI providers + SSE), B-46 (session persistence), B-46.5 (cleanup).
+> Format: decision → why → rejected alternatives.
+> Covers Phase 8: B-44 (MongoDB), B-45 (AI providers + SSE), B-46 (session persistence), B-46.5 (cleanup).
 
 ---
 
-## ADR-019: AI Chat Provider Abstraction (`IAiChatProvider`)
+## ADR-CHAT-001: `IAiChatProvider` Abstraction
 
-**Рішення:** Application layer визначає `IAiChatProvider` з одним методом що повертає `IAsyncEnumerable<ChatStreamEvent>`. Infrastructure містить `AnthropicChatProvider` і `GeminiChatProvider`. Вибір провайдера через `appsettings.json` → `AiChat:Provider = "Anthropic" | "Gemini"`. DI factory резолвить правильну реалізацію по рядку з конфігу.
+**Decision:** The Application layer defines `IAiChatProvider` with a single method returning `IAsyncEnumerable<ChatStreamEvent>`. Infrastructure contains `AnthropicChatProvider` and `GeminiChatProvider`. The active provider is selected via `appsettings.json` → `AiChat:Provider = "Anthropic" | "Gemini"`. DI resolves the correct implementation based on that string at startup.
 
-Streaming events нормалізуються в спільну модель незалежно від провайдера:
+Streaming events are normalized into a shared model regardless of provider:
 
 ```
 TextDeltaEvent(Content)
@@ -19,31 +19,59 @@ MessageEndEvent(FinishReason)
 ProviderErrorEvent(Message, Code)
 ```
 
-**Чому:**
-- Swap провайдера без жодних змін в Application layer — достатньо змінити один рядок конфігу.
-- Tool execution loop пишеться один раз в `ChatStreamOrchestrator`, не дублюється на провайдер.
-- `IAsyncEnumerable` дозволяє стрімити события безпосередньо в SSE без буферизації всієї відповіді.
+**Why:**
+- Swapping providers requires changing one config value — the Application layer is untouched.
+- The tool execution loop is written once in `ChatStreamOrchestrator` and not duplicated per provider.
+- `IAsyncEnumerable` allows streaming events directly into SSE without buffering the full response.
 
-**Альтернативи:**
-- Anthropic-only в v1 — простіше, але втрачаємо можливість переключення для cost optimization або fallback.
-- Окремі handlers per provider — масивне дублювання tool execution loop.
-- Повертати `Stream` замість `IAsyncEnumerable<ChatStreamEvent>` — дешевше за абстракцією, але тоді парсинг SSE лягав би на Application layer, що порушує Clean Architecture.
+**Rejected alternatives:**
+- Anthropic-only in v1 — simpler, but loses the ability to switch for cost optimization or fallback.
+- Separate handlers per provider — massive duplication of the tool execution loop.
+- Return `Stream` instead of `IAsyncEnumerable<ChatStreamEvent>` — cheaper abstraction, but SSE parsing would leak into the Application layer, violating Clean Architecture.
 
 ---
 
-## ADR-020: MongoDB для зберігання AI чат-сесій
+## ADR-CHAT-002: `Anthropic.SDK` Package over Manual HTTP
 
-**Рішення:** AI чат-сесії зберігаються в MongoDB колекції `chat_sessions`. Один документ = одна сесія = список повідомлень.
+**Decision:** `AnthropicChatProvider` uses the `Anthropic.SDK` NuGet package (v5.x, by tghamm) instead of hand-rolled HTTP requests. The three manual files — `AnthropicRequestBuilder`, `AnthropicSseParser`, `AnthropicDtos` — are deleted.
 
-Схема документа:
+Key SDK usage:
+- `client.Messages.StreamClaudeMessageAsync(parameters, ct)` — handles HTTP, SSE parsing, and connection lifecycle internally.
+- `new Function(name, description, JsonNode.Parse(schema))` — builds tool definitions from our existing JSON schema strings without a separate DTO layer.
+- `new Message(outputs)` — reconstructs the full assistant message from accumulated streaming events; `ToolUseContent` blocks are extracted from it after streaming completes.
+- `AnthropicClient` is registered as a singleton and injected into the scoped `AnthropicChatProvider`.
+
+**Why:**
+- Eliminates ~150 lines of fragile SSE parsing and HTTP plumbing with no business value.
+- Built-in retry with exponential backoff on transient errors.
+- `StreamClaudeMessageAsync` returns `IAsyncEnumerable<MessageResponse>` — maps cleanly onto our own `IAsyncEnumerable<ChatStreamEvent>`.
+- Tool definitions are created directly from our `ToolDefinition.ParametersJsonSchema` string via `JsonNode.Parse` — no conversion layer needed.
+
+**Rejected alternatives:**
+- Official `Anthropic` NuGet package (v10+) — first-party, but was in beta at the time with breaking changes between minor versions.
+- Keep manual HTTP — no benefit; the SDK handles auth headers, base URL, retries, and SSE framing.
+
+---
+
+## ADR-CHAT-003: MongoDB for AI Chat Sessions
+
+**Decision:** AI chat sessions are stored in a MongoDB collection `chat_sessions`. One document = one session = list of messages.
+
+Document schema:
 ```json
 {
   "_id": "ObjectId",
   "userId": "Guid",
   "isActive": true,
   "messages": [
-    { "role": "user|assistant|tool_result", "content": "...", "sentAt": "DateTime",
-      "toolCalls": [{ "callId": "...", "toolName": "...", "argumentsJson": "...", "resultJson": "..." }] }
+    {
+      "role": "user|assistant|tool_result",
+      "content": "...",
+      "sentAt": "DateTime",
+      "toolCalls": [
+        { "callId": "...", "toolName": "...", "argumentsJson": "...", "resultJson": "..." }
+      ]
+    }
   ],
   "createdAt": "DateTime",
   "updatedAt": "DateTime",
@@ -51,101 +79,101 @@ ProviderErrorEvent(Message, Code)
 }
 ```
 
-Індекс: `{ userId: 1, isActive: 1 }` — для швидкого знаходження активної сесії.
+Index: `{ userId: 1, isActive: 1 }` — for fast lookup of the active session. Created by `MongoIndexInitializer` (`IHostedService`) at startup.
 
-**Чому:**
-- Документна структура природна для conversational data — повідомлення зберігаються як масив всередині документа, а не в окремій таблиці з FK.
-- MongoDB `$push` дає атомарний append повідомлень без race condition при конкурентних запитах.
-- Уникаємо схемної міграції при зміні структури повідомлень (нові поля типу `toolCalls` додаються без ALTER TABLE).
+**Why:**
+- Document structure is natural for conversational data — messages are stored as an array inside the document, not in a separate table with a FK.
+- MongoDB `$push` gives atomic message appends without race conditions on concurrent requests.
+- Schema changes (e.g., adding new fields to messages like `toolCalls`) require no migrations.
 
-**Альтернативи:**
-- PostgreSQL JSONB — теж підтримує документну структуру, але вже використовується для реляційних даних. Змішувати не варто без вагомої причини.
-- Redis зі списками — надто ephemeral, не підходить для 30-денного зберігання.
-
----
-
-## ADR-021: Single Active Session per User
-
-**Рішення:** Кожен користувач має максимум одну активну сесію (`isActive: true`). При досягненні hard cap 50 повідомлень або при виклику `DELETE /api/ai-chat/session` — поточна сесія закривається (`isActive: false`, `closedAt` заповнюється), при наступному повідомленні створюється нова.
-
-Закриті сесії **не показуються в UI** (GET повертає тільки активну), але зберігаються 30 днів для observability, потім видаляються `ChatSessionCleanupService`.
-
-**Чому:**
-- Спрощений UX — у студента завжди є "поточний чат", без навігації по історії сесій.
-- Soft close замість hard delete — залишаємо дані для дебагу якщо AI дав неправильну відповідь.
-- Hard cap 50 повідомлень захищає від надто довгого контексту і явно сигналізує про розрив (нова сесія = чистий старт).
-
-**Альтернативи:**
-- Multiple sessions з UI для переключення (Model B) — правильніше для функціонального продукту, але over-engineering для LMS де AI = допоміжний інструмент, а не основний.
-- Нескінченна сесія без cap — ризик exponential росту документа і context overflow у провайдера.
+**Rejected alternatives:**
+- PostgreSQL JSONB — also supports document structure, but PostgreSQL is already used for relational data; mixing concerns without strong reason is avoided.
+- Redis lists — too ephemeral; unsuitable for 30-day retention.
 
 ---
 
-## ADR-022: Sliding Window Context (20 повідомлень)
+## ADR-CHAT-004: Single Active Session per User
 
-**Рішення:** До AI провайдера передаються лише останні 20 повідомлень з активної сесії. Старіші повідомлення залишаються в MongoDB, але не потрапляють у context window провайдера.
+**Decision:** Each user has at most one active session (`isActive: true`). The session is closed (`isActive: false`, `closedAt` set) when either the 50-message hard cap is reached or the user explicitly calls `DELETE /api/ai-chat/session`. The next message automatically creates a new session.
 
-Реалізовано в `ChatStreamOrchestrator` перед кожним викликом провайдера: `conversation.TakeLast(contextWindowSize)`.
+Closed sessions are **not returned to the UI** (GET returns only the active session) but are retained for 30 days for observability, then removed by `ChatSessionCleanupService`.
 
-**Чому:**
-- Cost control: менше токенів = менша вартість за запит. 20 повідомлень ≈ 10 пар user/assistant — достатньо для типового сценарію "порекомендуй курс".
-- Латенція: коротший prompt = швидша перша відповідь.
-- `ContextWindowSize` вирізається в `appsettings.json` (`AiChat:ContextWindowSize: 20`) для можливості тюнінгу без перекомпіляції.
+**Why:**
+- Simplified UX — a student always has a "current chat" with no history navigation needed.
+- Soft close instead of hard delete — data is preserved for debugging if the AI gave a wrong answer.
+- The 50-message hard cap prevents unbounded document growth and signals a clean break to the user.
 
-**Альтернативи:**
-- Передавати всі повідомлення — правильно для складних розмов, але дорого і повільно при великих сесіях.
-- Summarization попередніх повідомлень — ефективний підхід для production AI assistants, але значно складніший (потребує окремого API call для summary generation).
-
----
-
-## ADR-023: Tool Use для рекомендацій курсів
-
-**Рішення:** AI провайдер має доступ до інструменту `search_courses(query, category?, maxResults?)`. Реалізовано через `IChatTool` інтерфейс в Application layer. `SearchCoursesTool` делегує до `IMediator.Send(SearchCoursesQuery)` — пошук по опублікованих курсах з фільтрацією по назві/описі.
-
-Tool execution loop в `ChatStreamOrchestrator`:
-1. Отримує `ToolUseEndEvent` від провайдера.
-2. Знаходить відповідний `IChatTool` по імені.
-3. Викликає `ExecuteAsync` — результат як JSON string.
-4. Додає `tool_result` message в conversation.
-5. Повторно викликає провайдера з оновленою historical context.
-6. Loop до `MessageEndEvent` без tool calls (або max 5 turns для безпеки).
-
-Фільтрація по `category` реалізована через lookup `ICategoryRepository` по slug, а не через JOIN — у `Course` немає навігаційного property `Category` (тільки `CategoryId` FK, відповідно до EF конфігурації проєкту).
-
-**Чому:**
-- Tool use — стандартний підхід для grounded recommendations замість hallucination.
-- `IChatTool` реєструються як `IEnumerable<IChatTool>` — нові інструменти (search lessons, get enrollment status) додаються без зміни orchestrator.
-- MediatR як точка входу для tool execution зберігає validation pipeline (FluentValidation) і logging behavior.
-
-**Альтернативи:**
-- RAG (Retrieval-Augmented Generation) — значно потужніше для семантичного пошуку, але потребує embedding model і vector store. Over-engineering для поточного обсягу курсів.
-- System prompt з переліком всіх курсів — не масштабується при сотнях курсів.
-- Пряме звернення з Infrastructure до БД у tool — порушує Clean Architecture, оминає validation pipeline.
+**Rejected alternatives:**
+- Multiple sessions with UI switching — more appropriate for a full-featured product, but over-engineering for an LMS where AI is a supporting tool, not the primary feature.
+- Unbounded session with no cap — risk of exponential document growth and provider context overflow.
 
 ---
 
-## ADR-024: Rate Limiting AI Chat (20 запитів/годину per user)
+## ADR-CHAT-005: Sliding Window Context (20 Messages)
 
-**Рішення:** Окремий `RateLimiterPolicy` `"ai-chat"` для `POST /api/ai-chat/messages`. 20 запитів / 1 година, partition key = `userId` (з JWT `sub` claim). Реалізовано через ASP.NET Rate Limiter `FixedWindowLimiter` — той самий механізм що в `"auth-strict"` policy (ADR-038 в DECISIONS_AUTH.md).
+**Decision:** Only the last 20 messages from the active session are sent to the AI provider. Older messages remain in MongoDB but are excluded from the provider's context window.
 
-При перевищенні — HTTP 429 + `ProblemDetails` з `Retry-After` header (уніфікований `OnRejected` handler).
+Implemented in `ChatStreamOrchestrator` before each provider call: `conversation.TakeLast(_contextWindowSize)`. The window size is read from `IOptions<AiChatSettings>` (`AiChat:ContextWindowSize`, default 20) — tunable without recompilation.
 
-**Чому:**
-- Cost control: кожен запит до Anthropic/Gemini — платний. 20/год = ~1 запит кожні 3 хвилини, достатньо для навчального використання.
-- Anti-abuse: без ліміту один користувач може вичерпати API quota для всього продукту.
-- Per-user (не per-IP) partition — правильніший для authenticated endpoints де IP може бути shared (NAT, VPN).
+**Why:**
+- Cost control: fewer tokens = lower cost per request. 20 messages ≈ 10 user/assistant pairs — sufficient for the typical "recommend a course" scenario.
+- Latency: shorter prompt = faster first token.
+- Externalizing the value to config allows tuning without a code change.
 
-**Альтернативи:**
-- Sliding window замість fixed window — рівніший розподіл, але трохи складніше. Для 20/год різниця несуттєва.
-- Token budget (ліміт по кількості токенів) — більш точний cost control, але потребує tracking токенів в БД.
+**Rejected alternatives:**
+- Send all messages — correct for complex long conversations, but expensive and slow as sessions grow.
+- Summarize older messages — effective in production AI assistants, but significantly more complex (requires a separate API call for summary generation).
 
 ---
 
-## ADR-025: SSE замість WebSocket для AI стрімінгу
+## ADR-CHAT-006: Tool Use for Course Recommendations
 
-**Рішення:** `POST /api/ai-chat/messages` повертає `Content-Type: text/event-stream`. Контролер пише SSE events напряму в `Response.Body` без буферизації. Endpoint свідомо виключений з MediatR pipeline — `ChatStreamOrchestrator` викликається напряму, бо SSE потребує доступу до `HttpContext.Response`.
+**Decision:** The AI provider has access to a `search_courses(query, category?, maxResults?)` tool. Implemented via the `IChatTool` interface in the Application layer. `SearchCoursesTool` delegates to `IMediator.Send(SearchCoursesQuery)` — searches published courses filtered by title/description.
 
-SSE формат:
+Tool execution loop in `ChatStreamOrchestrator`:
+1. Receives `ToolUseEndEvent` from the provider (emitted after `AnthropicChatProvider` reconstructs tool blocks via `new Message(outputs)`).
+2. Locates the matching `IChatTool` by name.
+3. Calls `ExecuteAsync` — result as a JSON string.
+4. Appends a `tool_result` message to the conversation.
+5. Calls the provider again with the updated context.
+6. Loops until `MessageEndEvent` with no tool calls, or a max of 5 turns as a safety guard.
+
+Category filtering is resolved in two steps: the handler looks up the category `Guid` from the slug via `CategoryBySlugSpecification`, then passes the `Guid?` to `CourseSearchSpecification` which filters by `c.CategoryId`. This avoids a navigation property join — `Course` only exposes `CategoryId` FK, not a `Category` navigation property.
+
+**Why:**
+- Tool use is the standard approach for grounded recommendations rather than hallucination.
+- `IChatTool` instances are registered as `IEnumerable<IChatTool>` — new tools (search lessons, get enrollment status) can be added without changing the orchestrator.
+- Using MediatR as the tool execution entry point preserves the FluentValidation and logging pipeline.
+
+**Rejected alternatives:**
+- RAG (Retrieval-Augmented Generation) — far more powerful for semantic search, but requires an embedding model and vector store. Over-engineering for the current course volume.
+- System prompt with a full course list — does not scale beyond a few dozen courses.
+- Direct DB access in the tool from Infrastructure — violates Clean Architecture and bypasses the validation pipeline.
+
+---
+
+## ADR-CHAT-007: Rate Limiting AI Chat (20 requests/hour per user)
+
+**Decision:** A dedicated `RateLimiterPolicy` `"ai-chat"` is applied to `POST /api/ai-chat/messages`. Limit: 20 requests per hour, partition key = `userId` (from the JWT `sub` claim). Implemented via ASP.NET `FixedWindowLimiter` — the same mechanism as the `"auth-strict"` policy (see DECISIONS_AUTH.md).
+
+On limit exceeded: HTTP 429 + `ProblemDetails` with `Retry-After` header via the unified `OnRejected` handler.
+
+**Why:**
+- Cost control: every request to Anthropic/Gemini is billable. 20/hour ≈ 1 request every 3 minutes — sufficient for learning use.
+- Anti-abuse: without a limit, one user can exhaust the API quota for the entire product.
+- Per-user (not per-IP) partition is more accurate for authenticated endpoints where IP may be shared (NAT, VPN).
+
+**Rejected alternatives:**
+- Sliding window — more even distribution, but marginally more complex. The difference is negligible at 20/hour.
+- Token budget (limit by token count) — more precise cost control, but requires tracking tokens in the database.
+
+---
+
+## ADR-CHAT-008: SSE over WebSocket for AI Streaming
+
+**Decision:** `POST /api/ai-chat/messages` returns `Content-Type: text/event-stream`. The controller writes SSE events directly to `Response.Body` without buffering. This endpoint is intentionally excluded from the MediatR pipeline — `ChatStreamOrchestrator` is called directly because SSE requires access to `HttpContext.Response`.
+
+SSE event format:
 ```
 event: text_delta
 data: {"content":"Hello"}
@@ -163,28 +191,30 @@ event: error
 data: {"message":"Provider unavailable","code":"PROVIDER_ERROR"}
 ```
 
-Tool execution відбувається повністю server-side. Клієнт бачить `tool_use_start`/`tool_use_end` для UX (показати spinner "шукаю курси..."), але не виконує інструмент.
+Tool execution is entirely server-side. The client receives `tool_use_start`/`tool_use_end` for UX purposes (e.g., showing a "searching courses…" spinner) but does not execute tools itself.
 
-**Чому:**
-- SSE простіший за WebSocket для one-way streaming (server → client). Не потребує окремого upgrade, proxy-friendly, вбудована підтримка в браузерах через `EventSource`.
-- Виключення SSE endpoint з MediatR — виправданий виняток з правила: handler не може стрімити в `HttpContext.Response`. Задокументований тут як явне рішення, а не прогалина.
+**Why:**
+- SSE is simpler than WebSocket for one-way server→client streaming: no upgrade handshake, proxy-friendly, native browser support via `EventSource`.
+- Excluding the SSE endpoint from MediatR is a deliberate and documented exception — a handler cannot stream into `HttpContext.Response`.
 
-**Альтернативи:**
-- WebSocket — підходить якщо потрібен bi-directional streaming (напр., для Student↔Instructor messaging). Для AI відповідей один напрямок достатній.
-- Polling (client запитує кожні N секунд) — простіша серверна реалізація, але вища латенція першого токена і зайве навантаження.
-- Long polling — компроміс між polling і SSE, але складніший і без переваг у порівнянні з SSE для streaming.
+**Rejected alternatives:**
+- WebSocket — appropriate if bi-directional streaming is needed (e.g., Student↔Instructor messaging). One-way is sufficient for AI responses.
+- Polling — simpler server implementation, but higher first-token latency and unnecessary load.
+- Long polling — a compromise between polling and SSE, but more complex with no advantage over SSE for streaming.
 
 ---
 
-## ADR-026: Cleanup закритих AI чат-сесій (30-денна retention)
+## ADR-CHAT-009: Closed Session Cleanup (30-day Retention)
 
-**Рішення:** `ChatSessionCleanupService` — `BackgroundService` на базі `PeriodicTimer` з інтервалом 24 години. Видаляє документи з `isActive: false` і `updatedAt < UtcNow - 30d` через `IChatSessionRepository.DeleteOlderThanAsync`. Запускається одразу при старті і далі кожні 24 год.
+**Decision:** `ChatSessionCleanupService` is a `BackgroundService` using `PeriodicTimer` with a 24-hour interval. It deletes documents where `isActive: false` and `updatedAt < UtcNow - 30d` via `IChatSessionRepository.DeleteOlderThanAsync`. Runs immediately on startup, then every 24 hours.
 
-**Чому:**
-- 30 днів — достатньо для post-mortem якщо AI дав помилкову відповідь і є скарга від студента.
-- `PeriodicTimer` + `BackgroundService` — той самий паттерн що `RefreshTokenCleanupHostedService`. Консистентність в кодовій базі.
-- `IServiceScopeFactory` для резолву scoped `IChatSessionRepository` — обов'язково для singleton-hosted services що звертаються до scoped залежностей.
+`IServiceScopeFactory` is used to resolve the scoped `IChatSessionRepository` from the singleton-hosted service.
 
-**Альтернативи:**
-- MongoDB TTL index (`expireAfterSeconds`) — автоматичний, не потребує коду. Відкинуто: TTL index на MongoDB працює тільки з одним полем з `Date` типом і видаляє документ по фіксованому часу після значення в полі. Для умовного видалення (`isActive: false AND updatedAt < threshold`) TTL не підходить — він видалив би всі документи через 30 днів, включаючи активні.
-- Cron job в окремому процесі — зайва складність для однієї операції.
+**Why:**
+- 30 days is sufficient for post-mortem investigation if a student complains about a wrong AI answer.
+- `PeriodicTimer` + `BackgroundService` is the same pattern as `RefreshTokenCleanupHostedService` — consistent with the codebase.
+- `IServiceScopeFactory` is mandatory for singleton-hosted services that depend on scoped services.
+
+**Rejected alternatives:**
+- MongoDB TTL index (`expireAfterSeconds`) — automatic, requires no code, but only works on a single `Date` field and deletes the document unconditionally after the TTL expires. Conditional deletion (`isActive: false AND updatedAt < threshold`) is not supported — a TTL index would delete active sessions too.
+- External cron job — unnecessary complexity for a single operation that belongs to the service itself.
