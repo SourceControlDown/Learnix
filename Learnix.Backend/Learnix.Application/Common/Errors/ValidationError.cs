@@ -17,7 +17,7 @@ public sealed class ValidationError : Error
         ValidationResult = validationResult;
     }
 
-    public IReadOnlyDictionary<string, string[]> ToDictionary()
+    public Dictionary<string, string[]> ToDictionary()
         => ValidationResult.Errors
             .GroupBy(f => f.PropertyName)
             .ToDictionary(

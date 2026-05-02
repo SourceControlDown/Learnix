@@ -39,6 +39,34 @@
 
 ---
 
+## 1.5. Course Lifecycle
+
+Кожен курс перебуває в одному з трьох станів:
+
+| Status | Visible to | Mutable | Can enroll |
+|---|---|---|---|
+| `Draft` | Owner, Admin | Yes | No |
+| `Published` | Everyone | Yes (via Unpublish → Draft → edit → Publish) | Yes |
+| `Archived` | Owner, Admin | Read-only | No |
+
+**State transitions:**
+
+- `Create` → `Draft` (automatic, always)
+- `Draft` → `Published` via **Publish** (requires all invariants below)
+- `Published` → `Draft` via **Unpublish** (no invariants)
+- *Any state* → `Archived` via **Archive** (no invariants)
+- *Any state* → soft-deleted via **Delete** (no invariants; publishes `CourseDeletedDomainEvent` — Phase 7+ consumer will notify enrolled students by email)
+
+**Publish invariants** (all must hold):
+
+1. `CoverImageUrl` is set
+2. Course has at least one section
+3. At least one section has at least one lesson
+
+A course whose `Price == 0` is a free course. There is no separate `IsFree` flag.
+
+---
+
 ## 2. Student Features
 
 ### Course browsing

@@ -12,51 +12,54 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| B-01 | Project scaffolding: створити solution + 4 проєкти (Domain, Application, Infrastructure, API) з правильними залежностями | not started | |
-| B-02 | Domain layer: BaseEntity, IDomainEvent, Enums, Constants | not started | |
-| B-03 | Application layer: Result<T> (FluentResults), Specification<T> base, pipeline behaviors (Validation, Logging) | not started | |
-| B-04 | Infrastructure: ApplicationDbContext, UnitOfWork, SpecificationEvaluator | not started | |
-| B-05 | Infrastructure: перша EF міграція (User, RefreshToken) | not started | |
-| B-06 | API: Program.cs (DI, middleware pipeline), ExceptionHandlingMiddleware, SecurityHeadersMiddleware | not started | |
-| B-07 | Docker Compose: PostgreSQL + MongoDB + Redis для локальної розробки | not started | |
+| B-01 | Project scaffolding: створити solution + 4 проєкти (Domain, Application, Infrastructure, API) з правильними залежностями | done | |
+| B-02 | Domain layer: BaseEntity, IDomainEvent, Enums | done | |
+| B-03 | Application layer: Constants, Result<T> (FluentResults), Specification<T> base, pipeline behaviors (Validation, Logging) | done | |
+| B-04 | Infrastructure: ApplicationDbContext, UnitOfWork, SpecificationEvaluator | done | |
+| B-05 | Infrastructure: перша EF міграція (User, RefreshToken) | done | |
+| B-06 | API: Program.cs (DI, middleware pipeline), ExceptionHandlingMiddleware, SecurityHeadersMiddleware | done | |
+| B-07 | Docker Compose: PostgreSQL + MongoDB + Redis для локальної розробки | done | |
 
 ### Phase 2 — Auth (gate для всього іншого)
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| B-08 | ASP.NET Core Identity setup (User entity, role seeding) | not started | |
-| B-09 | Register command (+ validator + handler + email verification event) | not started | |
-| B-10 | Login command (JWT generation + refresh token creation) | not started | |
-| B-11 | Refresh token endpoint (rotation + revocation logic) | not started | |
-| B-12 | Email confirmation flow (confirm endpoint + resend) | not started | |
-| B-13 | Password reset flow (forgot + reset endpoints) | not started | |
-| B-14 | Google OAuth integration | not started | |
-| B-15 | Rate limiting middleware (auth endpoints) | not started | |
-| B-16 | Auth controllers (thin, delegate to MediatR) | not started | |
+| B-08 | ASP.NET Core Identity setup (User entity, role seeding) | done | |
+| B-09 | Register command (+ validator + handler + email verification event) | done | |
+| B-10 | Login command (JWT generation + refresh token creation) | done | |
+| B-10.5 | документувати Authentication pipeline в ARCHITECTURE.md | done | |
+| B-11 | Refresh token endpoint (rotation + revocation logic) | done | |
+| B-11.5 | Refresh token cleanup background service (видаляє токени старші expiry + 7 днів) | done | |
+| B-12 | Email confirmation flow (confirm endpoint + resend) | done (mock confirmation with console) | |
+| B-13 | Password reset flow (forgot + reset endpoints) | done | |
+| B-14 | Google OAuth integration | done | |
+| B-15 | Rate limiting middleware (auth endpoints) | done | |
+| B-16 | Auth controllers (thin, delegate to MediatR) | done | |
 
 ### Phase 3 — Core Domain (Courses + Lessons)
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| B-17 | Domain entities: Category, Course, Section, Lesson (TPH), Question, QuestionOption, TextAnswerConfig | not started | |
-| B-18 | EF Configurations + міграція для course-related entities | not started | |
-| B-19 | Category CRUD (seed initial categories) | not started | |
-| B-20 | Course CRUD (create/edit/delete/publish/archive) — Instructor only | not started | |
-| B-21 | Course queries: list (with filters, pagination, sorting), get by id | not started | |
-| B-22 | Section CRUD + reordering | not started | |
-| B-23 | Lesson CRUD (Video/Post/Test) + reordering | not started | |
-| B-24 | File upload service (Azure Blob): video + cover image | not started | |
-| B-25 | Instructor application flow (submit, admin approve/reject) | not started | |
+| B-17 | Domain entities: Category, Course, Section, Lesson (TPH), Question, QuestionOption, TextAnswerConfig | done (part: Category, Course, Section, Lesson TPH — Question-related deferred to Test-subsystem chat) | |
+| B-17.1 | Domain: Question, QuestionOption, TextAnswerConfig, TestAttempt, TestAttemptAnswer entities | not started | Feeds B-29 |
+| B-18 | EF Configurations + міграція для course-related entities | done | |
+| B-19 | Category CRUD (seed initial categories) | done | |
+| B-20 | Course CRUD (create/edit/delete/publish/archive) — Instructor only | done | |
+| B-21 | Course queries: list (with filters, pagination, sorting), get by id | done | |
+| B-22 | Section CRUD + reordering | done | |
+| B-23 | Lesson CRUD (Video/Post) + reordering | done | |
+| B-24 | File upload service (Azure Blob): video + cover image | done | |
+| B-25 | Instructor application flow (submit, admin approve/reject) | done | |
 
 ### Phase 4 — Student Features
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| B-26 | Enrollment (free courses — instant) | not started | |
-| B-27 | Lesson progress (mark complete, track per user) | not started | |
-| B-28 | Lesson likes | not started | |
-| B-29 | Test system: submit attempt, score calculation, attempt limits + cooldown | not started | |
-| B-30 | Course completion detection + Certificate generation (PDF) | not started | |
+| B-26 | Enrollment (free courses — instant) | done | Mock payment auto-confirms paid courses |
+| B-27 | Lesson progress (mark complete, track per user) | done | |
+| B-28 | Lesson likes | CANCELED | |
+| B-29 | Test system: submit attempt, score calculation, attempt limits + cooldown | done | Order-based answer matching (not GUID) — EF8 JSON collections require ordinal keys |
+| B-30 | Course completion detection + Certificate generation (PDF) | done | Async PDF gen via BackgroundService (PeriodicTimer 30s); QuestPDF; Azure Blob upload; SAS URL for download |
 | B-31 | Student profile (edit name, avatar, bio, category preferences) | not started | |
 
 ### Phase 5 — Payments
@@ -66,6 +69,8 @@
 | B-32 | Stripe integration (test mode): create checkout session | not started | |
 | B-33 | Stripe webhook handler (payment completed → activate enrollment) | not started | |
 | B-34 | Payment history queries | not started | |
+| B-34.5 | Outbox pattern: OutboxMessage entity + EF config + background publisher worker (замінити пряму публікацію domain events в ApplicationDbContext) | not started | Передумова для надійної асинхронної обробки в Phase 6 |
+| B-34.6 | Розділити `UserRegisteredDomainEvent` на два events: `UserRegistered` (raised в Register flow) і `EmailConfirmationRequested` (raised в Resend flow). Поточна реалізація використовує `RaiseUserRegistered` в обох місцях — семантичний запах. Рефакторити одночасно з міграцією email на integration events через MassTransit (B-36). | not started | Залежить від B-35 |
 
 ### Phase 6 — Async Processing (MassTransit)
 
@@ -215,6 +220,7 @@
 | # | Task | Status | Notes |
 |---|---|---|---|
 | D-06 | Azure Container Apps (або App Service) для API | not started | |
+| D-06.5 | Configure ForwardedHeaders for rate limiting partition-by-real-IP behind reverse proxy | not started | Prerequisite for rate limiter to work correctly in Azure |
 | D-07 | Azure Static Web Apps (або Container App) для frontend | not started | |
 | D-08 | Azure Database for PostgreSQL (Flexible Server) | not started | |
 | D-09 | Azure Cosmos DB for MongoDB API | not started | |
@@ -231,7 +237,7 @@
 
 | Section | Total | Done | Remaining |
 |---|---|---|---|
-| Backend | 53 | 0 | 53 |
+| Backend | 53 | 21 | 32 |
 | Frontend | 36 | 0 | 36 |
 | Deploy | 15 | 0 | 15 |
-| **Total** | **104** | **0** | **104** |
+| **Total** | **104** | **21** | **83** |

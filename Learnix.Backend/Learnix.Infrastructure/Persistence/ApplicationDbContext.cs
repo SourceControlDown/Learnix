@@ -1,78 +1,56 @@
-﻿using System.Linq.Expressions;
-using Learnix.Application.Common.Interfaces;
-using Learnix.Application.Common.Events;
+﻿using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Domain.Common;
-using MediatR;
+using Learnix.Domain.Entities;
+using Learnix.Infrastructure.Outbox;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Learnix.Infrastructure.Persistence;
 
-public class ApplicationDbContext : DbContext, IUnitOfWork
+public class ApplicationDbContext(
+    DbContextOptions<ApplicationDbContext> options)
+    : IdentityDbContext<User, IdentityRole<Guid>, Guid>(options), IUnitOfWork
 {
-    private readonly IPublisher _publisher;
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Course> Courses => Set<Course>();
+    public DbSet<Section> Sections => Set<Section>();
+    public DbSet<Lesson> Lessons => Set<Lesson>();
+    public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+    public DbSet<LessonProgress> LessonProgresses => Set<LessonProgress>();
+    public DbSet<InstructorApplication> InstructorApplications => Set<InstructorApplication>();
+    public DbSet<Certificate> Certificates => Set<Certificate>();
+    public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
-    public ApplicationDbContext(
-        DbContextOptions<ApplicationDbContext> options,
-        IPublisher publisher) : base(options)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        _publisher = publisher;
-    }
+        base.OnModelCreating(builder);
 
-    // DbSet<...> з'являться поступово:
-    //   Phase 2 — User, RefreshToken
-    //   Phase 3 — Category, Course, Section, Lesson, Question, ...
+        builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        // Apply all IEntityTypeConfiguration from this assembly
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
-
-        ApplySoftDeleteQueryFilter(modelBuilder);
-
-        base.OnModelCreating(modelBuilder);
-    }
-
-    private static void ApplySoftDeleteQueryFilter(ModelBuilder modelBuilder)
-    {
-        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        foreach (var entityType in builder.Model
+            .GetEntityTypes()
+            .Where(e => typeof(IHasDomainEvents)
+            .IsAssignableFrom(e.ClrType)))
         {
-            if (!typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
-                continue;
-
-            var parameter = Expression.Parameter(entityType.ClrType, "e");
-            var isDeletedProperty = Expression.Property(parameter, nameof(ISoftDeletable.IsDeleted));
-            var filter = Expression.Lambda(Expression.Not(isDeletedProperty), parameter);
-
-            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
-        }
-    }
-
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        var entitiesWithEvents = ChangeTracker
-            .Entries<BaseEntity>()
-            .Where(e => e.Entity.DomainEvents.Count > 0)
-            .Select(e => e.Entity)
-            .ToList();
-
-        var domainEvents = entitiesWithEvents
-            .SelectMany(e => e.DomainEvents)
-            .ToList();
-
-        var result = await base.SaveChangesAsync(cancellationToken);
-
-        // Публікуємо тільки ПІСЛЯ успішного збереження
-        foreach (var domainEvent in domainEvents)
-        {
-            var notificationType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
-            var notification = Activator.CreateInstance(notificationType, domainEvent)!;
-
-            await _publisher.Publish(notification, cancellationToken);
+            builder.Entity(entityType.ClrType).Ignore(nameof(IHasDomainEvents.DomainEvents));
         }
 
-        foreach (var entity in entitiesWithEvents)
-            entity.ClearDomainEvents();
+        foreach (var type in builder.Model
+            .GetEntityTypes()
+            .Select(e => e.ClrType)
+            .Where(type => typeof(ISoftDeletable)
+            .IsAssignableFrom(type)))
+        {
+            var parameter = Expression.Parameter(type, "e");
+            var property = Expression.Property(parameter, nameof(ISoftDeletable.IsDeleted));
+            var filter = Expression.Lambda(Expression.Not(property), parameter);
 
-        return result;
+            builder.Entity(type).HasQueryFilter(filter);
+        }
     }
 }
