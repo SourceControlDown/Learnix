@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Learnix.Domain.Entities;
 
-public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents
+public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents, ISoftDeletable
 {
     private readonly List<IDomainEvent> _domainEvents = [];
 
@@ -25,6 +25,8 @@ public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents
     public string? AvatarBlobPath { get; private set; }
     public string? Bio { get; private set; }
     public string? GoogleId { get; private set; }
+    public bool IsDeleted { get; private set; } = false;
+    public DateTime? DeletedAt { get; private set; } = null;
 
     #pragma warning disable S1144
     public DateTime CreatedAt { get; private set; }
@@ -71,6 +73,31 @@ public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents
     /// </summary>
     public void ConfirmEmailFromGoogle() => EmailConfirmed = true;
 
+    public void Ban()
+    {
+        LockoutEnabled = true;
+        LockoutEnd = DateTimeOffset.MaxValue;
+        RaiseDomainEvent(new UserBannedDomainEvent(Id));
+    }
+
+    public void Unban()
+    {
+        LockoutEnd = null;
+        RaiseDomainEvent(new UserUnbannedDomainEvent(Id));
+    }
+
+    public void SoftDelete()
+    {
+        IsDeleted = true;
+        DeletedAt = DateTime.UtcNow;
+    }
+
+    public void Recover()
+    {
+        IsDeleted = false;
+        DeletedAt = null;
+    }
+
     /// <summary>Raise domain event from outside the entity (e.g. from a command handler after UserManager creates user).</summary>
     /// <remarks>Required because UserManager.CreateAsync persists immediately, before handler can raise events through normal flow.</remarks>
     public void RaiseUserRegistered(string emailConfirmationToken)
@@ -80,4 +107,9 @@ public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents
     /// <remarks>Same rationale as <see cref="RaiseUserRegistered"/>: called by Application layer after UserManager operation.</remarks>
     public void RaisePasswordResetRequested(string token)
         => RaiseDomainEvent(new PasswordResetRequestedDomainEvent(Id, Email!, FirstName, token));
+
+    /// <summary>Raise domain event from outside the entity (after UserManager role operation completes).</summary>
+    /// <remarks>Same rationale as <see cref="RaiseUserRegistered"/>: Identity operations persist immediately.</remarks>
+    public void RaiseRoleChanged(string role, bool assigned)
+        => RaiseDomainEvent(new UserRoleChangedDomainEvent(Id, role, assigned));
 }

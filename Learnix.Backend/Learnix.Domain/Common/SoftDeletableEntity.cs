@@ -10,4 +10,10 @@ public abstract class SoftDeletableEntity : BaseEntity, ISoftDeletable
         IsDeleted = true;
         DeletedAt = DateTime.UtcNow;
     }
+
+    public void Recover()
+    {
+        IsDeleted = false;
+        DeletedAt = null;
+    }
 }
