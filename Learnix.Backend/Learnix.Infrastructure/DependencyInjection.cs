@@ -21,7 +21,9 @@ using Learnix.Application.TestAttempts.Abstractions;
 using Learnix.Application.Lessons.Abstractions;
 using Learnix.Application.Users.Abstractions;
 using Learnix.Application.Reviews.Abstractions;
+using Learnix.Application.Achievements.Abstractions;
 using Learnix.Domain.Entities;
+using Learnix.Infrastructure.Services.Achievements;
 using Learnix.Infrastructure.AiChat.Anthropic;
 using Learnix.Infrastructure.AiChat.Gemini;
 using Learnix.Infrastructure.Identity;
@@ -42,6 +44,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
+using System.Reflection;
 using System.Text;
 
 namespace Learnix.Infrastructure;
@@ -167,6 +170,18 @@ public static class DependencyInjection
         services.AddScoped<ICertificateRepository, CertificateRepository>();
         services.AddScoped<ITestAttemptRepository, TestAttemptRepository>();
         services.AddScoped<ICourseReviewRepository, CourseReviewRepository>();
+        services.AddScoped<IUserAchievementRepository, UserAchievementRepository>();
+        services.AddScoped<IUserAchievementProgressRepository, UserAchievementProgressRepository>();
+        services.AddScoped<IUserCompletedCategoryRepository, UserCompletedCategoryRepository>();
+
+        // Achievements
+        services.AddScoped<IAchievementEvaluator, AchievementEvaluator>();
+
+        // Register MediatR notification handlers defined in the Infrastructure assembly
+        // (e.g., outbox event handlers that translate domain events into outbox messages).
+        // The Application-layer AddMediatR only scans its own assembly.
+        services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
         // Storage
         services.AddSingleton(sp =>
