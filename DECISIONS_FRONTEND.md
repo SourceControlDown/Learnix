@@ -950,7 +950,7 @@ export function useCreateCourse() {
 
 | Інструмент | Вибір |
 |---|---|
-| Package manager | **pnpm** |
+| Package manager | **npm 10+** (ships with Node 20) |
 | Node version | **20 LTS** (зафіксовано в `.nvmrc`) |
 | Bundler | Vite (йде з шаблону React + TS) |
 
@@ -986,7 +986,7 @@ export function useCreateCourse() {
 Бек повертає `uploadUrl` (тимчасовий SAS URL) + `blobUrl` (фінальний URL для збереження в entity). Фронт робить `PUT` файлу напряму на Azure, потім шле `blobUrl` у відповідний Command (наприклад `CreateVideoLessonCommand`).
 
 **Чому:**
-- **pnpm** — швидший за npm, економить диск через симлінки, стандарт у 2025 у великих проєктах (Vercel, Vue)
+- **Зміна від першої редакції:** спочатку планувався pnpm, але на Windows він призвів до критичної несумісності з drive layout (store-dir у корені диска, EPERM на системних папках, втрата даних). Для cross-platform надійності (Win/Mac/Linux) повертаємось до npm — у v10 він достатньо швидкий, lockfile детермінований, не має платформо-специфічних квирків.
 - **Node 20 LTS** — активний LTS до квітня 2026, потім maintenance LTS до 2027
 - **Husky + lint-staged** — не дають закомітити код з ESLint/Prettier помилками. Врятовує від "забув запустити lint"
 - **lucide-react** — бандлиться shadcn CLI, 1500+ іконок, tree-shakable
@@ -999,7 +999,7 @@ export function useCreateCourse() {
 
 | Відкинуто | Чому |
 |---|---|
-| npm | Повільніше ніж pnpm, дублює пакети на диску |
+| pnpm | На Windows ламається через store-dir у корені диска. Hardlinks не працюють крос-дисково. На Linux/Mac працює добре, але cross-platform надійність важливіша за економію диска. |
 | yarn | Втрачає популярність у 2025 |
 | Heroicons | Менший набір ніж Lucide |
 | dayjs | Робочий, але date-fns функціональніший |
@@ -1015,7 +1015,7 @@ export function useCreateCourse() {
 - `.prettierrc` — конфіг Prettier
 - `.prettierignore`, `.eslintignore`
 - `.husky/` — pre-commit hook
-- `package.json` → `"engines": { "node": ">=20", "pnpm": ">=8" }`
+- `package.json` → `"engines": { "node": ">=20", "npm": ">=10" }`
 - `package.json` → `lint-staged` секція
 
 ### Installation cheat sheet

@@ -1,8 +1,11 @@
   {
     "permissions": {
-      "allow": [        
+      "allow": [
         "Search(*)",
         "Read(.env.example)",
+        "Bash(ls \"*\")",
+        "Bash(ls '*')",
+        "Bash(ls *\\\\*)",
         "Bash(dotnet build *)",
         "Bash(cd *; dotnet build *)",
         "Bash(dotnet test *)",
