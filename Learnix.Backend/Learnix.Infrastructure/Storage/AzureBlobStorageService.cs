@@ -34,6 +34,7 @@ internal sealed class AzureBlobStorageService(
         [UploadTarget.CourseCover] = 10L * 1024 * 1024,          // 10 MB
         [UploadTarget.LessonVideo] = 2L * 1024 * 1024 * 1024,    // 2 GB
         [UploadTarget.Certificate] = 5L * 1024 * 1024,           // 5 MB
+        [UploadTarget.CategoryImage] = 2L * 1024 * 1024,         // 2 MB
     };
 
     private static readonly Dictionary<UploadTarget, HashSet<string>> AllowedContentTypes = new()
@@ -42,6 +43,7 @@ internal sealed class AzureBlobStorageService(
         [UploadTarget.CourseCover] = ["image/jpeg", "image/png", "image/webp"],
         [UploadTarget.LessonVideo] = ["video/mp4", "video/webm"],
         [UploadTarget.Certificate] = ["application/pdf"],
+        [UploadTarget.CategoryImage] = ["image/jpeg", "image/png", "image/webp"],
     };
 
     public Task<UploadUrlResponse> GenerateUploadUrlAsync(
@@ -181,6 +183,7 @@ internal sealed class AzureBlobStorageService(
             UploadTarget.CourseCover => _options.CourseCoverContainer,
             UploadTarget.LessonVideo => _options.LessonVideoContainer,
             UploadTarget.Certificate => _options.CertificateContainer,
+            UploadTarget.CategoryImage => _options.CategoryImageContainer,
             _ => throw new ArgumentOutOfRangeException(nameof(target))
         };
         var blobName = $"{Guid.NewGuid():N}";

@@ -20,6 +20,7 @@ internal sealed class BlobStorageBootstrapper(
             options.Value.CourseCoverContainer,
             options.Value.LessonVideoContainer,
             options.Value.CertificateContainer,
+            options.Value.CategoryImageContainer,
         };
 
         foreach (var name in containers)
