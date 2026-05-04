@@ -1,7 +1,9 @@
+using Learnix.Application.Achievements.Abstractions;
 using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Infrastructure.Outbox;
 using Learnix.Infrastructure.Outbox.Payloads;
+using Learnix.Infrastructure.Outbox.Payloads.Achievements;
 using Learnix.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +37,7 @@ internal sealed class OutboxProcessorService(
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
             var blobStorage = scope.ServiceProvider.GetRequiredService<IBlobStorageService>();
+            var achievementEvaluator = scope.ServiceProvider.GetRequiredService<IAchievementEvaluator>();
 
             var messages = await db.OutboxMessages
                 .Where(m => m.ProcessedAt == null && m.NextRetryAt <= DateTime.UtcNow)
@@ -46,7 +49,7 @@ internal sealed class OutboxProcessorService(
             {
                 try
                 {
-                    await DispatchAsync(message, emailSender, blobStorage, ct);
+                    await DispatchAsync(message, emailSender, blobStorage, achievementEvaluator, ct);
                     message.ProcessedAt = DateTime.UtcNow;
                 }
                 catch (Exception ex)
@@ -77,6 +80,7 @@ internal sealed class OutboxProcessorService(
         OutboxMessage message,
         IEmailSender emailSender,
         IBlobStorageService blobStorage,
+        IAchievementEvaluator achievementEvaluator,
         CancellationToken ct)
     {
         switch (message.Type)
@@ -133,6 +137,37 @@ internal sealed class OutboxProcessorService(
             {
                 var payload = JsonSerializer.Deserialize<SendCourseAdminActionEmailPayload>(message.Payload)!;
                 await emailSender.SendCourseAdminDeletedAsync(payload.ToEmail, payload.InstructorFirstName, payload.CourseTitle, ct);
+                break;
+            }
+            case OutboxMessageTypes.EvaluateLessonCompleted:
+            {
+                var payload = JsonSerializer.Deserialize<EvaluateLessonCompletedPayload>(message.Payload)!;
+                await achievementEvaluator.OnLessonCompletedAsync(payload.UserId, ct);
+                break;
+            }
+            case OutboxMessageTypes.EvaluateEnrollmentCompleted:
+            {
+                var payload = JsonSerializer.Deserialize<EvaluateEnrollmentCompletedPayload>(message.Payload)!;
+                await achievementEvaluator.OnEnrollmentCompletedAsync(payload.UserId, payload.CourseId, ct);
+                break;
+            }
+            case OutboxMessageTypes.EvaluateTestSubmitted:
+            {
+                var payload = JsonSerializer.Deserialize<EvaluateTestSubmittedPayload>(message.Payload)!;
+                await achievementEvaluator.OnTestSubmittedAsync(
+                    payload.UserId, payload.QuestionsCount, payload.DurationSeconds, payload.Passed, ct);
+                break;
+            }
+            case OutboxMessageTypes.EvaluateProfileChanged:
+            {
+                var payload = JsonSerializer.Deserialize<EvaluateProfileChangedPayload>(message.Payload)!;
+                await achievementEvaluator.OnProfileChangedAsync(payload.UserId, ct);
+                break;
+            }
+            case OutboxMessageTypes.NotifyAchievementUnlocked:
+            {
+                // Phase 2 wires this to SignalR; until then the message is acknowledged.
+                _ = JsonSerializer.Deserialize<NotifyAchievementUnlockedPayload>(message.Payload);
                 break;
             }
             default:

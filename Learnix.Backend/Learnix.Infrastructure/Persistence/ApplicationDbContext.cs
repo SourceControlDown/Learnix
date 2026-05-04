@@ -25,6 +25,9 @@ public class ApplicationDbContext(
     public DbSet<Certificate> Certificates => Set<Certificate>();
     public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
     public DbSet<CourseReview> CourseReviews => Set<CourseReview>();
+    public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
+    public DbSet<UserAchievementProgress> UserAchievementProgresses => Set<UserAchievementProgress>();
+    public DbSet<UserCompletedCategory> UserCompletedCategories => Set<UserCompletedCategory>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)

@@ -11,6 +11,13 @@ public static class OutboxMessageTypes
     public const string UserRoleChangedEmail = "UserRoleChangedEmail";
     public const string CourseAdminUnpublishedEmail = "CourseAdminUnpublishedEmail";
     public const string CourseAdminDeletedEmail = "CourseAdminDeletedEmail";
+
+    public const string EvaluateLessonCompleted = "EvaluateLessonCompleted";
+    public const string EvaluateEnrollmentCompleted = "EvaluateEnrollmentCompleted";
+    public const string EvaluateTestSubmitted = "EvaluateTestSubmitted";
+    public const string EvaluateProfileChanged = "EvaluateProfileChanged";
+
+    public const string NotifyAchievementUnlocked = "NotifyAchievementUnlocked";
 }
 
 public record DeleteBlobPayload(string BlobPath);
