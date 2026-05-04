@@ -1,13 +1,4 @@
-﻿@import '@fontsource/dm-sans/400.css';
-@import '@fontsource/dm-sans/500.css';
-@import '@fontsource/dm-sans/600.css';
-@import '@fontsource/dm-sans/700.css';
-@import '@fontsource/plus-jakarta-sans/600.css';
-@import '@fontsource/plus-jakarta-sans/700.css';
-@import '@fontsource/plus-jakarta-sans/800.css';
-@import '@fontsource/plus-jakarta-sans/900.css';
-
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -73,9 +64,9 @@
     /* Decorative radial-gradient background for landing hero */
     .hero-blob {
         background-image:
-                radial-gradient(circle at 20% 20%, hsl(var(--primary) / 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 50%, hsl(var(--accent) / 0.12) 0%, transparent 50%),
-                radial-gradient(circle at 40% 90%, hsl(var(--warning) / 0.08) 0%, transparent 50%);
+            radial-gradient(circle at 20% 20%, hsl(var(--primary) / 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 50%, hsl(var(--accent) / 0.12) 0%, transparent 50%),
+            radial-gradient(circle at 40% 90%, hsl(var(--warning) / 0.08) 0%, transparent 50%);
     }
 
     /* Native <details> chevron rotation for FAQ accordion */

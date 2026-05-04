@@ -1042,6 +1042,63 @@ pnpm dlx husky init
 
 ---
 
+## FADR-012: Localization — static const dictionaries in `src/const/localization/`
+
+**Рішення:** Весь UI-текст (заголовки, підписи, кнопки, FAQ, відгуки) зберігається у файлах-словниках у `src/const/localization/`. Компоненти і сторінки НЕ мають хардкоджених рядків — лише посилання на константи.
+
+**Структура:**
+```
+src/const/localization/
+  landingPage.ts      ← LANDING_PAGE.HERO, LANDING_PAGE.FAQ, ...
+  courseCatalog.ts    ← COURSE_CATALOG.FILTERS, ...
+  auth.ts             ← AUTH.LOGIN, AUTH.REGISTER, ...
+  errors.ts           ← ERRORS.GENERIC, ERRORS.NOT_FOUND, ...
+```
+
+**Конвенція файлу:**
+```ts
+// src/const/localization/landingPage.ts
+export const LANDING_PAGE = {
+  FAQ: {
+    heading: 'Common questions',
+    items: [{ q: '...', a: '...' }, ...],
+  },
+  HERO: {
+    badge: 'New cohorts every week',
+    cta: { primary: 'Browse courses', secondary: 'Become an instructor' },
+  },
+  // ...
+} as const;
+```
+
+**Використання в компоненті:**
+```tsx
+import { LANDING_PAGE } from '@/const/localization/landingPage';
+const { FAQ } = LANDING_PAGE;
+
+export function FaqSection() {
+  return <h2>{FAQ.heading}</h2>;
+}
+```
+
+**Чому:**
+- Єдине джерело правди для UI-тексту — редагування в одному файлі без пошуку по JSX
+- Готовність до i18n: заміна словника на перекладений не потребує змін у компонентах
+- Текст доступний за назвою (`FAQ.heading`), а не загубленим рядком у JSX
+- `as const` дає точні літеральні типи, TypeScript ловить опечатки при рефакторингу
+
+**Альтернативи:**
+- Зберігати текст у компонентах — швидко для прототипу, але погано масштабується (навіть без i18n — важко знайти і змінити всі копірайти чи дати)
+- `react-i18next` або `react-intl` — потужні, але overkill для v1 без активного i18n. Конвенція з const-словниками є природним кроком перед міграцією на бібліотеку
+- JSON файли з перекладами — обов'язковий крок при додаванні другої мови, але на v1 TS-файл зручніший (автокомпліт, `as const`)
+
+**Наслідки:**
+- Кожна нова сторінка пишеться з константою-словником з першого дня
+- PR review помічає "новий хардкоджений рядок" як порушення конвенції
+- При додаванні i18n — замінити `as const` об'єкт на виклик `t()` функції за зрозумілою схемою
+
+---
+
 ## Шаблон для нових записів
 
 ```

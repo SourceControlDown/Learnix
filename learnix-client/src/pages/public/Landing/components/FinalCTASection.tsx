@@ -1,4 +1,7 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { LANDING_PAGE } from '@/const/localization/landingPage';
+
+const { FINAL_CTA } = LANDING_PAGE;
 
 export function FinalCTASection() {
     return (
@@ -10,30 +13,28 @@ export function FinalCTASection() {
 
                     <div className="relative">
                         <h2 className="font-heading text-4xl font-bold md:text-5xl">
-                            Ready to learn something
+                            {FINAL_CTA.heading.line1}
                             <br />
-                            you'll actually use?
+                            {FINAL_CTA.heading.line2}
                         </h2>
                         <p className="mx-auto mt-5 max-w-xl text-lg text-background/70">
-                            Join 85,000+ learners. Start with a free course today — no credit card required.
+                            {FINAL_CTA.subtitle}
                         </p>
                         <div className="mt-8 flex flex-wrap justify-center gap-3">
                             <Link
                                 to="/register"
                                 className="rounded-lg bg-primary px-8 py-3.5 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                             >
-                                Get started free
+                                {FINAL_CTA.cta.primary}
                             </Link>
                             <Link
                                 to="/courses"
                                 className="rounded-lg border border-background/30 px-8 py-3.5 font-medium text-background transition-colors hover:bg-background/10"
                             >
-                                Browse courses
+                                {FINAL_CTA.cta.secondary}
                             </Link>
                         </div>
-                        <p className="mt-6 text-sm text-background/50">
-                            ✓ Free forever for free courses · ✓ 30-day refund on paid · ✓ Cancel anytime
-                        </p>
+                        <p className="mt-6 text-sm text-background/50">{FINAL_CTA.guarantees}</p>
                     </div>
                 </div>
             </div>

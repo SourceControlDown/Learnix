@@ -1,4 +1,5 @@
-﻿import { featuredCourses, landingCategories } from '@/mocks/landing.mock';
+import { useCategories } from '@/hooks/useCategories';
+import { useFeaturedCourses } from '@/hooks/useFeaturedCourses';
 import { AIAssistantSection } from './components/AIAssistantSection';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { CategoriesSection } from './components/CategoriesSection';
@@ -12,13 +13,16 @@ import { StatsSection } from './components/StatsSection';
 import { TestimonialsSection } from './components/TestimonialsSection';
 
 export default function LandingPage() {
+    const { data: categories = [], isLoading: categoriesLoading } = useCategories();
+    const { data: featuredCourses = [], isLoading: coursesLoading } = useFeaturedCourses();
+
     return (
         <>
             <AnnouncementBar />
             <HeroSection />
             <StatsSection />
-            <CategoriesSection categories={landingCategories} />
-            <FeaturedCoursesSection courses={featuredCourses} />
+            <CategoriesSection categories={categories} isLoading={categoriesLoading} />
+            <FeaturedCoursesSection courses={featuredCourses} isLoading={coursesLoading} />
             <HowItWorksSection />
             <AIAssistantSection />
             <TestimonialsSection />
