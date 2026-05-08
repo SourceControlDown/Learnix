@@ -8,6 +8,9 @@ import { publicRoutes } from './publicRoutes';
 
 const CoursePlayerPage = lazy(() => import('@/pages/student/CoursePlayer/CoursePlayerPage'));
 const TestLessonPage = lazy(() => import('@/pages/student/TestLesson/TestLessonPage'));
+const ProfilePage = lazy(() => import('@/pages/student/Profile/ProfilePage'));
+const AchievementsPage = lazy(() => import('@/pages/student/Achievements/AchievementsPage'));
+const CertificatesPage = lazy(() => import('@/pages/student/Certificates/CertificatesPage'));
 const InstructorDashboardPage = lazy(
     () => import('@/pages/instructor/Dashboard/InstructorDashboardPage'),
 );
@@ -17,6 +20,10 @@ const BecomeInstructorPage = lazy(
 );
 
 const wrap = (el: React.ReactElement) => <Suspense fallback={<PageFallback />}>{el}</Suspense>;
+
+const guardStudent = (el: React.ReactElement) => (
+    <RequireRole roles={['Student', 'Instructor', 'Admin']}>{el}</RequireRole>
+);
 
 const guardInstructor = (el: React.ReactElement) => (
     <RequireRole roles={['Instructor', 'Admin']}>{el}</RequireRole>
@@ -30,6 +37,18 @@ export const router = createBrowserRouter([
             {
                 path: '/become-instructor',
                 element: wrap(<BecomeInstructorPage />),
+            },
+            {
+                path: '/profile',
+                element: guardStudent(wrap(<ProfilePage />)),
+            },
+            {
+                path: '/achievements',
+                element: guardStudent(wrap(<AchievementsPage />)),
+            },
+            {
+                path: '/certificates',
+                element: guardStudent(wrap(<CertificatesPage />)),
             },
         ],
     },

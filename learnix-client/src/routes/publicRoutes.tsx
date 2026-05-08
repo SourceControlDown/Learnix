@@ -7,7 +7,7 @@ const LandingPage = lazy(() => import('@/pages/public/Landing/LandingPage'));
 const LoginPage = lazy(() => import('@/pages/public/Login/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/public/Register/RegisterPage'));
 const CourseCatalogPage = lazy(() => import('@/pages/public/CourseCatalog/CourseCatalogPage'));
-const ProfilePage = lazy(() => import('@/pages/student/Profile/ProfilePage'));
+const CourseDetailPage = lazy(() => import('@/pages/public/CourseDetail/CourseDetailPage'));
 const NotFoundPage = lazy(() => import('@/pages/public/NotFound/NotFoundPage'));
 
 const wrap = (el: ReactElement) => <Suspense fallback={<PageFallback />}>{el}</Suspense>;
@@ -17,6 +17,6 @@ export const publicRoutes: RouteObject[] = [
     { path: '/login', element: wrap(<LoginPage />) },
     { path: '/register', element: wrap(<RegisterPage />) },
     { path: '/courses', element: wrap(<CourseCatalogPage />) },
-    { path: '/profile', element: wrap(<ProfilePage />) },
+    { path: '/courses/:courseId', element: wrap(<CourseDetailPage />) },
     { path: '*', element: wrap(<NotFoundPage />) },
 ];
