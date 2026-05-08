@@ -4,7 +4,6 @@ using Learnix.Domain.Events.InstructorApplications;
 using Learnix.Infrastructure.Outbox.Payloads;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace Learnix.Infrastructure.Outbox.EventHandlers.InstructorApplication;
 
@@ -26,13 +25,9 @@ internal sealed class InstructorApplicationApprovedHandler(OutboxDbContextHolder
 
         if (user is null) return;
 
-        db.OutboxMessages.Add(new OutboxMessage
-        {
-            Id = e.EventId,
-            Type = OutboxMessageTypes.InstructorApprovedEmail,
-            Payload = JsonSerializer.Serialize(new SendInstructorApprovedEmailPayload(user.Email!, user.FirstName)),
-            OccurredAt = DateTime.UtcNow,
-            NextRetryAt = DateTime.UtcNow,
-        });
+        db.OutboxMessages.Add(OutboxMessage.Create(
+            e.EventId,
+            OutboxMessageTypes.InstructorApprovedEmail,
+            new SendInstructorApprovedEmailPayload(user.Email!, user.FirstName)));
     }
 }

@@ -1,11 +1,9 @@
 using Learnix.Application.Common.Events;
 using Learnix.Domain.Entities;
 using Learnix.Domain.Events.User;
-using Learnix.Infrastructure.Outbox.Payloads;
 using Learnix.Infrastructure.Outbox.Payloads.Users;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace Learnix.Infrastructure.Outbox.EventHandlers.Users;
 
@@ -28,13 +26,9 @@ internal sealed class UserBannedHandler(OutboxDbContextHolder holder)
 
         if (user is null) return;
 
-        db.OutboxMessages.Add(new OutboxMessage
-        {
-            Id = e.EventId,
-            Type = OutboxMessageTypes.UserBannedEmail,
-            Payload = JsonSerializer.Serialize(new SendUserBannedEmailPayload(user.Email!, user.FirstName)),
-            OccurredAt = DateTime.UtcNow,
-            NextRetryAt = DateTime.UtcNow,
-        });
+        db.OutboxMessages.Add(OutboxMessage.Create(
+            e.EventId,
+            OutboxMessageTypes.UserBannedEmail,
+            new SendUserBannedEmailPayload(user.Email!, user.FirstName)));
     }
 }

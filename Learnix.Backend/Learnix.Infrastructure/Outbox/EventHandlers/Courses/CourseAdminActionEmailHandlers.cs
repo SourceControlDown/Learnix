@@ -4,7 +4,6 @@ using Learnix.Domain.Events.Course;
 using Learnix.Infrastructure.Outbox.Payloads;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace Learnix.Infrastructure.Outbox.EventHandlers.Courses;
 
@@ -70,14 +69,9 @@ file static class CourseAdminActionEmailHelper
 
         if (courseTitle is null) return null;
 
-        return new OutboxMessage
-        {
-            Id = eventId,
-            Type = messageType,
-            Payload = JsonSerializer.Serialize(
-                new SendCourseAdminActionEmailPayload(instructor.Email!, instructor.FirstName, courseTitle)),
-            OccurredAt = DateTime.UtcNow,
-            NextRetryAt = DateTime.UtcNow,
-        };
+        return OutboxMessage.Create(
+            eventId,
+            messageType,
+            new SendCourseAdminActionEmailPayload(instructor.Email!, instructor.FirstName, courseTitle));
     }
 }
