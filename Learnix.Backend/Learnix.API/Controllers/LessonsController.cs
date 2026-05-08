@@ -1,12 +1,15 @@
 ﻿using Learnix.API.Extensions;
 using Learnix.Application.Common.Models;
 using Learnix.Application.Lessons.Commands.CreatePostLesson;
+using Learnix.Application.Lessons.Commands.CreateTestLesson;
 using Learnix.Application.Lessons.Commands.CreateVideoLesson;
 using Learnix.Application.Lessons.Commands.DeleteLesson;
 using Learnix.Application.Lessons.Commands.ReorderLessons;
 using Learnix.Application.Lessons.Commands.UpdatePostLesson;
+using Learnix.Application.Lessons.Commands.UpdateTestLesson;
 using Learnix.Application.Lessons.Commands.UpdateVideoLesson;
 using Learnix.Application.Lessons.Queries.GetLessonContent;
+using Learnix.Domain.ValueObjects;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +32,22 @@ public sealed class LessonsController(ISender sender) : ControllerBase
     public sealed record UpdatePostLessonRequest(string Title, string Content);
 
     public sealed record ReorderLessonsRequest(IReadOnlyList<ReorderItem> Items);
+
+    public sealed record CreateTestLessonRequest(
+        string Title,
+        string? Description,
+        int? AttemptLimit,
+        int? CooldownMinutes,
+        int PassingThreshold,
+        IReadOnlyList<QuestionBlueprint> Questions);
+
+    public sealed record UpdateTestLessonRequest(
+        string Title,
+        string? Description,
+        int? AttemptLimit,
+        int? CooldownMinutes,
+        int PassingThreshold,
+        IReadOnlyList<QuestionBlueprint> Questions);
 
     // Get lesson content (student)
 
@@ -53,6 +72,22 @@ public sealed class LessonsController(ISender sender) : ControllerBase
                 courseId, sectionId, body.Title, body.VideoUrl, body.Description, body.DurationSeconds),
             ct);
         return result.ToActionResult(id => CreatedAtAction(nameof(CreateVideo),
+            new { courseId, sectionId }, new { id }));
+    }
+
+    [HttpPost("sections/{sectionId:guid}/lessons/test")]
+    public async Task<IActionResult> CreateTest(
+        Guid courseId,
+        Guid sectionId,
+        [FromBody] CreateTestLessonRequest body,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new CreateTestLessonCommand(
+                courseId, sectionId, body.Title, body.Description,
+                body.AttemptLimit, body.CooldownMinutes, body.PassingThreshold, body.Questions),
+            ct);
+        return result.ToActionResult(id => CreatedAtAction(nameof(CreateTest),
             new { courseId, sectionId }, new { id }));
     }
 
@@ -81,6 +116,21 @@ public sealed class LessonsController(ISender sender) : ControllerBase
         var result = await sender.Send(
             new UpdateVideoLessonCommand(
                 courseId, lessonId, body.Title, body.VideoUrl, body.Description, body.DurationSeconds),
+            ct);
+        return result.ToActionResult();
+    }
+
+    [HttpPatch("lessons/{lessonId:guid}/test")]
+    public async Task<IActionResult> UpdateTest(
+        Guid courseId,
+        Guid lessonId,
+        [FromBody] UpdateTestLessonRequest body,
+        CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new UpdateTestLessonCommand(
+                courseId, lessonId, body.Title, body.Description,
+                body.AttemptLimit, body.CooldownMinutes, body.PassingThreshold, body.Questions),
             ct);
         return result.ToActionResult();
     }

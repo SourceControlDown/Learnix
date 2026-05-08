@@ -1,6 +1,6 @@
 import { api } from './axios.instance';
 import type { PaginatedResult } from '@/types/api.types';
-import type { CourseDetailDto } from '@/types/course.types';
+import type { CourseDetailDto, ManageCourseCardDto, CourseForEditDto } from '@/types/course.types';
 
 export interface CourseFilters {
     search?: string;
@@ -40,6 +40,30 @@ export interface FeaturedCourseCardDto {
     badge: 'bestseller' | 'new' | null;
 }
 
+export interface InstructorCourseFilters {
+    search?: string;
+    skip?: number;
+    take?: number;
+    categoryId?: string;
+}
+
+export interface CreateCourseRequest {
+    categoryId: string;
+    title: string;
+    description: string;
+    price: number;
+    tags?: string[];
+}
+
+export interface UpdateCourseRequest {
+    categoryId: string;
+    title: string;
+    description: string;
+    price: number;
+    coverImageUrl: string | null;
+    tags: string[];
+}
+
 export const coursesApi = {
     getPublic: (filters: CourseFilters = {}) =>
         api
@@ -49,4 +73,27 @@ export const coursesApi = {
     getFeatured: () => api.get<FeaturedCourseCardDto[]>('/courses/featured').then((r) => r.data),
 
     getById: (id: string) => api.get<CourseDetailDto>(`/courses/${id}`).then((r) => r.data),
+
+    // Instructor methods
+    getMine: (filters: InstructorCourseFilters = {}) =>
+        api
+            .get<PaginatedResult<ManageCourseCardDto>>('/courses/mine', { params: filters })
+            .then((r) => r.data),
+
+    getForEdit: (id: string) =>
+        api.get<CourseForEditDto>(`/courses/${id}/edit`).then((r) => r.data),
+
+    create: (data: CreateCourseRequest) =>
+        api.post<{ courseId: string }>('/courses', data).then((r) => r.data),
+
+    update: (id: string, data: UpdateCourseRequest) =>
+        api.put(`/courses/${id}`, data).then((r) => r.data),
+
+    publish: (id: string) => api.post(`/courses/${id}/publish`).then((r) => r.data),
+
+    unpublish: (id: string) => api.post(`/courses/${id}/unpublish`).then((r) => r.data),
+
+    archive: (id: string) => api.post(`/courses/${id}/archive`).then((r) => r.data),
+
+    deleteCourse: (id: string) => api.delete(`/courses/${id}`).then((r) => r.data),
 };

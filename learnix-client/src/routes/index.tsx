@@ -1,18 +1,46 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
+import { InstructorLayout } from '@/components/layout/InstructorLayout';
 import { PageFallback } from '@/components/common/PageFallback';
+import { RequireRole } from '@/components/common/RequireRole';
 import { publicRoutes } from './publicRoutes';
 
 const CoursePlayerPage = lazy(() => import('@/pages/student/CoursePlayer/CoursePlayerPage'));
 const TestLessonPage = lazy(() => import('@/pages/student/TestLesson/TestLessonPage'));
+const InstructorDashboardPage = lazy(
+    () => import('@/pages/instructor/Dashboard/InstructorDashboardPage'),
+);
+const CourseEditorPage = lazy(() => import('@/pages/instructor/CourseEditor/CourseEditorPage'));
+const BecomeInstructorPage = lazy(
+    () => import('@/pages/public/BecomeInstructor/BecomeInstructorPage'),
+);
 
 const wrap = (el: React.ReactElement) => <Suspense fallback={<PageFallback />}>{el}</Suspense>;
+
+const guardInstructor = (el: React.ReactElement) => (
+    <RequireRole roles={['Instructor', 'Admin']}>{el}</RequireRole>
+);
 
 export const router = createBrowserRouter([
     {
         element: <PublicLayout />,
-        children: publicRoutes,
+        children: [
+            ...publicRoutes,
+            {
+                path: '/become-instructor',
+                element: wrap(<BecomeInstructorPage />),
+            },
+        ],
+    },
+    {
+        path: '/instructor',
+        element: guardInstructor(wrap(<InstructorLayout />)),
+        children: [
+            { index: true, element: wrap(<InstructorDashboardPage />) },
+            { path: 'courses/new', element: wrap(<CourseEditorPage />) },
+            { path: 'courses/:id/edit', element: wrap(<CourseEditorPage />) },
+        ],
     },
     {
         path: '/courses/:courseId/learn/:lessonId',
