@@ -28,4 +28,11 @@ export const queryKeys = {
         attempts: (courseId: string, lessonId: string) =>
             [...queryKeys.tests.all, 'attempts', courseId, lessonId] as const,
     },
+    instructor: {
+        myCourses: (filters: Record<string, unknown> = {}) => ['courses', 'mine', filters] as const,
+        courseForEdit: (id: string) => ['courses', 'edit', id] as const,
+    },
+    applications: {
+        mine: () => ['instructor-applications', 'mine'] as const,
+    },
 } as const;

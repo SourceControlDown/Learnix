@@ -1,0 +1,82 @@
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import MDEditor from '@uiw/react-md-editor';
+import { postLessonSchema, type PostLessonFormData } from '@/schemas/lesson.schema';
+import { INSTRUCTOR } from '@/const/localization/instructor';
+import type { CourseForEditLessonDto } from '@/types/course.types';
+
+interface Props {
+    lesson?: CourseForEditLessonDto;
+    isPending: boolean;
+    onSubmit: (data: PostLessonFormData) => void;
+    onCancel: () => void;
+}
+
+export function PostLessonForm({ lesson, isPending, onSubmit, onCancel }: Props) {
+    const {
+        register,
+        handleSubmit,
+        control,
+        formState: { errors },
+    } = useForm<PostLessonFormData>({
+        resolver: zodResolver(postLessonSchema),
+        defaultValues: {
+            title: lesson?.title ?? '',
+            content: lesson?.content ?? '',
+        },
+    });
+
+    return (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+                <label className="mb-1 block text-sm font-medium">{INSTRUCTOR.FIELD_TITLE}</label>
+                <input
+                    {...register('title')}
+                    placeholder={INSTRUCTOR.FIELD_TITLE_PLACEHOLDER}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                {errors.title && (
+                    <p className="mt-1 text-xs text-destructive">{errors.title.message}</p>
+                )}
+            </div>
+
+            <div>
+                <label className="mb-1 block text-sm font-medium">{INSTRUCTOR.FIELD_CONTENT}</label>
+                <Controller
+                    control={control}
+                    name="content"
+                    render={({ field }) => (
+                        <div data-color-mode="light">
+                            <MDEditor
+                                value={field.value}
+                                onChange={(val) => field.onChange(val ?? '')}
+                                height={300}
+                                preview="edit"
+                            />
+                        </div>
+                    )}
+                />
+                {errors.content && (
+                    <p className="mt-1 text-xs text-destructive">{errors.content.message}</p>
+                )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-secondary"
+                >
+                    {INSTRUCTOR.BTN_CANCEL}
+                </button>
+                <button
+                    type="submit"
+                    disabled={isPending}
+                    className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                >
+                    {isPending ? '...' : INSTRUCTOR.BTN_SAVE_LESSON}
+                </button>
+            </div>
+        </form>
+    );
+}
