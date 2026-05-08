@@ -166,10 +166,10 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| F-22 | Student profile page (edit, avatar upload, preferences) | not started | |
-| F-23 | Achievements display | not started | |
-| F-24 | Certificates list + download | not started | |
-| F-25 | Course reviews: leave review, view reviews | not started | |
+| F-22 | Student profile page (edit, avatar upload, preferences) | done | Preferences section placeholder (backend B-31 not started) |
+| F-23 | Achievements display | done | Static meta map for 10 backend codes; mark-seen on mount |
+| F-24 | Certificates list + download | done | Added GET /api/certificates/mine backend endpoint |
+| F-25 | Course reviews: leave review, view reviews | done | CourseDetailPage at /courses/:courseId with reviews section |
 
 ### Phase 6 — Chat & Notifications
 

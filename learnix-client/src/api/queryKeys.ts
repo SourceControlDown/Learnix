@@ -35,4 +35,22 @@ export const queryKeys = {
     applications: {
         mine: () => ['instructor-applications', 'mine'] as const,
     },
+    users: {
+        myProfile: () => ['users', 'me'] as const,
+    },
+    achievements: {
+        mine: () => ['achievements', 'me'] as const,
+    },
+    certificates: {
+        mine: () => ['certificates', 'mine'] as const,
+        course: (courseId: string) => ['certificates', 'course', courseId] as const,
+    },
+    reviews: {
+        all: ['reviews'] as const,
+        byCourse: (courseId: string) => ['reviews', 'course', courseId] as const,
+        mine: (courseId: string) => ['reviews', 'course', courseId, 'mine'] as const,
+    },
+    enrollments: {
+        mine: () => ['enrollments', 'mine'] as const,
+    },
 } as const;
