@@ -173,6 +173,7 @@ public static class DependencyInjection
         // Course services
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IPublicCourseCatalogSearchService, PublicCourseCatalogSearchService>();
+        services.AddScoped<IFeaturedCoursesService, FeaturedCoursesService>();
 
         // Repositories
         services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -256,6 +257,7 @@ public static class DependencyInjection
         services.AddHostedService<CertificatePdfGenerationService>();
         services.AddHostedService<MongoIndexInitializer>();
         services.AddHostedService<ChatSessionCleanupService>();
+        services.AddHostedService<CategoryCoursesCountReconciliationService>();
 
         return services;
     }

@@ -1,4 +1,6 @@
-﻿namespace Learnix.Infrastructure.Outbox;
+﻿using System.Text.Json;
+
+namespace Learnix.Infrastructure.Outbox;
 
 public class OutboxMessage
 {
@@ -13,4 +15,13 @@ public class OutboxMessage
 
     // for exponential backoff
     public DateTime? NextRetryAt { get; set; }
+
+    public static OutboxMessage Create<TPayload>(Guid id, string type, TPayload payload) => new()
+    {
+        Id = id,
+        Type = type,
+        Payload = JsonSerializer.Serialize(payload),
+        OccurredAt = DateTime.UtcNow,
+        NextRetryAt = DateTime.UtcNow,
+    };
 }

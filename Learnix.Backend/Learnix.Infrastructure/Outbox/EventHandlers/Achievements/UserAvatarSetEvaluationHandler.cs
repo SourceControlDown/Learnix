@@ -1,8 +1,5 @@
-using Learnix.Application.Common.Events;
 using Learnix.Domain.Events.User;
 using Learnix.Infrastructure.Outbox.Payloads.Achievements;
-using MediatR;
-using System.Text.Json;
 
 namespace Learnix.Infrastructure.Outbox.EventHandlers.Achievements;
 
@@ -10,24 +7,9 @@ namespace Learnix.Infrastructure.Outbox.EventHandlers.Achievements;
 /// Avatar changes feed into the same profile-completeness check as <see cref="UserProfileUpdatedDomainEvent"/>.
 /// </summary>
 internal sealed class UserAvatarSetEvaluationHandler(OutboxDbContextHolder holder)
-    : INotificationHandler<DomainEventNotification<UserAvatarSetDomainEvent>>
+    : SimpleOutboxHandler<UserAvatarSetDomainEvent, EvaluateProfileChangedPayload>(holder)
 {
-    public Task Handle(
-        DomainEventNotification<UserAvatarSetDomainEvent> notification,
-        CancellationToken ct)
-    {
-        var e = notification.DomainEvent;
-        var db = holder.DbContext!;
-
-        db.OutboxMessages.Add(new OutboxMessage
-        {
-            Id = e.EventId,
-            Type = OutboxMessageTypes.EvaluateProfileChanged,
-            Payload = JsonSerializer.Serialize(new EvaluateProfileChangedPayload(e.UserId)),
-            OccurredAt = DateTime.UtcNow,
-            NextRetryAt = DateTime.UtcNow,
-        });
-
-        return Task.CompletedTask;
-    }
+    protected override string MessageType => OutboxMessageTypes.EvaluateProfileChanged;
+    protected override EvaluateProfileChangedPayload BuildPayload(UserAvatarSetDomainEvent e)
+        => new(e.UserId);
 }
