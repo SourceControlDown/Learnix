@@ -1,5 +1,6 @@
 import { api } from './axios.instance';
 import type { PaginatedResult } from '@/types/api.types';
+import type { CourseDetailDto } from '@/types/course.types';
 
 export interface CourseFilters {
     search?: string;
@@ -46,4 +47,6 @@ export const coursesApi = {
             .then((r) => r.data),
 
     getFeatured: () => api.get<FeaturedCourseCardDto[]>('/courses/featured').then((r) => r.data),
+
+    getById: (id: string) => api.get<CourseDetailDto>(`/courses/${id}`).then((r) => r.data),
 };
