@@ -28,7 +28,7 @@ export function useCategories() {
                         id: apiCat.id,
                         name: apiCat.name,
                         slug: apiCat.slug,
-                        coursesCount: mock?.coursesCount ?? 0,
+                        coursesCount: apiCat.coursesCount,
                         emoji: mock?.emoji ?? '📚',
                         iconBgClass: mock?.iconBgClass ?? 'bg-primary/10',
                         iconTextClass: mock?.iconTextClass ?? 'text-primary',

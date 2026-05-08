@@ -23,9 +23,27 @@ export interface PublicCourseCardDto {
     tags: string[];
 }
 
+/** Matches backend FeaturedCourseDto */
+export interface FeaturedCourseCardDto {
+    id: string;
+    title: string;
+    description: string;
+    coverImageUrl: string | null;
+    price: number;
+    isFree: boolean;
+    rating: number;
+    reviewsCount: number;
+    durationHours: number;
+    categoryName: string;
+    instructor: { id: string; fullName: string };
+    badge: 'bestseller' | 'new' | null;
+}
+
 export const coursesApi = {
     getPublic: (filters: CourseFilters = {}) =>
         api
             .get<PaginatedResult<PublicCourseCardDto>>('/courses', { params: filters })
             .then((r) => r.data),
+
+    getFeatured: () => api.get<FeaturedCourseCardDto[]>('/courses/featured').then((r) => r.data),
 };

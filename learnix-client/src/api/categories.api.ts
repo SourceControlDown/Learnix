@@ -6,6 +6,7 @@ export interface CategoryListItemDto {
     name: string;
     slug: string;
     imageUrl: string | null;
+    coursesCount: number;
 }
 
 export const categoriesApi = {
