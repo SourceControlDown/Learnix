@@ -65,7 +65,8 @@ internal sealed class RefreshTokenCommandHandler(
             user.Email,
             user.FirstName,
             user.LastName,
-            user.Roles);
+            user.Roles,
+            user.EmailConfirmed);
 
         var newRefresh = tokenService.GenerateRefreshToken();
 

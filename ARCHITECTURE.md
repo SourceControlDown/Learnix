@@ -654,6 +654,7 @@ DomainEventHandler (Application, in-process)
 ## Security
 
 - JWT 15 min access + 7-day refresh with rotation + replay protection + HttpOnly cookie (ADR-003, ADR-033, ADR-034)
+- Email confirmation soft restriction: unconfirmed users can browse freely; write actions (enrollment, payment, reviews, messaging, instructor application) gated by `EmailConfirmed` ASP.NET Core policy on `email_verified` JWT claim (ADR-AUTH-014)
 - Refresh tokens: SHA-256 hash in PostgreSQL. Plain token only in HttpOnly client cookie. DB leak does not compromise sessions
 - Background cleanup: `RefreshTokenCleanupHostedService` removes revoked/expired tokens older than `ExpiresAt + 7d` daily
 - Google OAuth via GIS ID token flow — no Authorization Code flow, no Client Secret (ADR-036)
@@ -751,10 +752,37 @@ new CookieOptions
 - `UserId: Guid?` — null for anonymous requests
 - `Email: string?`
 - `IsAuthenticated: bool`
+- `IsEmailConfirmed: bool` — reads `email_verified` claim; used by the `EmailConfirmed` policy (ADR-AUTH-014)
 - `GetRoles() : IReadOnlyList<string>`
 - `IsInRole(role) : bool`
 
 Controllers do NOT use `ICurrentUserService` — authorization decisions belong in handlers (ADR-039).
+
+### Email Confirmation Gate (ADR-AUTH-014)
+
+After registration users are auto-logged in with `email_verified: false` in their JWT. A persistent frontend banner prompts confirmation. Specific write endpoints are protected by the named policy `EmailConfirmed`:
+
+```csharp
+// Learnix.API — registered in AddApiServices
+options.AddPolicy("EmailConfirmed", policy =>
+    policy.RequireClaim("email_verified", "true"));
+```
+
+**Gated endpoints** (`[Authorize(Policy = "EmailConfirmed")]`):
+
+| Endpoint | Reason |
+|---|---|
+| `POST /api/enrollments` | Free course enrollment — all downstream actions (progress, tests, certificates) cascade from this gate |
+| Stripe checkout (Phase 9) | Paid enrollment — creates the same `Enrollment` record on payment success |
+| `POST /api/instructor-applications` | Triggers admin review; unverified spam is a moderation risk |
+| `POST /api/courses/{id}/reviews` | Public content tied to a verified identity |
+| `PUT /api/courses/{id}/reviews/{reviewId}` | Same |
+| `POST /api/messages/conversations/start-or-get` | First human contact; requires trust |
+| `POST /api/messages/conversations/{id}/messages` | Same |
+
+**Not gated:** catalog browsing, course detail, reading reviews, own profile (read + edit), AI chat. Progress / tests / certificates cascade from enrollment — no separate gate needed.
+
+The check is at the controller (HTTP) level, not inside handlers — "is identity verified?" is an auth concern, not domain logic (consistent with ADR-013 which scopes handler auth checks to resource-based owner decisions).
 
 Typical handler pattern:
 ```csharp

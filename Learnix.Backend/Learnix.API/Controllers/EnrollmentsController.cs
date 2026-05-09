@@ -13,6 +13,7 @@ namespace Learnix.API.Controllers;
 public sealed class EnrollmentsController(ISender sender) : ControllerBase
 {
     [HttpPost]
+    [Authorize(Policy = "EmailConfirmed")]
     public async Task<IActionResult> Enroll(
         [FromBody] EnrollInCourseCommand command,
         CancellationToken ct)

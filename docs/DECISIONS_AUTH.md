@@ -312,6 +312,46 @@ Refresh token передається через HttpOnly + Secure + SameSite=Str
 
 ---
 
+## ADR-014: Email confirmation soft restriction via ASP.NET Core authorization policy
+
+**Рішення:** Після реєстрації юзер автоматично логіниться, але email залишається непідтвердженим. Persistent banner у UI нагадує підтвердити email. Write-дії з реальним платформним впливом захищені named policy `EmailConfirmed`, яка перевіряє claim `email_verified` у JWT. Непідтверджені юзери можуть вільно переглядати каталог і профіль; конкретні endpoints повертають 403 коли policy не виконується.
+
+**Заблоковані endpoints:**
+
+| Endpoint | Причина |
+|---|---|
+| `POST /api/enrollments` | Запис на безкоштовний курс — всі downstream дії (прогрес, тести, сертифікати) каскадують від цього gate |
+| Stripe checkout (Phase 9) | Запис на платний курс — при успішній оплаті створюється той самий `Enrollment` запис |
+| `POST /api/instructor-applications` | Запускає admin review; spam-заявки від неверифікованих email є модераційним ризиком |
+| `POST /api/courses/{id}/reviews` | Публічний контент прив'язаний до реальної ідентичності |
+| `PUT /api/courses/{id}/reviews/{reviewId}` | Те саме — редагування публічного контенту |
+| `POST /api/messages/conversations/start-or-get` | Перша точка людського контакту; вимагає довіри |
+| `POST /api/messages/conversations/{id}/messages` | Те саме |
+
+**Вільні (не блокуємо):** перегляд каталогу, сторінка курсу, читання відгуків, профіль (read + edit), AI chat. Прогрес / тести / сертифікати каскадують з Enrollment — окремий gate не потрібен.
+
+**Чому:**
+- **Controller-level concern, not domain concern.** "Чи підтверджена ідентичність юзера?" — це питання автентифікації/авторизації, не бізнес-логіки. Природне місце — `[Authorize]` attribute (той самий рівень що і role checks), не всередині handlers — узгоджується з ADR-013, який резервує handler-level auth-перевірки для resource-based (owner) рішень.
+- **Один механізм, не сім.** Єдина named policy декорує 7 endpoints. Альтернатива (перевірка `ICurrentUserService.IsEmailConfirmed` в кожному handler) розсіює auth-логіку по Application шару і ускладнює аудит.
+- **Soft restriction (не hard block).** Hard-block логіну/доступу до підтвердження email дає високий abandonment rate. Дозволити досліджувати платформу перед підтвердженням — industry standard (Slack, GitHub, Vercel).
+- **JWT claim = нуль зайвих DB-запитів.** Claim `email_verified: "true"/"false"` встановлюється під час логіну/реєстрації і живе в токені — без додаткових запитів на кожен request. Frontend зчитує той самий claim для відображення banner.
+
+**Альтернативи:**
+- **Hard-block логіну** — максимальна безпека, але висока ціна: UX погіршується, abandonment зростає. Відкинуто.
+- **Перевірка `IsEmailConfirmed` в кожному handler** — auth concern потрапляє в Application шар, порушує принцип "auth at the gate". Також ускладнює аудит: перевірки розсіяні по 7 handlers. Відкинуто.
+- **Middleware з перевіркою конкретних шляхів** — fragile: string path matching ламається при рефакторингу маршрутів. Відкинуто.
+- **Кастомний атрибут `[RequireEmailConfirmed]`** — еквівалентний named policy, але менш стандартний; ASP.NET Core authorization policies — правильний механізм для іменованих правил авторизації. Відкинуто.
+
+**Наслідки:**
+- `JwtTokenService.GenerateAccessToken` додає claim `email_verified: "true"/"false"` (string, consistent with OIDC standard)
+- `ICurrentUserService` розширюється: `bool IsEmailConfirmed`
+- `CurrentUserService` зчитує claim `email_verified` з `ClaimsPrincipal`
+- Нова named policy `EmailConfirmed` реєструється в `AddApiServices` (`Learnix.API`)
+- 7 endpoints отримують `[Authorize(Policy = "EmailConfirmed")]` поверх існуючого `[Authorize]`
+- Frontend: `isEmailConfirmed: boolean` додається до auth store; persistent banner відображається якщо `false`; при 403 від gated endpoint — modal "спочатку підтверди email" з кнопкою resend
+
+---
+
 ## Шаблон для нових записів
 
 ```

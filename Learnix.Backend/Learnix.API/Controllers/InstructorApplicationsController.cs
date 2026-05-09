@@ -17,6 +17,7 @@ namespace Learnix.API.Controllers;
 public sealed class InstructorApplicationsController(ISender sender) : ControllerBase
 {
     [HttpPost]
+    [Authorize(Policy = "EmailConfirmed")]
     public async Task<IActionResult> Submit([FromBody] SubmitApplicationCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
