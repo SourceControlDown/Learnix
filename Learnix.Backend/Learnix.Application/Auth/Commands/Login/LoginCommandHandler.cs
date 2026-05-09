@@ -26,11 +26,12 @@ internal sealed class LoginCommandHandler(
         var user = authResult.Value;
 
         var access = tokenService.GenerateAccessToken(
-            user.UserId, 
-            user.Email, 
-            user.FirstName, 
-            user.LastName, 
-            user.Roles);
+            user.UserId,
+            user.Email,
+            user.FirstName,
+            user.LastName,
+            user.Roles,
+            user.EmailConfirmed);
         
         var refresh = tokenService.GenerateRefreshToken();
 

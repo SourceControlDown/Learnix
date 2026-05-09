@@ -19,23 +19,20 @@ internal sealed class UserAuthenticationService(
         if (user is null)
             return Result.Fail<UserAuthenticationInfo>(new AuthenticationError("Invalid credentials."));
 
-        // SignInManager handles lockout counter and RequireConfirmedEmail = true policy
+        // lockoutOnFailure: true — SignInManager tracks failed attempts and applies lockout
         var signIn = await signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
 
         if (signIn.IsLockedOut)
             return Result.Fail<UserAuthenticationInfo>(
                 new AuthenticationError("Account is locked. Please try again later."));
 
-        if (signIn.IsNotAllowed)
-            return Result.Fail<UserAuthenticationInfo>(
-                new AuthenticationError("Email address not confirmed."));
-
         if (!signIn.Succeeded)
             return Result.Fail<UserAuthenticationInfo>(new AuthenticationError("Invalid credentials."));
 
         var roles = await userManager.GetRolesAsync(user);
         return Result.Ok(new UserAuthenticationInfo(
-            user.Id, user.Email!, user.FirstName, user.LastName, roles.ToList().AsReadOnly()));
+            user.Id, user.Email!, user.FirstName, user.LastName,
+            roles.ToList().AsReadOnly(), user.EmailConfirmed));
     }
 
     public async Task<Result<UserAuthenticationInfo>> GetAuthenticationInfoAsync(
@@ -47,6 +44,7 @@ internal sealed class UserAuthenticationService(
 
         var roles = await userManager.GetRolesAsync(user);
         return Result.Ok(new UserAuthenticationInfo(
-            user.Id, user.Email!, user.FirstName, user.LastName, roles.ToList().AsReadOnly()));
+            user.Id, user.Email!, user.FirstName, user.LastName,
+            roles.ToList().AsReadOnly(), user.EmailConfirmed));
     }
 }

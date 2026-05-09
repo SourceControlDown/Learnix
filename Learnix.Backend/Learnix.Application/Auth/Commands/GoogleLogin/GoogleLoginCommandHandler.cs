@@ -41,7 +41,8 @@ internal sealed class GoogleLoginCommandHandler(
 
         // 4. Generate tokens (same flow as regular Login)
         var access = tokenService.GenerateAccessToken(
-            authInfo.UserId, authInfo.Email, authInfo.FirstName, authInfo.LastName, authInfo.Roles);
+            authInfo.UserId, authInfo.Email, authInfo.FirstName, authInfo.LastName,
+            authInfo.Roles, authInfo.EmailConfirmed);
         var refresh = tokenService.GenerateRefreshToken();
 
         await refreshTokenRepository.AddAsync(

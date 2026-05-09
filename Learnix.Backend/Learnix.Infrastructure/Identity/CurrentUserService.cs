@@ -23,6 +23,9 @@ public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor)
 
     public string? Email => User?.FindFirstValue("email");
 
+    public bool IsEmailConfirmed =>
+        User?.FindFirstValue("email_verified") == "true";
+
     public IReadOnlyList<string> GetRoles() =>
         User?.FindAll("role").Select(c => c.Value).ToList() ?? [];
 

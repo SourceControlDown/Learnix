@@ -35,6 +35,7 @@ public sealed class CourseReviewsController(ISender sender) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "EmailConfirmed")]
     public async Task<IActionResult> Create(
         Guid courseId,
         [FromBody] CreateReviewRequest body,
@@ -45,6 +46,7 @@ public sealed class CourseReviewsController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{reviewId:guid}")]
+    [Authorize(Policy = "EmailConfirmed")]
     public async Task<IActionResult> Update(
         Guid courseId,
         Guid reviewId,

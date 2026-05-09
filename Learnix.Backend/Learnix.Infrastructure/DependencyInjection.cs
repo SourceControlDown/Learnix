@@ -90,7 +90,9 @@ public static class DependencyInjection
             .AddIdentity<User, IdentityRole<Guid>>(options =>
             {
                 options.User.RequireUniqueEmail = true;
-                options.SignIn.RequireConfirmedEmail = true;
+                // Email confirmation is enforced via JWT email_verified claim + EmailConfirmed
+                // authorization policy — not by blocking login (see ADR-AUTH-014).
+                options.SignIn.RequireConfirmedEmail = false;
 
                 options.Password.RequiredLength = AuthValidationConstants.PasswordMinLength;
                 options.Password.RequireDigit = true;
@@ -152,7 +154,13 @@ public static class DependencyInjection
                 };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            // Soft email-confirmation gate (ADR-AUTH-014).
+            // Applied to write endpoints that require a verified identity.
+            options.AddPolicy("EmailConfirmed", policy =>
+                policy.RequireClaim("email_verified", "true"));
+        });
 
         // Fail-fast validation
         var googleSettings = configuration.GetSection("Google").Get<GoogleSettings>()

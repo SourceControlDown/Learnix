@@ -36,6 +36,7 @@ public sealed class MessagesController(ISender sender) : ControllerBase
     }
 
     [HttpPost("conversations/start-or-get")]
+    [Authorize(Policy = "EmailConfirmed")]
     public async Task<IActionResult> StartOrGet(
         [FromBody] StartConversationRequest body,
         CancellationToken ct)
@@ -45,6 +46,7 @@ public sealed class MessagesController(ISender sender) : ControllerBase
     }
 
     [HttpPost("conversations/{conversationId:guid}/messages")]
+    [Authorize(Policy = "EmailConfirmed")]
     public async Task<IActionResult> SendMessage(
         Guid conversationId,
         [FromBody] SendChatMessageRequest body,
