@@ -660,6 +660,13 @@ namespace Learnix.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
+                        .HasDefaultValue("en");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)

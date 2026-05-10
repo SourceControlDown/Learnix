@@ -37,7 +37,9 @@ using Learnix.Infrastructure.Persistence.Mongo;
 using Learnix.Infrastructure.Persistence.Mongo.Conventions;
 using Learnix.Infrastructure.Persistence.Mongo.Repositories;
 using Learnix.Infrastructure.Persistence.Repositories;
+using Learnix.Infrastructure.Email;
 using Learnix.Infrastructure.Services;
+using Learnix.Infrastructure.Settings;
 using Learnix.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -177,7 +179,10 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IUserRoleService, UserRoleService>();
         services.AddScoped<OutboxDbContextHolder>();
-        services.AddSingleton<IEmailSender, ConsoleEmailSender>();
+        services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
+        services.AddLocalization(options => options.ResourcesPath = "Email/Resources");
+        services.AddSingleton<EmailRenderer>();
+        services.AddSingleton<IEmailSender, SmtpEmailSender>();
         services.AddHttpContextAccessor();
 
         // Course services

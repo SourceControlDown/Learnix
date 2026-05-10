@@ -1,0 +1,67 @@
+Додай локалізацію до шаблонів емейлів. Клауд розказав що робити:
+
+
+Додаєш ресурсні файли:
+
+Learnix.Infrastructure/Email/Resources/
+  EmailStrings.resx          ← англійська (default)
+  EmailStrings.uk.resx       ← українська
+EmailStrings.resx:
+
+xml
+<data name="ConfirmEmail_Subject" xml:space="preserve">
+  <value>Confirm your email</value>
+</data>
+<data name="ConfirmEmail_Greeting" xml:space="preserve">
+  <value>Hi, {0}!</value>
+</data>
+<data name="ConfirmEmail_Button" xml:space="preserve">
+  <value>Confirm Email</value>
+</data>
+EmailStrings.uk.resx:
+
+xml
+<data name="ConfirmEmail_Subject" xml:space="preserve">
+  <value>Підтвердіть свій email</value>
+</data>
+<data name="ConfirmEmail_Greeting" xml:space="preserve">
+  <value>Привіт, {0}!</value>
+</data>
+<data name="ConfirmEmail_Button" xml:space="preserve">
+  <value>Підтвердити Email</value>
+</data>
+У моделі шаблону додаєш рядки:
+
+csharp
+// Learnix.Infrastructure/Email/Models/ConfirmEmailViewModel.cs
+public record ConfirmEmailViewModel(
+    string FirstName,
+    string ConfirmationLink,
+    IStringLocalizer Strings);
+У EmailRenderer перед рендером виставляєш культуру:
+
+csharp
+// Learnix.Infrastructure/Email/EmailRenderer.cs
+CultureInfo.CurrentUICulture = new CultureInfo(user.Language ?? "en");
+
+var html = await _engine.CompileRenderAsync("ConfirmEmail", new ConfirmEmailViewModel(
+    user.FirstName,
+    confirmationLink,
+    _localizer));
+У шаблоні:
+
+html
+@* ConfirmEmail.cshtml *@
+<h1>@string.Format(Model.Strings["ConfirmEmail_Greeting"], Model.FirstName)</h1>
+<a href="@Model.ConfirmationLink">@Model.Strings["ConfirmEmail_Button"]</a>
+Реєструєш в DI:
+
+csharp
+// Learnix.Infrastructure/DependencyInjection.cs
+services.AddLocalization(options => 
+    options.ResourcesPath = "Email/Resources");
+Де зберігається мова юзера — потрібно поле Language на User або береш з Accept-Language хедера при реєстрації. Як плануєш?
+
+
+
+Локалізуй лише на укр і англ. Після цього онови ADR.

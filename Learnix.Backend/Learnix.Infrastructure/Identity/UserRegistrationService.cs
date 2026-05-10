@@ -16,10 +16,11 @@ internal sealed class UserRegistrationService(
     : IUserRegistrationService
 {
     public async Task<Result<(Guid UserId, string EmailConfirmationToken)>> RegisterAsync(
-        string email, 
-        string password, 
-        string firstName, 
+        string email,
+        string password,
+        string firstName,
         string lastName,
+        string language = "en",
         CancellationToken ct = default)
     {
         var existing = await userManager.FindByEmailAsync(email);
@@ -27,6 +28,7 @@ internal sealed class UserRegistrationService(
             return Result.Fail<(Guid, string)>(new ConflictError("User with this email already exists."));
 
         var user = new User(email, firstName, lastName);
+        user.SetLanguage(language);
         var createResult = await userManager.CreateAsync(user, password);
 
         if (!createResult.Succeeded)

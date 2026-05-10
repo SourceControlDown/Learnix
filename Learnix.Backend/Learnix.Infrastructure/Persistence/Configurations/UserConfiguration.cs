@@ -9,6 +9,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
+        builder.Property(u => u.Language)
+            .HasMaxLength(5)
+            .IsRequired()
+            .HasDefaultValue("en");
+
         builder.Property(u => u.FirstName)
             .HasMaxLength(UserConstants.FirstNameMaxLength)
             .IsRequired();

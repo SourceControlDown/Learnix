@@ -7,7 +7,8 @@ public sealed record RegisterCommand(
     string Email,
     string Password,
     string FirstName,
-    string LastName
+    string LastName,
+    string Language = "en"
 ) : IRequest<Result<RegisterResponse>>;
 
 public sealed record RegisterResponse(Guid UserId, string Email);

@@ -336,6 +336,56 @@ certificates/{code}.pdf
 
 ---
 
+## ADR-016: Email delivery — MailKit (SMTP) + RazorLight (.cshtml templates) + PreMailer.Net
+
+**Рішення:** Для відправки email використовуємо `MailKit` (SMTP-клієнт) та `RazorLight` для рендерингу `.cshtml` шаблонів. Для стилізації використовується `PreMailer.Net`, який автоматично перетворює CSS-класи з `styles.css` (через загальний `_Layout.cshtml`) на inline-стилі (`style="..."`). Локально — Mailpit у Docker (SMTP :1025, Web UI :8025). На Azure — SendGrid SMTP relay (smtp.sendgrid.net:587, username=`apikey`). `ConsoleEmailSender` видалено.
+
+**Чому:**
+- MailKit — промислово зрілий SMTP-клієнт для .NET, підтримує TLS/StartTLS, async.
+- RazorLight — standalone Razor engine, не потребує повного ASP.NET MVC pipeline; дозволяє рендерити `.cshtml` в Infrastructure layer.
+- PreMailer.Net — більшість email-клієнтів блокують зовнішні CSS-файли. PreMailer вирішує цю проблему, парсячи HTML і вбудовуючи класи як inline-стилі під час рендерингу. Це дозволяє мати чисті шаблони та спільний `_Layout.cshtml`.
+- Один і той самий `SmtpEmailSender` для всіх середовищ — змінюється тільки конфіг (`Smtp` секція). Немає vendor lock-in у коді.
+- Mailpit — легкий Docker-контейнер для локальної розробки (перехоплює всі листи, показує HTML у браузері).
+- SendGrid SMTP relay підтримується на free tier Azure та не потребує зміни коду порівняно з іншими SMTP-провайдерами.
+
+**Альтернативи:**
+- SendGrid SDK (`SendGrid` NuGet) — потребує окремої реалізації `IEmailSender`, vendor lock-in; перевага — не потрібен SMTP-порт 587.
+- Azure Communication Services Email — Azure-native, але вимагає верифікації домену та дорожче в налаштуванні.
+- `System.Net.Mail.SmtpClient` — застарілий, не підтримує async належним чином.
+
+**Наслідки:**
+- Шаблони у `Learnix.Infrastructure/Email/Templates/*.cshtml` та `.css`, копіюються до output directory (`Content`, `CopyToOutputDirectory=PreserveNewest`).
+- HTML-листи гарантовано сумісні з поштовими клієнтами, залишаючись читабельними для розробників.
+- `SmtpSettings` в `Learnix.Infrastructure/Settings/` (internal, тільки Infrastructure знає про SMTP).
+- При деплої на Azure: встановити `Smtp__Password` через Azure Key Vault / App Service Environment Variables.
+- Коли буде впроваджено MassTransit (ADR-002, Phase 6) — `SmtpEmailSender` залишається, змінюється тільки місце виклику (з Outbox → MassTransit consumer).
+
+---
+
+## ADR-017: Email localization — IStringLocalizer + .resx + Language on User
+
+**Рішення:** Email-шаблони локалізовані на англійську (default) та українську мови через `IStringLocalizer<EmailStrings>` та `.resx` ресурсні файли. Мова зберігається у полі `Language` на entity `User` (default `"en"`). При реєстрації береться з `Accept-Language` header. `SmtpEmailSender` встановлює `CultureInfo.CurrentUICulture` перед рендерингом; `IStringLocalizer` підхоплює культуру автоматично.
+
+**Чому:**
+- `IStringLocalizer` + `.resx` — стандартний .NET-підхід; без зовнішніх залежностей.
+- Мова на `User` entity — єдине місце правди для всіх email-подій (у т.ч. тих, що відправляються async через Outbox).
+- `Accept-Language` при реєстрації — без зайвої UX-складності (не потрібен окремий вибір мови).
+- Marker class `EmailStrings` у root namespace `Learnix.Infrastructure` + `ResourcesPath = "Email/Resources"` → файли `.resx` лежать у `Email/Resources/` поруч з шаблонами.
+
+**Альтернативи:**
+- Додати `Language` до domain events замість DB-запиту в хендлерах — відкинуто: `Language` є UI/infra concern, не доменний факт.
+- Окремий вибір мови в UI (profile setting) — планується як майбутнє покращення; зараз встановлюється при реєстрації.
+- Inline conditional замість `.resx` — не масштабується, важко підтримувати.
+
+**Наслідки:**
+- `User.Language` (varchar 5, default `en`) — нова колонка через міграцію `AddUserLanguage`.
+- Outbox payloads несуть `Language`; outbox handlers вибирають його в `SELECT`.
+- Application-layer event handlers (`UserRegisteredDomainEventHandler`, `PasswordResetRequestedDomainEventHandler`) роблять один додатковий SELECT для отримання `Language`.
+- `SmtpEmailSender` — singleton; `IStringLocalizerFactory` (singleton) ін'єктується, localizer створюється в constructor.
+- `.resx` файли: `Email/Resources/EmailStrings.resx` (EN) та `EmailStrings.uk.resx` (UK) — embedded resources, auto-included SDK.
+
+---
+
 ## Шаблон для нових записів
 
 ```

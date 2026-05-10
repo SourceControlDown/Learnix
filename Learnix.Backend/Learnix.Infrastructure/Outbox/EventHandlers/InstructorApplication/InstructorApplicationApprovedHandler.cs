@@ -20,7 +20,7 @@ internal sealed class InstructorApplicationApprovedHandler(OutboxDbContextHolder
         var user = await db.Set<User>()
             .AsNoTracking()
             .Where(u => u.Id == e.UserId)
-            .Select(u => new { u.Email, u.FirstName })
+            .Select(u => new { u.Email, u.FirstName, u.Language })
             .FirstOrDefaultAsync(ct);
 
         if (user is null) return;
@@ -28,6 +28,6 @@ internal sealed class InstructorApplicationApprovedHandler(OutboxDbContextHolder
         db.OutboxMessages.Add(OutboxMessage.Create(
             e.EventId,
             OutboxMessageTypes.InstructorApprovedEmail,
-            new SendInstructorApprovedEmailPayload(user.Email!, user.FirstName)));
+            new SendInstructorApprovedEmailPayload(user.Email!, user.FirstName, user.Language)));
     }
 }

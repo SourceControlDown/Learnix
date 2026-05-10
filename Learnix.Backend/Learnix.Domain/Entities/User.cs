@@ -22,6 +22,7 @@ public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents, ISoftDelet
 
     public string FirstName { get; private set; } = null!;
     public string LastName { get; private set; } = null!;
+    public string Language { get; private set; } = "en";
     public string? AvatarBlobPath { get; private set; }
     public string? Bio { get; private set; }
     public string? GoogleId { get; private set; }
@@ -53,6 +54,7 @@ public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents, ISoftDelet
         AvatarBlobPath = newBlobPath;
         RaiseDomainEvent(new UserAvatarSetDomainEvent(Id, newBlobPath));
     }
+    public void SetLanguage(string language) => Language = language;
     public void SetGoogleId(string googleId) => GoogleId = googleId;
 
     /// <summary>

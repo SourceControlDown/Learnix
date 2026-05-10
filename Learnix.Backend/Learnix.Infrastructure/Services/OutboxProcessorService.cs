@@ -91,13 +91,13 @@ internal sealed class OutboxProcessorService(
             case OutboxMessageTypes.InstructorApprovedEmail:
             {
                 var payload = JsonSerializer.Deserialize<SendInstructorApprovedEmailPayload>(message.Payload)!;
-                await emailSender.SendInstructorApplicationApprovedAsync(payload.ToEmail, payload.FirstName, ct);
+                await emailSender.SendInstructorApplicationApprovedAsync(payload.ToEmail, payload.FirstName, payload.Language, ct);
                 break;
             }
             case OutboxMessageTypes.InstructorRejectedEmail:
             {
                 var payload = JsonSerializer.Deserialize<SendInstructorRejectedEmailPayload>(message.Payload)!;
-                await emailSender.SendInstructorApplicationRejectedAsync(payload.ToEmail, payload.FirstName, payload.RejectionReason, ct);
+                await emailSender.SendInstructorApplicationRejectedAsync(payload.ToEmail, payload.FirstName, payload.RejectionReason, payload.Language, ct);
                 break;
             }
             case OutboxMessageTypes.DeleteBlob:
@@ -115,31 +115,31 @@ internal sealed class OutboxProcessorService(
             case OutboxMessageTypes.UserBannedEmail:
             {
                 var payload = JsonSerializer.Deserialize<SendUserBannedEmailPayload>(message.Payload)!;
-                await emailSender.SendUserBannedAsync(payload.ToEmail, payload.FirstName, ct);
+                await emailSender.SendUserBannedAsync(payload.ToEmail, payload.FirstName, payload.Language, ct);
                 break;
             }
             case OutboxMessageTypes.UserUnbannedEmail:
             {
                 var payload = JsonSerializer.Deserialize<SendUserUnbannedEmailPayload>(message.Payload)!;
-                await emailSender.SendUserUnbannedAsync(payload.ToEmail, payload.FirstName, ct);
+                await emailSender.SendUserUnbannedAsync(payload.ToEmail, payload.FirstName, payload.Language, ct);
                 break;
             }
             case OutboxMessageTypes.UserRoleChangedEmail:
             {
                 var payload = JsonSerializer.Deserialize<SendUserRoleChangedEmailPayload>(message.Payload)!;
-                await emailSender.SendUserRoleChangedAsync(payload.ToEmail, payload.FirstName, payload.Role, payload.Assigned, ct);
+                await emailSender.SendUserRoleChangedAsync(payload.ToEmail, payload.FirstName, payload.Role, payload.Assigned, payload.Language, ct);
                 break;
             }
             case OutboxMessageTypes.CourseAdminUnpublishedEmail:
             {
                 var payload = JsonSerializer.Deserialize<SendCourseAdminActionEmailPayload>(message.Payload)!;
-                await emailSender.SendCourseAdminUnpublishedAsync(payload.ToEmail, payload.InstructorFirstName, payload.CourseTitle, ct);
+                await emailSender.SendCourseAdminUnpublishedAsync(payload.ToEmail, payload.InstructorFirstName, payload.CourseTitle, payload.Language, ct);
                 break;
             }
             case OutboxMessageTypes.CourseAdminDeletedEmail:
             {
                 var payload = JsonSerializer.Deserialize<SendCourseAdminActionEmailPayload>(message.Payload)!;
-                await emailSender.SendCourseAdminDeletedAsync(payload.ToEmail, payload.InstructorFirstName, payload.CourseTitle, ct);
+                await emailSender.SendCourseAdminDeletedAsync(payload.ToEmail, payload.InstructorFirstName, payload.CourseTitle, payload.Language, ct);
                 break;
             }
             case OutboxMessageTypes.EvaluateLessonCompleted:
