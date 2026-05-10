@@ -15,6 +15,11 @@ internal sealed class EmailRenderer
             .Build();
     }
 
-    public Task<string> RenderAsync<TModel>(string templateFileName, TModel model)
-        => _engine.CompileRenderAsync(templateFileName, model);
+    public async Task<string> RenderAsync<TModel>(string templateFileName, TModel model)
+    {
+        var html = await _engine.CompileRenderAsync(templateFileName, model);
+        var preMailer = new PreMailer.Net.PreMailer(html);
+        var result = preMailer.MoveCssInline(removeStyleElements: true);
+        return result.Html;
+    }
 }
