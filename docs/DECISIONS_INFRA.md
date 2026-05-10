@@ -362,6 +362,30 @@ certificates/{code}.pdf
 
 ---
 
+## ADR-017: Email localization — IStringLocalizer + .resx + Language on User
+
+**Рішення:** Email-шаблони локалізовані на англійську (default) та українську мови через `IStringLocalizer<EmailStrings>` та `.resx` ресурсні файли. Мова зберігається у полі `Language` на entity `User` (default `"en"`). При реєстрації береться з `Accept-Language` header. `SmtpEmailSender` встановлює `CultureInfo.CurrentUICulture` перед рендерингом; `IStringLocalizer` підхоплює культуру автоматично.
+
+**Чому:**
+- `IStringLocalizer` + `.resx` — стандартний .NET-підхід; без зовнішніх залежностей.
+- Мова на `User` entity — єдине місце правди для всіх email-подій (у т.ч. тих, що відправляються async через Outbox).
+- `Accept-Language` при реєстрації — без зайвої UX-складності (не потрібен окремий вибір мови).
+- Marker class `EmailStrings` у root namespace `Learnix.Infrastructure` + `ResourcesPath = "Email/Resources"` → файли `.resx` лежать у `Email/Resources/` поруч з шаблонами.
+
+**Альтернативи:**
+- Додати `Language` до domain events замість DB-запиту в хендлерах — відкинуто: `Language` є UI/infra concern, не доменний факт.
+- Окремий вибір мови в UI (profile setting) — планується як майбутнє покращення; зараз встановлюється при реєстрації.
+- Inline conditional замість `.resx` — не масштабується, важко підтримувати.
+
+**Наслідки:**
+- `User.Language` (varchar 5, default `en`) — нова колонка через міграцію `AddUserLanguage`.
+- Outbox payloads несуть `Language`; outbox handlers вибирають його в `SELECT`.
+- Application-layer event handlers (`UserRegisteredDomainEventHandler`, `PasswordResetRequestedDomainEventHandler`) роблять один додатковий SELECT для отримання `Language`.
+- `SmtpEmailSender` — singleton; `IStringLocalizerFactory` (singleton) ін'єктується, localizer створюється в constructor.
+- `.resx` файли: `Email/Resources/EmailStrings.resx` (EN) та `EmailStrings.uk.resx` (UK) — embedded resources, auto-included SDK.
+
+---
+
 ## Шаблон для нових записів
 
 ```

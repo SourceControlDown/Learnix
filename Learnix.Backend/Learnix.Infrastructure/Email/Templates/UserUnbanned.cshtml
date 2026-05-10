@@ -1,14 +1,13 @@
 @model Learnix.Infrastructure.Email.Models.UserUnbannedModel
 @{
     Layout = "_Layout.cshtml";
-    ViewBag.Title = "Обліковий запис розблоковано";
+    ViewBag.Title = Model.Strings["UserUnbanned_Subject"].Value;
 }
 
-<h1 class="email-heading">Привіт, @Model.FirstName!</h1>
+<h1 class="email-heading">@string.Format(Model.Strings["UserUnbanned_Greeting"], Model.FirstName)</h1>
 <p class="email-text">
-    Ваш обліковий запис на платформі <strong>Learnix</strong> було <strong>розблоковано</strong>.
-    Тепер ви знову можете користуватися всіма функціями платформи.
+    @Model.Strings["UserUnbanned_Body"]
 </p>
 <p class="email-text">
-    Будь ласка, дотримуйтесь правил спільноти, щоб уникнути повторного блокування.
+    @Model.Strings["UserUnbanned_Warning"]
 </p>

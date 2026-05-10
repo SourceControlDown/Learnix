@@ -1,5 +1,6 @@
+@using System.Globalization
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -25,7 +26,7 @@
           </tr>
           <tr>
             <td class="email-footer">
-              <p class="email-footer-text">© Learnix — Платформа онлайн-навчання</p>
+              <p class="email-footer-text">© Learnix — @(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "uk" ? "Платформа онлайн-навчання" : "Online Learning Platform")</p>
             </td>
           </tr>
         </table>

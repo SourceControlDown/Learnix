@@ -1,23 +1,23 @@
 @model Learnix.Infrastructure.Email.Models.EmailConfirmationModel
 @{
     Layout = "_Layout.cshtml";
-    ViewBag.Title = "Підтвердіть електронну пошту";
+    ViewBag.Title = Model.Strings["EmailConfirmation_Subject"].Value;
 }
 
-<h1 class="email-heading">Привіт, @Model.FirstName!</h1>
+<h1 class="email-heading">@string.Format(Model.Strings["EmailConfirmation_Greeting"], Model.FirstName)</h1>
 <p class="email-text-lg">
-    Дякуємо за реєстрацію на <strong>Learnix</strong>. Натисніть кнопку нижче, щоб підтвердити вашу електронну пошту та активувати акаунт.
+    @Model.Strings["EmailConfirmation_Body"]
 </p>
 <table cellpadding="0" cellspacing="0" class="email-button-container">
     <tr>
         <td class="email-button-bg">
             <a href="@Model.ConfirmationLink" class="email-button">
-                Підтвердити пошту
+                @Model.Strings["EmailConfirmation_Button"]
             </a>
         </td>
     </tr>
 </table>
-<p class="email-text-sm">Якщо кнопка не працює, скопіюйте посилання:</p>
+<p class="email-text-sm">@Model.Strings["EmailConfirmation_FallbackText"]</p>
 <p style="margin:0;word-break:break-all;">
     <a href="@Model.ConfirmationLink" class="email-link-sm">@Model.ConfirmationLink</a>
 </p>

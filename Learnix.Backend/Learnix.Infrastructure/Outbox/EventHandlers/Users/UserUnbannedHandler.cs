@@ -21,7 +21,7 @@ internal sealed class UserUnbannedHandler(OutboxDbContextHolder holder)
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(u => u.Id == e.UserId)
-            .Select(u => new { u.Email, u.FirstName })
+            .Select(u => new { u.Email, u.FirstName, u.Language })
             .FirstOrDefaultAsync(ct);
 
         if (user is null) return;
@@ -29,6 +29,6 @@ internal sealed class UserUnbannedHandler(OutboxDbContextHolder holder)
         db.OutboxMessages.Add(OutboxMessage.Create(
             e.EventId,
             OutboxMessageTypes.UserUnbannedEmail,
-            new SendUserUnbannedEmailPayload(user.Email!, user.FirstName)));
+            new SendUserUnbannedEmailPayload(user.Email!, user.FirstName, user.Language)));
     }
 }

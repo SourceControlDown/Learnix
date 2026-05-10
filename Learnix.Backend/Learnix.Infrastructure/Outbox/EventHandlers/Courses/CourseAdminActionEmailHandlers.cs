@@ -55,7 +55,7 @@ file static class CourseAdminActionEmailHelper
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(u => u.Id == instructorId)
-            .Select(u => new { u.Email, u.FirstName })
+            .Select(u => new { u.Email, u.FirstName, u.Language })
             .FirstOrDefaultAsync(ct);
 
         if (instructor is null) return null;
@@ -72,6 +72,6 @@ file static class CourseAdminActionEmailHelper
         return OutboxMessage.Create(
             eventId,
             messageType,
-            new SendCourseAdminActionEmailPayload(instructor.Email!, instructor.FirstName, courseTitle));
+            new SendCourseAdminActionEmailPayload(instructor.Email!, instructor.FirstName, courseTitle, instructor.Language));
     }
 }

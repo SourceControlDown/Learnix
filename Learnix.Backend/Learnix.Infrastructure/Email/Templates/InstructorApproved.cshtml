@@ -1,21 +1,21 @@
 @model Learnix.Infrastructure.Email.Models.InstructorApprovedModel
 @{
     Layout = "_Layout.cshtml";
-    ViewBag.Title = "Заявку схвалено";
+    ViewBag.Title = Model.Strings["InstructorApproved_Subject"].Value;
 }
 
-<h1 class="email-heading">Вітаємо, @Model.FirstName!</h1>
+<h1 class="email-heading">@string.Format(Model.Strings["InstructorApproved_Greeting"], Model.FirstName)</h1>
 <p class="email-text">
-    Ваша заявка на отримання ролі <strong>Інструктора</strong> на платформі Learnix була <strong>схвалена</strong>.
+    @Model.Strings["InstructorApproved_Body"]
 </p>
 <p class="email-text-lg">
-    Тепер ви можете створювати та публікувати курси. Увійдіть до свого акаунта, щоб розпочати.
+    @Model.Strings["InstructorApproved_BodyCta"]
 </p>
 <table cellpadding="0" cellspacing="0">
     <tr>
         <td class="badge-success-container">
             <span class="badge-success">
-                ✓ Роль Інструктора активовано
+                @Model.Strings["InstructorApproved_Badge"]
             </span>
         </td>
     </tr>

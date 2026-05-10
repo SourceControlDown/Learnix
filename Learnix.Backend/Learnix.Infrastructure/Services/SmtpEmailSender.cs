@@ -4,115 +4,136 @@ using Learnix.Infrastructure.Email.Models;
 using Learnix.Infrastructure.Settings;
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
+using System.Globalization;
 
 namespace Learnix.Infrastructure.Services;
 
 internal sealed class SmtpEmailSender(
     IOptions<SmtpSettings> options,
     EmailRenderer renderer,
+    IStringLocalizerFactory localizerFactory,
     ILogger<SmtpEmailSender> logger) : IEmailSender
 {
     private readonly SmtpSettings _settings = options.Value;
+    private readonly IStringLocalizer _localizer = localizerFactory.Create(typeof(EmailStrings));
 
-    private const string SubjectConfirmation = "Підтвердіть електронну пошту — Learnix";
-    private const string SubjectPasswordReset = "Скидання пароля — Learnix";
-    private const string SubjectInstructorApproved = "Заявку схвалено — Learnix";
-    private const string SubjectInstructorRejected = "Заявку відхилено — Learnix";
-    private const string SubjectUserBanned = "Обліковий запис заблоковано — Learnix";
-    private const string SubjectUserUnbanned = "Обліковий запис розблоковано — Learnix";
-    private const string SubjectUserRoleChanged = "Зміна ролі — Learnix";
-    private const string SubjectCourseUnpublished = "Курс знято з публікації — Learnix";
-    private const string SubjectCourseDeleted = "Курс видалено — Learnix";
-
-    public async Task SendEmailConfirmationAsync(string toEmail, string firstName, string confirmationLink, CancellationToken ct = default)
+    public async Task SendEmailConfirmationAsync(string toEmail, string firstName, string confirmationLink, string language = "en", CancellationToken ct = default)
     {
+        CultureInfo.CurrentUICulture = new CultureInfo(language);
+        var subject = $"{_localizer["EmailConfirmation_Subject"]} — Learnix";
         var html = await renderer.RenderAsync("EmailConfirmation.cshtml", new EmailConfirmationModel
         {
             FirstName = firstName,
-            ConfirmationLink = confirmationLink
+            ConfirmationLink = confirmationLink,
+            Strings = _localizer
         });
-        await SendAsync(toEmail, SubjectConfirmation, html, ct);
+        await SendAsync(toEmail, subject, html, ct);
     }
 
-    public async Task SendPasswordResetAsync(string toEmail, string firstName, string resetLink, CancellationToken ct = default)
+    public async Task SendPasswordResetAsync(string toEmail, string firstName, string resetLink, string language = "en", CancellationToken ct = default)
     {
+        CultureInfo.CurrentUICulture = new CultureInfo(language);
+        var subject = $"{_localizer["PasswordReset_Subject"]} — Learnix";
         var html = await renderer.RenderAsync("PasswordReset.cshtml", new PasswordResetModel
         {
             FirstName = firstName,
-            ResetLink = resetLink
+            ResetLink = resetLink,
+            Strings = _localizer
         });
-        await SendAsync(toEmail, SubjectPasswordReset, html, ct);
+        await SendAsync(toEmail, subject, html, ct);
     }
 
-    public async Task SendInstructorApplicationApprovedAsync(string toEmail, string firstName, CancellationToken ct = default)
+    public async Task SendInstructorApplicationApprovedAsync(string toEmail, string firstName, string language = "en", CancellationToken ct = default)
     {
+        CultureInfo.CurrentUICulture = new CultureInfo(language);
+        var subject = $"{_localizer["InstructorApproved_Subject"]} — Learnix";
         var html = await renderer.RenderAsync("InstructorApproved.cshtml", new InstructorApprovedModel
         {
-            FirstName = firstName
+            FirstName = firstName,
+            Strings = _localizer
         });
-        await SendAsync(toEmail, SubjectInstructorApproved, html, ct);
+        await SendAsync(toEmail, subject, html, ct);
     }
 
-    public async Task SendInstructorApplicationRejectedAsync(string toEmail, string firstName, string? rejectionReason, CancellationToken ct = default)
+    public async Task SendInstructorApplicationRejectedAsync(string toEmail, string firstName, string? rejectionReason, string language = "en", CancellationToken ct = default)
     {
+        CultureInfo.CurrentUICulture = new CultureInfo(language);
+        var subject = $"{_localizer["InstructorRejected_Subject"]} — Learnix";
         var html = await renderer.RenderAsync("InstructorRejected.cshtml", new InstructorRejectedModel
         {
             FirstName = firstName,
-            RejectionReason = rejectionReason
+            RejectionReason = rejectionReason,
+            Strings = _localizer
         });
-        await SendAsync(toEmail, SubjectInstructorRejected, html, ct);
+        await SendAsync(toEmail, subject, html, ct);
     }
 
-    public async Task SendUserBannedAsync(string toEmail, string firstName, CancellationToken ct = default)
+    public async Task SendUserBannedAsync(string toEmail, string firstName, string language = "en", CancellationToken ct = default)
     {
+        CultureInfo.CurrentUICulture = new CultureInfo(language);
+        var subject = $"{_localizer["UserBanned_Subject"]} — Learnix";
         var html = await renderer.RenderAsync("UserBanned.cshtml", new UserBannedModel
         {
-            FirstName = firstName
+            FirstName = firstName,
+            Strings = _localizer
         });
-        await SendAsync(toEmail, SubjectUserBanned, html, ct);
+        await SendAsync(toEmail, subject, html, ct);
     }
 
-    public async Task SendUserUnbannedAsync(string toEmail, string firstName, CancellationToken ct = default)
+    public async Task SendUserUnbannedAsync(string toEmail, string firstName, string language = "en", CancellationToken ct = default)
     {
+        CultureInfo.CurrentUICulture = new CultureInfo(language);
+        var subject = $"{_localizer["UserUnbanned_Subject"]} — Learnix";
         var html = await renderer.RenderAsync("UserUnbanned.cshtml", new UserUnbannedModel
         {
-            FirstName = firstName
+            FirstName = firstName,
+            Strings = _localizer
         });
-        await SendAsync(toEmail, SubjectUserUnbanned, html, ct);
+        await SendAsync(toEmail, subject, html, ct);
     }
 
-    public async Task SendUserRoleChangedAsync(string toEmail, string firstName, string role, bool assigned, CancellationToken ct = default)
+    public async Task SendUserRoleChangedAsync(string toEmail, string firstName, string role, bool assigned, string language = "en", CancellationToken ct = default)
     {
+        CultureInfo.CurrentUICulture = new CultureInfo(language);
+        var subject = $"{_localizer["UserRoleChanged_Subject"]} — Learnix";
         var html = await renderer.RenderAsync("UserRoleChanged.cshtml", new UserRoleChangedModel
         {
             FirstName = firstName,
             Role = role,
-            Assigned = assigned
+            Assigned = assigned,
+            Strings = _localizer
         });
-        await SendAsync(toEmail, SubjectUserRoleChanged, html, ct);
+        await SendAsync(toEmail, subject, html, ct);
     }
 
-    public async Task SendCourseAdminUnpublishedAsync(string toEmail, string instructorFirstName, string courseTitle, CancellationToken ct = default)
+    public async Task SendCourseAdminUnpublishedAsync(string toEmail, string instructorFirstName, string courseTitle, string language = "en", CancellationToken ct = default)
     {
+        CultureInfo.CurrentUICulture = new CultureInfo(language);
+        var subject = $"{_localizer["CourseAdminUnpublished_Subject"]} — Learnix";
         var html = await renderer.RenderAsync("CourseAdminUnpublished.cshtml", new CourseAdminActionModel
         {
             InstructorFirstName = instructorFirstName,
-            CourseTitle = courseTitle
+            CourseTitle = courseTitle,
+            Strings = _localizer
         });
-        await SendAsync(toEmail, SubjectCourseUnpublished, html, ct);
+        await SendAsync(toEmail, subject, html, ct);
     }
 
-    public async Task SendCourseAdminDeletedAsync(string toEmail, string instructorFirstName, string courseTitle, CancellationToken ct = default)
+    public async Task SendCourseAdminDeletedAsync(string toEmail, string instructorFirstName, string courseTitle, string language = "en", CancellationToken ct = default)
     {
+        CultureInfo.CurrentUICulture = new CultureInfo(language);
+        var subject = $"{_localizer["CourseAdminDeleted_Subject"]} — Learnix";
         var html = await renderer.RenderAsync("CourseAdminDeleted.cshtml", new CourseAdminActionModel
         {
             InstructorFirstName = instructorFirstName,
-            CourseTitle = courseTitle
+            CourseTitle = courseTitle,
+            Strings = _localizer
         });
-        await SendAsync(toEmail, SubjectCourseDeleted, html, ct);
+        await SendAsync(toEmail, subject, html, ct);
     }
 
     private async Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct)

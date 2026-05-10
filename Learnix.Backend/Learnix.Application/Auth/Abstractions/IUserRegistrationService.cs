@@ -10,6 +10,7 @@ public interface IUserRegistrationService
         string password,
         string firstName,
         string lastName,
+        string language = "en",
         CancellationToken ct = default);
 
     Task<Result> ConfirmEmailAsync(

@@ -1,6 +1,8 @@
-﻿using Learnix.Application.Common.Abstractions.Messaging;
+using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Application.Common.Events;
 using Learnix.Application.Common.Settings;
+using Learnix.Application.Users.Abstractions;
+using Learnix.Application.Users.Specifications;
 using Learnix.Domain.Events;
 using MediatR;
 using Microsoft.AspNetCore.WebUtilities;
@@ -11,6 +13,7 @@ namespace Learnix.Application.Auth.EventHandlers;
 
 internal sealed class PasswordResetRequestedDomainEventHandler(
     IEmailSender emailSender,
+    IUserRepository userRepository,
     IOptions<AppSettings> appSettings)
     : INotificationHandler<DomainEventNotification<PasswordResetRequestedDomainEvent>>
 {
@@ -22,6 +25,11 @@ internal sealed class PasswordResetRequestedDomainEventHandler(
     {
         var domainEvent = notification.DomainEvent;
 
+        var user = await userRepository.FirstOrDefaultAsync(
+            new UserByIdSpecification(domainEvent.UserId), cancellationToken);
+
+        var language = user?.Language ?? "en";
+
         // Identity tokens contain '+', '/', '=' — must be base64-url encoded for safe URL transport
         var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(domainEvent.Token));
         var encodedEmail = Uri.EscapeDataString(domainEvent.Email);
@@ -30,6 +38,6 @@ internal sealed class PasswordResetRequestedDomainEventHandler(
                    $"?email={encodedEmail}&token={encodedToken}";
 
         await emailSender.SendPasswordResetAsync(
-            domainEvent.Email, domainEvent.FirstName, link, cancellationToken);
+            domainEvent.Email, domainEvent.FirstName, link, language, cancellationToken);
     }
 }

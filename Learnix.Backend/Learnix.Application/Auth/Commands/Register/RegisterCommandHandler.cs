@@ -14,6 +14,7 @@ internal sealed class RegisterCommandHandler(IUserRegistrationService registrati
             request.Password,
             request.FirstName,
             request.LastName,
+            request.Language,
             cancellationToken);
 
         return result.IsFailed

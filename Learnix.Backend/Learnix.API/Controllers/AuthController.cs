@@ -30,11 +30,15 @@ public sealed class AuthController(ISender sender) : ControllerBase
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
     public async Task<IActionResult> Register([FromBody] RegisterCommand command, CancellationToken ct)
     {
-        var result = await sender.Send(command, ct);
+        var language = ParseAcceptLanguage(Request.Headers.AcceptLanguage.ToString());
+        var result = await sender.Send(command with { Language = language }, ct);
 
         return result.ToActionResult(
             onSuccess: value => CreatedAtAction(nameof(Register), value));
     }
+
+    private static string ParseAcceptLanguage(string header) =>
+        header.StartsWith("uk", StringComparison.OrdinalIgnoreCase) ? "uk" : "en";
 
     [HttpPost("confirm-email")]
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]

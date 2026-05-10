@@ -1,16 +1,16 @@
 @model Learnix.Infrastructure.Email.Models.CourseAdminActionModel
 @{
     Layout = "_Layout.cshtml";
-    ViewBag.Title = "Курс видалено";
+    ViewBag.Title = Model.Strings["CourseAdminDeleted_Subject"].Value;
 }
 
-<h1 class="email-heading">Привіт, @Model.InstructorFirstName!</h1>
+<h1 class="email-heading">@string.Format(Model.Strings["CourseAdminDeleted_Greeting"], Model.InstructorFirstName)</h1>
 <p class="email-text">
-    Адміністратор платформи <strong>Learnix</strong> видалив ваш курс:
+    @Model.Strings["CourseAdminDeleted_Body"]
 </p>
 <div class="alert-danger">
     <p class="alert-danger-text">@Model.CourseTitle</p>
 </div>
 <p class="email-text">
-    Якщо у вас є питання щодо цього рішення, зверніться до служби підтримки.
+    @Model.Strings["CourseAdminDeleted_Support"]
 </p>

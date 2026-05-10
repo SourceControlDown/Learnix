@@ -180,6 +180,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRoleService, UserRoleService>();
         services.AddScoped<OutboxDbContextHolder>();
         services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
+        services.AddLocalization(options => options.ResourcesPath = "Email/Resources");
         services.AddSingleton<EmailRenderer>();
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
         services.AddHttpContextAccessor();
