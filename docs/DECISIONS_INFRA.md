@@ -336,6 +336,30 @@ certificates/{code}.pdf
 
 ---
 
+## ADR-016: Email delivery — MailKit (SMTP) + RazorLight (.cshtml templates)
+
+**Рішення:** Для відправки email використовуємо `MailKit` (SMTP-клієнт) та `RazorLight` для рендерингу `.cshtml` шаблонів. Локально — Mailpit у Docker (SMTP :1025, Web UI :8025). На Azure — SendGrid SMTP relay (smtp.sendgrid.net:587, username=`apikey`). `ConsoleEmailSender` видалено.
+
+**Чому:**
+- MailKit — промислово зрілий SMTP-клієнт для .NET, підтримує TLS/StartTLS, async.
+- RazorLight — standalone Razor engine, не потребує повного ASP.NET MVC pipeline; дозволяє рендерити `.cshtml` в Infrastructure layer.
+- Один і той самий `SmtpEmailSender` для всіх середовищ — змінюється тільки конфіг (`Smtp` секція). Немає vendor lock-in у коді.
+- Mailpit — легкий Docker-контейнер для локальної розробки (перехоплює всі листи, показує HTML у браузері).
+- SendGrid SMTP relay підтримується на free tier Azure та не потребує зміни коду порівняно з іншими SMTP-провайдерами.
+
+**Альтернативи:**
+- SendGrid SDK (`SendGrid` NuGet) — потребує окремої реалізації `IEmailSender`, vendor lock-in; перевага — не потрібен SMTP-порт 587.
+- Azure Communication Services Email — Azure-native, але вимагає верифікації домену та дорожче в налаштуванні.
+- `System.Net.Mail.SmtpClient` — застарілий, не підтримує async належним чином.
+
+**Наслідки:**
+- Шаблони у `Learnix.Infrastructure/Email/Templates/*.cshtml`, копіюються до output directory (`Content`, `CopyToOutputDirectory=PreserveNewest`).
+- `SmtpSettings` в `Learnix.Infrastructure/Settings/` (internal, тільки Infrastructure знає про SMTP).
+- При деплої на Azure: встановити `Smtp__Password` через Azure Key Vault / App Service Environment Variables.
+- Коли буде впроваджено MassTransit (ADR-002, Phase 6) — `SmtpEmailSender` залишається, змінюється тільки місце виклику (з Outbox → MassTransit consumer).
+
+---
+
 ## Шаблон для нових записів
 
 ```

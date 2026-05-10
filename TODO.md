@@ -30,7 +30,7 @@
 | B-10.5 | документувати Authentication pipeline в ARCHITECTURE.md | done | |
 | B-11 | Refresh token endpoint (rotation + revocation logic) | done | |
 | B-11.5 | Refresh token cleanup background service (видаляє токени старші expiry + 7 днів) | done | |
-| B-12 | Email confirmation flow (confirm endpoint + resend) | done (mock confirmation with console) | |
+| B-12 | Email confirmation flow (confirm endpoint + resend) | done | Real SMTP via MailKit + RazorLight .cshtml templates; ConsoleEmailSender removed (ADR-INFRA-016) |
 | B-13 | Password reset flow (forgot + reset endpoints) | done | |
 | B-14 | Google OAuth integration | done | |
 | B-15 | Rate limiting middleware (auth endpoints) | done | |
