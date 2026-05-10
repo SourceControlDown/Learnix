@@ -8,6 +8,9 @@ export interface CourseFilters {
     take?: number;
     categoryId?: string;
     instructorId?: string;
+    sortBy?: 'popular' | 'newest' | 'rating';
+    isFree?: boolean;
+    minRating?: number;
 }
 
 /** Matches backend PublicCourseCardDto */
@@ -22,6 +25,10 @@ export interface PublicCourseCardDto {
     isFree: boolean;
     enrollmentsCount: number;
     tags: string[];
+    averageRating: number;
+    reviewsCount: number;
+    categoryName: string;
+    instructorFullName: string;
 }
 
 /** Matches backend FeaturedCourseDto */
