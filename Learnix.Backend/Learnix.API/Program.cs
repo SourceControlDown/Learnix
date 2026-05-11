@@ -9,6 +9,11 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load .env — ignored if absent (CI / prod use real env vars)
+var envFile = Path.Combine(builder.Environment.ContentRootPath, ".env");
+if (File.Exists(envFile))
+    DotNetEnv.Env.NoClobber().Load(envFile);
+
 // Serilog
 builder.Host.UseSerilog((context, loggerConfiguration) =>
 {

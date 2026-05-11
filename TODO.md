@@ -50,6 +50,7 @@
 | B-23 | Lesson CRUD (Video/Post) + reordering | done | |
 | B-24 | File upload service (Azure Blob): video + cover image | done | |
 | B-25 | Instructor application flow (submit, admin approve/reject) | done | |
+| B-25.1 | Admin seeding: `AdminSeederHostedService` — creates first admin from `SeedAdmin:Email`/`SeedAdmin:Password` config on startup if no Admin exists. Dev defaults in `appsettings.Development.json` (`admin@learnix.dev` / `Admin123!`). Admin can promote others via existing `POST /api/admin/users/{id}/roles/{role}`. | done | |
 
 ### Phase 4 — Student Features
 
