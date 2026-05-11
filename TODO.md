@@ -50,6 +50,7 @@
 | B-23 | Lesson CRUD (Video/Post) + reordering | done | |
 | B-24 | File upload service (Azure Blob): video + cover image | done | |
 | B-25 | Instructor application flow (submit, admin approve/reject) | done | |
+| B-25.1 | Admin seeding: `AdminSeederHostedService` — creates first admin from `SeedAdmin:Email`/`SeedAdmin:Password` config on startup if no Admin exists. Dev defaults in `appsettings.Development.json` (`admin@learnix.dev` / `Admin123!`). Admin can promote others via existing `POST /api/admin/users/{id}/roles/{role}`. | done | |
 
 ### Phase 4 — Student Features
 
@@ -138,7 +139,7 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| F-09 | Course catalog page (grid, filters, search, pagination) | not started | |
+| F-09 | Course catalog page (grid, filters, search, pagination) | done | Server-side search/sort/filter (sortBy, isFree, minRating added to backend). URL-synced filters via useSearchParams. PublicCourseCardDto enriched with averageRating, reviewsCount, categoryName, instructorFullName. |
 | F-10 | Course detail page (description, sections, lessons list, enroll button) | not started | |
 | F-11 | Enrollment flow (free + paid) | not started | |
 

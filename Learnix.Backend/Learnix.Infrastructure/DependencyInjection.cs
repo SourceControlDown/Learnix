@@ -270,6 +270,7 @@ public static class DependencyInjection
         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
         services.AddHostedService<RoleSeederHostedService>();
+        services.AddHostedService<AdminSeederHostedService>();
         services.AddHostedService<CategorySeederHostedService>();
         services.AddHostedService<BlobStorageBootstrapper>();
         services.AddHostedService<RefreshTokenCleanupHostedService>();

@@ -84,8 +84,12 @@ export function CourseCard({ course, className }: CourseCardProps) {
 
                 <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                     <span>👤 {course.instructor.fullName}</span>
-                    <span>·</span>
-                    <span>{course.durationHours}h video</span>
+                    {course.durationHours > 0 && (
+                        <>
+                            <span>·</span>
+                            <span>{course.durationHours}h video</span>
+                        </>
+                    )}
                 </div>
 
                 <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
