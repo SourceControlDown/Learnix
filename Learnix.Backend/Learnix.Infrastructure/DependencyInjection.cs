@@ -272,6 +272,7 @@ public static class DependencyInjection
         services.AddHostedService<RoleSeederHostedService>();
         services.AddHostedService<AdminSeederHostedService>();
         services.AddHostedService<CategorySeederHostedService>();
+        services.AddHostedService<DevCourseSeederHostedService>();
         services.AddHostedService<BlobStorageBootstrapper>();
         services.AddHostedService<RefreshTokenCleanupHostedService>();
         services.AddHostedService<OutboxProcessorService>();
