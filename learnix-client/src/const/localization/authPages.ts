@@ -15,6 +15,7 @@ export const AUTH_PAGES = {
         submitting: 'Logging in...',
         divider: 'or continue with',
         google: 'Continue with Google',
+        googleError: 'Google sign-in failed. Please try again.',
         noAccount: "Don't have an account?",
         register: 'Sign up',
         successRedirect: 'Login successful',
@@ -53,6 +54,7 @@ export const AUTH_PAGES = {
         submitting: 'Creating account...',
         divider: 'or continue with',
         google: 'Sign up with Google',
+        googleError: 'Google sign-up failed. Please try again.',
         hasAccount: 'Already have an account?',
         login: 'Log in',
         success: {

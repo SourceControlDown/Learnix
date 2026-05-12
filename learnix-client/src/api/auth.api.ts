@@ -22,9 +22,16 @@ export interface RegisterResponse {
     email: string;
 }
 
+export interface GoogleLoginRequest {
+    idToken: string;
+}
+
 export const authApi = {
     login: (data: LoginRequest) => api.post<LoginResponse>('/auth/login', data).then((r) => r.data),
 
     register: (data: RegisterRequest) =>
         api.post<RegisterResponse>('/auth/register', data).then((r) => r.data),
+
+    googleLogin: (data: GoogleLoginRequest) =>
+        api.post<LoginResponse>('/auth/google', data).then((r) => r.data),
 };

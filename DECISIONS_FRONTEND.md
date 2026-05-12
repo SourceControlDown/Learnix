@@ -579,7 +579,7 @@ export class ErrorBoundary extends Component<Props, State> {
 - **Refresh token** — HttpOnly cookie (встановлює бек, JS не має доступу)
 - **Silent refresh on app start** — при завантаженні робимо `POST /auth/refresh`, якщо cookie валідна — юзер залогінений
 - **На інших вкладках** — нічого спеціального. Дізнаються через 401 → refresh → continue
-- **Google OAuth** — redirect flow (не popup)
+- **Google OAuth** — token-based flow через `@react-oauth/google` (не server-side redirect)
 
 **Silent refresh:**
 ```tsx
@@ -609,37 +609,44 @@ function App() {
 }
 ```
 
-**Google OAuth — redirect flow:**
+**Google OAuth — token-based flow (фактична реалізація):**
+
+Бекенд реалізує `POST /api/auth/google` з тілом `{ idToken: string }` — не redirect handler.
+Фронтенд отримує `id_token` від Google через `GoogleLogin` компонент (`@react-oauth/google`)
+і одразу надсилає його на бекенд:
+
 ```tsx
+// src/hooks/useGoogleAuth.ts
+export function useGoogleAuth() {
+  const { mutate } = useMutation({
+    mutationFn: authApi.googleLogin,       // POST /api/auth/google
+    onSuccess: (data) => {
+      setAccessToken(data.accessToken);
+      navigate(from, { replace: true });
+    },
+  });
+  return { onGoogleCredential: (credential: string) => mutate({ idToken: credential }) };
+}
+
 // src/pages/public/Login/LoginPage.tsx
-const handleGoogleLogin = () => {
-  // Зберігаємо куди повернутись
-  const returnUrl = location.state?.from?.pathname ?? '/dashboard';
-  sessionStorage.setItem('oauth_return_url', returnUrl);
-  window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
-};
+<GoogleLogin
+  onSuccess={(r) => r.credential && onGoogleCredential(r.credential)}
+  onError={() => toast.error(T.googleError)}
+  theme="outline" size="large" shape="rectangular" text="continue_with"
+/>
 ```
 
-Бек після успішного OAuth встановлює HttpOnly cookie і редіректить на `/auth/google/callback`:
-```tsx
-// src/pages/public/OAuthCallback/OAuthCallbackPage.tsx
-useEffect(() => {
-  authApi.refresh()
-    .then((data) => {
-      setAccessToken(data.accessToken);
-      setUser(data.user);
-      const returnUrl = sessionStorage.getItem('oauth_return_url') ?? '/dashboard';
-      sessionStorage.removeItem('oauth_return_url');
-      navigate(returnUrl, { replace: true });
-    })
-    .catch(() => navigate('/login?error=oauth_failed'));
-}, []);
-```
+`GoogleOAuthProvider` з `clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}` обгортає весь застосунок у `main.tsx`.
+
+**Чому token-based, а не redirect:**
+- Бекенд валідує `id_token` через `GoogleJsonWebSignature.ValidateAsync` (Google.Apis.Auth) — не потребує server-side OAuth code exchange
+- `id_token` доступний тільки через Google Identity Services (`GoogleLogin` компонент) — не через `useGoogleLogin` OAuth2 hook
+- Немає callback-сторінки, немає `sessionStorage` для return URL, простіший flow
+- `OAuthCallbackPage` (описана в першій редакції FADR) — не реалізована і не потрібна
 
 **Чому:**
 - `localStorage` для токенів = XSS вразливість. HttpOnly cookie недоступний JS
 - Silent refresh на старті — юзер не бачить flash логіну після reload сторінки
-- Redirect flow простіший за popup (немає window.opener, message passing, popup blockers)
 - Inter-tab sync (через `BroadcastChannel` або `storage event`) — overkill для v1
 
 **Альтернативи:**
