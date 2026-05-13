@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Running Locally
 
-**Prerequisites:** Docker, .NET 8 SDK, Node 20, pnpm
+**Prerequisites:** Docker, .NET 8 SDK, Node 20
 
 ```bash
 # 1. Start infrastructure (PostgreSQL:5432, MongoDB:27017, Redis:6379)
@@ -25,15 +25,15 @@ dotnet run --project Learnix.API          # https://localhost:5001, Swagger at /
 
 # 3. Frontend
 cd learnix-client
-pnpm install
-pnpm dev                                   # http://localhost:5173
+npm install
+npm run dev                                # http://localhost:5173
 ```
 
 **Other frontend commands:**
 ```bash
-pnpm build    # production build
-pnpm lint     # ESLint
-pnpm preview  # preview production build
+npm run build    # production build
+npm run lint     # ESLint
+npm run preview  # preview production build
 ```
 
 No tests exist yet (Phase 2 of development). When added: `dotnet test` for backend.

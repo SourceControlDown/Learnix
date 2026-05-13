@@ -14,6 +14,8 @@ using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Settings;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Enrollments.Abstractions;
+using Learnix.Application.Payments.Abstractions;
+using Learnix.Application.Wishlist.Abstractions;
 using Learnix.Application.InstructorApplications.Abstractions;
 using Learnix.Application.LessonProgress.Abstractions;
 using Learnix.Application.Lessons.Abstractions;
@@ -195,6 +197,8 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IInstructorApplicationRepository, InstructorApplicationRepository>();
         services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IWishlistRepository, WishlistRepository>();
         services.AddScoped<ILessonProgressRepository, LessonProgressRepository>();
         services.AddScoped<ICertificateRepository, CertificateRepository>();
         services.AddScoped<ITestAttemptRepository, TestAttemptRepository>();
