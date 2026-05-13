@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Clock, Users, Star, Tag, ArrowLeft } from 'lucide-react';
 import { useCourseDetail } from '@/hooks/useCourseDetail';
 import { useCourseReviews } from '@/hooks/useCourseReviews';
@@ -29,9 +29,15 @@ export default function CourseDetailPage() {
     const isFree = course ? course.price === 0 : false;
     const totalLessons = course?.sections.reduce((sum, s) => sum + s.lessons.length, 0) ?? 0;
 
+    const navigate = useNavigate();
+
     function handleEnroll() {
         if (!courseId) return;
-        enroll.mutate(courseId);
+        if (isFree) {
+            enroll.mutate(courseId);
+        } else {
+            navigate(`/payment/${courseId}`);
+        }
     }
 
     if (courseLoading) {

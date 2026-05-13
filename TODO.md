@@ -141,7 +141,8 @@
 |---|---|---|---|
 | F-09 | Course catalog page (grid, filters, search, pagination) | done | Server-side search/sort/filter (sortBy, isFree, minRating added to backend). URL-synced filters via useSearchParams. PublicCourseCardDto enriched with averageRating, reviewsCount, categoryName, instructorFullName. |
 | F-10 | Course detail page (description, sections, lessons list, enroll button) | not started | |
-| F-11 | Enrollment flow (free + paid) | not started | |
+| F-11 | Enrollment flow (free + paid) | done | Added PaymentPage for mock premium course enrollment checkout. Uses react-hook-form + zod for card input. |
+| F-11.5 | Wishlist page (view, remove) | done | Implemented WishlistPage with WishlistCard utilizing backend Wishlist API |
 
 ### Phase 3 — Learning Experience
 

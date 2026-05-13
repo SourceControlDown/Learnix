@@ -13,6 +13,8 @@ const TestLessonPage = lazy(() => import('@/pages/student/TestLesson/TestLessonP
 const ProfilePage = lazy(() => import('@/pages/student/Profile/ProfilePage'));
 const AchievementsPage = lazy(() => import('@/pages/student/Achievements/AchievementsPage'));
 const CertificatesPage = lazy(() => import('@/pages/student/Certificates/CertificatesPage'));
+const WishlistPage = lazy(() => import('@/pages/student/Wishlist/WishlistPage'));
+const PaymentPage = lazy(() => import('@/pages/student/Payment/PaymentPage'));
 const InstructorDashboardPage = lazy(
     () => import('@/pages/instructor/Dashboard/InstructorDashboardPage'),
 );
@@ -79,6 +81,14 @@ export const router = createBrowserRouter([
             {
                 path: '/messages',
                 element: guardStudent(wrap(<MessagesPage />)),
+            },
+            {
+                path: '/wishlist',
+                element: guardStudent(wrap(<WishlistPage />)),
+            },
+            {
+                path: '/payment/:courseId',
+                element: guardStudent(wrap(<PaymentPage />)),
             },
         ],
     },
