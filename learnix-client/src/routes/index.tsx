@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 import { InstructorLayout } from '@/components/layout/InstructorLayout';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { PageFallback } from '@/components/common/PageFallback';
@@ -12,6 +13,8 @@ const TestLessonPage = lazy(() => import('@/pages/student/TestLesson/TestLessonP
 const ProfilePage = lazy(() => import('@/pages/student/Profile/ProfilePage'));
 const AchievementsPage = lazy(() => import('@/pages/student/Achievements/AchievementsPage'));
 const CertificatesPage = lazy(() => import('@/pages/student/Certificates/CertificatesPage'));
+const WishlistPage = lazy(() => import('@/pages/student/Wishlist/WishlistPage'));
+const PaymentPage = lazy(() => import('@/pages/student/Payment/PaymentPage'));
 const InstructorDashboardPage = lazy(
     () => import('@/pages/instructor/Dashboard/InstructorDashboardPage'),
 );
@@ -19,6 +22,8 @@ const CourseEditorPage = lazy(() => import('@/pages/instructor/CourseEditor/Cour
 const BecomeInstructorPage = lazy(
     () => import('@/pages/public/BecomeInstructor/BecomeInstructorPage'),
 );
+const LoginPage = lazy(() => import('@/pages/public/Login/LoginPage'));
+const RegisterPage = lazy(() => import('@/pages/public/Register/RegisterPage'));
 const MessagesPage = lazy(() => import('@/pages/student/Messages/MessagesPage'));
 const InstructorMessagesPage = lazy(
     () => import('@/pages/instructor/Messages/InstructorMessagesPage'),
@@ -47,6 +52,13 @@ const guardInstructor = (el: React.ReactElement) => (
 
 export const router = createBrowserRouter([
     {
+        element: <AuthLayout />,
+        children: [
+            { path: '/login', element: wrap(<LoginPage />) },
+            { path: '/register', element: wrap(<RegisterPage />) },
+        ],
+    },
+    {
         element: <PublicLayout />,
         children: [
             ...publicRoutes,
@@ -69,6 +81,14 @@ export const router = createBrowserRouter([
             {
                 path: '/messages',
                 element: guardStudent(wrap(<MessagesPage />)),
+            },
+            {
+                path: '/wishlist',
+                element: guardStudent(wrap(<WishlistPage />)),
+            },
+            {
+                path: '/payment/:courseId',
+                element: guardStudent(wrap(<PaymentPage />)),
             },
         ],
     },

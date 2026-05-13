@@ -9,6 +9,7 @@ using Learnix.Application.Users.Commands.AdminDeleteUser;
 using Learnix.Application.Users.Commands.AdminRecoverUser;
 using Learnix.Application.Users.Commands.AdminRemoveRole;
 using Learnix.Application.Users.Commands.AdminUnbanUser;
+using Learnix.Application.Payments.Queries.GetAdminPayments;
 using Learnix.Application.Users.Queries.GetAdminUsers;
 using Learnix.Domain.Constants;
 using MediatR;
@@ -111,5 +112,18 @@ public sealed class AdminController(ISender sender) : ControllerBase
     {
         var result = await sender.Send(new AdminRecoverCourseCommand(courseId), ct);
         return result.ToActionResult();
+    }
+
+    // ── Payments ─────────────────────────────────────────────────────────────
+
+    [HttpGet("payments")]
+    public async Task<IActionResult> GetPayments(
+        [FromQuery] string? search,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 20,
+        CancellationToken ct = default)
+    {
+        var result = await sender.Send(new GetAdminPaymentsQuery(search, skip, take), ct);
+        return result.ToActionResult(onSuccess: value => Ok(value));
     }
 }

@@ -30,6 +30,8 @@ public class ApplicationDbContext(
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
     public DbSet<UserAchievementProgress> UserAchievementProgresses => Set<UserAchievementProgress>();
     public DbSet<UserCompletedCategory> UserCompletedCategories => Set<UserCompletedCategory>();
+    public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
+    public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)

@@ -7,6 +7,7 @@ using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Courses.Specifications;
 using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.Enrollments.Specifications;
+using Learnix.Application.Wishlist.Abstractions;
 using Learnix.Domain.Entities;
 using Learnix.Domain.Enums;
 using MediatR;
@@ -17,6 +18,7 @@ public sealed class EnrollInCourseCommandHandler(
     ICurrentUserService currentUser,
     ICourseRepository courseRepository,
     IEnrollmentRepository enrollmentRepository,
+    IWishlistRepository wishlistRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<EnrollInCourseCommand, Result<EnrollInCourseResponse>>
 {
@@ -55,6 +57,7 @@ public sealed class EnrollInCourseCommandHandler(
         course.IncrementEnrollmentsCount();
 
         await enrollmentRepository.AddAsync(enrollment, cancellationToken);
+        await wishlistRepository.RemoveIfExistsAsync(studentId, request.CourseId, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok(new EnrollInCourseResponse(enrollment.Id));
