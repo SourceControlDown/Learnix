@@ -263,6 +263,8 @@ public static class DependencyInjection
 
         // AI Chat — tools and orchestrator
         services.AddScoped<IChatTool, SearchCoursesTool>();
+        services.AddScoped<IChatTool, GetCategoriesTool>();
+        services.AddSingleton<IChatTool, GetPlatformInfoTool>();
         services.AddScoped<ChatStreamOrchestrator>();
 
         // Background services

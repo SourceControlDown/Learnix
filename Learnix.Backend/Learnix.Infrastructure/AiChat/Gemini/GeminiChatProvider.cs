@@ -11,12 +11,6 @@ namespace Learnix.Infrastructure.AiChat.Gemini;
 
 internal sealed class GeminiChatProvider : IAiChatProvider
 {
-    private const string SystemPrompt =
-        "You are a helpful learning assistant for Learnix, an online learning platform. " +
-        "You help students find courses and answer questions about learning topics. " +
-        "When a user asks for course recommendations, use the search_courses tool to find relevant courses. " +
-        "Be concise and friendly.";
-
     private readonly Client _client;
     private readonly GeminiSettings _settings;
 
@@ -105,8 +99,8 @@ internal sealed class GeminiChatProvider : IAiChatProvider
                 foreach (var tc in msg.ToolCalls)
                 {
                     var args = tc.ArgumentsJson.Length > 0
-                        ? JsonSerializer.Deserialize<JsonElement>(tc.ArgumentsJson)
-                        : (object)new { };
+                        ? JsonSerializer.Deserialize<Dictionary<string, object>>(tc.ArgumentsJson)
+                        : new Dictionary<string, object>();
 
                     parts.Add(new Part
                     {
@@ -132,7 +126,7 @@ internal sealed class GeminiChatProvider : IAiChatProvider
         {
             SystemInstruction = new Content
             {
-                Parts = [new Part { Text = SystemPrompt }]
+                Parts = [new Part { Text = AiChatConstants.SystemPrompt }]
             },
             MaxOutputTokens = _settings.MaxTokens
         };

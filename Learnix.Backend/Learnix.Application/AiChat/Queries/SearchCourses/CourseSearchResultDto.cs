@@ -4,7 +4,7 @@ public sealed record CourseSearchResultDto(
     Guid CourseId,
     string Title,
     string ShortDescription,
-    string CategoryId,
+    string CategoryName,
     decimal Price,
     bool IsFree,
     int EnrollmentsCount);

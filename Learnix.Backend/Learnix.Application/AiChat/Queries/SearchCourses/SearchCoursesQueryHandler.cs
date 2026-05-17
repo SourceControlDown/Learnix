@@ -29,12 +29,17 @@ internal sealed class SearchCoursesQueryHandler(
         var spec = new CourseSearchSpecification(request.Query, categoryId, maxResults);
         var courses = await courseRepository.ListAsync(spec, cancellationToken);
 
+        var categoryIds = courses.Select(c => c.CategoryId).Distinct().ToList();
+        var categories = await categoryRepository.ListAsync(
+            new CategoriesByIdsSpecification(categoryIds), cancellationToken);
+        var categoryMap = categories.ToDictionary(c => c.Id, c => c.Name);
+
         var results = courses
             .Select(c => new CourseSearchResultDto(
                 c.Id,
                 c.Title,
                 c.Description.Length > 200 ? c.Description[..200] + "..." : c.Description,
-                c.CategoryId.ToString(),
+                categoryMap.TryGetValue(c.CategoryId, out var name) ? name : "Unknown",
                 c.Price,
                 c.Price == 0,
                 c.EnrollmentsCount))
