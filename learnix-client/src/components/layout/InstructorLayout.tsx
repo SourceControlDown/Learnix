@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { AiChatWidget } from '@/components/common/AiChatWidget/AiChatWidget';
+import { useChatHub } from '@/hooks/useChatHub';
 import {
     LayoutDashboard,
     BookOpen,
@@ -39,6 +40,7 @@ const navItems: NavItem[] = [
 ];
 
 export function InstructorLayout() {
+    useChatHub();
     const navigate = useNavigate();
     const { logout } = useAuthStore();
 

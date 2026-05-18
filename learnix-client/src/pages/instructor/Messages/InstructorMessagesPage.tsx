@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/api/queryKeys';
 import { messagesApi } from '@/api/messages.api';
-import { useChatHub } from '@/hooks/useChatHub';
 import { InstructorConversationList } from './components/InstructorConversationList';
 import { ConversationView } from '@/components/common/ConversationView';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -10,7 +9,6 @@ import { MESSAGES } from '@/const/localization/messages';
 import type { ConversationSummary } from '@/types/message.types';
 
 export default function InstructorMessagesPage() {
-    useChatHub();
     const [selected, setSelected] = useState<ConversationSummary | null>(null);
 
     const { data: conversations = [], isLoading } = useQuery({

@@ -13,8 +13,7 @@ export function NotificationBell() {
         queryKey: queryKeys.messages.unreadCount(),
         queryFn: messagesApi.getUnreadCount,
         enabled: !!user,
-        refetchInterval: 30_000,
-        staleTime: 15_000,
+        staleTime: Infinity,
     });
 
     const count = data?.totalUnread ?? 0;
