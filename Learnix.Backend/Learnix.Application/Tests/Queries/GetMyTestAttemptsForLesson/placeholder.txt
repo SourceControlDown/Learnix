@@ -1,1 +1,0 @@
-Placeholder for reading a student's attempt history for one test lesson.

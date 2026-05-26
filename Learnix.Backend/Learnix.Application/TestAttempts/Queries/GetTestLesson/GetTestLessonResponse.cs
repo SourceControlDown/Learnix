@@ -16,6 +16,11 @@ public sealed record StudentTestStatusDto(
     int AttemptsUsed,
     bool CanAttempt,
     int? CooldownRemainingMinutes,
+    /// <summary>
+    /// ID of an in-progress (not yet submitted) attempt, if one exists.
+    /// The frontend uses this to resume without re-calling start.
+    /// </summary>
+    Guid? InProgressAttemptId,
     LatestAttemptDto? LatestAttempt);
 
 public sealed record LatestAttemptDto(

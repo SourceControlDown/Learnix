@@ -1,6 +1,0 @@
-Future application-layer test-taking feature area.
-
-Suggested scope:
-- Commands: start attempt, submit attempt, retake attempt
-- Queries: get attempt result, get my attempts for lesson, get lesson attempts for instructor/admin
-- Abstractions: repositories/services for attempts and evaluation flow

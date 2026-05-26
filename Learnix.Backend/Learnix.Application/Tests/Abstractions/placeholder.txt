@@ -1,1 +1,0 @@
-Future abstractions for test attempts, results, grading, and cooldown/attempt-limit policies.

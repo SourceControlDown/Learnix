@@ -1,6 +1,0 @@
-Placeholder for submitting a test attempt.
-
-Likely responsibilities:
-- load active attempt and test questions
-- score answers
-- persist result and completion metadata
