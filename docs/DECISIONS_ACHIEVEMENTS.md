@@ -112,3 +112,29 @@
 **Rejected alternatives:**
 - Skip the outbox message entirely in Phase 1; add it in Phase 2 — requires a migration or new `OutboxMessageTypes` constant and a new event handler in Phase 2, making the Phase 2 diff larger and more risky.
 - Throw `NotImplementedException` from the `case` block — causes every `NotifyAchievementUnlocked` message to fail, increment retry count, and eventually become permanently failed. Achievement unlock still works; the notification simply never fires. But the outbox table fills with failed messages and noisy error logs.
+
+---
+
+## Reference: Achievement Catalogue
+
+All 10 achievements are static — defined at build time in `AchievementCodes.cs` (backend) and `ACHIEVEMENT_META` (frontend). Changing a code string is a breaking change for already-unlocked rows in `UserAchievements`.
+
+| Code | Name | Unlock condition |
+|---|---|---|
+| `FIRST_LESSON` | First Step | Complete any 1 lesson. |
+| `LESSONS_50` | Eager Learner | Reach 50 completed lessons in total. |
+| `LESSONS_200` | Knowledge Seeker | Reach 200 completed lessons in total. |
+| `LESSONS_500` | Scholar | Reach 500 completed lessons in total. |
+| `FIRST_COURSE` | Course Graduate | Finish 1 course (enrollment status → Completed). |
+| `COURSES_3` | Triple Crown | Finish 3 courses in total. |
+| `COURSES_5` | Dedicated Student | Finish 5 courses in total. |
+| `SPEED_DEMON` | Speed Demon | Pass a test of ≥ 20 questions in under 5 minutes. |
+| `POLYMATH` | Polymath | Complete courses in ≥ 3 distinct categories. |
+| `PROFILE_COMPLETE` | All Set | Fill in first name, last name, bio, and set a profile photo. |
+
+**Trigger mapping** (which evaluator method handles each group):
+
+- `OnLessonCompletedAsync` — `FIRST_LESSON`, `LESSONS_50`, `LESSONS_200`, `LESSONS_500`
+- `OnEnrollmentCompletedAsync` — `FIRST_COURSE`, `COURSES_3`, `COURSES_5`, `POLYMATH`
+- `OnTestSubmittedAsync` — `SPEED_DEMON` (only on a passed attempt)
+- `OnProfileChangedAsync` — `PROFILE_COMPLETE`
