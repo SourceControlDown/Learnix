@@ -179,7 +179,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRoleService, UserRoleService>();
         services.AddScoped<OutboxDbContextHolder>();
         services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
-        services.AddLocalization(options => options.ResourcesPath = "Email/Resources");
+        services.AddLocalization();
         services.AddSingleton<EmailRenderer>();
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
         services.AddHttpContextAccessor();
@@ -275,6 +275,7 @@ public static class DependencyInjection
         services.AddHostedService<AdminSeederHostedService>();
         services.AddHostedService<CategorySeederHostedService>();
         services.AddHostedService<DevCourseSeederHostedService>();
+        services.AddHostedService<DevStudentSeederHostedService>();
         services.AddHostedService<RefreshTokenCleanupHostedService>();
         services.AddHostedService<OutboxProcessorService>();
         services.AddHostedService<CertificatePdfGenerationService>();
