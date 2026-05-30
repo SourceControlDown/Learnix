@@ -1,5 +1,6 @@
-import Markdown from 'react-markdown';
 import { useLessonContent } from '@/hooks/useLessonContent';
+import { MarkdownRenderer } from '@/components/common/MarkdownRenderer';
+import { LESSON_PLAYER } from '@/const/localization/lessonPlayer';
 import type { LessonProgressItemDto } from '@/types/progress.types';
 
 interface PostLessonViewProps {
@@ -26,14 +27,10 @@ export function PostLessonView({ lesson, courseId }: PostLessonViewProps) {
                 </div>
             )}
 
-            {!isLoading && data?.content && (
-                <div className="prose prose-neutral dark:prose-invert max-w-none">
-                    <Markdown>{data.content}</Markdown>
-                </div>
-            )}
+            {!isLoading && data?.content && <MarkdownRenderer content={data.content} />}
 
             {!isLoading && !data?.content && (
-                <p className="text-sm text-muted-foreground">No content for this lesson yet.</p>
+                <p className="text-sm text-muted-foreground">{LESSON_PLAYER.POST.noContent}</p>
             )}
         </div>
     );
