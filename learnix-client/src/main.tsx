@@ -5,6 +5,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { toast, Toaster } from 'sonner';
 import App from './App';
 import { AuthInitializer } from '@/components/common/AuthInitializer';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { isValidationError, getErrorMessage } from '@/utils/errors';
 import '@fontsource/dm-sans/400.css';
 import '@fontsource/dm-sans/500.css';
@@ -36,13 +37,15 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-            <QueryClientProvider client={queryClient}>
-                <AuthInitializer>
-                    <App />
-                    <Toaster position="top-right" richColors />
-                </AuthInitializer>
-            </QueryClientProvider>
-        </GoogleOAuthProvider>
+        <ErrorBoundary>
+            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+                <QueryClientProvider client={queryClient}>
+                    <AuthInitializer>
+                        <App />
+                        <Toaster position="top-right" richColors />
+                    </AuthInitializer>
+                </QueryClientProvider>
+            </GoogleOAuthProvider>
+        </ErrorBoundary>
     </StrictMode>,
 );

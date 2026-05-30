@@ -35,8 +35,7 @@ export const PROFILE = {
     },
     ACHIEVEMENTS: {
         SECTION_TITLE: 'Achievements',
-        EARNED_COUNT: (earned: number, total: number) =>
-            `${earned} of ${total} earned`,
+        EARNED_COUNT: (earned: number, total: number) => `${earned} of ${total} earned`,
         VIEW_ALL: 'View all achievements →',
     },
     CERTIFICATES_NAV: {

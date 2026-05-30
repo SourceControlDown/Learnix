@@ -3,7 +3,15 @@ import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { User, Camera, Construction, Award, ChevronRight, CheckCircle2, AlertTriangle } from 'lucide-react';
+import {
+    User,
+    Camera,
+    Construction,
+    Award,
+    ChevronRight,
+    CheckCircle2,
+    AlertTriangle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { profileSchema, type ProfileFormValues } from '@/schemas/profile.schema';
 import { useMyProfile } from '@/hooks/useMyProfile';
@@ -63,7 +71,6 @@ export default function ProfilePage() {
                 lastName: profile.lastName,
                 bio: profile.bio ?? '',
             });
-            setAvatarBlobPath(profile.avatarBlobPath);
         }
     }, [profile, form]);
 
@@ -117,7 +124,7 @@ export default function ProfilePage() {
         );
     }
 
-    const displayAvatar = avatarPreview ?? (profile?.avatarBlobPath ? undefined : null);
+    const displayAvatar = avatarPreview ?? profile?.avatarUrl ?? null;
 
     return (
         <div className="mx-auto max-w-3xl px-6 py-12">
@@ -235,13 +242,25 @@ export default function ProfilePage() {
                             className="mt-1 w-full cursor-not-allowed rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground"
                         />
                         {user && (
-                            <p className={cn(
-                                'mt-1.5 flex items-center gap-1.5 text-xs',
-                                user.emailVerified ? 'text-success' : 'text-amber-600 dark:text-amber-400',
-                            )}>
-                                {user.emailVerified
-                                    ? <><CheckCircle2 className="h-3.5 w-3.5" />{TE.CONFIRMED}</>
-                                    : <><AlertTriangle className="h-3.5 w-3.5" />{TE.NOT_CONFIRMED}</>}
+                            <p
+                                className={cn(
+                                    'mt-1.5 flex items-center gap-1.5 text-xs',
+                                    user.emailVerified
+                                        ? 'text-success'
+                                        : 'text-amber-600 dark:text-amber-400',
+                                )}
+                            >
+                                {user.emailVerified ? (
+                                    <>
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                        {TE.CONFIRMED}
+                                    </>
+                                ) : (
+                                    <>
+                                        <AlertTriangle className="h-3.5 w-3.5" />
+                                        {TE.NOT_CONFIRMED}
+                                    </>
+                                )}
                             </p>
                         )}
                     </div>
@@ -258,7 +277,10 @@ export default function ProfilePage() {
                                 className="mt-3 rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-800 dark:bg-transparent dark:text-amber-300"
                             >
                                 {resendCooldown > 0
-                                    ? TE.RESEND_COOLDOWN.replace('{seconds}', String(resendCooldown))
+                                    ? TE.RESEND_COOLDOWN.replace(
+                                          '{seconds}',
+                                          String(resendCooldown),
+                                      )
                                     : TE.RESEND}
                             </button>
                         </div>
@@ -283,6 +305,18 @@ export default function ProfilePage() {
                                 {form.formState.errors.bio.message}
                             </p>
                         )}
+                    </div>
+
+                    <div className="mt-6 flex justify-end">
+                        <button
+                            type="submit"
+                            disabled={updateProfile.isPending || isUploading}
+                            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                        >
+                            {updateProfile.isPending
+                                ? PROFILE.ACTIONS.SAVING
+                                : PROFILE.ACTIONS.SAVE}
+                        </button>
                     </div>
                 </section>
 
@@ -367,16 +401,6 @@ export default function ProfilePage() {
                     </div>
                     <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </Link>
-
-                <div className="flex justify-end gap-3">
-                    <button
-                        type="submit"
-                        disabled={updateProfile.isPending || isUploading}
-                        className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-                    >
-                        {updateProfile.isPending ? PROFILE.ACTIONS.SAVING : PROFILE.ACTIONS.SAVE}
-                    </button>
-                </div>
             </form>
         </div>
     );
