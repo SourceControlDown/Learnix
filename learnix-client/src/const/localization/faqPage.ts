@@ -1,4 +1,8 @@
 export const FAQ_PAGE = {
+    DISCLAIMER: {
+        badge: 'Portfolio project',
+        text: 'Learnix is a pet project built for learning and demonstration purposes — not a real commercial product. No real payments are processed, no real courses are sold, and no personal data is stored beyond what is needed for local testing.',
+    },
     HERO: {
         badge: 'Help center',
         title: 'How can we help?',
