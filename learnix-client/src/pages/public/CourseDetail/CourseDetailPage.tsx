@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Clock, Users, Star, Tag, ArrowLeft } from 'lucide-react';
+import { Clock, Users, Star, Tag, ArrowLeft, BookOpen } from 'lucide-react';
 import { useCourseDetail } from '@/hooks/useCourseDetail';
 import { useCourseReviews } from '@/hooks/useCourseReviews';
 import { useMyReview } from '@/hooks/useMyReview';
@@ -148,13 +148,23 @@ export default function CourseDetailPage() {
                 <aside className="shrink-0">
                     <div className="sticky top-6 rounded-xl border border-border bg-card p-6 shadow-sm">
                         {/* Cover image */}
-                        {course.coverImageUrl && (
+                        {course.coverImageUrl ? (
                             <img
                                 src={course.coverImageUrl}
                                 alt={course.title}
                                 className="mb-5 aspect-video w-full rounded-lg object-cover"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling?.removeAttribute('hidden');
+                                }}
                             />
-                        )}
+                        ) : null}
+                        <div
+                            hidden={!!course.coverImageUrl}
+                            className="mb-5 flex aspect-video w-full items-center justify-center rounded-lg bg-muted"
+                        >
+                            <BookOpen className="h-12 w-12 text-muted-foreground/40" />
+                        </div>
 
                         {/* Price */}
                         <p
@@ -201,6 +211,14 @@ export default function CourseDetailPage() {
                                 <span className="font-medium text-foreground">
                                     {COURSE_DETAIL.INSTRUCTOR.LABEL}
                                 </span>
+                                {course.instructorFullName && (
+                                    <Link
+                                        to={`/instructors/${course.instructorId}`}
+                                        className="ml-1 text-primary hover:underline"
+                                    >
+                                        {course.instructorFullName}
+                                    </Link>
+                                )}
                             </p>
                         </div>
                     </div>

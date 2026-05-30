@@ -1,4 +1,3 @@
-import { format } from 'date-fns';
 import { User } from 'lucide-react';
 import { RatingStars } from '@/components/common/RatingStars';
 import { COURSE_DETAIL } from '@/const/localization/courseDetail';
@@ -56,7 +55,10 @@ export function ReviewsList({ reviews, averageRating, totalCount }: ReviewsListP
                                             {review.studentFirstName} {review.studentLastName}
                                         </p>
                                         <span className="text-xs text-muted-foreground">
-                                            {format(new Date(review.createdAt), 'MMM d, yyyy')}
+                                            {new Date(review.createdAt).toLocaleDateString(
+                                                'en-US',
+                                                { month: 'short', day: 'numeric', year: 'numeric' },
+                                            )}
                                         </span>
                                     </div>
 
