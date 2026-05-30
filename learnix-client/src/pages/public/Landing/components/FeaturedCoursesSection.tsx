@@ -11,7 +11,11 @@ interface FeaturedCoursesSectionProps {
 
 const { FEATURED_COURSES } = LANDING_PAGE;
 
-export function FeaturedCoursesSection({ courses, isLoading, totalCount }: FeaturedCoursesSectionProps) {
+export function FeaturedCoursesSection({
+    courses,
+    isLoading,
+    totalCount,
+}: FeaturedCoursesSectionProps) {
     return (
         <section id="courses" className="bg-secondary/40 py-20">
             <div className="mx-auto max-w-7xl px-6">
@@ -53,7 +57,10 @@ export function FeaturedCoursesSection({ courses, isLoading, totalCount }: Featu
                         className="inline-flex items-center gap-2 font-medium text-primary hover:underline"
                     >
                         {totalCount !== undefined
-                            ? FEATURED_COURSES.viewMore.replace('{count}', totalCount.toLocaleString())
+                            ? FEATURED_COURSES.viewMore.replace(
+                                  '{count}',
+                                  totalCount.toLocaleString(),
+                              )
                             : FEATURED_COURSES.viewAll}
                     </Link>
                 </div>

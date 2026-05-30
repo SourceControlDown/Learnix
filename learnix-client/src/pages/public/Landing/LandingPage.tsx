@@ -24,7 +24,11 @@ export default function LandingPage() {
             <HeroSection />
             <StatsSection />
             <CategoriesSection categories={categories} isLoading={categoriesLoading} />
-            <FeaturedCoursesSection courses={featuredCourses} isLoading={coursesLoading} totalCount={courseCount} />
+            <FeaturedCoursesSection
+                courses={featuredCourses}
+                isLoading={coursesLoading}
+                totalCount={courseCount}
+            />
             <HowItWorksSection />
             <AIAssistantSection />
             <TestimonialsSection />

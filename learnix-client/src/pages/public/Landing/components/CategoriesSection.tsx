@@ -43,7 +43,7 @@ export function CategoriesSection({ categories, isLoading }: CategoriesSectionPr
                         {categories.map((cat) => (
                             <Link
                                 key={cat.id}
-                                to={`/courses?category=${cat.slug}`}
+                                to={`/courses?categoryId=${cat.id}`}
                                 className="group rounded-xl border border-border bg-card p-5 transition-all hover:border-primary hover:shadow-md"
                             >
                                 <div
