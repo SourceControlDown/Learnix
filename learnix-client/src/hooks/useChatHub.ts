@@ -15,7 +15,7 @@ export function useChatHub() {
         if (!accessToken) return;
 
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl(`${env.API_URL}/hubs/chat`, {
+            .withUrl(`${env.HUB_URL}/hubs/chat`, {
                 accessTokenFactory: () => accessToken,
             })
             .withAutomaticReconnect()

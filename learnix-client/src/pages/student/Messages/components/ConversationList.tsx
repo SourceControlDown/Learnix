@@ -1,4 +1,4 @@
-import { formatDistanceToNow } from 'date-fns';
+import { formatRelativeTime } from '@/utils/formatDate';
 import { cn } from '@/utils/cn';
 import type { ConversationSummary } from '@/types/message.types';
 import { MESSAGES } from '@/const/localization/messages';
@@ -47,9 +47,7 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
                             <div className="flex shrink-0 flex-col items-end gap-1">
                                 {c.lastMessageAt && (
                                     <span className="text-xs text-muted-foreground">
-                                        {formatDistanceToNow(new Date(c.lastMessageAt), {
-                                            addSuffix: true,
-                                        })}
+                                        {formatRelativeTime(c.lastMessageAt)}
                                     </span>
                                 )}
                                 {c.unreadCount > 0 && (

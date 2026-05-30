@@ -38,6 +38,7 @@ export const queryKeys = {
     },
     users: {
         myProfile: () => ['users', 'me'] as const,
+        profile: (id: string) => ['users', 'profile', id] as const,
     },
     achievements: {
         mine: () => ['achievements', 'me'] as const,

@@ -1,6 +1,5 @@
 import { useState, type KeyboardEvent } from 'react';
 import { Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 import { MESSAGES } from '@/const/localization/messages';
 
@@ -43,14 +42,14 @@ export function MessageInput({ onSend, disabled, className }: MessageInputProps)
                 disabled={disabled}
                 rows={1}
             />
-            <Button
-                size="icon"
+            <button
+                type="button"
                 onClick={handleSend}
                 disabled={disabled || !value.trim()}
-                className="shrink-0"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
             >
                 <Send className="h-4 w-4" />
-            </Button>
+            </button>
         </div>
     );
 }
