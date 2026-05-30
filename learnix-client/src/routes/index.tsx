@@ -120,10 +120,10 @@ export const router = createBrowserRouter([
     },
     {
         path: '/courses/:courseId/learn/:lessonId',
-        element: wrap(<CoursePlayerPage />),
+        element: guardStudent(wrap(<CoursePlayerPage />)),
     },
     {
         path: '/courses/:courseId/learn/:lessonId/test',
-        element: wrap(<TestLessonPage />),
+        element: guardStudent(wrap(<TestLessonPage />)),
     },
 ]);
