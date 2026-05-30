@@ -257,6 +257,7 @@ The frontend reads the SSE stream via `fetch` with a `ReadableStream` reader. Th
 
 **Decision:** `GeminiChatProvider` uses the official `Google.GenAI` NuGet package instead of manual HTTP requests to the Generative Language API. Key usage:
 
+- Documentation: https://googleapis.github.io/dotnet-genai/
 - `new Client(apiKey: ...)` — initializes the client; the library resolves the correct API endpoint (`https://generativelanguage.googleapis.com`) internally. No `BaseUrl` configuration is needed or exposed.
 - `client.Models.GenerateContentStreamAsync(model, contents, config)` — handles HTTP, SSE framing, and response deserialization.
 - `GenerateContentConfig.SystemInstruction` — system prompt passed as a `Content` object with a single `Part`.
