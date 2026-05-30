@@ -17,6 +17,7 @@ namespace Learnix.API.Controllers;
 public sealed class CourseReviewsController(ISender sender) : ControllerBase
 {
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll(
         Guid courseId,
         [FromQuery] int skip = 0,
