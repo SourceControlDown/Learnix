@@ -176,9 +176,9 @@ export default function UserManagementPage() {
                                     <td className="px-5 py-3">
                                         <div className="flex items-center gap-3">
                                             <div className="relative grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/20 text-xs font-semibold text-primary">
-                                                {u.avatarBlobPath ? (
+                                                {u.avatarUrl ? (
                                                     <img
-                                                        src={u.avatarBlobPath}
+                                                        src={u.avatarUrl}
                                                         alt=""
                                                         className="h-full w-full object-cover"
                                                     />
