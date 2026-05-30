@@ -1,4 +1,3 @@
-import { format } from 'date-fns';
 import { Lock } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { ACHIEVEMENT_META } from '@/const/localization/achievements';
@@ -80,7 +79,7 @@ export function AchievementBadge({
                         alt={meta?.name ?? code}
                         className={cn(
                             'h-full w-full object-cover',
-                            !isUnlocked && 'grayscale opacity-40',
+                            !isUnlocked && 'opacity-40 grayscale',
                         )}
                     />
                 ) : isUnlocked ? (
@@ -91,7 +90,7 @@ export function AchievementBadge({
             </div>
 
             {/* Text */}
-            <div className={cn('min-w-0 w-full', !isSm && 'space-y-1')}>
+            <div className={cn('w-full min-w-0', !isSm && 'space-y-1')}>
                 <p
                     className={cn(
                         'font-heading font-semibold leading-tight text-foreground',
@@ -106,7 +105,12 @@ export function AchievementBadge({
                         <p className="text-xs text-muted-foreground">{meta?.description}</p>
                         {isUnlocked && unlockedAt && (
                             <p className="mt-1 text-xs text-accent">
-                                Earned {format(new Date(unlockedAt), 'MMM d, yyyy')}
+                                Earned{' '}
+                                {new Date(unlockedAt).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                })}
                             </p>
                         )}
                     </>
