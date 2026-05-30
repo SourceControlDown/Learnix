@@ -6,4 +6,4 @@ public sealed record MyProfileResponse(
     string FirstName,
     string LastName,
     string? Bio,
-    string? AvatarBlobPath);
+    string? AvatarUrl);
