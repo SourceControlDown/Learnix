@@ -37,8 +37,12 @@ const navItems: NavItem[] = [
         label: INSTRUCTOR.NAV_NEW_COURSE,
         icon: <PlusCircle size={16} />,
     },
-    { to: '#', label: INSTRUCTOR.NAV_MESSAGES, icon: <MessageSquare size={16} />, disabled: true },
-    { to: '#', label: INSTRUCTOR.NAV_EARNINGS, icon: <TrendingUp size={16} />, disabled: true },
+    {
+        to: '/instructor/messages',
+        label: INSTRUCTOR.NAV_MESSAGES,
+        icon: <MessageSquare size={16} />,
+    },
+    { to: '/instructor/earnings', label: INSTRUCTOR.NAV_EARNINGS, icon: <TrendingUp size={16} /> },
 ];
 
 export function InstructorLayout() {
@@ -56,7 +60,7 @@ export function InstructorLayout() {
 
     return (
         <>
-            <div className="grid min-h-screen grid-cols-[240px_1fr] bg-background">
+            <div className="grid h-screen grid-cols-[240px_1fr] overflow-hidden bg-background">
                 {/* Sidebar */}
                 <aside className="flex flex-col border-r border-border bg-card">
                     <div className="flex items-center gap-2 px-4 py-5">
@@ -131,7 +135,7 @@ export function InstructorLayout() {
                 </aside>
 
                 {/* Main content */}
-                <main className="min-h-screen overflow-y-auto">
+                <main className="h-full overflow-y-auto">
                     <Outlet />
                 </main>
             </div>
