@@ -4,6 +4,7 @@ import { EyeOff, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminApi } from '@/api/admin.api';
 import { queryKeys } from '@/api/queryKeys';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { ADMIN } from '@/const/localization/admin';
 import { cn } from '@/utils/cn';
 import type { ManageCourseCardDto, CourseStatus } from '@/types/course.types';
@@ -22,12 +23,18 @@ const STATUS_LABELS: Record<CourseStatus, string> = {
     Archived: ADMIN.COURSE_STATUS_ARCHIVED,
 };
 
+type PendingAction =
+    | { type: 'unpublish'; course: ManageCourseCardDto }
+    | { type: 'delete'; course: ManageCourseCardDto }
+    | { type: 'recover'; course: ManageCourseCardDto };
+
 export default function CourseModerationPage() {
     const qc = useQueryClient();
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [includeDeleted, setIncludeDeleted] = useState(false);
     const [skip, setSkip] = useState(0);
+    const [pending, setPending] = useState<PendingAction | null>(null);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -58,6 +65,7 @@ export default function CourseModerationPage() {
         onSuccess: () => {
             toast.success(ADMIN.TOAST_UNPUBLISHED);
             invalidateCourses();
+            setPending(null);
         },
     });
 
@@ -66,6 +74,7 @@ export default function CourseModerationPage() {
         onSuccess: () => {
             toast.success(ADMIN.TOAST_COURSE_DELETED);
             invalidateCourses();
+            setPending(null);
         },
     });
 
@@ -74,6 +83,7 @@ export default function CourseModerationPage() {
         onSuccess: () => {
             toast.success(ADMIN.TOAST_COURSE_RECOVERED);
             invalidateCourses();
+            setPending(null);
         },
     });
 
@@ -81,17 +91,48 @@ export default function CourseModerationPage() {
     const totalPages = data?.totalPages ?? 0;
     const currentPage = Math.floor(skip / PAGE_SIZE) + 1;
 
-    function handleUnpublish(c: ManageCourseCardDto) {
-        if (confirm(ADMIN.CONFIRM_UNPUBLISH(c.title))) unpublishMutation.mutate(c.id);
+    const isAnyPending =
+        unpublishMutation.isPending || deleteMutation.isPending || recoverMutation.isPending;
+
+    function handleConfirm() {
+        if (!pending) return;
+        if (pending.type === 'unpublish') unpublishMutation.mutate(pending.course.id);
+        else if (pending.type === 'delete') deleteMutation.mutate(pending.course.id);
+        else if (pending.type === 'recover') recoverMutation.mutate(pending.course.id);
     }
 
-    function handleDelete(c: ManageCourseCardDto) {
-        if (confirm(ADMIN.CONFIRM_DELETE_COURSE(c.title))) deleteMutation.mutate(c.id);
+    function dialogProps(): {
+        title: string;
+        description: string;
+        confirmLabel: string;
+        variant: 'destructive' | 'warning' | 'default';
+    } | null {
+        if (!pending) return null;
+        if (pending.type === 'unpublish')
+            return {
+                title: ADMIN.BTN_UNPUBLISH,
+                description: ADMIN.CONFIRM_UNPUBLISH(pending.course.title),
+                confirmLabel: ADMIN.BTN_UNPUBLISH,
+                variant: 'warning',
+            };
+        if (pending.type === 'delete')
+            return {
+                title: ADMIN.BTN_DELETE_COURSE,
+                description: ADMIN.CONFIRM_DELETE_COURSE(pending.course.title),
+                confirmLabel: ADMIN.BTN_DELETE_COURSE,
+                variant: 'destructive',
+            };
+        if (pending.type === 'recover')
+            return {
+                title: ADMIN.BTN_RECOVER_COURSE,
+                description: ADMIN.CONFIRM_RECOVER_COURSE(pending.course.title),
+                confirmLabel: ADMIN.BTN_RECOVER_COURSE,
+                variant: 'default',
+            };
+        return null;
     }
 
-    function handleRecover(c: ManageCourseCardDto) {
-        if (confirm(ADMIN.CONFIRM_RECOVER_COURSE(c.title))) recoverMutation.mutate(c.id);
-    }
+    const dialog = dialogProps();
 
     return (
         <div className="p-8">
@@ -219,7 +260,9 @@ export default function CourseModerationPage() {
                                         <div className="flex items-center justify-end gap-1">
                                             {!c.isDeleted && c.status === 'Published' && (
                                                 <button
-                                                    onClick={() => handleUnpublish(c)}
+                                                    onClick={() =>
+                                                        setPending({ type: 'unpublish', course: c })
+                                                    }
                                                     className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-warning"
                                                     title={ADMIN.BTN_UNPUBLISH}
                                                 >
@@ -228,7 +271,9 @@ export default function CourseModerationPage() {
                                             )}
                                             {c.isDeleted ? (
                                                 <button
-                                                    onClick={() => handleRecover(c)}
+                                                    onClick={() =>
+                                                        setPending({ type: 'recover', course: c })
+                                                    }
                                                     className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
                                                     title={ADMIN.BTN_RECOVER_COURSE}
                                                 >
@@ -236,7 +281,9 @@ export default function CourseModerationPage() {
                                                 </button>
                                             ) : (
                                                 <button
-                                                    onClick={() => handleDelete(c)}
+                                                    onClick={() =>
+                                                        setPending({ type: 'delete', course: c })
+                                                    }
                                                     className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
                                                     title={ADMIN.BTN_DELETE_COURSE}
                                                 >
@@ -276,6 +323,19 @@ export default function CourseModerationPage() {
                     </div>
                 )}
             </div>
+
+            {/* Confirm dialog */}
+            {pending && dialog && (
+                <ConfirmDialog
+                    title={dialog.title}
+                    description={dialog.description}
+                    confirmLabel={dialog.confirmLabel}
+                    variant={dialog.variant}
+                    isPending={isAnyPending}
+                    onConfirm={handleConfirm}
+                    onClose={() => setPending(null)}
+                />
+            )}
         </div>
     );
 }

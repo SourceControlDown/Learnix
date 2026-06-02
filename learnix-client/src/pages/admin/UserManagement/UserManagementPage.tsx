@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { adminApi } from '@/api/admin.api';
 import { queryKeys } from '@/api/queryKeys';
 import { ChangeRoleDialog } from './ChangeRoleDialog';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { ADMIN } from '@/const/localization/admin';
 import { cn } from '@/utils/cn';
 import type { AdminUserDto } from '@/types/admin.types';
@@ -17,6 +18,12 @@ const ROLE_STYLES: Record<string, string> = {
     Admin: 'bg-destructive/10 text-destructive',
 };
 
+type PendingAction =
+    | { type: 'ban'; user: AdminUserDto }
+    | { type: 'unban'; user: AdminUserDto }
+    | { type: 'delete'; user: AdminUserDto }
+    | { type: 'recover'; user: AdminUserDto };
+
 function userInitials(u: AdminUserDto) {
     return `${u.firstName[0] ?? ''}${u.lastName[0] ?? ''}`.toUpperCase();
 }
@@ -27,6 +34,7 @@ export default function UserManagementPage() {
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [skip, setSkip] = useState(0);
     const [roleDialogUser, setRoleDialogUser] = useState<AdminUserDto | null>(null);
+    const [pending, setPending] = useState<PendingAction | null>(null);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -56,6 +64,7 @@ export default function UserManagementPage() {
         onSuccess: () => {
             toast.success(ADMIN.TOAST_BANNED);
             invalidateUsers();
+            setPending(null);
         },
     });
 
@@ -64,6 +73,7 @@ export default function UserManagementPage() {
         onSuccess: () => {
             toast.success(ADMIN.TOAST_UNBANNED);
             invalidateUsers();
+            setPending(null);
         },
     });
 
@@ -72,6 +82,7 @@ export default function UserManagementPage() {
         onSuccess: () => {
             toast.success(ADMIN.TOAST_USER_DELETED);
             invalidateUsers();
+            setPending(null);
         },
     });
 
@@ -80,6 +91,7 @@ export default function UserManagementPage() {
         onSuccess: () => {
             toast.success(ADMIN.TOAST_USER_RECOVERED);
             invalidateUsers();
+            setPending(null);
         },
     });
 
@@ -87,29 +99,60 @@ export default function UserManagementPage() {
     const totalPages = data?.totalPages ?? 0;
     const currentPage = Math.floor(skip / PAGE_SIZE) + 1;
 
-    function handleBan(u: AdminUserDto) {
-        if (confirm(ADMIN.CONFIRM_BAN(`${u.firstName} ${u.lastName}`))) {
-            banMutation.mutate(u.id);
-        }
+    const isAnyPending =
+        banMutation.isPending ||
+        unbanMutation.isPending ||
+        deleteMutation.isPending ||
+        recoverMutation.isPending;
+
+    function handleConfirm() {
+        if (!pending) return;
+        if (pending.type === 'ban') banMutation.mutate(pending.user.id);
+        else if (pending.type === 'unban') unbanMutation.mutate(pending.user.id);
+        else if (pending.type === 'delete') deleteMutation.mutate(pending.user.id);
+        else if (pending.type === 'recover') recoverMutation.mutate(pending.user.id);
     }
 
-    function handleUnban(u: AdminUserDto) {
-        if (confirm(ADMIN.CONFIRM_UNBAN(`${u.firstName} ${u.lastName}`))) {
-            unbanMutation.mutate(u.id);
-        }
+    function dialogProps(): {
+        title: string;
+        description: string;
+        confirmLabel: string;
+        variant: 'destructive' | 'warning' | 'default';
+    } | null {
+        if (!pending) return null;
+        const name = `${pending.user.firstName} ${pending.user.lastName}`;
+        if (pending.type === 'ban')
+            return {
+                title: ADMIN.BTN_BAN,
+                description: ADMIN.CONFIRM_BAN(name),
+                confirmLabel: ADMIN.BTN_BAN,
+                variant: 'warning',
+            };
+        if (pending.type === 'unban')
+            return {
+                title: ADMIN.BTN_UNBAN,
+                description: ADMIN.CONFIRM_UNBAN(name),
+                confirmLabel: ADMIN.BTN_UNBAN,
+                variant: 'default',
+            };
+        if (pending.type === 'delete')
+            return {
+                title: ADMIN.BTN_DELETE,
+                description: ADMIN.CONFIRM_DELETE(name),
+                confirmLabel: ADMIN.BTN_DELETE,
+                variant: 'destructive',
+            };
+        if (pending.type === 'recover')
+            return {
+                title: ADMIN.BTN_RECOVER,
+                description: ADMIN.CONFIRM_RECOVER(name),
+                confirmLabel: ADMIN.BTN_RECOVER,
+                variant: 'default',
+            };
+        return null;
     }
 
-    function handleDelete(u: AdminUserDto) {
-        if (confirm(ADMIN.CONFIRM_DELETE(`${u.firstName} ${u.lastName}`))) {
-            deleteMutation.mutate(u.id);
-        }
-    }
-
-    function handleRecover(u: AdminUserDto) {
-        if (confirm(ADMIN.CONFIRM_RECOVER(`${u.firstName} ${u.lastName}`))) {
-            recoverMutation.mutate(u.id);
-        }
-    }
+    const dialog = dialogProps();
 
     return (
         <div className="p-8">
@@ -250,7 +293,9 @@ export default function UserManagementPage() {
                                             {!u.isDeleted &&
                                                 (u.isBanned ? (
                                                     <button
-                                                        onClick={() => handleUnban(u)}
+                                                        onClick={() =>
+                                                            setPending({ type: 'unban', user: u })
+                                                        }
                                                         className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
                                                         title={ADMIN.BTN_UNBAN}
                                                     >
@@ -258,7 +303,9 @@ export default function UserManagementPage() {
                                                     </button>
                                                 ) : (
                                                     <button
-                                                        onClick={() => handleBan(u)}
+                                                        onClick={() =>
+                                                            setPending({ type: 'ban', user: u })
+                                                        }
                                                         className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-warning"
                                                         title={ADMIN.BTN_BAN}
                                                     >
@@ -267,7 +314,9 @@ export default function UserManagementPage() {
                                                 ))}
                                             {u.isDeleted ? (
                                                 <button
-                                                    onClick={() => handleRecover(u)}
+                                                    onClick={() =>
+                                                        setPending({ type: 'recover', user: u })
+                                                    }
                                                     className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
                                                     title={ADMIN.BTN_RECOVER}
                                                 >
@@ -275,7 +324,9 @@ export default function UserManagementPage() {
                                                 </button>
                                             ) : (
                                                 <button
-                                                    onClick={() => handleDelete(u)}
+                                                    onClick={() =>
+                                                        setPending({ type: 'delete', user: u })
+                                                    }
                                                     className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
                                                     title={ADMIN.BTN_DELETE}
                                                 >
@@ -322,6 +373,19 @@ export default function UserManagementPage() {
                     user={roleDialogUser}
                     onClose={() => setRoleDialogUser(null)}
                     onRolesChanged={invalidateUsers}
+                />
+            )}
+
+            {/* Confirm dialog */}
+            {pending && dialog && (
+                <ConfirmDialog
+                    title={dialog.title}
+                    description={dialog.description}
+                    confirmLabel={dialog.confirmLabel}
+                    variant={dialog.variant}
+                    isPending={isAnyPending}
+                    onConfirm={handleConfirm}
+                    onClose={() => setPending(null)}
                 />
             )}
         </div>
