@@ -22,6 +22,9 @@ const InstructorDashboardPage = lazy(
     () => import('@/pages/instructor/Dashboard/InstructorDashboardPage'),
 );
 const CourseEditorPage = lazy(() => import('@/pages/instructor/CourseEditor/CourseEditorPage'));
+const InstructorMyCoursesPage = lazy(
+    () => import('@/pages/instructor/MyCourses/InstructorMyCoursesPage'),
+);
 const BecomeInstructorPage = lazy(
     () => import('@/pages/public/BecomeInstructor/BecomeInstructorPage'),
 );
@@ -30,6 +33,9 @@ const RegisterPage = lazy(() => import('@/pages/public/Register/RegisterPage'));
 const MessagesPage = lazy(() => import('@/pages/student/Messages/MessagesPage'));
 const InstructorMessagesPage = lazy(
     () => import('@/pages/instructor/Messages/InstructorMessagesPage'),
+);
+const InstructorEarningsPage = lazy(
+    () => import('@/pages/instructor/Earnings/InstructorEarningsPage'),
 );
 
 // Admin pages
@@ -108,9 +114,11 @@ export const router = createBrowserRouter([
         element: guardInstructor(wrap(<InstructorLayout />)),
         children: [
             { index: true, element: wrap(<InstructorDashboardPage />) },
+            { path: 'courses', element: wrap(<InstructorMyCoursesPage />) },
             { path: 'courses/new', element: wrap(<CourseEditorPage />) },
             { path: 'courses/:id/edit', element: wrap(<CourseEditorPage />) },
             { path: 'messages', element: wrap(<InstructorMessagesPage />) },
+            { path: 'earnings', element: wrap(<InstructorEarningsPage />) },
         ],
     },
     {
