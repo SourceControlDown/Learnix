@@ -1,5 +1,6 @@
 using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
+using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Common.Pagination;
@@ -12,7 +13,8 @@ namespace Learnix.Application.Courses.Queries.GetInstructorCourses;
 
 public sealed class GetInstructorCoursesQueryHandler(
     ICurrentUserService currentUser,
-    ICourseRepository courseRepository)
+    ICourseRepository courseRepository,
+    IBlobStorageService blobStorage)
     : IRequestHandler<GetInstructorCoursesQuery, Result<PaginatedResult<ManageCourseCardDto>>>
 {
     public async Task<Result<PaginatedResult<ManageCourseCardDto>>> Handle(
@@ -22,8 +24,8 @@ public sealed class GetInstructorCoursesQueryHandler(
         if (currentUser.UserId is null)
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
 
-        if (!currentUser.IsInRole(Roles.Admin))
-            return Result.Fail(new ForbiddenError("You are not admin"));
+        if (!currentUser.IsInRole(Roles.Instructor) && !currentUser.IsInRole(Roles.Admin))
+            return Result.Fail(new ForbiddenError("Only instructors can access their courses."));
 
         var pagination = PaginationRequest.FromOffset(request.Skip, request.Take);
 
@@ -45,7 +47,9 @@ public sealed class GetInstructorCoursesQueryHandler(
                 c.CategoryId,
                 c.Title,
                 c.Description,
-                c.CoverBlobPath,
+                c.CoverBlobPath is not null
+                    ? blobStorage.GenerateReadUrl(c.CoverBlobPath, TimeSpan.FromHours(24))
+                    : null,
                 c.Price,
                 c.Price == 0m,
                 c.Status.ToString(),

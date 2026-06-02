@@ -1,5 +1,6 @@
 using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
+using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Common.Extensions;
@@ -12,7 +13,8 @@ namespace Learnix.Application.Courses.Queries.GetCourseForEditById;
 
 public sealed class GetCourseForEditByIdQueryHandler(
     ICurrentUserService currentUser,
-    ICourseRepository courseRepository)
+    ICourseRepository courseRepository,
+    IBlobStorageService blobStorage)
     : IRequestHandler<GetCourseForEditByIdQuery, Result<CourseForEditDto>>
 {
     public async Task<Result<CourseForEditDto>> Handle(GetCourseForEditByIdQuery request, CancellationToken cancellationToken)
@@ -36,7 +38,9 @@ public sealed class GetCourseForEditByIdQueryHandler(
             course.CategoryId,
             course.Title,
             course.Description,
-            course.CoverBlobPath,
+            course.CoverBlobPath is not null
+                ? blobStorage.GenerateReadUrl(course.CoverBlobPath, TimeSpan.FromHours(24))
+                : null,
             course.Price,
             course.Price == 0m,
             course.Status.ToString(),
