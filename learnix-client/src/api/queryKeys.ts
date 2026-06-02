@@ -32,6 +32,7 @@ export const queryKeys = {
     instructor: {
         myCourses: (filters: Record<string, unknown> = {}) => ['courses', 'mine', filters] as const,
         courseForEdit: (id: string) => ['courses', 'edit', id] as const,
+        earnings: () => ['instructor', 'earnings'] as const,
     },
     applications: {
         mine: () => ['instructor-applications', 'mine'] as const,

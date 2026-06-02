@@ -1,5 +1,6 @@
 import { api } from './axios.instance';
 import type { PaginatedResult } from '@/types/api.types';
+import type { InstructorEarningsResponse } from '@/types/payment.types';
 
 // The mock payment response (matches InitiateMockPaymentResponse)
 export interface InitiateMockPaymentResponse {
@@ -16,4 +17,7 @@ export const paymentsApi = {
         api
             .get<PaginatedResult<any>>('/payments/mine', { params: { skip, take } })
             .then((r) => r.data),
+
+    getInstructorEarnings: () =>
+        api.get<InstructorEarningsResponse>('/instructor/earnings').then((r) => r.data),
 };
