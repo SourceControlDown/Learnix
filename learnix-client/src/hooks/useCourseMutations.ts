@@ -68,6 +68,18 @@ export function useArchiveCourse() {
     });
 }
 
+export function useUnarchiveCourse() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (courseId: string) => coursesApi.unarchive(courseId),
+        onSuccess: () => {
+            toast.success(INSTRUCTOR.TOAST_COURSE_UNARCHIVED);
+            invalidateMyCourses(qc);
+        },
+        onError: () => toast.error(INSTRUCTOR.TOAST_ERROR),
+    });
+}
+
 export function useDeleteCourse() {
     const qc = useQueryClient();
     return useMutation({

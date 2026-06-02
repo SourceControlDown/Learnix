@@ -102,5 +102,7 @@ export const coursesApi = {
 
     archive: (id: string) => api.post(`/courses/${id}/archive`).then((r) => r.data),
 
+    unarchive: (id: string) => api.post(`/courses/${id}/unarchive`).then((r) => r.data),
+
     deleteCourse: (id: string) => api.delete(`/courses/${id}`).then((r) => r.data),
 };
