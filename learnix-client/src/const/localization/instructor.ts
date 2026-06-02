@@ -169,6 +169,7 @@ export const INSTRUCTOR = {
     TOAST_COURSE_DELETED: 'Course deleted',
     TOAST_SECTION_ADDED: 'Section added',
     TOAST_SECTION_DELETED: 'Section deleted',
+    CONFIRM_DELETE_LESSON: (title: string) => `Delete "${title}"? This action cannot be undone.`,
     TOAST_LESSON_SAVED: 'Lesson saved',
     TOAST_LESSON_DELETED: 'Lesson deleted',
     TOAST_APPLICATION_SUBMITTED: 'Application submitted',
