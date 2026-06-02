@@ -1,5 +1,6 @@
 using Learnix.API.Extensions;
 using Learnix.Application.Courses.Commands.ArchiveCourse;
+using Learnix.Application.Courses.Commands.UnarchiveCourse;
 using Learnix.Application.Courses.Commands.CreateCourse;
 using Learnix.Application.Courses.Commands.DeleteCourse;
 using Learnix.Application.Courses.Commands.PublishCourse;
@@ -144,6 +145,14 @@ public sealed class CoursesController(ISender sender) : ControllerBase
     public async Task<IActionResult> Archive(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new ArchiveCourseCommand(id), ct);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("{id:guid}/unarchive")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
+    public async Task<IActionResult> Unarchive(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new UnarchiveCourseCommand(id), ct);
         return result.ToActionResult();
     }
 
