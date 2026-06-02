@@ -3,6 +3,7 @@ import { BookOpen, Users, PlusCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useMyCoursesQuery } from '@/hooks/useMyCoursesQuery';
 import { INSTRUCTOR } from '@/const/localization/instructor';
+import { PAGINATION } from '@/const/ui.constants';
 import type { CourseStatus } from '@/types/course.types';
 
 const STATUS_STYLES: Record<CourseStatus, string> = {
@@ -18,7 +19,7 @@ const STATUS_LABELS: Record<CourseStatus, string> = {
 };
 
 export default function InstructorDashboardPage() {
-    const { data, isLoading } = useMyCoursesQuery({ take: 5 });
+    const { data, isLoading } = useMyCoursesQuery({ take: PAGINATION.DASHBOARD_RECENT });
 
     const recentCourses = data?.items ?? [];
     const totalCourses = data?.totalCount ?? 0;

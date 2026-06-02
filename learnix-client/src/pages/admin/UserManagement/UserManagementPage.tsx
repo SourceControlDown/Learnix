@@ -7,10 +7,11 @@ import { queryKeys } from '@/api/queryKeys';
 import { ChangeRoleDialog } from './ChangeRoleDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { ADMIN } from '@/const/localization/admin';
+import { PAGINATION } from '@/const/ui.constants';
 import { cn } from '@/utils/cn';
 import type { AdminUserDto } from '@/types/admin.types';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = PAGINATION.DEFAULT;
 
 const ROLE_STYLES: Record<string, string> = {
     Student: 'bg-primary/10 text-primary',

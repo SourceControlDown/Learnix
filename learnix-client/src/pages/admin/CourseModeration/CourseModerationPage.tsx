@@ -6,10 +6,11 @@ import { adminApi } from '@/api/admin.api';
 import { queryKeys } from '@/api/queryKeys';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { ADMIN } from '@/const/localization/admin';
+import { PAGINATION } from '@/const/ui.constants';
 import { cn } from '@/utils/cn';
 import type { ManageCourseCardDto, CourseStatus } from '@/types/course.types';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = PAGINATION.DEFAULT;
 
 const STATUS_STYLES: Record<CourseStatus, string> = {
     Published: 'bg-success/20 text-success',

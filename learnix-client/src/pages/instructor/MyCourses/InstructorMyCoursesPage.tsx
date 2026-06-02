@@ -12,9 +12,10 @@ import {
 } from '@/hooks/useCourseMutations';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { INSTRUCTOR } from '@/const/localization/instructor';
+import { PAGINATION } from '@/const/ui.constants';
 import type { ManageCourseCardDto, CourseStatus } from '@/types/course.types';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = PAGINATION.DEFAULT;
 
 const STATUS_STYLES: Record<CourseStatus, string> = {
     Published: 'bg-success/20 text-success',

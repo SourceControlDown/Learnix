@@ -5,11 +5,12 @@ import { CourseCard } from '@/components/common/CourseCard';
 import { useCategories } from '@/hooks/useCategories';
 import { useCatalogCourses } from '@/hooks/useCatalogCourses';
 import { COURSE_CATALOG } from '@/const/localization/courseCatalog';
+import { PAGINATION } from '@/const/ui.constants';
 import { cn } from '@/utils/cn';
 import { FilterSidebar } from './FilterSidebar';
 import { SortDropdown } from './SortDropdown';
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = PAGINATION.CATALOG;
 
 type SortBy = 'popular' | 'newest' | 'rating';
 

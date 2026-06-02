@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import { courseInfoSchema, type CourseInfoFormData } from '@/schemas/course.schema';
+import { COURSE_LIMITS } from '@/const/course.constants';
 import { CoverImageUploader } from './CoverImageUploader';
 import { useCategories } from '@/hooks/useCategories';
 import { INSTRUCTOR } from '@/const/localization/instructor';
@@ -43,7 +44,7 @@ export function CourseInfoForm({ course, isPending, onSubmit }: Props) {
         if (e.key !== 'Enter' && e.key !== ',') return;
         e.preventDefault();
         const tag = tagInput.trim().toLowerCase();
-        if (tag && !tags.includes(tag) && tags.length < 10) {
+        if (tag && !tags.includes(tag) && tags.length < COURSE_LIMITS.TAGS_MAX_COUNT) {
             setValue('tags', [...tags, tag]);
         }
         setTagInput('');
@@ -117,7 +118,7 @@ export function CourseInfoForm({ course, isPending, onSubmit }: Props) {
                     <input
                         {...register('price')}
                         type="number"
-                        min={0}
+                        min={COURSE_LIMITS.PRICE_MIN}
                         step={0.01}
                         placeholder={INSTRUCTOR.FIELD_PRICE_PLACEHOLDER}
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"

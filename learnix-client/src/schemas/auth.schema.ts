@@ -1,27 +1,37 @@
 import { z } from 'zod';
+import { AUTH_LIMITS } from '@/const/auth.constants';
 
 export const loginSchema = z.object({
     email: z
         .string()
         .min(1, 'Email is required')
         .email('Please enter a valid email address')
-        .max(256, 'Email is too long'),
-    password: z.string().min(1, 'Password is required').max(128, 'Password is too long'),
+        .max(AUTH_LIMITS.EMAIL_MAX, 'Email is too long'),
+    password: z
+        .string()
+        .min(1, 'Password is required')
+        .max(AUTH_LIMITS.PASSWORD_MAX, 'Password is too long'),
 });
 
 export const registerSchema = z
     .object({
-        firstName: z.string().min(1, 'First name is required').max(100, 'First name is too long'),
-        lastName: z.string().min(1, 'Last name is required').max(100, 'Last name is too long'),
+        firstName: z
+            .string()
+            .min(1, 'First name is required')
+            .max(AUTH_LIMITS.FIRST_NAME_MAX, 'First name is too long'),
+        lastName: z
+            .string()
+            .min(1, 'Last name is required')
+            .max(AUTH_LIMITS.LAST_NAME_MAX, 'Last name is too long'),
         email: z
             .string()
             .min(1, 'Email is required')
             .email('Please enter a valid email address')
-            .max(256, 'Email is too long'),
+            .max(AUTH_LIMITS.EMAIL_MAX, 'Email is too long'),
         password: z
             .string()
-            .min(8, 'Password must be at least 8 characters')
-            .max(128, 'Password is too long')
+            .min(AUTH_LIMITS.PASSWORD_MIN, 'Password must be at least 8 characters')
+            .max(AUTH_LIMITS.PASSWORD_MAX, 'Password is too long')
             .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
             .regex(/[a-z]/, 'Must contain at least one lowercase letter')
             .regex(/[0-9]/, 'Must contain at least one digit'),

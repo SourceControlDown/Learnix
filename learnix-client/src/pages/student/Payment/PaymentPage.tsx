@@ -9,6 +9,7 @@ import { AlertTriangle, ShieldCheck, CreditCard, ArrowLeft } from 'lucide-react'
 import { useCourseDetail } from '@/hooks/useCourseDetail';
 import { paymentsApi } from '@/api/payments.api';
 import { paymentSchema, type PaymentFormValues } from '@/schemas/payment.schema';
+import { PAYMENT_LIMITS } from '@/const/payment.constants';
 import { queryKeys } from '@/api/queryKeys';
 import { PAYMENT_PAGE } from '@/const/localization/paymentPage';
 
@@ -52,7 +53,7 @@ export default function PaymentPage() {
     const { onChange: onCvvChange, ...cvvReg } = form.register('cvv');
 
     function handleCardNumber(e: React.ChangeEvent<HTMLInputElement>) {
-        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 16);
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, PAYMENT_LIMITS.CARD_NUMBER_LENGTH);
         onCardNumberChange(e);
     }
 
@@ -63,7 +64,7 @@ export default function PaymentPage() {
     }
 
     function handleCvv(e: React.ChangeEvent<HTMLInputElement>) {
-        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, PAYMENT_LIMITS.CVV_MAX);
         onCvvChange(e);
     }
 
@@ -137,7 +138,7 @@ export default function PaymentPage() {
                                 <input
                                     type="text"
                                     inputMode="numeric"
-                                    maxLength={16}
+                                    maxLength={PAYMENT_LIMITS.CARD_NUMBER_LENGTH}
                                     placeholder={PAYMENT_PAGE.cardNumberPlaceholder}
                                     {...cardNumberReg}
                                     onChange={handleCardNumber}
@@ -159,7 +160,7 @@ export default function PaymentPage() {
                                     <input
                                         type="text"
                                         inputMode="numeric"
-                                        maxLength={5}
+                                        maxLength={PAYMENT_LIMITS.EXPIRY_MAX_LENGTH}
                                         placeholder={PAYMENT_PAGE.expiryPlaceholder}
                                         {...expiryReg}
                                         onChange={handleExpiry}
@@ -179,7 +180,7 @@ export default function PaymentPage() {
                                     <input
                                         type="text"
                                         inputMode="numeric"
-                                        maxLength={4}
+                                        maxLength={PAYMENT_LIMITS.CVV_MAX}
                                         placeholder={PAYMENT_PAGE.cvvPlaceholder}
                                         {...cvvReg}
                                         onChange={handleCvv}

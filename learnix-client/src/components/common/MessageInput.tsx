@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { Send } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { MESSAGES } from '@/const/localization/messages';
-import { CHAT } from '@/const/appConstants';
+import { CHAT_LIMITS } from '@/const/ui.constants';
 
 interface MessageInputProps {
     onSend: (content: string) => void;
@@ -44,7 +44,7 @@ export function MessageInput({ onSend, disabled, className }: MessageInputProps)
         }
     };
 
-    const remaining = CHAT.MESSAGE_MAX_LENGTH - value.length;
+    const remaining = CHAT_LIMITS.MESSAGE_MAX - value.length;
     const isNearLimit = remaining <= 200;
 
     return (
@@ -62,7 +62,7 @@ export function MessageInput({ onSend, disabled, className }: MessageInputProps)
                     placeholder={MESSAGES.TYPE_MESSAGE}
                     value={value}
                     rows={1}
-                    maxLength={CHAT.MESSAGE_MAX_LENGTH}
+                    maxLength={CHAT_LIMITS.MESSAGE_MAX}
                     onChange={(e) => setValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     disabled={disabled}

@@ -6,9 +6,10 @@ import { adminApi } from '@/api/admin.api';
 import { queryKeys } from '@/api/queryKeys';
 import { RejectDialog } from './RejectDialog';
 import { ADMIN } from '@/const/localization/admin';
+import { PAGINATION } from '@/const/ui.constants';
 import type { PendingApplicationDto } from '@/types/admin.types';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = PAGINATION.APPLICATIONS;
 
 function applicantInitials(a: PendingApplicationDto) {
     return `${a.firstName[0] ?? ''}${a.lastName[0] ?? ''}`.toUpperCase();

@@ -223,6 +223,17 @@ src/
 │   ├── theme.store.ts            # light/dark, persisted
 │   └── ui.store.ts               # isSidebarOpen, isMobileMenuOpen, isChatOpen
 │
+├── const/
+│   ├── localization/             # UI strings (SCREAMING_SNAKE_CASE exports, one file per page/domain)
+│   ├── auth.constants.ts         # AUTH_LIMITS — field lengths for auth forms
+│   ├── course.constants.ts       # COURSE_LIMITS — title/description/tag constraints
+│   ├── instructor.constants.ts   # INSTRUCTOR_APP_LIMITS — motivation text, portfolio URL
+│   ├── lesson.constants.ts       # LESSON_LIMITS — title, content, test thresholds, question counts
+│   ├── payment.constants.ts      # PAYMENT_LIMITS — card number, CVV, expiry lengths
+│   ├── profile.constants.ts      # PROFILE_LIMITS — name and bio lengths
+│   ├── review.constants.ts       # REVIEW_LIMITS — rating range, comment length
+│   └── ui.constants.ts           # PAGINATION (page sizes per context), CHAT_LIMITS
+│
 ├── schemas/                      # Zod schemas (source of truth for FormValues)
 │   ├── auth.schema.ts
 │   ├── course.schema.ts
@@ -272,6 +283,7 @@ src/
    - 1-3 додаткові компоненти → flat файли поруч зі сторінкою
    - 4+ → у підпапці `components/` всередині сторінки
 5. **Правило міграції:** компонент використовується на другій сторінці → переноситься в `components/common/`.
+6. **`const/` — константи:** усі magic numbers (мін/макс довжини полів, діапазони значень, розміри сторінок) виносяться у відповідний файл `const/*.constants.ts`. Схеми Zod і компоненти імпортують звідти — не хардкодять числа.
 
 ---
 
