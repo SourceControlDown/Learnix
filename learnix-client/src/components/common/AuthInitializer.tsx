@@ -12,7 +12,7 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         axios
-            .post<{ accessToken: string }>(
+            .post<{ accessToken: string; avatarUrl: string | null }>(
                 `${BASE_URL}/auth/refresh`,
                 {},
                 { withCredentials: true },
@@ -20,7 +20,7 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
             .then(({ data }) => {
                 setAccessToken(data.accessToken);
                 const user = parseAccessToken(data.accessToken);
-                if (user) setUser(user);
+                if (user) setUser({ ...user, avatarUrl: data.avatarUrl });
             })
             .catch(() => {
                 // No valid refresh token — user is not logged in

@@ -1,15 +1,16 @@
 import { GraduationCap, Download, Link as LinkIcon, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { useMyCertificates } from '@/hooks/useMyCertificates';
-import { CERTIFICATES } from '@/const/localization/certificates';
 import { cn } from '@/utils/cn';
 
 export default function CertificatesPage() {
+    const { t } = useTranslation('certificates');
     const { data: certificates, isLoading } = useMyCertificates();
 
     function copyLink(url: string) {
         navigator.clipboard.writeText(url);
-        toast.success(CERTIFICATES.MESSAGES.LINK_COPIED);
+        toast.success(t('messages.linkCopied'));
     }
 
     if (isLoading) {
@@ -29,9 +30,9 @@ export default function CertificatesPage() {
         <div className="mx-auto max-w-4xl px-6 py-12">
             <div>
                 <h1 className="font-heading text-3xl font-bold text-foreground">
-                    {CERTIFICATES.PAGE_TITLE}
+                    {t('pageTitle')}
                 </h1>
-                <p className="mt-1 text-muted-foreground">{CERTIFICATES.SUBTITLE}</p>
+                <p className="mt-1 text-muted-foreground">{t('subtitle')}</p>
             </div>
 
             {!certificates || certificates.length === 0 ? (
@@ -39,12 +40,8 @@ export default function CertificatesPage() {
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
                         <GraduationCap className="h-10 w-10 text-muted-foreground" />
                     </div>
-                    <h2 className="font-heading text-xl font-semibold">
-                        {CERTIFICATES.EMPTY_TITLE}
-                    </h2>
-                    <p className="max-w-sm text-muted-foreground">
-                        {CERTIFICATES.EMPTY_DESCRIPTION}
-                    </p>
+                    <h2 className="font-heading text-xl font-semibold">{t('emptyTitle')}</h2>
+                    <p className="max-w-sm text-muted-foreground">{t('emptyDescription')}</p>
                 </div>
             ) : (
                 <div className="mt-8 space-y-4">
@@ -77,7 +74,7 @@ export default function CertificatesPage() {
                                     {cert.courseTitle}
                                 </p>
                                 <p className="mt-0.5 text-sm text-muted-foreground">
-                                    {CERTIFICATES.ISSUED_ON}{' '}
+                                    {t('issuedOn')}{' '}
                                     {new Date(cert.issuedAt).toLocaleDateString('en-US', {
                                         month: 'long',
                                         day: 'numeric',
@@ -87,7 +84,7 @@ export default function CertificatesPage() {
                                 {!cert.isReady && (
                                     <p className="mt-1 flex items-center gap-1 text-xs text-warning">
                                         <Clock className="h-3 w-3" />
-                                        {CERTIFICATES.STATUS.GENERATING_HINT}
+                                        {t('status.generatingHint')}
                                     </p>
                                 )}
                             </div>
@@ -97,7 +94,7 @@ export default function CertificatesPage() {
                                 <button
                                     type="button"
                                     onClick={() => copyLink(cert.verificationUrl)}
-                                    title={CERTIFICATES.ACTIONS.SHARE}
+                                    title={t('actions.share')}
                                     className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                                 >
                                     <LinkIcon className="h-4 w-4" />
@@ -111,12 +108,12 @@ export default function CertificatesPage() {
                                         className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
                                     >
                                         <Download className="h-4 w-4" />
-                                        {CERTIFICATES.ACTIONS.DOWNLOAD}
+                                        {t('actions.download')}
                                     </a>
                                 ) : (
                                     <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-4 py-2 text-sm text-muted-foreground">
                                         <Clock className="h-4 w-4" />
-                                        {CERTIFICATES.STATUS.GENERATING}
+                                        {t('status.generating')}
                                     </span>
                                 )}
                             </div>

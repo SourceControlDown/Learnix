@@ -1,6 +1,6 @@
 import { User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { RatingStars } from '@/components/common/RatingStars';
-import { COURSE_DETAIL } from '@/const/localization/courseDetail';
 import type { CourseReviewDto } from '@/types/review.types';
 
 interface ReviewsListProps {
@@ -10,25 +10,27 @@ interface ReviewsListProps {
 }
 
 export function ReviewsList({ reviews, averageRating, totalCount }: ReviewsListProps) {
+    const { t } = useTranslation('courseDetail');
+
     return (
         <section className="space-y-4">
             <div className="flex items-baseline justify-between">
                 <h2 className="font-heading text-xl font-semibold text-foreground">
-                    {COURSE_DETAIL.REVIEWS.TITLE}
+                    {t('reviews.title')}
                 </h2>
                 {totalCount > 0 && (
                     <div className="flex items-center gap-2">
                         <RatingStars value={Math.round(averageRating)} size="sm" />
                         <span className="text-sm font-medium">{averageRating.toFixed(1)}</span>
                         <span className="text-sm text-muted-foreground">
-                            ({COURSE_DETAIL.REVIEWS.REVIEW_COUNT(totalCount)})
+                            ({t('reviews.reviewCount', { count: totalCount })})
                         </span>
                     </div>
                 )}
             </div>
 
             {reviews.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{COURSE_DETAIL.REVIEWS.NO_REVIEWS}</p>
+                <p className="text-sm text-muted-foreground">{t('reviews.noReviews')}</p>
             ) : (
                 <div className="space-y-4">
                     {reviews.map((review) => (

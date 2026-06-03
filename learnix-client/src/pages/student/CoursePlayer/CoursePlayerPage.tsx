@@ -2,6 +2,7 @@ import { useMemo, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { MessageSquare, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import { messagesApi } from '@/api/messages.api';
 import { useCourseDetail } from '@/hooks/useCourseDetail';
@@ -11,11 +12,11 @@ import { CourseSidebar } from './components/CourseSidebar';
 import { VideoLessonView } from './components/VideoLessonView';
 import { PostLessonView } from './components/PostLessonView';
 import { TestLessonPreview } from './components/TestLessonPreview';
-import { LESSON_PLAYER } from '@/const/localization/lessonPlayer';
 
 export default function CoursePlayerPage() {
     const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
     const navigate = useNavigate();
+    const { t } = useTranslation('lessonPlayer');
 
     const { data: course } = useCourseDetail(courseId!);
     const { data: progress, isLoading } = useCourseProgress(courseId!);
@@ -95,7 +96,7 @@ export default function CoursePlayerPage() {
                         type="button"
                         onClick={() => startChat.mutate()}
                         disabled={startChat.isPending}
-                        title={LESSON_PLAYER.HEADER.messageInstructor}
+                        title={t('header.messageInstructor')}
                         className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
                     >
                         {startChat.isPending ? (
@@ -125,16 +126,14 @@ export default function CoursePlayerPage() {
                             <div className="flex h-full items-center justify-center">
                                 <div className="space-y-3 text-center">
                                     <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                    <p className="text-sm text-muted-foreground">
-                                        {LESSON_PLAYER.LOADING}
-                                    </p>
+                                    <p className="text-sm text-muted-foreground">{t('loading')}</p>
                                 </div>
                             </div>
                         )}
 
                         {!isLoading && !currentLesson && (
                             <div className="flex h-full items-center justify-center text-muted-foreground">
-                                {LESSON_PLAYER.LESSON_NOT_FOUND}
+                                {t('lessonNotFound')}
                             </div>
                         )}
 
@@ -166,7 +165,7 @@ export default function CoursePlayerPage() {
                                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                 >
                                     <ChevronLeft className="h-4 w-4" />
-                                    {LESSON_PLAYER.ACTIONS.previousLesson}
+                                    {t('actions.previousLesson')}
                                 </Link>
                             )}
                         </div>
@@ -186,10 +185,10 @@ export default function CoursePlayerPage() {
                             >
                                 {currentLesson.isCompleted && <CheckCircle2 className="h-4 w-4" />}
                                 {currentLesson.isCompleted
-                                    ? LESSON_PLAYER.ACTIONS.completed
+                                    ? t('actions.completed')
                                     : markComplete.isPending
                                       ? 'Saving...'
-                                      : LESSON_PLAYER.ACTIONS.markComplete}
+                                      : t('actions.markComplete')}
                             </button>
                         )}
                         {/* For test lessons, show completion badge only */}
@@ -198,7 +197,7 @@ export default function CoursePlayerPage() {
                             currentLesson.isCompleted && (
                                 <span className="inline-flex items-center gap-2 rounded-lg bg-success/15 px-5 py-2 text-sm font-medium text-success">
                                     <CheckCircle2 className="h-4 w-4" />
-                                    {LESSON_PLAYER.ACTIONS.completed}
+                                    {t('actions.completed')}
                                 </span>
                             )}
 
@@ -209,7 +208,7 @@ export default function CoursePlayerPage() {
                                     to={`/courses/${courseId}/learn/${nextLesson.lessonId}`}
                                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                 >
-                                    {LESSON_PLAYER.ACTIONS.nextLesson}
+                                    {t('actions.nextLesson')}
                                     <ChevronRight className="h-4 w-4" />
                                 </Link>
                             )}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ADMIN } from '@/const/localization/admin';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import type { MockPaymentDto } from '@/types/admin.types';
 
@@ -122,21 +122,22 @@ const STATUS_STYLES: Record<MockPaymentDto['status'], string> = {
     Failed: 'bg-destructive/10 text-destructive',
 };
 
-const STATUS_LABELS: Record<MockPaymentDto['status'], string> = {
-    Completed: ADMIN.PAY_STATUS_COMPLETED,
-    Pending: ADMIN.PAY_STATUS_PENDING,
-    Failed: ADMIN.PAY_STATUS_FAILED,
-};
-
-const FILTERS: { value: StatusFilter; label: string }[] = [
-    { value: 'All', label: ADMIN.PAY_FILTER_ALL },
-    { value: 'Completed', label: ADMIN.PAY_FILTER_COMPLETED },
-    { value: 'Pending', label: ADMIN.PAY_FILTER_PENDING },
-    { value: 'Failed', label: ADMIN.PAY_FILTER_FAILED },
-];
-
 export default function PaymentHistoryPage() {
+    const { t } = useTranslation('admin');
     const [filter, setFilter] = useState<StatusFilter>('All');
+
+    const STATUS_LABELS: Record<MockPaymentDto['status'], string> = {
+        Completed: t('payStatusCompleted'),
+        Pending: t('payStatusPending'),
+        Failed: t('payStatusFailed'),
+    };
+
+    const FILTERS: { value: StatusFilter; label: string }[] = [
+        { value: 'All', label: t('payFilterAll') },
+        { value: 'Completed', label: t('payFilterCompleted') },
+        { value: 'Pending', label: t('payFilterPending') },
+        { value: 'Failed', label: t('payFilterFailed') },
+    ];
 
     const displayed =
         filter === 'All' ? MOCK_PAYMENTS : MOCK_PAYMENTS.filter((p) => p.status === filter);
@@ -152,12 +153,12 @@ export default function PaymentHistoryPage() {
             <div className="mb-2 flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <h1 className="font-heading text-3xl font-bold text-foreground">
-                        {ADMIN.PAYMENTS_TITLE}
+                        {t('paymentsTitle')}
                     </h1>
-                    <p className="mt-1 text-muted-foreground">{ADMIN.PAYMENTS_SUBTITLE}</p>
+                    <p className="mt-1 text-muted-foreground">{t('paymentsSubtitle')}</p>
                 </div>
                 <span className="rounded-full border border-warning/30 bg-warning/10 px-3 py-1 text-xs font-medium text-warning">
-                    {ADMIN.PAYMENTS_MOCK_BADGE}
+                    {t('paymentsMockBadge')}
                 </span>
             </div>
 
@@ -183,27 +184,23 @@ export default function PaymentHistoryPage() {
             <div className="overflow-hidden rounded-xl border border-border bg-card">
                 {displayed.length === 0 ? (
                     <div className="py-16 text-center text-sm text-muted-foreground">
-                        {ADMIN.EMPTY_PAYMENTS}
+                        {t('emptyPayments')}
                     </div>
                 ) : (
                     <table className="w-full text-sm">
                         <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
                             <tr>
+                                <th className="px-5 py-3 text-left font-medium">{t('colPayer')}</th>
                                 <th className="px-5 py-3 text-left font-medium">
-                                    {ADMIN.COL_PAYER}
+                                    {t('colCourseTitle')}
                                 </th>
                                 <th className="px-5 py-3 text-left font-medium">
-                                    {ADMIN.COL_COURSE_TITLE}
+                                    {t('colAmount')}
                                 </th>
                                 <th className="px-5 py-3 text-left font-medium">
-                                    {ADMIN.COL_AMOUNT}
+                                    {t('colPayStatus')}
                                 </th>
-                                <th className="px-5 py-3 text-left font-medium">
-                                    {ADMIN.COL_PAY_STATUS}
-                                </th>
-                                <th className="px-5 py-3 text-left font-medium">
-                                    {ADMIN.COL_DATE}
-                                </th>
+                                <th className="px-5 py-3 text-left font-medium">{t('colDate')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">

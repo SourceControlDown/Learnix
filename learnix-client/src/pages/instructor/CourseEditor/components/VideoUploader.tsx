@@ -1,8 +1,8 @@
 import { useRef } from 'react';
 import { Video } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import { useRequestUploadUrl } from '@/hooks/useRequestUploadUrl';
-import { INSTRUCTOR } from '@/const/localization/instructor';
 
 interface Props {
     value: string;
@@ -10,6 +10,7 @@ interface Props {
 }
 
 export function VideoUploader({ value, onChange }: Props) {
+    const { t } = useTranslation('instructor');
     const inputRef = useRef<HTMLInputElement>(null);
     const { uploadFile, isUploading, error } = useRequestUploadUrl();
 
@@ -36,9 +37,7 @@ export function VideoUploader({ value, onChange }: Props) {
 
     return (
         <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-foreground">
-                {INSTRUCTOR.FIELD_VIDEO}
-            </label>
+            <label className="block text-sm font-medium text-foreground">{t('fieldVideo')}</label>
             <div
                 onClick={() => !isUploading && inputRef.current?.click()}
                 onDrop={onDrop}
@@ -50,13 +49,11 @@ export function VideoUploader({ value, onChange }: Props) {
             >
                 <Video size={28} className="opacity-50" />
                 {isUploading ? (
-                    <span className="text-sm">{INSTRUCTOR.VIDEO_UPLOADING}</span>
+                    <span className="text-sm">{t('videoUploading')}</span>
                 ) : value ? (
-                    <span className="text-sm font-medium text-success">
-                        {INSTRUCTOR.VIDEO_UPLOADED}
-                    </span>
+                    <span className="text-sm font-medium text-success">{t('videoUploaded')}</span>
                 ) : (
-                    <span className="text-sm">{INSTRUCTOR.VIDEO_HINT}</span>
+                    <span className="text-sm">{t('videoHint')}</span>
                 )}
             </div>
             {error && <p className="text-xs text-destructive">{error}</p>}

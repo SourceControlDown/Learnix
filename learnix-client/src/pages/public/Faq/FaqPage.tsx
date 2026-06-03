@@ -1,17 +1,31 @@
 import { FlaskConical, Search } from 'lucide-react';
-import { FAQ_PAGE } from '@/const/localization/faqPage';
+import { useTranslation } from 'react-i18next';
 import { FaqSidebar } from './FaqSidebar';
 import { FaqCategory } from './FaqCategory';
 
 export default function FaqPage() {
+    const { t } = useTranslation('faq');
+
+    const gettingStarted = t('categories.gettingStarted', { returnObjects: true }) as object;
+    const coursesAndLearning = t('categories.coursesAndLearning', {
+        returnObjects: true,
+    }) as object;
+    const paymentsAndRefunds = t('categories.paymentsAndRefunds', {
+        returnObjects: true,
+    }) as object;
+    const certificates = t('categories.certificates', { returnObjects: true }) as object;
+    const forInstructors = t('categories.forInstructors', { returnObjects: true }) as object;
+    const aiTutor = t('categories.aiTutor', { returnObjects: true }) as object;
+    const accountAndPrivacy = t('categories.accountAndPrivacy', { returnObjects: true }) as object;
+
     return (
         <div className="bg-background">
             {/* Pet-project disclaimer */}
             <div className="border-b border-warning/30 bg-warning/10">
                 <div className="mx-auto flex max-w-7xl items-center gap-3 px-6 py-3 text-sm">
                     <FlaskConical className="h-4 w-4 shrink-0 text-warning" />
-                    <span className="font-semibold text-warning">{FAQ_PAGE.DISCLAIMER.badge}:</span>
-                    <span className="text-muted-foreground">{FAQ_PAGE.DISCLAIMER.text}</span>
+                    <span className="font-semibold text-warning">{t('disclaimer.badge')}:</span>
+                    <span className="text-muted-foreground">{t('disclaimer.text')}</span>
                 </div>
             </div>
 
@@ -19,33 +33,39 @@ export default function FaqPage() {
             <div className="border-b border-border bg-gradient-to-b from-secondary/40 to-background">
                 <div className="mx-auto max-w-3xl px-6 py-16 text-center">
                     <span className="inline-block rounded-full bg-accent/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent">
-                        {FAQ_PAGE.HERO.badge}
+                        {t('hero.badge')}
                     </span>
                     <h1 className="mt-4 font-heading text-4xl font-bold md:text-5xl">
-                        {FAQ_PAGE.HERO.title}
+                        {t('hero.title')}
                     </h1>
-                    <p className="mt-3 text-lg text-muted-foreground">{FAQ_PAGE.HERO.subtitle}</p>
+                    <p className="mt-3 text-lg text-muted-foreground">{t('hero.subtitle')}</p>
 
                     <div className="relative mx-auto mt-8 max-w-xl">
                         <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"
-                            placeholder={FAQ_PAGE.HERO.searchPlaceholder}
+                            placeholder={t('hero.searchPlaceholder')}
                             className="w-full rounded-xl border border-input bg-card py-4 pl-12 pr-4 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         />
                     </div>
 
                     {/* Popular searches */}
                     <div className="mt-5 flex flex-wrap justify-center gap-2 text-sm">
-                        <span className="text-muted-foreground">{FAQ_PAGE.HERO.popular}</span>
-                        {FAQ_PAGE.HERO.popularLinks.map((link, index) => (
+                        <span className="text-muted-foreground">{t('hero.popular')}</span>
+                        {(
+                            t('hero.popularLinks', { returnObjects: true }) as Array<{
+                                anchor: string;
+                                label: string;
+                            }>
+                        ).map((link, index) => (
                             <span key={index}>
                                 <a href={link.anchor} className="text-primary hover:underline">
                                     {link.label}
                                 </a>
-                                {index < FAQ_PAGE.HERO.popularLinks.length - 1 && (
-                                    <span className="ml-2 text-muted-foreground">·</span>
-                                )}
+                                {index <
+                                    (t('hero.popularLinks', { returnObjects: true }) as unknown[])
+                                        .length -
+                                        1 && <span className="ml-2 text-muted-foreground">·</span>}
                             </span>
                         ))}
                     </div>
@@ -59,13 +79,34 @@ export default function FaqPage() {
 
                 {/* Content */}
                 <div className="max-w-3xl space-y-12">
-                    <FaqCategory category={FAQ_PAGE.CATEGORIES.GETTING_STARTED} isFirst />
-                    <FaqCategory category={FAQ_PAGE.CATEGORIES.COURSES_AND_LEARNING} />
-                    <FaqCategory category={FAQ_PAGE.CATEGORIES.PAYMENTS_AND_REFUNDS} />
-                    <FaqCategory category={FAQ_PAGE.CATEGORIES.CERTIFICATES} />
-                    <FaqCategory category={FAQ_PAGE.CATEGORIES.FOR_INSTRUCTORS} />
-                    <FaqCategory category={FAQ_PAGE.CATEGORIES.AI_TUTOR} />
-                    <FaqCategory category={FAQ_PAGE.CATEGORIES.ACCOUNT_AND_PRIVACY} />
+                    <FaqCategory
+                        category={gettingStarted as Parameters<typeof FaqCategory>[0]['category']}
+                        isFirst
+                    />
+                    <FaqCategory
+                        category={
+                            coursesAndLearning as Parameters<typeof FaqCategory>[0]['category']
+                        }
+                    />
+                    <FaqCategory
+                        category={
+                            paymentsAndRefunds as Parameters<typeof FaqCategory>[0]['category']
+                        }
+                    />
+                    <FaqCategory
+                        category={certificates as Parameters<typeof FaqCategory>[0]['category']}
+                    />
+                    <FaqCategory
+                        category={forInstructors as Parameters<typeof FaqCategory>[0]['category']}
+                    />
+                    <FaqCategory
+                        category={aiTutor as Parameters<typeof FaqCategory>[0]['category']}
+                    />
+                    <FaqCategory
+                        category={
+                            accountAndPrivacy as Parameters<typeof FaqCategory>[0]['category']
+                        }
+                    />
 
                     {/* Still need help */}
                     <div className="mt-16 rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-background to-accent/10 p-8 text-center md:p-10">
@@ -73,23 +114,21 @@ export default function FaqPage() {
                             💬
                         </div>
                         <h3 className="mt-4 font-heading text-2xl font-bold">
-                            {FAQ_PAGE.SUPPORT_SECTION.title}
+                            {t('supportSection.title')}
                         </h3>
-                        <p className="mt-2 text-muted-foreground">
-                            {FAQ_PAGE.SUPPORT_SECTION.subtitle}
-                        </p>
+                        <p className="mt-2 text-muted-foreground">{t('supportSection.subtitle')}</p>
                         <div className="mt-6 flex flex-wrap justify-center gap-3">
                             <a
                                 href="#"
                                 className="rounded-lg bg-primary px-5 py-2.5 font-medium text-primary-foreground hover:bg-primary/90"
                             >
-                                {FAQ_PAGE.SUPPORT_SECTION.contactCta}
+                                {t('supportSection.contactCta')}
                             </a>
                             <a
                                 href="#"
                                 className="rounded-lg border border-border bg-card px-5 py-2.5 font-medium hover:bg-secondary"
                             >
-                                {FAQ_PAGE.SUPPORT_SECTION.discordCta}
+                                {t('supportSection.discordCta')}
                             </a>
                         </div>
                     </div>

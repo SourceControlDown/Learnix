@@ -1,20 +1,14 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Pencil, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
-import { INSTRUCTOR } from '@/const/localization/instructor';
 import type { CourseForEditLessonDto, LessonType } from '@/types/course.types';
 
 const TYPE_STYLES: Record<LessonType, string> = {
     Video: 'bg-primary/10 text-primary',
     Post: 'bg-accent/10 text-accent',
     Test: 'bg-warning/20 text-warning',
-};
-
-const TYPE_LABELS: Record<LessonType, string> = {
-    Video: INSTRUCTOR.BADGE_VIDEO,
-    Post: INSTRUCTOR.BADGE_POST,
-    Test: INSTRUCTOR.BADGE_TEST,
 };
 
 function lessonMeta(lesson: CourseForEditLessonDto): string {
@@ -36,6 +30,7 @@ interface Props {
 }
 
 export function LessonRow({ lesson, onEdit, onDelete }: Props) {
+    const { t } = useTranslation('instructor');
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: lesson.id,
     });
@@ -44,6 +39,12 @@ export function LessonRow({ lesson, onEdit, onDelete }: Props) {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.4 : 1,
+    };
+
+    const TYPE_LABELS: Record<LessonType, string> = {
+        Video: t('badgeVideo'),
+        Post: t('badgePost'),
+        Test: t('badgeTest'),
     };
 
     return (

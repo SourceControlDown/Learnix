@@ -8,6 +8,7 @@ export interface LoginRequest {
 export interface LoginResponse {
     accessToken: string;
     accessTokenExpiresAt: string;
+    avatarUrl: string | null;
 }
 
 export interface RegisterRequest {

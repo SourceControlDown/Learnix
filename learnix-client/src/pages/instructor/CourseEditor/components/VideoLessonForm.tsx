@@ -1,8 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslation } from 'react-i18next';
 import { videoLessonSchema, type VideoLessonFormData } from '@/schemas/lesson.schema';
 import { VideoUploader } from './VideoUploader';
-import { INSTRUCTOR } from '@/const/localization/instructor';
 import type { CourseForEditLessonDto } from '@/types/course.types';
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
 }
 
 export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel }: Props) {
+    const { t } = useTranslation('instructor');
     const {
         register,
         handleSubmit,
@@ -34,10 +35,10 @@ export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel }: Props
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-                <label className="mb-1 block text-sm font-medium">{INSTRUCTOR.FIELD_TITLE}</label>
+                <label className="mb-1 block text-sm font-medium">{t('fieldTitle')}</label>
                 <input
                     {...register('title')}
-                    placeholder={INSTRUCTOR.FIELD_TITLE_PLACEHOLDER}
+                    placeholder={t('fieldTitlePlaceholder')}
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 {errors.title && (
@@ -54,9 +55,7 @@ export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel }: Props
             )}
 
             <div>
-                <label className="mb-1 block text-sm font-medium">
-                    {INSTRUCTOR.FIELD_DESCRIPTION}
-                </label>
+                <label className="mb-1 block text-sm font-medium">{t('fieldDescription')}</label>
                 <textarea
                     {...register('description')}
                     rows={3}
@@ -65,9 +64,7 @@ export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel }: Props
             </div>
 
             <div>
-                <label className="mb-1 block text-sm font-medium">
-                    {INSTRUCTOR.FIELD_DURATION}
-                </label>
+                <label className="mb-1 block text-sm font-medium">{t('fieldDuration')}</label>
                 <input
                     {...register('durationSeconds')}
                     type="number"
@@ -82,14 +79,14 @@ export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel }: Props
                     onClick={onCancel}
                     className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-secondary"
                 >
-                    {INSTRUCTOR.BTN_CANCEL}
+                    {t('btnCancel')}
                 </button>
                 <button
                     type="submit"
                     disabled={isPending}
                     className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                 >
-                    {isPending ? '...' : INSTRUCTOR.BTN_SAVE_LESSON}
+                    {isPending ? '...' : t('btnSaveLesson')}
                 </button>
             </div>
         </form>

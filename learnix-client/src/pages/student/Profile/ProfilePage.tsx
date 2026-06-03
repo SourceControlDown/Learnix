@@ -14,6 +14,7 @@ import {
     GraduationCap,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { profileSchema, type ProfileFormValues } from '@/schemas/profile.schema';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useUpdateProfile } from '@/hooks/useUpdateProfile';
@@ -21,16 +22,14 @@ import { useRequestUploadUrl } from '@/hooks/useRequestUploadUrl';
 import { useMyAchievements } from '@/hooks/useMyAchievements';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi } from '@/api/auth.api';
-import { PROFILE } from '@/const/localization/profile';
-import { EMAIL_CONFIRMATION } from '@/const/localization/emailConfirmation';
 import { ALL_ACHIEVEMENT_CODES } from '@/const/localization/achievements';
 import { AchievementBadge } from '@/components/common/AchievementBadge';
 import { cn } from '@/utils/cn';
 import { isValidationError } from '@/utils/errors';
 
-const TE = EMAIL_CONFIRMATION.PROFILE;
-
 export default function ProfilePage() {
+    const { t } = useTranslation('profile');
+    const { t: tEmail } = useTranslation('emailConfirmation');
     const { data: profile, isLoading } = useMyProfile();
     const updateProfile = useUpdateProfile();
     const { uploadFile, isUploading } = useRequestUploadUrl();
@@ -97,7 +96,7 @@ export default function ProfilePage() {
                 bio: values.bio || null,
                 avatarBlobPath,
             });
-            toast.success(PROFILE.MESSAGES.SAVE_SUCCESS);
+            toast.success(t('messages.saveSuccess'));
         } catch (error) {
             if (isValidationError(error)) {
                 const errors = error.response!.data.errors!;
@@ -129,16 +128,12 @@ export default function ProfilePage() {
 
     return (
         <div className="mx-auto max-w-3xl px-6 py-12">
-            <h1 className="font-heading text-3xl font-bold text-foreground">
-                {PROFILE.PAGE_TITLE}
-            </h1>
+            <h1 className="font-heading text-3xl font-bold text-foreground">{t('pageTitle')}</h1>
 
             <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-6">
                 {/* Avatar */}
                 <section className="rounded-xl border border-border bg-card p-6">
-                    <h2 className="font-heading text-lg font-semibold">
-                        {PROFILE.SECTIONS.AVATAR}
-                    </h2>
+                    <h2 className="font-heading text-lg font-semibold">{t('sections.avatar')}</h2>
                     <div className="mt-4 flex items-center gap-6">
                         <div className="relative">
                             <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-muted">
@@ -175,24 +170,20 @@ export default function ProfilePage() {
                                 disabled={isUploading}
                                 className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
                             >
-                                {isUploading ? PROFILE.AVATAR.UPLOADING : PROFILE.AVATAR.UPLOAD}
+                                {isUploading ? t('avatar.uploading') : t('avatar.upload')}
                             </button>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                {PROFILE.AVATAR.HINT}
-                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">{t('avatar.hint')}</p>
                         </div>
                     </div>
                 </section>
 
                 {/* Personal info */}
                 <section className="rounded-xl border border-border bg-card p-6">
-                    <h2 className="font-heading text-lg font-semibold">
-                        {PROFILE.SECTIONS.PERSONAL}
-                    </h2>
+                    <h2 className="font-heading text-lg font-semibold">{t('sections.personal')}</h2>
                     <div className="mt-4 grid gap-4 sm:grid-cols-2">
                         <div>
                             <label className="block text-sm font-medium text-foreground">
-                                {PROFILE.FIELDS.FIRST_NAME}
+                                {t('fields.firstName')}
                             </label>
                             <input
                                 {...form.register('firstName')}
@@ -213,7 +204,7 @@ export default function ProfilePage() {
 
                         <div>
                             <label className="block text-sm font-medium text-foreground">
-                                {PROFILE.FIELDS.LAST_NAME}
+                                {t('fields.lastName')}
                             </label>
                             <input
                                 {...form.register('lastName')}
@@ -235,7 +226,7 @@ export default function ProfilePage() {
 
                     <div className="mt-4">
                         <label className="block text-sm font-medium text-foreground">
-                            {PROFILE.FIELDS.EMAIL}
+                            {t('fields.email')}
                         </label>
                         <input
                             value={profile?.email ?? ''}
@@ -254,12 +245,12 @@ export default function ProfilePage() {
                                 {user.emailVerified ? (
                                     <>
                                         <CheckCircle2 className="h-3.5 w-3.5" />
-                                        {TE.CONFIRMED}
+                                        {tEmail('profile.confirmed')}
                                     </>
                                 ) : (
                                     <>
                                         <AlertTriangle className="h-3.5 w-3.5" />
-                                        {TE.NOT_CONFIRMED}
+                                        {tEmail('profile.notConfirmed')}
                                     </>
                                 )}
                             </p>
@@ -269,7 +260,7 @@ export default function ProfilePage() {
                     {user && !user.emailVerified && (
                         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
                             <p className="text-sm text-amber-800 dark:text-amber-300">
-                                {TE.NOT_CONFIRMED_HINT}
+                                {tEmail('profile.notConfirmedHint')}
                             </p>
                             <button
                                 type="button"
@@ -278,23 +269,20 @@ export default function ProfilePage() {
                                 className="mt-3 rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-800 dark:bg-transparent dark:text-amber-300"
                             >
                                 {resendCooldown > 0
-                                    ? TE.RESEND_COOLDOWN.replace(
-                                          '{seconds}',
-                                          String(resendCooldown),
-                                      )
-                                    : TE.RESEND}
+                                    ? tEmail('profile.resendCooldown', { seconds: resendCooldown })
+                                    : tEmail('profile.resend')}
                             </button>
                         </div>
                     )}
 
                     <div className="mt-4">
                         <label className="block text-sm font-medium text-foreground">
-                            {PROFILE.FIELDS.BIO}
+                            {t('fields.bio')}
                         </label>
                         <textarea
                             {...form.register('bio')}
                             rows={4}
-                            placeholder={PROFILE.FIELDS.BIO_PLACEHOLDER}
+                            placeholder={t('fields.bioPlaceholder')}
                             className={cn(
                                 'mt-1 w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm outline-none transition-colors',
                                 'focus:border-primary focus:ring-1 focus:ring-primary',
@@ -314,9 +302,7 @@ export default function ProfilePage() {
                             disabled={updateProfile.isPending || isUploading}
                             className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                         >
-                            {updateProfile.isPending
-                                ? PROFILE.ACTIONS.SAVING
-                                : PROFILE.ACTIONS.SAVE}
+                            {updateProfile.isPending ? t('actions.saving') : t('actions.save')}
                         </button>
                     </div>
                 </section>
@@ -325,15 +311,15 @@ export default function ProfilePage() {
                 <section className="rounded-xl border border-border bg-card p-6 opacity-70">
                     <div className="flex items-center gap-3">
                         <h2 className="font-heading text-lg font-semibold">
-                            {PROFILE.SECTIONS.PREFERENCES}
+                            {t('sections.preferences')}
                         </h2>
                         <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2.5 py-0.5 text-xs font-medium text-warning">
                             <Construction className="h-3 w-3" />
-                            {PROFILE.PREFERENCES.COMING_SOON}
+                            {t('preferences.comingSoon')}
                         </span>
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">
-                        {PROFILE.PREFERENCES.DESCRIPTION}
+                        {t('preferences.description')}
                     </p>
                 </section>
 
@@ -341,13 +327,13 @@ export default function ProfilePage() {
                 <section className="rounded-xl border border-border bg-card p-6">
                     <div className="flex items-center justify-between">
                         <h2 className="font-heading text-lg font-semibold">
-                            {PROFILE.ACHIEVEMENTS.SECTION_TITLE}
+                            {t('achievements.sectionTitle')}
                         </h2>
                         <span className="text-sm text-muted-foreground">
-                            {PROFILE.ACHIEVEMENTS.EARNED_COUNT(
-                                achievementsData?.unlocked.length ?? 0,
-                                ALL_ACHIEVEMENT_CODES.length,
-                            )}
+                            {t('achievements.earnedCount', {
+                                earned: achievementsData?.unlocked.length ?? 0,
+                                total: ALL_ACHIEVEMENT_CODES.length,
+                            })}
                         </span>
                     </div>
 
@@ -379,7 +365,7 @@ export default function ProfilePage() {
                             to="/achievements"
                             className="text-sm font-medium text-primary hover:underline"
                         >
-                            {PROFILE.ACHIEVEMENTS.VIEW_ALL}
+                            {t('achievements.viewAll')}
                         </Link>
                     </div>
                 </section>
@@ -394,11 +380,9 @@ export default function ProfilePage() {
                     </div>
                     <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-foreground">
-                            {PROFILE.CERTIFICATES_NAV.TITLE}
+                            {t('certificatesNav.title')}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                            {PROFILE.CERTIFICATES_NAV.DESC}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{t('certificatesNav.desc')}</p>
                     </div>
                     <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </Link>
@@ -414,10 +398,10 @@ export default function ProfilePage() {
                         </div>
                         <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-foreground">
-                                {PROFILE.BECOME_INSTRUCTOR_NAV.TITLE}
+                                {t('becomeInstructorNav.title')}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                {PROFILE.BECOME_INSTRUCTOR_NAV.DESC}
+                                {t('becomeInstructorNav.desc')}
                             </p>
                         </div>
                         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />

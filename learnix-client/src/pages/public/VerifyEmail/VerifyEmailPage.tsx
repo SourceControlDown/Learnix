@@ -2,14 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { CheckCircle2, XCircle, Loader2, Mail } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { authApi } from '@/api/auth.api';
-import { EMAIL_CONFIRMATION } from '@/const/localization/emailConfirmation';
-
-const T = EMAIL_CONFIRMATION.VERIFY;
 
 type Status = 'verifying' | 'success' | 'error';
 
 export default function VerifyEmailPage() {
+    const { t } = useTranslation('emailConfirmation');
     const [searchParams] = useSearchParams();
     const [status, setStatus] = useState<Status>('verifying');
 
@@ -42,9 +41,11 @@ export default function VerifyEmailPage() {
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
                         <h1 className="font-heading text-2xl font-bold text-foreground">
-                            {T.VERIFYING_TITLE}
+                            {t('verify.verifyingTitle')}
                         </h1>
-                        <p className="mt-2 text-sm text-muted-foreground">{T.VERIFYING_SUBTITLE}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            {t('verify.verifyingSubtitle')}
+                        </p>
                     </>
                 )}
 
@@ -54,14 +55,16 @@ export default function VerifyEmailPage() {
                             <CheckCircle2 className="h-8 w-8 text-success" />
                         </div>
                         <h1 className="font-heading text-2xl font-bold text-foreground">
-                            {T.SUCCESS_TITLE}
+                            {t('verify.successTitle')}
                         </h1>
-                        <p className="mt-2 text-sm text-muted-foreground">{T.SUCCESS_SUBTITLE}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            {t('verify.successSubtitle')}
+                        </p>
                         <Link
                             to="/login"
                             className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                         >
-                            {T.SUCCESS_CTA}
+                            {t('verify.successCta')}
                         </Link>
                     </>
                 )}
@@ -72,20 +75,22 @@ export default function VerifyEmailPage() {
                             <XCircle className="h-8 w-8 text-destructive" />
                         </div>
                         <h1 className="font-heading text-2xl font-bold text-foreground">
-                            {T.ERROR_TITLE}
+                            {t('verify.errorTitle')}
                         </h1>
-                        <p className="mt-2 text-sm text-muted-foreground">{T.ERROR_SUBTITLE}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            {t('verify.errorSubtitle')}
+                        </p>
                         <Link
                             to="/login"
                             className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                         >
-                            {T.ERROR_CTA}
+                            {t('verify.errorCta')}
                         </Link>
                         <div className="mt-4 flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
                             <Mail className="h-4 w-4" />
-                            <span>{T.RESEND_HINT}</span>
+                            <span>{t('verify.resendHint')}</span>
                             <Link to="/login" className="font-medium text-primary hover:underline">
-                                {T.RESEND}
+                                {t('verify.resend')}
                             </Link>
                         </div>
                     </>

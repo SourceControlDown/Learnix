@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { VideoLessonForm } from './VideoLessonForm';
 import { PostLessonForm } from './PostLessonForm';
 import { TestLessonForm } from './TestLessonForm';
@@ -11,7 +12,6 @@ import {
     useUpdatePostLesson,
     useUpdateTestLesson,
 } from '@/hooks/useLessonMutations';
-import { INSTRUCTOR } from '@/const/localization/instructor';
 import type { CourseForEditLessonDto, LessonType } from '@/types/course.types';
 import type {
     VideoLessonFormData,
@@ -27,13 +27,8 @@ interface Props {
     onClose: () => void;
 }
 
-const TITLES: Record<LessonType, { create: string; edit: string }> = {
-    Video: { create: INSTRUCTOR.MODAL_NEW_VIDEO, edit: INSTRUCTOR.MODAL_EDIT_VIDEO },
-    Post: { create: INSTRUCTOR.MODAL_NEW_POST, edit: INSTRUCTOR.MODAL_EDIT_POST },
-    Test: { create: INSTRUCTOR.MODAL_NEW_TEST, edit: INSTRUCTOR.MODAL_EDIT_TEST },
-};
-
 export function LessonEditorModal({ courseId, sectionId, lessonType, lesson, onClose }: Props) {
+    const { t } = useTranslation('instructor');
     const overlayRef = useRef<HTMLDivElement>(null);
 
     const createVideo = useCreateVideoLesson(courseId, sectionId);
@@ -44,6 +39,13 @@ export function LessonEditorModal({ courseId, sectionId, lessonType, lesson, onC
     const updateTest = useUpdateTestLesson(courseId);
 
     const isEditing = !!lesson;
+
+    const TITLES: Record<LessonType, { create: string; edit: string }> = {
+        Video: { create: t('modalNewVideo'), edit: t('modalEditVideo') },
+        Post: { create: t('modalNewPost'), edit: t('modalEditPost') },
+        Test: { create: t('modalNewTest'), edit: t('modalEditTest') },
+    };
+
     const title = TITLES[lessonType][isEditing ? 'edit' : 'create'];
 
     function handleVideoSubmit(data: VideoLessonFormData) {

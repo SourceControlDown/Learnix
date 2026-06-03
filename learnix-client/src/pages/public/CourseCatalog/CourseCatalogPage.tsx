@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { CourseCard } from '@/components/common/CourseCard';
 import { useCategories } from '@/hooks/useCategories';
 import { useCatalogCourses } from '@/hooks/useCatalogCourses';
-import { COURSE_CATALOG } from '@/const/localization/courseCatalog';
 import { PAGINATION } from '@/const/ui.constants';
 import { cn } from '@/utils/cn';
 import { FilterSidebar } from './FilterSidebar';
@@ -27,10 +27,14 @@ function Pagination({
     page,
     totalPages,
     onChange,
+    prevLabel,
+    nextLabel,
 }: {
     page: number;
     totalPages: number;
     onChange: (p: number) => void;
+    prevLabel: string;
+    nextLabel: string;
 }) {
     if (totalPages <= 1) return null;
 
@@ -53,7 +57,7 @@ function Pagination({
                 disabled={page === 1}
                 className="grid h-9 w-9 place-items-center rounded-lg border border-border hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
             >
-                {COURSE_CATALOG.PAGINATION.PREV}
+                {prevLabel}
             </button>
             {pages.map((p, idx) =>
                 p === '...' ? (
@@ -83,13 +87,14 @@ function Pagination({
                 disabled={page === totalPages}
                 className="grid h-9 w-9 place-items-center rounded-lg border border-border hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
             >
-                {COURSE_CATALOG.PAGINATION.NEXT}
+                {nextLabel}
             </button>
         </div>
     );
 }
 
 export default function CourseCatalogPage() {
+    const { t } = useTranslation('catalog');
     const [searchParams, setSearchParams] = useSearchParams();
 
     // Read URL state
@@ -201,17 +206,17 @@ export default function CourseCatalogPage() {
     }
     if (isFree === true)
         chips.push({
-            label: COURSE_CATALOG.ACTIVE_CHIPS.FREE,
+            label: t('activeChips.free'),
             onRemove: () => setIsFree(undefined),
         });
     if (isFree === false)
         chips.push({
-            label: COURSE_CATALOG.ACTIVE_CHIPS.PAID,
+            label: t('activeChips.paid'),
             onRemove: () => setIsFree(undefined),
         });
     if (minRating !== undefined)
         chips.push({
-            label: COURSE_CATALOG.ACTIVE_CHIPS.RATING(minRating),
+            label: t('activeChips.rating', { n: minRating }),
             onRemove: () => setMinRating(undefined),
         });
 
@@ -220,9 +225,11 @@ export default function CourseCatalogPage() {
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
                 {/* Page title */}
                 <div className="mb-5">
-                    <h1 className="font-heading text-3xl font-bold">{COURSE_CATALOG.PAGE_TITLE}</h1>
+                    <h1 className="font-heading text-3xl font-bold">{t('pageTitle')}</h1>
                     <p className="mt-1 text-muted-foreground">
-                        {COURSE_CATALOG.RESULTS_COUNT(totalCount, debouncedSearch || undefined)}
+                        {debouncedSearch
+                            ? t('resultsCountQuery', { count: totalCount, query: debouncedSearch })
+                            : t('resultsCount', { count: totalCount })}
                     </p>
                 </div>
 
@@ -250,7 +257,7 @@ export default function CourseCatalogPage() {
                                     type="text"
                                     value={searchInput}
                                     onChange={(e) => setSearchInput(e.target.value)}
-                                    placeholder={COURSE_CATALOG.SEARCH_PLACEHOLDER}
+                                    placeholder={t('searchPlaceholder')}
                                     className="w-full rounded-lg border border-input bg-card py-2.5 pl-9 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                 />
                                 {searchInput && (
@@ -302,23 +309,29 @@ export default function CourseCatalogPage() {
                                 : !isFetching && (
                                       <div className="col-span-full py-20 text-center">
                                           <p className="font-heading text-lg font-semibold text-foreground">
-                                              {COURSE_CATALOG.NO_RESULTS_TITLE}
+                                              {t('noResultsTitle')}
                                           </p>
                                           <p className="mt-2 text-sm text-muted-foreground">
-                                              {COURSE_CATALOG.NO_RESULTS_DESC}
+                                              {t('noResultsDesc')}
                                           </p>
                                           <button
                                               type="button"
                                               onClick={clearAllFilters}
                                               className="mt-4 text-sm text-primary underline hover:text-primary/80"
                                           >
-                                              {COURSE_CATALOG.CLEAR_FILTERS}
+                                              {t('clearFilters')}
                                           </button>
                                       </div>
                                   )}
                         </div>
 
-                        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+                        <Pagination
+                            page={page}
+                            totalPages={totalPages}
+                            onChange={setPage}
+                            prevLabel={t('pagination.prev')}
+                            nextLabel={t('pagination.next')}
+                        />
                     </div>
                 </div>
             </div>

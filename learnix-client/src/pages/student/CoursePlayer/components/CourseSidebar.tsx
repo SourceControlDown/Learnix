@@ -8,9 +8,9 @@ import {
     ClipboardList,
     ChevronDown,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import type { SectionProgressDto } from '@/types/progress.types';
-import { LESSON_PLAYER } from '@/const/localization/lessonPlayer';
 
 interface CourseSidebarProps {
     sections: SectionProgressDto[];
@@ -33,6 +33,7 @@ export function CourseSidebar({
     totalLessons,
     completedLessons,
 }: CourseSidebarProps) {
+    const { t } = useTranslation('lessonPlayer');
     const progressPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
     const activeSectionId = sections.find((s) =>
@@ -63,7 +64,10 @@ export function CourseSidebar({
         <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-border bg-card">
             <div className="border-b border-border p-4">
                 <p className="mb-2 text-xs font-medium text-muted-foreground">
-                    {LESSON_PLAYER.SIDEBAR.progressLabel(completedLessons, totalLessons)}
+                    {t('sidebar.progressLabel', {
+                        completed: completedLessons,
+                        total: totalLessons,
+                    })}
                 </p>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
                     <div
@@ -84,8 +88,7 @@ export function CourseSidebar({
                                 className="flex w-full items-center justify-between px-4 py-2 text-left hover:bg-secondary/50"
                             >
                                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                    {LESSON_PLAYER.SIDEBAR.sectionPrefix} {sIdx + 1} ·{' '}
-                                    {section.title}
+                                    {t('sidebar.sectionPrefix')} {sIdx + 1} · {section.title}
                                 </span>
                                 <ChevronDown
                                     className={cn(

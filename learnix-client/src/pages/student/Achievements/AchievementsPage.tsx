@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { BookOpen, GraduationCap, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useMyAchievements } from '@/hooks/useMyAchievements';
 import { useMarkAchievementSeen } from '@/hooks/useMarkAchievementSeen';
 import { AchievementBadge } from '@/components/common/AchievementBadge';
-import { ALL_ACHIEVEMENT_CODES, ACHIEVEMENTS_PAGE } from '@/const/localization/achievements';
+import { ALL_ACHIEVEMENT_CODES } from '@/const/localization/achievements';
 
 export default function AchievementsPage() {
+    const { t } = useTranslation('achievements');
     const { data, isLoading } = useMyAchievements();
     const markSeen = useMarkAchievementSeen();
 
@@ -16,7 +18,7 @@ export default function AchievementsPage() {
         if (unseenIds.length > 0) {
             unseenIds.forEach((id) => markSeen.mutate(id));
         }
-    }, [unseenIds.join(',')]);
+    }, [unseenIds.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (isLoading) {
         return (
@@ -39,16 +41,16 @@ export default function AchievementsPage() {
         <div className="mx-auto max-w-5xl px-6 py-12">
             <div>
                 <h1 className="font-heading text-3xl font-bold text-foreground">
-                    {ACHIEVEMENTS_PAGE.TITLE}
+                    {t('page.title')}
                 </h1>
-                <p className="mt-1 text-muted-foreground">{ACHIEVEMENTS_PAGE.SUBTITLE}</p>
+                <p className="mt-1 text-muted-foreground">{t('page.subtitle')}</p>
             </div>
 
             {/* Progress stats */}
             {progress && (
                 <section className="mt-8 rounded-xl border border-border bg-card p-6">
                     <h2 className="font-heading text-lg font-semibold">
-                        {ACHIEVEMENTS_PAGE.PROGRESS_SECTION}
+                        {t('page.progressSection')}
                     </h2>
                     <div className="mt-4 grid grid-cols-3 gap-4">
                         <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4 text-center">
@@ -57,7 +59,7 @@ export default function AchievementsPage() {
                                 {progress.lessonsCompleted}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                                {ACHIEVEMENTS_PAGE.STATS.LESSONS}
+                                {t('page.statsLessons')}
                             </span>
                         </div>
                         <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4 text-center">
@@ -66,7 +68,7 @@ export default function AchievementsPage() {
                                 {progress.coursesCompleted}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                                {ACHIEVEMENTS_PAGE.STATS.COURSES}
+                                {t('page.statsCourses')}
                             </span>
                         </div>
                         <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4 text-center">
@@ -75,7 +77,7 @@ export default function AchievementsPage() {
                                 {progress.distinctCategoriesCompleted}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                                {ACHIEVEMENTS_PAGE.STATS.CATEGORIES}
+                                {t('page.statsCategories')}
                             </span>
                         </div>
                     </div>
@@ -84,7 +86,7 @@ export default function AchievementsPage() {
 
             {/* Earned count */}
             <p className="mt-8 text-sm font-medium text-muted-foreground">
-                {ACHIEVEMENTS_PAGE.EARNED_COUNT(data?.unlocked.length ?? 0)}
+                {t('page.earnedCount', { count: data?.unlocked.length ?? 0 })}
             </p>
 
             {/* Achievement grid */}

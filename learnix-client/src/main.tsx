@@ -7,6 +7,7 @@ import App from './App';
 import { AuthInitializer } from '@/components/common/AuthInitializer';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { isValidationError, getErrorMessage } from '@/utils/errors';
+import '@/i18n/config';
 import '@fontsource/dm-sans/400.css';
 import '@fontsource/dm-sans/500.css';
 import '@fontsource/dm-sans/600.css';

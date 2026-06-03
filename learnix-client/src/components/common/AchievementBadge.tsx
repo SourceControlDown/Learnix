@@ -1,4 +1,5 @@
 import { Lock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import { ACHIEVEMENT_META } from '@/const/localization/achievements';
 import { ACHIEVEMENT_IMAGES } from '@/assets/achievements';
@@ -24,6 +25,7 @@ export function AchievementBadge({
     onClick,
     className,
 }: AchievementBadgeProps) {
+    const { t } = useTranslation('achievements');
     const meta = ACHIEVEMENT_META[code];
     const isUnlocked = !!unlockedAt;
     const Icon = meta?.icon ?? Lock;
@@ -35,6 +37,14 @@ export function AchievementBadge({
         !resolvedImage && isUnlocked && meta?.gradient
             ? { background: `linear-gradient(135deg, ${meta.gradient[0]}, ${meta.gradient[1]})` }
             : undefined;
+
+    // Use i18n translations for name and description if available, fall back to meta
+    const name = code
+        ? t(`meta.${code}.name`, { defaultValue: meta?.name ?? code })
+        : (meta?.name ?? code);
+    const description = code
+        ? t(`meta.${code}.description`, { defaultValue: meta?.description ?? '' })
+        : (meta?.description ?? '');
 
     return (
         <button
@@ -76,7 +86,7 @@ export function AchievementBadge({
                 {resolvedImage ? (
                     <img
                         src={resolvedImage}
-                        alt={meta?.name ?? code}
+                        alt={name}
                         className={cn(
                             'h-full w-full object-cover',
                             !isUnlocked && 'opacity-40 grayscale',
@@ -97,12 +107,12 @@ export function AchievementBadge({
                         isSm ? 'line-clamp-2 text-[11px]' : 'text-sm',
                     )}
                 >
-                    {meta?.name ?? code}
+                    {name}
                 </p>
 
                 {!isSm && (
                     <>
-                        <p className="text-xs text-muted-foreground">{meta?.description}</p>
+                        <p className="text-xs text-muted-foreground">{description}</p>
                         {isUnlocked && unlockedAt && (
                             <p className="mt-1 text-xs text-accent">
                                 Earned{' '}

@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { queryKeys } from '@/api/queryKeys';
 import { messagesApi } from '@/api/messages.api';
 import { ChatMessage } from '@/components/common/ChatMessage';
 import { MessageInput } from '@/components/common/MessageInput';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { MESSAGES } from '@/const/localization/messages';
 import type { ConversationSummary } from '@/types/message.types';
 
 interface ConversationViewProps {
@@ -13,6 +13,7 @@ interface ConversationViewProps {
 }
 
 export function ConversationView({ conversation }: ConversationViewProps) {
+    const { t } = useTranslation('messages');
     const queryClient = useQueryClient();
     const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +62,7 @@ export function ConversationView({ conversation }: ConversationViewProps) {
                         </div>
                     ) : messages.length === 0 ? (
                         <p className="py-8 text-center text-sm text-muted-foreground">
-                            {MESSAGES.NO_MESSAGES}
+                            {t('noMessages')}
                         </p>
                     ) : (
                         <div className="flex flex-col gap-3">

@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Clock, Users, Star, Tag, ArrowLeft, BookOpen, Heart } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useCourseDetail } from '@/hooks/useCourseDetail';
 import { useCourseReviews } from '@/hooks/useCourseReviews';
 import { useMyReview } from '@/hooks/useMyReview';
@@ -11,12 +12,12 @@ import { useAuthStore } from '@/store/auth.store';
 import { CurriculumAccordion } from './components/CurriculumAccordion';
 import { ReviewsList } from './components/ReviewsList';
 import { ReviewForm } from './components/ReviewForm';
-import { COURSE_DETAIL } from '@/const/localization/courseDetail';
 import { cn } from '@/utils/cn';
 
 export default function CourseDetailPage() {
     const { courseId } = useParams<{ courseId: string }>();
     const user = useAuthStore((s) => s.user);
+    const { t } = useTranslation('courseDetail');
 
     const { data: course, isLoading: courseLoading } = useCourseDetail(courseId!);
     const { data: reviewsData } = useCourseReviews(courseId!);
@@ -146,7 +147,7 @@ export default function CourseDetailPage() {
                     )}
                     {user && !isOwnCourse && !isEnrolled && (
                         <p className="text-sm text-muted-foreground">
-                            {COURSE_DETAIL.REVIEWS.ENROLL_TO_REVIEW}
+                            {t('reviews.enrollToReview')}
                         </p>
                     )}
                 </div>
@@ -174,20 +175,20 @@ export default function CourseDetailPage() {
                                 isFree ? 'text-success' : 'text-foreground',
                             )}
                         >
-                            {isFree ? COURSE_DETAIL.PRICE.FREE : `$${course.price}`}
+                            {isFree ? t('price.free') : `$${course.price}`}
                         </p>
 
                         {/* Enroll button */}
                         {isOwnCourse ? (
                             <div className="mt-4 flex w-full items-center justify-center rounded-lg border border-border bg-muted px-4 py-3 text-sm font-medium text-muted-foreground">
-                                {COURSE_DETAIL.ENROLL.OWN_COURSE}
+                                {t('enroll.ownCourse')}
                             </div>
                         ) : isEnrolled ? (
                             <Link
                                 to={`/courses/${courseId}/learn/${course.sections[0]?.lessons[0]?.id ?? ''}`}
                                 className="mt-4 flex w-full items-center justify-center rounded-lg bg-success px-4 py-3 font-medium text-white transition-opacity hover:opacity-90"
                             >
-                                {COURSE_DETAIL.ENROLL.ENROLLED}
+                                {t('enroll.enrolled')}
                             </Link>
                         ) : user ? (
                             <button
@@ -197,17 +198,17 @@ export default function CourseDetailPage() {
                                 className="mt-4 w-full rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                             >
                                 {enroll.isPending
-                                    ? COURSE_DETAIL.ENROLL.ENROLLING
+                                    ? t('enroll.enrolling')
                                     : isFree
-                                      ? COURSE_DETAIL.ENROLL.FREE
-                                      : COURSE_DETAIL.ENROLL.PAID(course.price)}
+                                      ? t('enroll.free')
+                                      : t('enroll.paid', { price: course.price })}
                             </button>
                         ) : (
                             <Link
                                 to="/login"
                                 className="mt-4 flex w-full items-center justify-center rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition-opacity hover:opacity-90"
                             >
-                                {COURSE_DETAIL.ENROLL.LOGIN_REQUIRED}
+                                {t('enroll.loginRequired')}
                             </Link>
                         )}
 
@@ -234,19 +235,19 @@ export default function CourseDetailPage() {
                                     )}
                                 />
                                 {addToWishlist.isPending
-                                    ? COURSE_DETAIL.WISHLIST.SAVING
+                                    ? t('wishlist.saving')
                                     : removeFromWishlist.isPending
-                                      ? COURSE_DETAIL.WISHLIST.REMOVING
+                                      ? t('wishlist.removing')
                                       : inWishlist
-                                        ? COURSE_DETAIL.WISHLIST.SAVED
-                                        : COURSE_DETAIL.WISHLIST.SAVE}
+                                        ? t('wishlist.saved')
+                                        : t('wishlist.save')}
                             </button>
                         )}
 
                         <div className="mt-5 border-t border-border pt-4 text-sm text-muted-foreground">
                             <p>
                                 <span className="font-medium text-foreground">
-                                    {COURSE_DETAIL.INSTRUCTOR.LABEL}
+                                    {t('instructor.label')}
                                 </span>
                                 {course.instructorFullName && (
                                     <Link

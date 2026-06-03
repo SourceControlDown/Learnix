@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { queryKeys } from '@/api/queryKeys';
 import { messagesApi } from '@/api/messages.api';
 import { ConversationList } from './components/ConversationList';
 import { ConversationView } from '@/components/common/ConversationView';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { MESSAGES } from '@/const/localization/messages';
 import type { ConversationDetail, ConversationSummary } from '@/types/message.types';
 
 export default function MessagesPage() {
+    const { t } = useTranslation('messages');
     const location = useLocation();
     const initialConversation =
         (location.state as { initialConversation?: ConversationDetail } | null)
@@ -62,7 +63,7 @@ export default function MessagesPage() {
             <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-border bg-card lg:w-80">
                 <div className="shrink-0 border-b border-border px-4 py-3">
                     <h1 className="font-heading text-lg font-semibold text-foreground">
-                        {MESSAGES.PAGE_TITLE}
+                        {t('pageTitle')}
                     </h1>
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto">
@@ -80,7 +81,7 @@ export default function MessagesPage() {
                     <ConversationView conversation={selected} />
                 ) : (
                     <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                        {MESSAGES.SELECT_CONVERSATION}
+                        {t('selectConversation')}
                     </div>
                 )}
             </main>

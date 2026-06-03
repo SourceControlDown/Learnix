@@ -1,27 +1,32 @@
 import { Link } from 'react-router-dom';
-import { LANDING_PAGE } from '@/const/localization/landingPage';
-
-const { FAQ } = LANDING_PAGE;
+import { useTranslation } from 'react-i18next';
 
 export function FaqSection() {
+    const { t } = useTranslation('landing');
+    const items = t('faq.items', { returnObjects: true }) as Array<{
+        q: string;
+        a: string;
+        defaultOpen: boolean;
+    }>;
+
     return (
         <section id="faq" className="py-20">
             <div className="mx-auto max-w-3xl px-6">
                 <div className="mb-12 text-center">
-                    <span className="text-sm font-semibold text-primary">{FAQ.tag}</span>
+                    <span className="text-sm font-semibold text-primary">{t('faq.tag')}</span>
                     <h2 className="mt-2 font-heading text-3xl font-bold md:text-4xl">
-                        {FAQ.heading}
+                        {t('faq.heading')}
                     </h2>
                     <p className="mt-3 text-muted-foreground">
-                        {FAQ.subtitle}{' '}
+                        {t('faq.subtitle')}{' '}
                         <a href="#" className="text-primary hover:underline">
-                            {FAQ.contactLabel}
+                            {t('faq.contactLabel')}
                         </a>
                     </p>
                 </div>
 
                 <div className="space-y-3">
-                    {FAQ.items.map((item, i) => (
+                    {items.map((item, i) => (
                         <details
                             key={i}
                             open={item.defaultOpen}
@@ -40,7 +45,7 @@ export function FaqSection() {
 
                 <div className="mt-8 text-center">
                     <Link to="/faq" className="font-medium text-primary hover:underline">
-                        {FAQ.viewAll}
+                        {t('faq.viewAll')}
                     </Link>
                 </div>
             </div>

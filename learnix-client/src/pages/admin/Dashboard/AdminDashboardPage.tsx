@@ -1,44 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Users, BookOpen, FileCheck, CreditCard } from 'lucide-react';
-import { ADMIN } from '@/const/localization/admin';
-
-const MOCK_STATS = [
-    { label: ADMIN.STAT_TOTAL_USERS, value: '1,247', sub: 'Registered accounts' },
-    { label: ADMIN.STAT_TOTAL_COURSES, value: '83', sub: '61 published, 22 draft' },
-    { label: ADMIN.STAT_PENDING_APPS, value: '5', sub: 'Awaiting review' },
-    { label: ADMIN.STAT_REVENUE, value: '$12,480', sub: 'Simulated total' },
-];
-
-const QUICK_LINKS = [
-    {
-        to: '/admin/users',
-        icon: <Users size={24} />,
-        title: ADMIN.QUICK_USERS_TITLE,
-        desc: ADMIN.QUICK_USERS_DESC,
-        color: 'text-primary bg-primary/10',
-    },
-    {
-        to: '/admin/courses',
-        icon: <BookOpen size={24} />,
-        title: ADMIN.QUICK_COURSES_TITLE,
-        desc: ADMIN.QUICK_COURSES_DESC,
-        color: 'text-accent bg-accent/10',
-    },
-    {
-        to: '/admin/applications',
-        icon: <FileCheck size={24} />,
-        title: ADMIN.QUICK_APPLICATIONS_TITLE,
-        desc: ADMIN.QUICK_APPLICATIONS_DESC,
-        color: 'text-success bg-success/10',
-    },
-    {
-        to: '/admin/payments',
-        icon: <CreditCard size={24} />,
-        title: ADMIN.QUICK_PAYMENTS_TITLE,
-        desc: ADMIN.QUICK_PAYMENTS_DESC,
-        color: 'text-warning bg-warning/10',
-    },
-];
+import { useTranslation } from 'react-i18next';
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub: string }) {
     return (
@@ -51,13 +13,53 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub: st
 }
 
 export default function AdminDashboardPage() {
+    const { t } = useTranslation('admin');
+
+    const MOCK_STATS = [
+        { label: t('statTotalUsers'), value: '1,247', sub: 'Registered accounts' },
+        { label: t('statTotalCourses'), value: '83', sub: '61 published, 22 draft' },
+        { label: t('statPendingApps'), value: '5', sub: 'Awaiting review' },
+        { label: t('statRevenue'), value: '$12,480', sub: 'Simulated total' },
+    ];
+
+    const QUICK_LINKS = [
+        {
+            to: '/admin/users',
+            icon: <Users size={24} />,
+            title: t('quickUsersTitle'),
+            desc: t('quickUsersDesc'),
+            color: 'text-primary bg-primary/10',
+        },
+        {
+            to: '/admin/courses',
+            icon: <BookOpen size={24} />,
+            title: t('quickCoursesTitle'),
+            desc: t('quickCoursesDesc'),
+            color: 'text-accent bg-accent/10',
+        },
+        {
+            to: '/admin/applications',
+            icon: <FileCheck size={24} />,
+            title: t('quickApplicationsTitle'),
+            desc: t('quickApplicationsDesc'),
+            color: 'text-success bg-success/10',
+        },
+        {
+            to: '/admin/payments',
+            icon: <CreditCard size={24} />,
+            title: t('quickPaymentsTitle'),
+            desc: t('quickPaymentsDesc'),
+            color: 'text-warning bg-warning/10',
+        },
+    ];
+
     return (
         <div className="p-8">
             <div className="mb-8">
                 <h1 className="font-heading text-3xl font-bold text-foreground">
-                    {ADMIN.DASHBOARD_TITLE}
+                    {t('dashboardTitle')}
                 </h1>
-                <p className="mt-1 text-muted-foreground">{ADMIN.DASHBOARD_SUBTITLE}</p>
+                <p className="mt-1 text-muted-foreground">{t('dashboardSubtitle')}</p>
             </div>
 
             {/* Stats */}

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
-import { LANDING_PAGE } from '@/const/localization/landingPage';
 import type { LandingCategory } from '@/mocks/landing.mock';
 
 interface CategoriesSectionProps {
@@ -8,24 +8,26 @@ interface CategoriesSectionProps {
     isLoading?: boolean;
 }
 
-const { CATEGORIES } = LANDING_PAGE;
-
 export function CategoriesSection({ categories, isLoading }: CategoriesSectionProps) {
+    const { t } = useTranslation('landing');
+
     return (
         <section id="categories" className="py-20">
             <div className="mx-auto max-w-7xl px-6">
                 <div className="mb-10 flex items-end justify-between">
                     <div>
-                        <span className="text-sm font-semibold text-primary">{CATEGORIES.tag}</span>
+                        <span className="text-sm font-semibold text-primary">
+                            {t('categories.tag')}
+                        </span>
                         <h2 className="mt-2 font-heading text-3xl font-bold md:text-4xl">
-                            {CATEGORIES.heading}
+                            {t('categories.heading')}
                         </h2>
                     </div>
                     <Link
                         to="/courses"
                         className="hidden text-sm text-primary hover:underline md:inline"
                     >
-                        {CATEGORIES.viewAll}
+                        {t('categories.viewAll')}
                     </Link>
                 </div>
 
@@ -57,7 +59,7 @@ export function CategoriesSection({ categories, isLoading }: CategoriesSectionPr
                                 </div>
                                 <h3 className="mt-4 font-heading font-semibold">{cat.name}</h3>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    {cat.coursesCount} {CATEGORIES.coursesLabel}
+                                    {cat.coursesCount} {t('categories.coursesLabel')}
                                 </p>
                             </Link>
                         ))}

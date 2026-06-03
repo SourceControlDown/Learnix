@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { CourseSummaryDto } from '@/types/course.types';
 import { CourseCard } from '@/components/common/CourseCard';
-import { LANDING_PAGE } from '@/const/localization/landingPage';
 
 interface FeaturedCoursesSectionProps {
     courses: CourseSummaryDto[];
@@ -9,28 +9,30 @@ interface FeaturedCoursesSectionProps {
     totalCount?: number;
 }
 
-const { FEATURED_COURSES } = LANDING_PAGE;
-
 export function FeaturedCoursesSection({
     courses,
     isLoading,
     totalCount,
 }: FeaturedCoursesSectionProps) {
+    const { t } = useTranslation('landing');
+
     return (
         <section id="courses" className="bg-secondary/40 py-20">
             <div className="mx-auto max-w-7xl px-6">
                 <div className="mb-10 flex items-end justify-between">
                     <div>
                         <span className="text-sm font-semibold text-primary">
-                            {FEATURED_COURSES.tag}
+                            {t('featuredCourses.tag')}
                         </span>
                         <h2 className="mt-2 font-heading text-3xl font-bold md:text-4xl">
-                            {FEATURED_COURSES.heading}
+                            {t('featuredCourses.heading')}
                         </h2>
-                        <p className="mt-2 text-muted-foreground">{FEATURED_COURSES.subtitle}</p>
+                        <p className="mt-2 text-muted-foreground">
+                            {t('featuredCourses.subtitle')}
+                        </p>
                     </div>
                     <Link to="/courses" className="text-sm text-primary hover:underline">
-                        {FEATURED_COURSES.viewAll}
+                        {t('featuredCourses.viewAll')}
                     </Link>
                 </div>
 
@@ -57,11 +59,8 @@ export function FeaturedCoursesSection({
                         className="inline-flex items-center gap-2 font-medium text-primary hover:underline"
                     >
                         {totalCount !== undefined
-                            ? FEATURED_COURSES.viewMore.replace(
-                                  '{count}',
-                                  totalCount.toLocaleString(),
-                              )
-                            : FEATURED_COURSES.viewAll}
+                            ? t('featuredCourses.viewMore', { count: totalCount })
+                            : t('featuredCourses.viewAll')}
                     </Link>
                 </div>
             </div>

@@ -1,5 +1,5 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
-import { COURSE_CATALOG } from '@/const/localization/courseCatalog';
 
 interface CategoryOption {
     id: string;
@@ -18,18 +18,6 @@ interface FilterSidebarProps {
     onClear: () => void;
 }
 
-const PRICE_OPTIONS: { label: string; value: boolean | undefined }[] = [
-    { label: COURSE_CATALOG.FILTERS.PRICE_ALL, value: undefined },
-    { label: COURSE_CATALOG.FILTERS.PRICE_FREE, value: true },
-    { label: COURSE_CATALOG.FILTERS.PRICE_PAID, value: false },
-];
-
-const RATING_OPTIONS: { label: string; value: number }[] = [
-    { label: COURSE_CATALOG.FILTERS.RATING_45, value: 4.5 },
-    { label: COURSE_CATALOG.FILTERS.RATING_40, value: 4.0 },
-    { label: COURSE_CATALOG.FILTERS.RATING_35, value: 3.5 },
-];
-
 const STAR = '★';
 
 export function FilterSidebar({
@@ -42,6 +30,20 @@ export function FilterSidebar({
     onRatingChange,
     onClear,
 }: FilterSidebarProps) {
+    const { t } = useTranslation('catalog');
+
+    const PRICE_OPTIONS: { label: string; value: boolean | undefined }[] = [
+        { label: t('filters.priceAll'), value: undefined },
+        { label: t('filters.priceFree'), value: true },
+        { label: t('filters.pricePaid'), value: false },
+    ];
+
+    const RATING_OPTIONS: { label: string; value: number }[] = [
+        { label: t('filters.rating45'), value: 4.5 },
+        { label: t('filters.rating40'), value: 4.0 },
+        { label: t('filters.rating35'), value: 3.5 },
+    ];
+
     const hasActiveFilters =
         !!selectedCategoryId || isFree !== undefined || minRating !== undefined;
 
@@ -49,9 +51,7 @@ export function FilterSidebar({
         <aside className="space-y-4">
             {/* Category */}
             <div className="rounded-xl border border-border bg-card p-5">
-                <h3 className="mb-3 font-heading font-semibold">
-                    {COURSE_CATALOG.FILTERS.CATEGORY}
-                </h3>
+                <h3 className="mb-3 font-heading font-semibold">{t('filters.category')}</h3>
                 <div className="max-h-64 space-y-1 overflow-y-auto text-sm">
                     {categories.map((cat) => {
                         const selected = cat.id === selectedCategoryId;
@@ -77,7 +77,7 @@ export function FilterSidebar({
 
             {/* Price */}
             <div className="rounded-xl border border-border bg-card p-5">
-                <h3 className="mb-3 font-heading font-semibold">{COURSE_CATALOG.FILTERS.PRICE}</h3>
+                <h3 className="mb-3 font-heading font-semibold">{t('filters.price')}</h3>
                 <div className="space-y-2 text-sm">
                     {PRICE_OPTIONS.map((opt) => {
                         const checked = isFree === opt.value;
@@ -102,7 +102,7 @@ export function FilterSidebar({
 
             {/* Rating */}
             <div className="rounded-xl border border-border bg-card p-5">
-                <h3 className="mb-3 font-heading font-semibold">{COURSE_CATALOG.FILTERS.RATING}</h3>
+                <h3 className="mb-3 font-heading font-semibold">{t('filters.rating')}</h3>
                 <div className="space-y-2 text-sm">
                     {RATING_OPTIONS.map((opt) => {
                         const checked = minRating === opt.value;
@@ -136,7 +136,7 @@ export function FilterSidebar({
                     onClick={onClear}
                     className="w-full text-sm text-muted-foreground transition-colors hover:text-destructive"
                 >
-                    {COURSE_CATALOG.CLEAR_FILTERS}
+                    {t('clearFilters')}
                 </button>
             )}
         </aside>

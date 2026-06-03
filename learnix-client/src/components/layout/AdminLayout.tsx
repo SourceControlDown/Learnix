@@ -10,38 +10,32 @@ import {
     ArrowLeft,
     LogOut,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/store/auth.store';
-import { ADMIN } from '@/const/localization/admin';
-
-interface NavItem {
-    to: string;
-    label: string;
-    icon: React.ReactNode;
-    end?: boolean;
-}
-
-const navItems: NavItem[] = [
-    {
-        to: '/admin',
-        label: ADMIN.NAV_DASHBOARD,
-        icon: <LayoutDashboard size={16} />,
-        end: true,
-    },
-    { to: '/admin/users', label: ADMIN.NAV_USERS, icon: <Users size={16} /> },
-    { to: '/admin/courses', label: ADMIN.NAV_COURSES, icon: <BookOpen size={16} /> },
-    {
-        to: '/admin/applications',
-        label: ADMIN.NAV_APPLICATIONS,
-        icon: <FileCheck size={16} />,
-    },
-    { to: '/admin/payments', label: ADMIN.NAV_PAYMENTS, icon: <CreditCard size={16} /> },
-];
 
 export function AdminLayout() {
+    const { t } = useTranslation('admin');
     const navigate = useNavigate();
     const { logout } = useAuthStore();
     const queryClient = useQueryClient();
+
+    const navItems = [
+        {
+            to: '/admin',
+            label: t('navDashboard'),
+            icon: <LayoutDashboard size={16} />,
+            end: true,
+        },
+        { to: '/admin/users', label: t('navUsers'), icon: <Users size={16} /> },
+        { to: '/admin/courses', label: t('navCourses'), icon: <BookOpen size={16} /> },
+        {
+            to: '/admin/applications',
+            label: t('navApplications'),
+            icon: <FileCheck size={16} />,
+        },
+        { to: '/admin/payments', label: t('navPayments'), icon: <CreditCard size={16} /> },
+    ];
 
     function handleSignOut() {
         logout();
@@ -102,14 +96,14 @@ export function AdminLayout() {
                                 className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-foreground transition-colors hover:bg-secondary"
                             >
                                 <ArrowLeft size={16} />
-                                {ADMIN.NAV_BACK_TO_SITE}
+                                {t('navBackToSite')}
                             </Link>
                             <button
                                 onClick={handleSignOut}
                                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                             >
                                 <LogOut size={16} />
-                                {ADMIN.NAV_SIGN_OUT}
+                                {t('navSignOut')}
                             </button>
                         </nav>
                     </div>
