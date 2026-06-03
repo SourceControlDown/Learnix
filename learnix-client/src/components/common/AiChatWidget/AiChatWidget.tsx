@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Bot } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/utils/cn';
@@ -12,14 +13,25 @@ export function AiChatWidget() {
     const user = useAuthStore((s) => s.user);
     const { isChatOpen, toggleChat, closeChat } = useUiStore();
     const { pathname } = useLocation();
+    const [isExpanded, setIsExpanded] = useState(false);
 
     if (!user || HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;
 
+    function handleClose() {
+        setIsExpanded(false);
+        closeChat();
+    }
+
     return (
         <div className="fixed bottom-6 right-6 z-50">
-            <div className="relative">
-                <AiChatPanel isOpen={isChatOpen} onClose={closeChat} />
+            <AiChatPanel
+                isOpen={isChatOpen}
+                onClose={handleClose}
+                isExpanded={isExpanded}
+                onToggleExpand={() => setIsExpanded((v) => !v)}
+            />
 
+            {!isExpanded && (
                 <button
                     onClick={toggleChat}
                     aria-label={AI_CHAT.ARIA_TOGGLE}
@@ -33,7 +45,7 @@ export function AiChatWidget() {
                 >
                     <Bot size={24} />
                 </button>
-            </div>
+            )}
         </div>
     );
 }

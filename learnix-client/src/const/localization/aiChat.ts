@@ -12,6 +12,8 @@ export const AI_CHAT = {
     ARIA_TOGGLE: 'Toggle AI chat',
     ARIA_CLOSE: 'Close chat',
     ARIA_CLEAR: 'Start new conversation',
+    ARIA_EXPAND: 'Expand chat',
+    ARIA_COLLAPSE: 'Collapse chat',
 } as const;
 
 export function getToolLabel(toolName: string): string {
