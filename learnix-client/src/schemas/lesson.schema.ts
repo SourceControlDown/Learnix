@@ -44,8 +44,14 @@ export const testLessonSchema = z.object({
         .int()
         .min(LESSON_LIMITS.PASSING_THRESHOLD_MIN, 'Must be at least 1%')
         .max(LESSON_LIMITS.PASSING_THRESHOLD_MAX, 'Cannot exceed 100%'),
-    attemptLimit: z.coerce.number().int().min(LESSON_LIMITS.ATTEMPT_LIMIT_MIN).optional(),
-    cooldownMinutes: z.coerce.number().int().min(LESSON_LIMITS.COOLDOWN_MINUTES_MIN).optional(),
+    attemptLimit: z.preprocess(
+        (val) => (val === '' || val === null ? undefined : val),
+        z.coerce.number().int().min(LESSON_LIMITS.ATTEMPT_LIMIT_MIN).optional(),
+    ),
+    cooldownMinutes: z.preprocess(
+        (val) => (val === '' || val === null ? undefined : val),
+        z.coerce.number().int().min(LESSON_LIMITS.COOLDOWN_MINUTES_MIN).optional(),
+    ),
     questions: z.array(questionSchema).min(1, 'At least one question required'),
 });
 

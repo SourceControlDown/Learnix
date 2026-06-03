@@ -24,8 +24,6 @@ export default function InstructorMessagesPage() {
         });
     }, [conversations]);
 
-    const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
-
     if (isLoading) {
         return (
             <div className="flex h-full items-center justify-center">
@@ -39,16 +37,9 @@ export default function InstructorMessagesPage() {
             {/* Conversation list sidebar */}
             <aside className="flex w-80 shrink-0 flex-col overflow-hidden border-r border-border bg-card">
                 <div className="shrink-0 border-b border-border px-4 py-3">
-                    <div className="flex items-center justify-between">
-                        <h1 className="font-heading text-lg font-semibold text-foreground">
-                            {MESSAGES.INSTRUCTOR_PAGE_TITLE}
-                        </h1>
-                        {totalUnread > 0 && (
-                            <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground">
-                                {totalUnread}
-                            </span>
-                        )}
-                    </div>
+                    <h1 className="font-heading text-lg font-semibold text-foreground">
+                        {MESSAGES.INSTRUCTOR_PAGE_TITLE}
+                    </h1>
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto">
                     <InstructorConversationList

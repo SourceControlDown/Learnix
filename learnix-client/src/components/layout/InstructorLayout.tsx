@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AiChatWidget } from '@/components/common/AiChatWidget/AiChatWidget';
 import { useChatHub } from '@/hooks/useChatHub';
 import { useAchievementsHub } from '@/hooks/useAchievementsHub';
@@ -15,6 +15,8 @@ import {
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/store/auth.store';
 import { INSTRUCTOR } from '@/const/localization/instructor';
+import { messagesApi } from '@/api/messages.api';
+import { queryKeys } from '@/api/queryKeys';
 
 interface NavItem {
     to: string;
@@ -31,7 +33,7 @@ const navItems: NavItem[] = [
         icon: <LayoutDashboard size={16} />,
         end: true,
     },
-    { to: '/instructor/courses', label: INSTRUCTOR.NAV_MY_COURSES, icon: <BookOpen size={16} /> },
+    { to: '/instructor/courses', label: INSTRUCTOR.NAV_MY_COURSES, icon: <BookOpen size={16} />, end: true },
     {
         to: '/instructor/courses/new',
         label: INSTRUCTOR.NAV_NEW_COURSE,
@@ -51,6 +53,13 @@ export function InstructorLayout() {
     const navigate = useNavigate();
     const { logout } = useAuthStore();
     const queryClient = useQueryClient();
+
+    const { data: unreadData } = useQuery({
+        queryKey: queryKeys.messages.unreadCount(),
+        queryFn: messagesApi.getUnreadCount,
+        staleTime: Infinity,
+    });
+    const unreadCount = unreadData?.totalUnread ?? 0;
 
     function handleSignOut() {
         logout();
@@ -105,6 +114,11 @@ export function InstructorLayout() {
                                     >
                                         {item.icon}
                                         {item.label}
+                                        {item.to === '/instructor/messages' && unreadCount > 0 && (
+                                            <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                                                {unreadCount > 99 ? '99+' : unreadCount}
+                                            </span>
+                                        )}
                                     </NavLink>
                                 ),
                             )}

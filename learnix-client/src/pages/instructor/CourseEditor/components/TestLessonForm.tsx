@@ -20,6 +20,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel }: Props)
         handleSubmit,
         control,
         watch,
+        setValue,
         formState: { errors },
     } = useForm<TestLessonFormData>({
         resolver: zodResolver(testLessonSchema),
@@ -81,7 +82,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel }: Props)
                 />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 items-end gap-4">
                 <div>
                     <label className="mb-1 block text-sm font-medium">
                         {INSTRUCTOR.FIELD_PASSING_THRESHOLD}
@@ -156,6 +157,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel }: Props)
                         register={register}
                         control={control}
                         watch={watch}
+                        setValue={setValue}
                         errors={errors}
                         onRemove={() => removeQuestion(qIdx)}
                     />
@@ -188,6 +190,7 @@ function QuestionEditor({
     register,
     control,
     watch,
+    setValue,
     errors,
     onRemove,
 }: {
@@ -195,6 +198,7 @@ function QuestionEditor({
     register: ReturnType<typeof useForm<TestLessonFormData>>['register'];
     control: ReturnType<typeof useForm<TestLessonFormData>>['control'];
     watch: ReturnType<typeof useForm<TestLessonFormData>>['watch'];
+    setValue: ReturnType<typeof useForm<TestLessonFormData>>['setValue'];
     errors: ReturnType<typeof useForm<TestLessonFormData>>['formState']['errors'];
     onRemove: () => void;
 }) {
@@ -245,11 +249,29 @@ function QuestionEditor({
                     const isCorrectField = `questions.${qIdx}.options.${oIdx}.isCorrect` as const;
                     return (
                         <div key={optField.id} className="flex items-center gap-2">
-                            <input
-                                type={qType === 'SingleChoice' ? 'radio' : 'checkbox'}
-                                {...register(isCorrectField)}
-                                className="accent-primary"
-                            />
+                            {qType === 'SingleChoice' ? (
+                                <input
+                                    type="radio"
+                                    name={`questions.${qIdx}.singleCorrect`}
+                                    checked={watch(isCorrectField)}
+                                    onChange={() =>
+                                        optionFields.forEach((_, i) =>
+                                            setValue(
+                                                `questions.${qIdx}.options.${i}.isCorrect`,
+                                                i === oIdx,
+                                                { shouldValidate: true },
+                                            )
+                                        )
+                                    }
+                                    className="accent-primary"
+                                />
+                            ) : (
+                                <input
+                                    type="checkbox"
+                                    {...register(isCorrectField)}
+                                    className="accent-primary"
+                                />
+                            )}
                             <input
                                 {...register(`questions.${qIdx}.options.${oIdx}.text`)}
                                 placeholder={INSTRUCTOR.FIELD_OPTION_TEXT}

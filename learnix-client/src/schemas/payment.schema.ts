@@ -4,9 +4,14 @@ import { PAYMENT_LIMITS } from '@/const/payment.constants';
 export const paymentSchema = z.object({
     cardNumber: z
         .string()
-        .min(PAYMENT_LIMITS.CARD_NUMBER_LENGTH, 'Card number must be 16 digits')
-        .max(PAYMENT_LIMITS.CARD_NUMBER_LENGTH, 'Card number must be 16 digits')
-        .regex(/^\d+$/, 'Card number can only contain digits'),
+        .transform((val) => val.replace(/\s/g, ''))
+        .pipe(
+            z
+                .string()
+                .min(PAYMENT_LIMITS.CARD_NUMBER_LENGTH, 'Card number must be 16 digits')
+                .max(PAYMENT_LIMITS.CARD_NUMBER_LENGTH, 'Card number must be 16 digits')
+                .regex(/^\d+$/, 'Card number can only contain digits'),
+        ),
     expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Expiry must be in MM/YY format'),
     cvv: z
         .string()
