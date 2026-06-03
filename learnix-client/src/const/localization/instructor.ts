@@ -37,8 +37,7 @@ export const INSTRUCTOR = {
     BTN_DELETE: 'Delete',
     CONFIRM_ARCHIVE: (title: string) =>
         `Archive "${title}"? It will be hidden from the catalog. You can unarchive it later.`,
-    CONFIRM_DELETE: (title: string) =>
-        `Delete "${title}"? This action cannot be undone.`,
+    CONFIRM_DELETE: (title: string) => `Delete "${title}"? This action cannot be undone.`,
     PAGINATION_PREV: 'Previous',
     PAGINATION_NEXT: 'Next',
     PAGINATION_PAGE: (current: number, total: number) => `Page ${current} of ${total}`,
@@ -52,7 +51,8 @@ export const INSTRUCTOR = {
     EDITOR_TITLE_NEW: 'New course',
     EDITOR_BACK: '← My courses',
     EDITOR_UNSAVED: 'Unsaved changes',
-    EDITOR_ARCHIVED_BANNER: 'This course is archived and cannot be edited. Unarchive it first to make changes.',
+    EDITOR_ARCHIVED_BANNER:
+        'This course is archived and cannot be edited. Unarchive it first to make changes.',
     BTN_SAVE: 'Save',
     BTN_PUBLISH_COURSE: 'Publish',
     BTN_UNPUBLISH_COURSE: 'Unpublish',

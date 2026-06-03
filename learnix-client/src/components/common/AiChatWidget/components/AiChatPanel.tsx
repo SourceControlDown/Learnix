@@ -27,7 +27,9 @@ export function AiChatPanel({ isOpen, onClose, isExpanded, onToggleExpand }: AiC
 
     useEffect(() => {
         document.body.style.overflow = isExpanded ? 'hidden' : '';
-        return () => { document.body.style.overflow = ''; };
+        return () => {
+            document.body.style.overflow = '';
+        };
     }, [isExpanded]);
 
     const visible = isOpen || isExpanded;
@@ -50,9 +52,7 @@ export function AiChatPanel({ isOpen, onClose, isExpanded, onToggleExpand }: AiC
                     isExpanded
                         ? 'bottom-4 right-4 h-[calc(100vh-2rem)] w-[calc(100vw-2rem)]'
                         : 'bottom-[88px] right-6 h-[520px] w-80',
-                    !isExpanded && (visible
-                        ? 'opacity-100'
-                        : 'pointer-events-none opacity-0'),
+                    !isExpanded && (visible ? 'opacity-100' : 'pointer-events-none opacity-0'),
                 )}
             >
                 {/* Header */}

@@ -80,50 +80,70 @@ export default function TestLessonPage() {
     const canAttempt = status?.canAttempt ?? false;
 
     // ---------------------------------------------------------------------------
-    // On test load: restore from sessionStorage or server in-progress attempt
+    // On test load: restore from sessionStorage or server in-progress attempt.
+    //
+    // Why cleanup resets didInitRef:
+    // React 18 Strict Mode preserves refs (but resets state) between its
+    // double-mount. Without the cleanup, mount #2 sees didInitRef.current=true
+    // (from mount #1) but attemptId=null (state reset) → "Starting…" forever.
+    // The cleanup fires between mounts, resetting the ref so mount #2 re-runs
+    // the init logic correctly.
     // ---------------------------------------------------------------------------
     const didInitRef = useRef(false);
 
     useEffect(() => {
         if (!test || !lessonId || didInitRef.current) return;
         if (!canAttempt) return;
+        if (pageState !== 'testing') return;
 
         const draft = getDraft(lessonId);
+        let initialized = false;
 
         if (draft) {
-            // Restore draft from this browser tab/session
-            setAttemptId(draft.attemptId);
-            setAnswers(draft.answers);
-            setDraftRestored(true);
-            didInitRef.current = true;
-            return;
+            if (draft.attemptId) {
+                setAttemptId(draft.attemptId);
+                setAnswers(draft.answers);
+                setDraftRestored(true);
+                didInitRef.current = true;
+                initialized = true;
+            } else {
+                // Corrupted draft (no attemptId) — discard and start fresh
+                clearDraft(lessonId);
+            }
         }
 
-        if (status?.inProgressAttemptId) {
-            // Server knows about an in-progress attempt (e.g., after browser restart)
+        if (!initialized && status?.inProgressAttemptId) {
             setAttemptId(status.inProgressAttemptId);
-            const emptyAnswers = Object.fromEntries(
-                test.questions.map((q) => [q.order, { selectedOptions: [], textValue: '' }]),
+            setAnswers(
+                Object.fromEntries(
+                    test.questions.map((q) => [q.order, { selectedOptions: [], textValue: '' }]),
+                ),
             );
-            setAnswers(emptyAnswers);
             didInitRef.current = true;
-            return;
+            initialized = true;
         }
 
-        // No draft, no in-progress — auto-start a new attempt
-        startAttempt.mutate(undefined, {
-            onSuccess: (res) => {
-                setAttemptId(res.attemptId);
-                const emptyAnswers = Object.fromEntries(
-                    test.questions.map((q) => [q.order, { selectedOptions: [], textValue: '' }]),
-                );
-                setAnswers(emptyAnswers);
-                saveDraft(lessonId, { attemptId: res.attemptId, answers: emptyAnswers });
-            },
-        });
+        if (!initialized) {
+            startAttempt.mutate(undefined, {
+                onSuccess: (res) => {
+                    setAttemptId(res.attemptId);
+                    const emptyAnswers = Object.fromEntries(
+                        test.questions.map((q) => [
+                            q.order,
+                            { selectedOptions: [], textValue: '' },
+                        ]),
+                    );
+                    setAnswers(emptyAnswers);
+                    saveDraft(lessonId, { attemptId: res.attemptId, answers: emptyAnswers });
+                },
+            });
+            didInitRef.current = true;
+        }
 
-        didInitRef.current = true;
-    }, [test, lessonId, canAttempt]); // eslint-disable-line react-hooks/exhaustive-deps
+        return () => {
+            didInitRef.current = false;
+        };
+    }, [test, lessonId, canAttempt, pageState]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // ---------------------------------------------------------------------------
     // Cooldown countdown timer
@@ -268,14 +288,28 @@ export default function TestLessonPage() {
     // Retake
     // ---------------------------------------------------------------------------
     const handleRetake = () => {
+        if (!test || !lessonId) return;
+
         setPageState('testing');
         setSubmitResult(null);
         setSubmittedAnswers({});
         setDraftRestored(false);
-        didInitRef.current = false; // allow re-init to call startAttempt again
         setAttemptId(null);
         setAnswers({});
-        // The next render will trigger the init effect again
+        // Mark as initialized so the effect doesn't race with us
+        didInitRef.current = true;
+
+        // Call directly — the effect won't re-run if test/canAttempt haven't changed
+        const emptyAnswers = Object.fromEntries(
+            test.questions.map((q) => [q.order, { selectedOptions: [], textValue: '' }]),
+        );
+        startAttempt.mutate(undefined, {
+            onSuccess: (res) => {
+                setAttemptId(res.attemptId);
+                setAnswers(emptyAnswers);
+                saveDraft(lessonId, { attemptId: res.attemptId, answers: emptyAnswers });
+            },
+        });
     };
 
     // ---------------------------------------------------------------------------

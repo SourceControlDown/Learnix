@@ -53,7 +53,9 @@ export default function PaymentPage() {
     const { onChange: onCvvChange, ...cvvReg } = form.register('cvv');
 
     function handleCardNumber(e: React.ChangeEvent<HTMLInputElement>) {
-        const digits = e.target.value.replace(/\D/g, '').slice(0, PAYMENT_LIMITS.CARD_NUMBER_LENGTH);
+        const digits = e.target.value
+            .replace(/\D/g, '')
+            .slice(0, PAYMENT_LIMITS.CARD_NUMBER_LENGTH);
         e.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
         onCardNumberChange(e);
     }

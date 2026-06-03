@@ -4,6 +4,7 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { InstructorLayout } from '@/components/layout/InstructorLayout';
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { CourseLayout } from '@/components/layout/CourseLayout';
 import { PageFallback } from '@/components/common/PageFallback';
 import { RequireRole } from '@/components/common/RequireRole';
 import { publicRoutes } from './publicRoutes';
@@ -134,14 +135,11 @@ export const router = createBrowserRouter([
     },
     {
         path: '/courses/:courseId/learn',
-        element: guardStudent(wrap(<CourseStartPage />)),
-    },
-    {
-        path: '/courses/:courseId/learn/:lessonId',
-        element: guardStudent(wrap(<CoursePlayerPage />)),
-    },
-    {
-        path: '/courses/:courseId/learn/:lessonId/test',
-        element: guardStudent(wrap(<TestLessonPage />)),
+        element: guardStudent(<CourseLayout />),
+        children: [
+            { index: true, element: wrap(<CourseStartPage />) },
+            { path: ':lessonId', element: wrap(<CoursePlayerPage />) },
+            { path: ':lessonId/test', element: wrap(<TestLessonPage />) },
+        ],
     },
 ]);

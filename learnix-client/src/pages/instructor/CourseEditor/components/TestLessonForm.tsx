@@ -260,7 +260,7 @@ function QuestionEditor({
                                                 `questions.${qIdx}.options.${i}.isCorrect`,
                                                 i === oIdx,
                                                 { shouldValidate: true },
-                                            )
+                                            ),
                                         )
                                     }
                                     className="accent-primary"

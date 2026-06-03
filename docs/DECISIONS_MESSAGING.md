@@ -22,6 +22,8 @@
 
 ## ADR-MSG-002: Separate `ChatHub` from `AchievementsHub`
 
+> **Superseded by ADR-MSG-007.** Original decision kept for history.
+
 **Decision:** A dedicated `ChatHub : Hub<IChatHubClient>` at `/hubs/chat` handles messaging events. It is separate from `AchievementsHub`.
 
 **Why:**
@@ -88,3 +90,18 @@
 
 **Rejected alternatives:**
 - Domain events for messaging — meaningful for achievements because detection is complex (many conditions evaluated asynchronously). For messaging, the handler already knows the recipient and unread count immediately — domain event overhead adds no value.
+
+---
+
+## ADR-MSG-007: Unified `NotificationsHub` (supersedes ADR-MSG-002)
+
+**Decision:** `ChatHub` and `AchievementsHub` are merged into a single `NotificationsHub : Hub<INotificationsHubClient>` at `/hubs/notifications`. The frontend opens one WebSocket connection for all real-time events.
+
+**Why:**
+- Two hubs = two WebSocket connections per authenticated user for no architectural gain. Both hubs used the same auth, the same `user-{userId}` group pattern, and the same `[Authorize]` attribute — there was nothing functionally separate about them.
+- As the notification surface grows (certificate ready, in-app notifications — B-41/B-42), each new domain would require a third, fourth hub. One hub scales horizontally via Azure SignalR Service just as well as two.
+- `INotificationsHubClient` defines all four typed methods: `ReceiveMessage`, `UnreadCountChanged`, `AchievementUnlocked`, `CertificateReady`. Client-side handler routing is a simple `connection.on('EventName', handler)` — there is no routing complexity.
+- The frontend `useNotificationsHub` hook replaces `useChatHub` + `useAchievementsHub`, reducing layout component coupling.
+
+**Rejected alternative that was previously chosen (ADR-MSG-002):**
+- Separate hubs per domain — driven by "independent deployability" concern that does not apply at this scale (single API process, single Azure Container App). The scale argument becomes relevant only when consumers are extracted to separate services.
