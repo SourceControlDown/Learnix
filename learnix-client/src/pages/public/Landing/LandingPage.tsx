@@ -1,5 +1,6 @@
 import { useCategories } from '@/hooks/useCategories';
 import { useFeaturedCourses } from '@/hooks/useFeaturedCourses';
+import { useCourseCount } from '@/hooks/useCourseCount';
 import { AIAssistantSection } from './components/AIAssistantSection';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { CategoriesSection } from './components/CategoriesSection';
@@ -15,6 +16,7 @@ import { TestimonialsSection } from './components/TestimonialsSection';
 export default function LandingPage() {
     const { data: categories = [], isLoading: categoriesLoading } = useCategories();
     const { data: featuredCourses = [], isLoading: coursesLoading } = useFeaturedCourses();
+    const { data: courseCount } = useCourseCount();
 
     return (
         <>
@@ -22,7 +24,11 @@ export default function LandingPage() {
             <HeroSection />
             <StatsSection />
             <CategoriesSection categories={categories} isLoading={categoriesLoading} />
-            <FeaturedCoursesSection courses={featuredCourses} isLoading={coursesLoading} />
+            <FeaturedCoursesSection
+                courses={featuredCourses}
+                isLoading={coursesLoading}
+                totalCount={courseCount}
+            />
             <HowItWorksSection />
             <AIAssistantSection />
             <TestimonialsSection />

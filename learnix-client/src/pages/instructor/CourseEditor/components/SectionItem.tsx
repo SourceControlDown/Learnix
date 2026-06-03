@@ -17,6 +17,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2 } from 'lucide-react';
 import { LessonRow } from './LessonRow';
 import { LessonEditorModal } from './LessonEditorModal';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useDeleteSection, useUpdateSectionTitle } from '@/hooks/useSectionMutations';
 import {
     useDeleteLesson,
@@ -48,6 +49,7 @@ export function SectionItem({ courseId, section }: Props) {
     };
 
     const [modal, setModal] = useState<ModalState>(null);
+    const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null);
     const titleRef = useRef<HTMLInputElement>(null);
 
     const deleteSection = useDeleteSection(courseId);
@@ -70,8 +72,12 @@ export function SectionItem({ courseId, section }: Props) {
     }
 
     function handleDeleteLesson(lessonId: string, title: string) {
-        if (!confirm(`Delete lesson "${title}"?`)) return;
-        deleteLesson.mutate(lessonId);
+        setPendingDelete({ id: lessonId, title });
+    }
+
+    function confirmDeleteLesson() {
+        if (!pendingDelete) return;
+        deleteLesson.mutate(pendingDelete.id, { onSettled: () => setPendingDelete(null) });
     }
 
     function handleLessonDragEnd(event: DragEndEvent) {
@@ -165,6 +171,18 @@ export function SectionItem({ courseId, section }: Props) {
                     lessonType={modal.type}
                     lesson={modal.lesson}
                     onClose={() => setModal(null)}
+                />
+            )}
+
+            {pendingDelete && (
+                <ConfirmDialog
+                    title={INSTRUCTOR.BTN_DELETE}
+                    description={INSTRUCTOR.CONFIRM_DELETE_LESSON(pendingDelete.title)}
+                    confirmLabel={INSTRUCTOR.BTN_DELETE}
+                    variant="destructive"
+                    isPending={deleteLesson.isPending}
+                    onConfirm={confirmDeleteLesson}
+                    onClose={() => setPendingDelete(null)}
                 />
             )}
         </>

@@ -6,11 +6,16 @@ import { LANDING_PAGE } from '@/const/localization/landingPage';
 interface FeaturedCoursesSectionProps {
     courses: CourseSummaryDto[];
     isLoading?: boolean;
+    totalCount?: number;
 }
 
 const { FEATURED_COURSES } = LANDING_PAGE;
 
-export function FeaturedCoursesSection({ courses, isLoading }: FeaturedCoursesSectionProps) {
+export function FeaturedCoursesSection({
+    courses,
+    isLoading,
+    totalCount,
+}: FeaturedCoursesSectionProps) {
     return (
         <section id="courses" className="bg-secondary/40 py-20">
             <div className="mx-auto max-w-7xl px-6">
@@ -51,7 +56,12 @@ export function FeaturedCoursesSection({ courses, isLoading }: FeaturedCoursesSe
                         to="/courses"
                         className="inline-flex items-center gap-2 font-medium text-primary hover:underline"
                     >
-                        {FEATURED_COURSES.viewMore}
+                        {totalCount !== undefined
+                            ? FEATURED_COURSES.viewMore.replace(
+                                  '{count}',
+                                  totalCount.toLocaleString(),
+                              )
+                            : FEATURED_COURSES.viewAll}
                     </Link>
                 </div>
             </div>

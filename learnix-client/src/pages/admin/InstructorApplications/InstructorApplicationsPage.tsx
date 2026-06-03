@@ -6,9 +6,10 @@ import { adminApi } from '@/api/admin.api';
 import { queryKeys } from '@/api/queryKeys';
 import { RejectDialog } from './RejectDialog';
 import { ADMIN } from '@/const/localization/admin';
+import { PAGINATION } from '@/const/ui.constants';
 import type { PendingApplicationDto } from '@/types/admin.types';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = PAGINATION.APPLICATIONS;
 
 function applicantInitials(a: PendingApplicationDto) {
     return `${a.firstName[0] ?? ''}${a.lastName[0] ?? ''}`.toUpperCase();
@@ -72,7 +73,9 @@ export default function InstructorApplicationsPage() {
             </div>
 
             {isLoading ? (
-                <div className="py-16 text-center text-sm text-muted-foreground">Loading...</div>
+                <div className="py-16 text-center text-sm text-muted-foreground">
+                    {ADMIN.APPLICATIONS_LOADING}
+                </div>
             ) : applications.length === 0 ? (
                 <div className="flex flex-col items-center py-20">
                     <CheckCircle size={48} className="mb-4 text-success" />
@@ -127,15 +130,21 @@ export default function InstructorApplicationsPage() {
                                                 <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                                     {ADMIN.APP_PORTFOLIO_LABEL}
                                                 </p>
-                                                <a
-                                                    href={a.portfolioUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                                                >
-                                                    {a.portfolioUrl}
-                                                    <ExternalLink size={12} />
-                                                </a>
+                                                {/^https?:\/\//.test(a.portfolioUrl) ? (
+                                                    <a
+                                                        href={a.portfolioUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                                                    >
+                                                        {a.portfolioUrl}
+                                                        <ExternalLink size={12} />
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {a.portfolioUrl}
+                                                    </span>
+                                                )}
                                             </div>
                                         )}
 

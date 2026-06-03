@@ -1,6 +1,0 @@
-Placeholder for retaking a test.
-
-Likely responsibilities:
-- validate previous completion state
-- enforce cooldown and attempt limit
-- start a fresh attempt

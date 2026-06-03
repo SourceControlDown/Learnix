@@ -660,7 +660,10 @@ namespace Learnix.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TestLessonId");
 
-                    b.HasIndex("StudentId", "TestLessonId");
+                    b.HasIndex("StudentId", "TestLessonId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_TestAttempts_OneInProgress")
+                        .HasFilter("\"SubmittedAt\" IS NULL");
 
                     b.ToTable("TestAttempts", (string)null);
                 });

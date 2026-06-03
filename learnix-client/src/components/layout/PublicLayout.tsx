@@ -1,17 +1,35 @@
-﻿import { Outlet } from 'react-router-dom';
+﻿import { Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { AiChatWidget } from '@/components/common/AiChatWidget/AiChatWidget';
+import { EmailConfirmationBanner } from '@/components/common/EmailConfirmationBanner';
+import { useChatHub } from '@/hooks/useChatHub';
+import { useAchievementsHub } from '@/hooks/useAchievementsHub';
+
+const NO_FOOTER_ROUTES = ['/messages', '/instructor/messages'];
 
 export function PublicLayout() {
+    useChatHub();
+    useAchievementsHub();
+    const { pathname } = useLocation();
+    const hideFooter = NO_FOOTER_ROUTES.some((p) => pathname.startsWith(p));
+
     return (
-        <div className="flex min-h-screen flex-col">
+        <div
+            className={
+                hideFooter ? 'flex h-screen flex-col overflow-hidden' : 'flex min-h-screen flex-col'
+            }
+        >
             <Header />
-            <main className="flex-1">
+            <EmailConfirmationBanner />
+            <main
+                className={hideFooter ? 'flex min-h-0 flex-1 flex-col overflow-hidden' : 'flex-1'}
+            >
                 <Outlet />
             </main>
-            <Footer />
+            {!hideFooter && <Footer />}
             <AiChatWidget />
+            <ScrollRestoration />
         </div>
     );
 }

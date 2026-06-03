@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { LANDING_PAGE } from '@/const/localization/landingPage';
 
 const { FAQ } = LANDING_PAGE;
@@ -38,9 +39,9 @@ export function FaqSection() {
                 </div>
 
                 <div className="mt-8 text-center">
-                    <a href="#" className="font-medium text-primary hover:underline">
+                    <Link to="/faq" className="font-medium text-primary hover:underline">
                         {FAQ.viewAll}
-                    </a>
+                    </Link>
                 </div>
             </div>
         </section>

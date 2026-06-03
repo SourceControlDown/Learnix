@@ -1,7 +1,7 @@
 export const LESSON_PLAYER = {
     HEADER: {
         backToCatalog: 'Back to courses',
-        chatDisabledTooltip: 'Chat with instructor (coming soon)',
+        messageInstructor: 'Message instructor',
     },
     SIDEBAR: {
         progressLabel: (completed: number, total: number) => `${completed} / ${total} completed`,
@@ -28,15 +28,21 @@ export const LESSON_PLAYER = {
     },
     TEST_PREVIEW: {
         heading: 'Test lesson',
+        questionsCount: (n: number) => `${n} question${n === 1 ? '' : 's'}`,
         passThreshold: (pct: number) => `Passing score: ${pct}%`,
         attemptsLimit: (n: number) => `Attempt limit: ${n}`,
         unlimitedAttempts: 'Unlimited attempts',
+        attemptsUsed: (n: number) => `Attempts used: ${n}`,
+        cooldownRemaining: (min: number) => `Next attempt in ${min} min`,
         lastResult: 'Last result',
         score: (score: number, max: number) => `${score} / ${max}`,
         passed: 'Passed',
         failed: 'Failed',
         startTest: 'Start test',
         retakeTest: 'Retake test',
+        markComplete: 'Mark as complete',
+        noQuestions: 'This test has no questions yet.',
+        noAttemptsLeft: 'No attempts remaining for this test.',
     },
     LOADING: 'Loading lesson...',
     LESSON_NOT_FOUND: 'Lesson not found in this course.',

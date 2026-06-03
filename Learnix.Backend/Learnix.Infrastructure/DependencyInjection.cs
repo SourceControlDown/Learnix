@@ -19,6 +19,7 @@ using Learnix.Application.Wishlist.Abstractions;
 using Learnix.Application.InstructorApplications.Abstractions;
 using Learnix.Application.LessonProgress.Abstractions;
 using Learnix.Application.Lessons.Abstractions;
+using Learnix.Application.Sections.Abstractions;
 using Learnix.Application.Messaging.Abstractions;
 using Learnix.Application.Reviews.Abstractions;
 using Learnix.Application.TestAttempts.Abstractions;
@@ -179,7 +180,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRoleService, UserRoleService>();
         services.AddScoped<OutboxDbContextHolder>();
         services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
-        services.AddLocalization(options => options.ResourcesPath = "Email/Resources");
+        services.AddLocalization();
         services.AddSingleton<EmailRenderer>();
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
         services.AddHttpContextAccessor();
@@ -192,6 +193,7 @@ public static class DependencyInjection
         // Repositories
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<ICourseRepository, CourseRepository>();
+        services.AddScoped<ISectionRepository, SectionRepository>();
         services.AddScoped<ILessonRepository, LessonRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
@@ -251,9 +253,7 @@ public static class DependencyInjection
         var aiProvider = configuration["AiChat:Provider"] ?? "Anthropic";
         if (aiProvider.Equals("Gemini", StringComparison.OrdinalIgnoreCase))
         {
-            services.AddHttpClient<IAiChatProvider, GeminiChatProvider>(client =>
-                client.BaseAddress = new Uri(
-                    configuration["Gemini:BaseUrl"] ?? "https://generativelanguage.googleapis.com"));
+            services.AddSingleton<IAiChatProvider, GeminiChatProvider>();
         }
         else
         {
@@ -265,6 +265,8 @@ public static class DependencyInjection
 
         // AI Chat — tools and orchestrator
         services.AddScoped<IChatTool, SearchCoursesTool>();
+        services.AddScoped<IChatTool, GetCategoriesTool>();
+        services.AddSingleton<IChatTool, GetPlatformInfoTool>();
         services.AddScoped<ChatStreamOrchestrator>();
 
         // Background services
@@ -275,6 +277,7 @@ public static class DependencyInjection
         services.AddHostedService<AdminSeederHostedService>();
         services.AddHostedService<CategorySeederHostedService>();
         services.AddHostedService<DevCourseSeederHostedService>();
+        services.AddHostedService<DevStudentSeederHostedService>();
         services.AddHostedService<RefreshTokenCleanupHostedService>();
         services.AddHostedService<OutboxProcessorService>();
         services.AddHostedService<CertificatePdfGenerationService>();

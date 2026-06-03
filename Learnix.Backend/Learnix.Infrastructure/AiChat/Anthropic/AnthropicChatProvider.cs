@@ -14,12 +14,6 @@ internal sealed class AnthropicChatProvider(
     AnthropicClient client,
     IOptions<AnthropicSettings> options) : IAiChatProvider
 {
-    private const string SystemPrompt =
-        "You are a helpful learning assistant for Learnix, an online learning platform. " +
-        "You help students find courses and answer questions about learning topics. " +
-        "When a user asks for course recommendations, use the search_courses tool to find relevant courses. " +
-        "Be concise and friendly.";
-
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
         IReadOnlyList<ChatMessage> conversation,
         IReadOnlyList<ToolDefinition> tools,
@@ -30,7 +24,7 @@ internal sealed class AnthropicChatProvider(
             Model = options.Value.Model,
             MaxTokens = options.Value.MaxTokens,
             Stream = true,
-            System = [new SystemMessage(SystemPrompt)],
+            System = [new SystemMessage(AiChatConstants.SystemPrompt)],
             Messages = BuildMessages(conversation),
             Tools = tools.Count > 0 ? BuildTools(tools) : null
         };
@@ -46,7 +40,7 @@ internal sealed class AnthropicChatProvider(
 
         // Tool use blocks are fully accumulated after streaming ends
         var assistantMsg = new Message(outputs);
-        var toolBlocks = (assistantMsg.Content as IList<ContentBase>)
+        var toolBlocks = assistantMsg.Content
             ?.OfType<ToolUseContent>()
             .ToList() ?? [];
 

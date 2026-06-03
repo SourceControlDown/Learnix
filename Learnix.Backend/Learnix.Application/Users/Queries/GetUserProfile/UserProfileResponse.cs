@@ -5,4 +5,4 @@ public sealed record UserProfileResponse(
     string FirstName,
     string LastName,
     string? Bio,
-    string? AvatarBlobPath);
+    string? AvatarUrl);

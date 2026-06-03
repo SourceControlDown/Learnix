@@ -1,10 +1,5 @@
 <Solution>
-  <Folder Name="/Solution Items/">
-    <File Path="../.github/workflows/backend-ci.yml" />
-    <File Path="../ARCHITECTURE.md" />
-    <File Path="../CLAUDE.md" />
-    <File Path="../DATA_MODEL.md" />
-    <File Path="../docker-compose.yml" />
+  <Folder Name="/Decision Documents/">
     <File Path="../docs/DECISIONS_ACHIEVEMENTS.md" />
     <File Path="../docs/DECISIONS_ARCHITECTURE.md" />
     <File Path="../docs/DECISIONS_AUTH.md" />
@@ -12,9 +7,21 @@
     <File Path="../docs/DECISIONS_DOMAIN.md" />
     <File Path="../docs/DECISIONS_INFRA.md" />
     <File Path="../docs/DECISIONS_MESSAGING.md" />
+    <File Path="../docs/DECISIONS_PAYMENT.md" />
     <File Path="../docs/DECISIONS_REVIEWS.md" />
-    <File Path="../FEATURES.md" />
+  </Folder>
+  <Folder Name="/Git/">
+    <File Path="../.gitignore" />
     <File Path="../README.md" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="../.github/workflows/backend-ci.yml" />
+    <File Path="../ARCHITECTURE.md" />
+    <File Path="../CLAUDE.md" />
+    <File Path="../DATA_MODEL.md" />
+    <File Path="../docker-compose.yml" />
+    <File Path="../docs/DEV_SETUP.md" />
+    <File Path="../FEATURES.md" />
     <File Path="../TODO.md" />
   </Folder>
   <Project Path="Learnix.API/Learnix.API.csproj" />

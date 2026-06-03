@@ -1,5 +1,6 @@
 using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
+using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Common.Pagination;
 using Learnix.Application.Users.Abstractions;
@@ -12,7 +13,8 @@ namespace Learnix.Application.Users.Queries.GetAdminUsers;
 internal sealed class GetAdminUsersQueryHandler(
     ICurrentUserService currentUser,
     IUserRepository userRepository,
-    IUserRoleService roleService)
+    IUserRoleService roleService,
+    IBlobStorageService blobStorage)
     : IRequestHandler<GetAdminUsersQuery, Result<PaginatedResult<AdminUserDto>>>
 {
     public async Task<Result<PaginatedResult<AdminUserDto>>> Handle(
@@ -47,7 +49,9 @@ internal sealed class GetAdminUsersQueryHandler(
                 user.Email!,
                 user.FirstName,
                 user.LastName,
-                user.AvatarBlobPath,
+                user.AvatarBlobPath is not null
+                    ? blobStorage.GenerateReadUrl(user.AvatarBlobPath, TimeSpan.FromHours(24))
+                    : null,
                 roles.AsReadOnly(),
                 user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow,
                 user.IsDeleted,

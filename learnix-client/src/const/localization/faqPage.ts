@@ -1,11 +1,20 @@
 export const FAQ_PAGE = {
+    DISCLAIMER: {
+        badge: 'Portfolio project',
+        text: 'Learnix is a pet project built for learning and demonstration purposes — not a real commercial product. No real payments are processed, no real courses are sold, and no personal data is stored beyond what is needed for local testing.',
+    },
     HERO: {
         badge: 'Help center',
         title: 'How can we help?',
         subtitle: 'Search 100+ articles, or browse by topic below',
         searchPlaceholder: 'Search for answers...',
         popular: 'Popular:',
-        popularLinks: ['refund policy', 'become instructor', 'certificate', 'AI tutor'],
+        popularLinks: [
+            { label: 'refund policy', anchor: '#faq-payments' },
+            { label: 'become instructor', anchor: '#faq-instructors' },
+            { label: 'certificate', anchor: '#faq-certificates' },
+            { label: 'AI tutor', anchor: '#faq-ai' },
+        ],
     },
     TOPICS: {
         heading: 'Topics',

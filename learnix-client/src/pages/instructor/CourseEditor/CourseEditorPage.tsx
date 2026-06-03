@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, ArchiveRestore } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useCourseForEdit } from '@/hooks/useCourseForEdit';
 import {
@@ -8,6 +8,7 @@ import {
     useUpdateCourse,
     usePublishCourse,
     useUnpublishCourse,
+    useUnarchiveCourse,
 } from '@/hooks/useCourseMutations';
 import { CourseInfoForm } from './components/CourseInfoForm';
 import { CurriculumTab } from './components/CurriculumTab';
@@ -28,7 +29,10 @@ export default function CourseEditorPage() {
     const publishCourse = usePublishCourse();
     const unpublishCourse = useUnpublishCourse();
 
+    const unarchiveCourse = useUnarchiveCourse();
+
     const isNew = !id;
+    const isArchived = course?.status === 'Archived';
     const title = isNew ? INSTRUCTOR.EDITOR_TITLE_NEW : (course?.title ?? '...');
 
     async function handleInfoSubmit(data: CourseInfoFormData) {
@@ -116,7 +120,17 @@ export default function CourseEditorPage() {
                         )}
                     </div>
                     <div className="flex items-center gap-2">
-                        {tab === 'info' && (
+                        {!isNew && isArchived && (
+                            <button
+                                onClick={() => unarchiveCourse.mutate(id!)}
+                                disabled={unarchiveCourse.isPending}
+                                className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-1.5 text-sm hover:bg-secondary disabled:opacity-60"
+                            >
+                                <ArchiveRestore size={14} />
+                                {INSTRUCTOR.BTN_UNARCHIVE_COURSE}
+                            </button>
+                        )}
+                        {tab === 'info' && !isArchived && (
                             <button
                                 type="submit"
                                 form="course-info-form"
@@ -126,7 +140,7 @@ export default function CourseEditorPage() {
                                 {INSTRUCTOR.BTN_SAVE}
                             </button>
                         )}
-                        {!isNew && course && (
+                        {!isNew && course && !isArchived && (
                             <>
                                 {isPublished ? (
                                     <button
@@ -168,6 +182,13 @@ export default function CourseEditorPage() {
                     ))}
                 </div>
             </header>
+
+            {/* Archived banner */}
+            {!isNew && isArchived && (
+                <div className="border-b border-warning/30 bg-warning/10 px-6 py-3 text-sm text-warning">
+                    {INSTRUCTOR.EDITOR_ARCHIVED_BANNER}
+                </div>
+            )}
 
             {/* Content */}
             {isLoading && !isNew ? (

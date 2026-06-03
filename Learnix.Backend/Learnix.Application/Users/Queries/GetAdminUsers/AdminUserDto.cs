@@ -5,7 +5,7 @@ public sealed record AdminUserDto(
     string Email,
     string FirstName,
     string LastName,
-    string? AvatarBlobPath,
+    string? AvatarUrl,
     IReadOnlyList<string> Roles,
     bool IsBanned,
     bool IsDeleted,

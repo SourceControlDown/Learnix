@@ -57,7 +57,7 @@ export const LANDING_PAGE = {
         heading: 'Top courses this week',
         subtitle: 'Hand-picked by our community of learners',
         viewAll: 'View all courses →',
-        viewMore: 'View 1,200+ more courses →',
+        viewMore: 'View all {count} courses →',
     },
 
     HOW_IT_WORKS: {

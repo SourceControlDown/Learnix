@@ -1,10 +1,9 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/store/auth.store';
-
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api';
+import { env } from '@/utils/env';
 
 export const api = axios.create({
-    baseURL: BASE_URL,
+    baseURL: env.API_URL,
     withCredentials: true,
 });
 
@@ -30,7 +29,8 @@ api.interceptors.response.use(
     async (error: AxiosError) => {
         const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-        if (error.response?.status !== 401 || original._retry) {
+        const hasBearer = original.headers?.Authorization?.toString().startsWith('Bearer ');
+        if (error.response?.status !== 401 || original._retry || !hasBearer) {
             return Promise.reject(error);
         }
 
@@ -51,7 +51,7 @@ api.interceptors.response.use(
 
         try {
             const { data } = await axios.post(
-                `${BASE_URL}/auth/refresh`,
+                `${env.API_URL}/auth/refresh`,
                 {},
                 { withCredentials: true },
             );

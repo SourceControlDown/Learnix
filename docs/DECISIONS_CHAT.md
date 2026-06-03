@@ -19,10 +19,13 @@ MessageEndEvent(FinishReason)
 ProviderErrorEvent(Message, Code)
 ```
 
+The system prompt is defined once in `AiChatConstants.SystemPrompt` (Application layer, `AiChat/Abstractions/AiChatConstants.cs`) and referenced by both providers. Duplication in individual provider classes is avoided.
+
 **Why:**
 - Swapping providers requires changing one config value — the Application layer is untouched.
 - The tool execution loop is written once in `ChatStreamOrchestrator` and not duplicated per provider.
 - `IAsyncEnumerable` allows streaming events directly into SSE without buffering the full response.
+- Single source of truth for the system prompt ensures consistent AI behavior regardless of which provider is active.
 
 **Rejected alternatives:**
 - Anthropic-only in v1 — simpler, but loses the ability to switch for cost optimization or fallback.
@@ -128,27 +131,52 @@ Implemented in `ChatStreamOrchestrator` before each provider call: `conversation
 
 ## ADR-CHAT-006: Tool Use for Course Recommendations
 
-**Decision:** The AI provider has access to a `search_courses(query, category?, maxResults?)` tool. Implemented via the `IChatTool` interface in the Application layer. `SearchCoursesTool` delegates to `IMediator.Send(SearchCoursesQuery)` — searches published courses filtered by title/description.
+**Decision:** The AI provider has access to two tools registered via `IChatTool`:
+
+- `search_courses(query, category?, maxResults?)` — searches published courses by keyword and optional category slug; returns `{ courses: [...] }`.
+- `get_categories()` — returns all available categories with name, slug, and course count. Called by the AI when the user mentions a subject area and the AI needs the correct slug before calling `search_courses`.
+
+Implemented via the `IChatTool` interface in the Application layer. Both tools delegate to `IMediator.Send(...)` — preserving the FluentValidation and logging pipeline.
 
 Tool execution loop in `ChatStreamOrchestrator`:
-1. Receives `ToolUseEndEvent` from the provider (emitted after `AnthropicChatProvider` reconstructs tool blocks via `new Message(outputs)`).
+1. Receives `ToolUseEndEvent` from the provider.
 2. Locates the matching `IChatTool` by name.
 3. Calls `ExecuteAsync` — result as a JSON string.
 4. Appends a `tool_result` message to the conversation.
 5. Calls the provider again with the updated context.
 6. Loops until `MessageEndEvent` with no tool calls, or a max of 5 turns as a safety guard.
 
-Category filtering is resolved in two steps: the handler looks up the category `Guid` from the slug via `CategoryBySlugSpecification`, then passes the `Guid?` to `CourseSearchSpecification` which filters by `c.CategoryId`. This avoids a navigation property join — `Course` only exposes `CategoryId` FK, not a `Category` navigation property.
+**Tool result format — always a JSON object, never a bare array:**
+Both tools return `{ "courses": [...] }` / `{ "categories": [...] }` (not a raw JSON array). Gemini's `FunctionResponse.Response` is typed as `IDictionary<string, object?>` — a JSON object. Passing a bare array would cause a `JsonException` when deserializing the stored `ResultJson` back into `Dictionary<string, object>` during conversation history replay in `GeminiChatProvider.MapContents`. Anthropic is unaffected (tool results are passed as text), but the object wrapper is applied uniformly for consistency.
+
+**`CourseSearchResultDto` fields:**
+`CategoryName` (human-readable string, e.g. `"Programming"`) is returned instead of `CategoryId` (a raw GUID). The handler resolves category names in a single batch query after fetching courses (`CategoriesByIdsSpecification`), not per-row. `Course` has no `Category` navigation property — the batch query is the correct join-free approach.
+
+**Category filtering in `search_courses`:**
+Resolved in two steps — the handler looks up the category `Guid` from the slug via `CategoryBySlugSpecification`, then passes the `Guid?` to `CourseSearchSpecification`. This avoids adding a navigation property to the `Course` entity.
+
+**`CourseSearchSpecification` — full-text index strategy:**
+The spec uses `c.Title.ToLower().Contains(normalized)` which EF Core + Npgsql translates to `LOWER("Title") LIKE '%q%'`. A migration (`AddCourseSearchTrigram`) enables the `pg_trgm` PostgreSQL extension and creates functional GIN indexes on `LOWER("Title")` and `LOWER("Description")`. PostgreSQL uses these indexes for `LOWER(col) LIKE '%q%'` patterns. `EF.Functions.ILike` (which would emit `ILIKE`) is not used because `Application` does not reference `Microsoft.EntityFrameworkCore` — the spec stays in the Application layer.
+
+**`get_platform_info(section?)` — static platform knowledge:**
+A third tool provides information about how the platform works without any DB calls. It holds hardcoded content for 10 sections: `overview`, `enrollment`, `lessons`, `tests`, `achievements`, `certificates`, `becoming_instructor`, `payment`, `chat`, `account`. When called without a section it returns an index of available sections; the AI then calls again with the relevant section. This is the only tool registered as `Singleton` (alongside `GeminiChatProvider`) because it has no mutable dependencies. Anthropic and Gemini providers receive it alongside the other tools — no provider-specific filtering needed.
+
+The system prompt (`AiChatConstants.SystemPrompt`) explicitly lists all three tools and their purpose so the AI knows when to reach for each one.
 
 **Why:**
 - Tool use is the standard approach for grounded recommendations rather than hallucination.
-- `IChatTool` instances are registered as `IEnumerable<IChatTool>` — new tools (search lessons, get enrollment status) can be added without changing the orchestrator.
-- Using MediatR as the tool execution entry point preserves the FluentValidation and logging pipeline.
+- `IChatTool` instances are registered as `IEnumerable<IChatTool>` — new tools can be added without changing the orchestrator.
+- `get_categories` lets the AI discover slugs dynamically instead of guessing them, avoiding empty results from malformed category filters.
+- `get_platform_info` keeps the system prompt short (token cost per request) while still giving the AI access to full platform knowledge on demand.
+- pg_trgm GIN indexes keep search fast without moving the spec to Infrastructure or coupling Application to EF Core.
 
 **Rejected alternatives:**
 - RAG (Retrieval-Augmented Generation) — far more powerful for semantic search, but requires an embedding model and vector store. Over-engineering for the current course volume.
 - System prompt with a full course list — does not scale beyond a few dozen courses.
+- Embedding all platform info in the system prompt — sent with every request regardless of whether the user asks about the platform; wastes tokens on pure course-search conversations.
 - Direct DB access in the tool from Infrastructure — violates Clean Architecture and bypasses the validation pipeline.
+- Bare JSON array as tool result — breaks Gemini's `FunctionResponse.Response` deserialization (see tool result format note above).
+- `EF.Functions.ILike` in `CourseSearchSpecification` — requires adding `Microsoft.EntityFrameworkCore` to Application, violating layer boundaries.
 
 ---
 
@@ -194,13 +222,17 @@ data: {"message":"Provider unavailable","code":"PROVIDER_ERROR"}
 Tool execution is entirely server-side. The client receives `tool_use_start`/`tool_use_end` for UX purposes (e.g., showing a "searching courses…" spinner) but does not execute tools itself.
 
 **Why:**
-- SSE is simpler than WebSocket for one-way server→client streaming: no upgrade handshake, proxy-friendly, native browser support via `EventSource`.
+- SSE is simpler than WebSocket for one-way server→client streaming: no upgrade handshake, proxy-friendly, HTTP/1.1 compatible.
 - Excluding the SSE endpoint from MediatR is a deliberate and documented exception — a handler cannot stream into `HttpContext.Response`.
+
+**Client-side consumption — `fetch` + `ReadableStream`, not `EventSource`:**
+The frontend reads the SSE stream via `fetch` with a `ReadableStream` reader. The browser's native `EventSource` API is intentionally not used because it does not support custom request headers (e.g., `Authorization: Bearer <token>`). JWT auth would be impossible with `EventSource` without degrading to query-string tokens.
 
 **Rejected alternatives:**
 - WebSocket — appropriate if bi-directional streaming is needed (e.g., Student↔Instructor messaging). One-way is sufficient for AI responses.
 - Polling — simpler server implementation, but higher first-token latency and unnecessary load.
 - Long polling — a compromise between polling and SSE, but more complex with no advantage over SSE for streaming.
+- `EventSource` on the client — cannot send `Authorization` header; would require passing the JWT in the query string, which is a security downgrade (tokens appear in server logs).
 
 ---
 
@@ -218,3 +250,35 @@ Tool execution is entirely server-side. The client receives `tool_use_start`/`to
 **Rejected alternatives:**
 - MongoDB TTL index (`expireAfterSeconds`) — automatic, requires no code, but only works on a single `Date` field and deletes the document unconditionally after the TTL expires. Conditional deletion (`isActive: false AND updatedAt < threshold`) is not supported — a TTL index would delete active sessions too.
 - External cron job — unnecessary complexity for a single operation that belongs to the service itself.
+
+---
+
+## ADR-CHAT-010: `Google.GenAI` Official Library for Gemini
+
+**Decision:** `GeminiChatProvider` uses the official `Google.GenAI` NuGet package instead of manual HTTP requests to the Generative Language API. Key usage:
+
+- Documentation: https://googleapis.github.io/dotnet-genai/
+- `new Client(apiKey: ...)` — initializes the client; the library resolves the correct API endpoint (`https://generativelanguage.googleapis.com`) internally. No `BaseUrl` configuration is needed or exposed.
+- `client.Models.GenerateContentStreamAsync(model, contents, config)` — handles HTTP, SSE framing, and response deserialization.
+- `GenerateContentConfig.SystemInstruction` — system prompt passed as a `Content` object with a single `Part`.
+- `GenerateContentConfig.Tools` — tool declarations built from `ToolDefinition.ParametersJsonSchema` via `JsonSerializer.Deserialize<Schema>(...)`.
+- `FunctionCall.Args` / `FunctionResponse.Response` — both typed as `IDictionary<string, object?>`. Values are deserialized from stored JSON via `JsonSerializer.Deserialize<Dictionary<string, object>>` (STJ produces `JsonElement` values for nested structures). The library uses `System.Text.Json` internally, which handles `JsonElement` values transparently during re-serialization — this is the expected usage pattern.
+
+**Conversation history mapping (`MapContents`):**
+Gemini's multi-turn format differs from Anthropic's:
+- User/assistant text → `Content { Role = "user"|"model", Parts = [Part { Text }] }`
+- Assistant tool call (replaying history) → `Content { Role = "model", Parts = [Part { FunctionCall }] }`
+- Tool result → `Content { Role = "user", Parts = [Part { FunctionResponse }] }`
+
+The `tool_result` role used internally in `ChatMessage` is mapped to `"user"` in Gemini's format (Gemini requires function responses to come from the `user` turn, not a separate role).
+
+**`GeminiChatProvider` is registered as `Singleton`** (vs `Scoped` for `AnthropicChatProvider`). The `Client` instance is thread-safe and is reused across requests. Both registrations are correct; the difference is intentional — the Google client benefits from connection pooling across requests.
+
+**Why:**
+- Eliminates manual SSE parsing and HTTP plumbing (same rationale as ADR-CHAT-002 for Anthropic).
+- The official library handles API versioning, model routing, and error mapping.
+- `GenerateContentStreamAsync` returns `IAsyncEnumerable<GenerateContentResponse>` — maps directly onto `IAsyncEnumerable<ChatStreamEvent>`.
+
+**Rejected alternatives:**
+- Manual HTTP + custom SSE parser — equivalent to what was replaced; ~200 lines of fragile plumbing with no business value.
+- `Google.Ai.Generativelanguage.V1beta` (gRPC-based) — lower-level, more complex, no streaming SSE; overkill for this use case.

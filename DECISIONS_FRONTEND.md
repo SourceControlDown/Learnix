@@ -1106,6 +1106,51 @@ export function FaqSection() {
 
 ---
 
+## FADR-013: MarkdownRenderer — єдиний безпечний рендерер markdown
+
+**Рішення:** Весь markdown у студентському UI рендериться через `src/components/common/MarkdownRenderer.tsx`. Компонент огортає `react-markdown` з кастомним рендерером для тегу `<a>`, що блокує будь-який `href` без протоколу `http://` або `https://`.
+
+```tsx
+// src/components/common/MarkdownRenderer.tsx
+const safeComponents: Components = {
+    a: ({ href, children }) => {
+        if (!href?.match(/^https?:\/\//)) return <span>{children}</span>;
+        return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>;
+    },
+};
+
+export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
+    return (
+        <div className={cn('prose prose-neutral dark:prose-invert max-w-none', className)}>
+            <Markdown components={safeComponents}>{content}</Markdown>
+        </div>
+    );
+}
+```
+
+**Використання:**
+```tsx
+// Базовий (PostLessonView)
+<MarkdownRenderer content={lesson.content} />
+
+// З додатковими prose-класами (AiChatMessage)
+<MarkdownRenderer content={message.content} className="prose-sm break-words prose-p:my-1" />
+```
+
+**Чому:** `react-markdown` за замовчуванням рендерить `[текст](javascript:alert(1))` як живе посилання — JS виконується при кліку. Це критично для контенту, що пишуть інструктори (PostLessonView) або генерує AI (AiChatMessage). Zod `.url()` не захищає, бо браузерний `URL` API вважає `javascript:` валідною схемою.
+
+**Альтернативи:**
+- `rehype-sanitize` плагін — потужніший (фільтрує будь-який HTML), але надлишково для markdown без `rehype-raw`; додає залежність
+- DOMPurify перед передачею в компонент — не підходить, бо `react-markdown` не використовує `dangerouslySetInnerHTML`; sanitize відбувається на рівні рядка, а не DOM
+- Використовувати `react-markdown` напряму з `components` prop щоразу — дублювання і ризик пропустити в новому місці
+
+**Наслідки:**
+- **Заборонено** використовувати `react-markdown` або `ReactMarkdown` напряму в компонентах — тільки через `MarkdownRenderer`
+- Новий компонент з markdown-контентом → імпортуй `MarkdownRenderer`, передавай `className` для кастомних prose-класів
+- `javascript:`, `data:`, відносні URL в посиланнях рендеряться як plain text без кліку
+
+---
+
 ## Шаблон для нових записів
 
 ```

@@ -8,17 +8,23 @@ import { PageFallback } from '@/components/common/PageFallback';
 import { RequireRole } from '@/components/common/RequireRole';
 import { publicRoutes } from './publicRoutes';
 
+const VerifyEmailPage = lazy(() => import('@/pages/public/VerifyEmail/VerifyEmailPage'));
 const CoursePlayerPage = lazy(() => import('@/pages/student/CoursePlayer/CoursePlayerPage'));
+const CourseStartPage = lazy(() => import('@/pages/student/CoursePlayer/CourseStartPage'));
 const TestLessonPage = lazy(() => import('@/pages/student/TestLesson/TestLessonPage'));
 const ProfilePage = lazy(() => import('@/pages/student/Profile/ProfilePage'));
 const AchievementsPage = lazy(() => import('@/pages/student/Achievements/AchievementsPage'));
 const CertificatesPage = lazy(() => import('@/pages/student/Certificates/CertificatesPage'));
 const WishlistPage = lazy(() => import('@/pages/student/Wishlist/WishlistPage'));
+const MyLearningPage = lazy(() => import('@/pages/student/MyLearning/MyLearningPage'));
 const PaymentPage = lazy(() => import('@/pages/student/Payment/PaymentPage'));
 const InstructorDashboardPage = lazy(
     () => import('@/pages/instructor/Dashboard/InstructorDashboardPage'),
 );
 const CourseEditorPage = lazy(() => import('@/pages/instructor/CourseEditor/CourseEditorPage'));
+const InstructorMyCoursesPage = lazy(
+    () => import('@/pages/instructor/MyCourses/InstructorMyCoursesPage'),
+);
 const BecomeInstructorPage = lazy(
     () => import('@/pages/public/BecomeInstructor/BecomeInstructorPage'),
 );
@@ -27,6 +33,9 @@ const RegisterPage = lazy(() => import('@/pages/public/Register/RegisterPage'));
 const MessagesPage = lazy(() => import('@/pages/student/Messages/MessagesPage'));
 const InstructorMessagesPage = lazy(
     () => import('@/pages/instructor/Messages/InstructorMessagesPage'),
+);
+const InstructorEarningsPage = lazy(
+    () => import('@/pages/instructor/Earnings/InstructorEarningsPage'),
 );
 
 // Admin pages
@@ -63,6 +72,10 @@ export const router = createBrowserRouter([
         children: [
             ...publicRoutes,
             {
+                path: '/verify-email',
+                element: wrap(<VerifyEmailPage />),
+            },
+            {
                 path: '/become-instructor',
                 element: wrap(<BecomeInstructorPage />),
             },
@@ -87,6 +100,10 @@ export const router = createBrowserRouter([
                 element: guardStudent(wrap(<WishlistPage />)),
             },
             {
+                path: '/my-learning',
+                element: guardStudent(wrap(<MyLearningPage />)),
+            },
+            {
                 path: '/payment/:courseId',
                 element: guardStudent(wrap(<PaymentPage />)),
             },
@@ -97,9 +114,11 @@ export const router = createBrowserRouter([
         element: guardInstructor(wrap(<InstructorLayout />)),
         children: [
             { index: true, element: wrap(<InstructorDashboardPage />) },
+            { path: 'courses', element: wrap(<InstructorMyCoursesPage />) },
             { path: 'courses/new', element: wrap(<CourseEditorPage />) },
             { path: 'courses/:id/edit', element: wrap(<CourseEditorPage />) },
             { path: 'messages', element: wrap(<InstructorMessagesPage />) },
+            { path: 'earnings', element: wrap(<InstructorEarningsPage />) },
         ],
     },
     {
@@ -114,11 +133,15 @@ export const router = createBrowserRouter([
         ],
     },
     {
+        path: '/courses/:courseId/learn',
+        element: guardStudent(wrap(<CourseStartPage />)),
+    },
+    {
         path: '/courses/:courseId/learn/:lessonId',
-        element: wrap(<CoursePlayerPage />),
+        element: guardStudent(wrap(<CoursePlayerPage />)),
     },
     {
         path: '/courses/:courseId/learn/:lessonId/test',
-        element: wrap(<TestLessonPage />),
+        element: guardStudent(wrap(<TestLessonPage />)),
     },
 ]);

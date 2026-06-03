@@ -1,10 +1,21 @@
-﻿import { Link, NavLink } from 'react-router-dom';
+﻿import { useRef, useState, useEffect } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Sun, Moon, LogOut, User, BookOpen } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/store/auth.store';
+import { useThemeStore } from '@/store/theme.store';
 import { NotificationBell } from './NotificationBell';
+import { WishlistButton } from './WishlistButton';
 import { HEADER } from '@/const/localization/header';
 
-function UserAvatar({ fullName, avatarUrl }: { fullName: string; avatarUrl: string | null }) {
+function UserMenu({ fullName, avatarUrl }: { fullName: string; avatarUrl: string | null }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
+    const { logout } = useAuthStore();
+    const queryClient = useQueryClient();
+
     const initials = fullName
         .split(' ')
         .map((n) => n[0])
@@ -12,25 +23,81 @@ function UserAvatar({ fullName, avatarUrl }: { fullName: string; avatarUrl: stri
         .join('')
         .toUpperCase();
 
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (ref.current && !ref.current.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    function handleSignOut() {
+        logout();
+        queryClient.clear();
+        navigate('/login');
+    }
+
     return (
-        <Link
-            to="/profile"
-            className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
-        >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-xs font-semibold text-primary">
-                {avatarUrl ? (
-                    <img src={avatarUrl} alt={fullName} className="h-full w-full object-cover" />
-                ) : (
-                    initials
-                )}
-            </div>
-            <span className="hidden text-sm font-medium text-foreground md:block">{fullName}</span>
-        </Link>
+        <div ref={ref} className="relative">
+            <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
+            >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                    {avatarUrl ? (
+                        <img
+                            src={avatarUrl}
+                            alt={fullName}
+                            className="h-full w-full object-cover"
+                        />
+                    ) : (
+                        initials
+                    )}
+                </div>
+                <span className="hidden text-sm font-medium text-foreground md:block">
+                    {fullName}
+                </span>
+            </button>
+
+            {open && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+                    <Link
+                        to="/profile"
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
+                    >
+                        <User size={14} className="text-muted-foreground" />
+                        {HEADER.MENU_PROFILE}
+                    </Link>
+                    <Link
+                        to="/my-learning"
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
+                    >
+                        <BookOpen size={14} className="text-muted-foreground" />
+                        {HEADER.MENU_MY_LEARNING}
+                    </Link>
+                    <div className="my-1 border-t border-border" />
+                    <button
+                        type="button"
+                        onClick={handleSignOut}
+                        className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    >
+                        <LogOut size={14} />
+                        {HEADER.MENU_SIGN_OUT}
+                    </button>
+                </div>
+            )}
+        </div>
     );
 }
 
 export function Header() {
     const user = useAuthStore((s) => s.user);
+    const { theme, toggleTheme } = useThemeStore();
 
     const navItems = [
         { to: '/courses', label: HEADER.NAV_COURSES },
@@ -68,10 +135,23 @@ export function Header() {
                     </nav>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={toggleTheme}
+                        aria-label="Toggle theme"
+                        className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    >
+                        {theme === 'dark' ? (
+                            <Sun className="h-4 w-4" />
+                        ) : (
+                            <Moon className="h-4 w-4" />
+                        )}
+                    </button>
                     {user ? (
                         <>
                             <NotificationBell />
-                            <UserAvatar fullName={user.fullName} avatarUrl={user.avatarUrl} />
+                            <WishlistButton />
+                            <UserMenu fullName={user.fullName} avatarUrl={user.avatarUrl} />
                         </>
                     ) : (
                         <>

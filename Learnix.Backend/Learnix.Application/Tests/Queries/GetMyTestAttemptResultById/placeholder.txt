@@ -1,1 +1,0 @@
-Placeholder for reading a student's test result by attempt id.

@@ -5,6 +5,7 @@ export const queryKeys = {
         list: (filters: Record<string, unknown>) =>
             [...queryKeys.courses.lists(), filters] as const,
         featured: () => [...queryKeys.courses.all, 'featured'] as const,
+        count: () => [...queryKeys.courses.all, 'count'] as const,
         details: () => [...queryKeys.courses.all, 'detail'] as const,
         detail: (id: string) => [...queryKeys.courses.details(), id] as const,
     },
@@ -31,12 +32,14 @@ export const queryKeys = {
     instructor: {
         myCourses: (filters: Record<string, unknown> = {}) => ['courses', 'mine', filters] as const,
         courseForEdit: (id: string) => ['courses', 'edit', id] as const,
+        earnings: () => ['instructor', 'earnings'] as const,
     },
     applications: {
         mine: () => ['instructor-applications', 'mine'] as const,
     },
     users: {
         myProfile: () => ['users', 'me'] as const,
+        profile: (id: string) => ['users', 'profile', id] as const,
     },
     achievements: {
         mine: () => ['achievements', 'me'] as const,

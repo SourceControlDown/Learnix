@@ -75,13 +75,11 @@ public class Course : SoftDeletableEntity
         Tags = tags.ToList();
     }
 
-    /// <summary>
-    /// Setting cover to null on a Published course breaks the "must have cover" invariant.
-    /// </summary>
     public void SetCoverImage(string? coverImageUrl)
     {
         CoverBlobPath = coverImageUrl;
-        EnsurePublishableInvariants();
+        if (Status == CourseStatus.Published && string.IsNullOrWhiteSpace(CoverBlobPath))
+            throw new DomainException("Published course must have a cover image.");
     }
 
     // Lifecycle
@@ -123,6 +121,15 @@ public class Course : SoftDeletableEntity
         var wasPublished = Status == CourseStatus.Published;
         Status = CourseStatus.Archived;
         RaiseDomainEvent(new CourseArchivedDomainEvent(Id, CategoryId, wasPublished));
+    }
+
+    public void Unarchive()
+    {
+        if (Status != CourseStatus.Archived)
+            return;
+
+        Status = CourseStatus.Draft;
+        RaiseDomainEvent(new CourseUnarchivedDomainEvent(Id, CategoryId));
     }
 
     public void MarkForDeletion()
@@ -183,7 +190,8 @@ public class Course : SoftDeletableEntity
         var section = FindSection(sectionId);
         _sections.Remove(section);
 
-        EnsurePublishableInvariants();
+        if (Status == CourseStatus.Published && _sections.Count == 0)
+            throw new DomainException("Published course must have at least one section.");
     }
 
     public void ReorderSections(IReadOnlyList<(Guid Id, int Order)> pairs)

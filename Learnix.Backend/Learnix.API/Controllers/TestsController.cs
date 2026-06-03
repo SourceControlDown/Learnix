@@ -1,4 +1,5 @@
 using Learnix.API.Extensions;
+using Learnix.Application.TestAttempts.Commands.StartTestAttempt;
 using Learnix.Application.TestAttempts.Commands.SubmitTestAttempt;
 using Learnix.Application.TestAttempts.Queries.GetMyTestAttempts;
 using Learnix.Application.TestAttempts.Queries.GetTestLesson;
@@ -13,6 +14,7 @@ namespace Learnix.API.Controllers;
 [Authorize]
 public sealed class TestsController(ISender sender) : ControllerBase
 {
+    /// <summary>Gets test metadata and the current student's status (attempts used, cooldown, etc.).</summary>
     [HttpGet]
     public async Task<IActionResult> GetTestLesson(
         Guid courseId, Guid lessonId, CancellationToken ct)
@@ -21,17 +23,31 @@ public sealed class TestsController(ISender sender) : ControllerBase
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
-    [HttpPost("attempts")]
+    /// <summary>
+    /// Creates an in-progress attempt and returns its ID. Idempotent — returns the existing
+    /// in-progress attempt if one already exists for this student and test.
+    /// </summary>
+    [HttpPost("attempts/start")]
+    public async Task<IActionResult> StartAttempt(
+        Guid courseId, Guid lessonId, CancellationToken ct)
+    {
+        var result = await sender.Send(new StartTestAttemptCommand(courseId, lessonId), ct);
+        return result.ToActionResult(onSuccess: value => Ok(value));
+    }
+
+    /// <summary>Submits answers for an in-progress attempt and scores it.</summary>
+    [HttpPost("attempts/{attemptId:guid}/submit")]
     public async Task<IActionResult> SubmitAttempt(
-        Guid courseId, Guid lessonId,
+        Guid courseId, Guid lessonId, Guid attemptId,
         [FromBody] SubmitAttemptRequest request,
         CancellationToken ct)
     {
-        var command = new SubmitTestAttemptCommand(courseId, lessonId, request.Answers);
+        var command = new SubmitTestAttemptCommand(courseId, lessonId, attemptId, request.Answers);
         var result = await sender.Send(command, ct);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
+    /// <summary>Returns all submitted attempts for the current student on this test.</summary>
     [HttpGet("attempts")]
     public async Task<IActionResult> GetMyAttempts(
         Guid courseId, Guid lessonId, CancellationToken ct)

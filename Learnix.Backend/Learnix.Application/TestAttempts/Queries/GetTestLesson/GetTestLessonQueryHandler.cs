@@ -42,6 +42,7 @@ public sealed class GetTestLessonQueryHandler(
         if (testLesson is null)
             return Result.Fail(new NotFoundError(TestAttemptMessages.TestLessonNotFound));
 
+        // Load submitted attempts for limit/cooldown calculation
         var attempts = await testAttemptRepository.ListAsync(
             new TestAttemptsByStudentAndLessonSpecification(studentId, request.LessonId),
             cancellationToken);
@@ -60,10 +61,18 @@ public sealed class GetTestLessonQueryHandler(
         var limitReached = testLesson.AttemptLimit.HasValue && attempts.Count >= testLesson.AttemptLimit.Value;
         var canAttempt = !limitReached && cooldownRemaining is null;
 
+        // Return existing in-progress attempt ID so the frontend can resume without calling start again
+        var inProgress = canAttempt
+            ? await testAttemptRepository.FirstOrDefaultAsync(
+                new InProgressAttemptByStudentAndLessonSpecification(studentId, request.LessonId),
+                cancellationToken)
+            : null;
+
         var studentStatus = new StudentTestStatusDto(
             AttemptsUsed: attempts.Count,
             CanAttempt: canAttempt,
             CooldownRemainingMinutes: cooldownRemaining,
+            InProgressAttemptId: inProgress?.Id,
             LatestAttempt: latest is null ? null : new LatestAttemptDto(
                 latest.Id,
                 latest.AttemptNumber,

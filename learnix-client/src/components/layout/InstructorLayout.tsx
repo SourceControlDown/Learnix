@@ -1,5 +1,8 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AiChatWidget } from '@/components/common/AiChatWidget/AiChatWidget';
+import { useChatHub } from '@/hooks/useChatHub';
+import { useAchievementsHub } from '@/hooks/useAchievementsHub';
 import {
     LayoutDashboard,
     BookOpen,
@@ -12,6 +15,8 @@ import {
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/store/auth.store';
 import { INSTRUCTOR } from '@/const/localization/instructor';
+import { messagesApi } from '@/api/messages.api';
+import { queryKeys } from '@/api/queryKeys';
 
 interface NavItem {
     to: string;
@@ -28,28 +33,43 @@ const navItems: NavItem[] = [
         icon: <LayoutDashboard size={16} />,
         end: true,
     },
-    { to: '/instructor/courses', label: INSTRUCTOR.NAV_MY_COURSES, icon: <BookOpen size={16} /> },
+    { to: '/instructor/courses', label: INSTRUCTOR.NAV_MY_COURSES, icon: <BookOpen size={16} />, end: true },
     {
         to: '/instructor/courses/new',
         label: INSTRUCTOR.NAV_NEW_COURSE,
         icon: <PlusCircle size={16} />,
     },
-    { to: '#', label: INSTRUCTOR.NAV_MESSAGES, icon: <MessageSquare size={16} />, disabled: true },
-    { to: '#', label: INSTRUCTOR.NAV_EARNINGS, icon: <TrendingUp size={16} />, disabled: true },
+    {
+        to: '/instructor/messages',
+        label: INSTRUCTOR.NAV_MESSAGES,
+        icon: <MessageSquare size={16} />,
+    },
+    { to: '/instructor/earnings', label: INSTRUCTOR.NAV_EARNINGS, icon: <TrendingUp size={16} /> },
 ];
 
 export function InstructorLayout() {
+    useChatHub();
+    useAchievementsHub();
     const navigate = useNavigate();
     const { logout } = useAuthStore();
+    const queryClient = useQueryClient();
+
+    const { data: unreadData } = useQuery({
+        queryKey: queryKeys.messages.unreadCount(),
+        queryFn: messagesApi.getUnreadCount,
+        staleTime: Infinity,
+    });
+    const unreadCount = unreadData?.totalUnread ?? 0;
 
     function handleSignOut() {
         logout();
+        queryClient.clear();
         navigate('/login');
     }
 
     return (
         <>
-            <div className="grid min-h-screen grid-cols-[240px_1fr] bg-background">
+            <div className="grid h-screen grid-cols-[240px_1fr] overflow-hidden bg-background">
                 {/* Sidebar */}
                 <aside className="flex flex-col border-r border-border bg-card">
                     <div className="flex items-center gap-2 px-4 py-5">
@@ -94,6 +114,11 @@ export function InstructorLayout() {
                                     >
                                         {item.icon}
                                         {item.label}
+                                        {item.to === '/instructor/messages' && unreadCount > 0 && (
+                                            <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                                                {unreadCount > 99 ? '99+' : unreadCount}
+                                            </span>
+                                        )}
                                     </NavLink>
                                 ),
                             )}
@@ -124,7 +149,7 @@ export function InstructorLayout() {
                 </aside>
 
                 {/* Main content */}
-                <main className="min-h-screen overflow-y-auto">
+                <main className="h-full overflow-y-auto">
                     <Outlet />
                 </main>
             </div>

@@ -2,6 +2,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Trash2 } from 'lucide-react';
 import { testLessonSchema, type TestLessonFormData } from '@/schemas/lesson.schema';
+import { LESSON_LIMITS } from '@/const/lesson.constants';
 import { cn } from '@/utils/cn';
 import { INSTRUCTOR } from '@/const/localization/instructor';
 import type { CourseForEditLessonDto } from '@/types/course.types';
@@ -19,6 +20,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel }: Props)
         handleSubmit,
         control,
         watch,
+        setValue,
         formState: { errors },
     } = useForm<TestLessonFormData>({
         resolver: zodResolver(testLessonSchema),
@@ -80,7 +82,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel }: Props)
                 />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 items-end gap-4">
                 <div>
                     <label className="mb-1 block text-sm font-medium">
                         {INSTRUCTOR.FIELD_PASSING_THRESHOLD}
@@ -88,8 +90,8 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel }: Props)
                     <input
                         {...register('passingThreshold')}
                         type="number"
-                        min={1}
-                        max={100}
+                        min={LESSON_LIMITS.PASSING_THRESHOLD_MIN}
+                        max={LESSON_LIMITS.PASSING_THRESHOLD_MAX}
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                     {errors.passingThreshold && (
@@ -105,7 +107,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel }: Props)
                     <input
                         {...register('attemptLimit')}
                         type="number"
-                        min={1}
+                        min={LESSON_LIMITS.ATTEMPT_LIMIT_MIN}
                         placeholder="∞"
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
@@ -117,7 +119,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel }: Props)
                     <input
                         {...register('cooldownMinutes')}
                         type="number"
-                        min={1}
+                        min={LESSON_LIMITS.COOLDOWN_MINUTES_MIN}
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                 </div>
@@ -155,6 +157,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel }: Props)
                         register={register}
                         control={control}
                         watch={watch}
+                        setValue={setValue}
                         errors={errors}
                         onRemove={() => removeQuestion(qIdx)}
                     />
@@ -187,6 +190,7 @@ function QuestionEditor({
     register,
     control,
     watch,
+    setValue,
     errors,
     onRemove,
 }: {
@@ -194,6 +198,7 @@ function QuestionEditor({
     register: ReturnType<typeof useForm<TestLessonFormData>>['register'];
     control: ReturnType<typeof useForm<TestLessonFormData>>['control'];
     watch: ReturnType<typeof useForm<TestLessonFormData>>['watch'];
+    setValue: ReturnType<typeof useForm<TestLessonFormData>>['setValue'];
     errors: ReturnType<typeof useForm<TestLessonFormData>>['formState']['errors'];
     onRemove: () => void;
 }) {
@@ -244,11 +249,29 @@ function QuestionEditor({
                     const isCorrectField = `questions.${qIdx}.options.${oIdx}.isCorrect` as const;
                     return (
                         <div key={optField.id} className="flex items-center gap-2">
-                            <input
-                                type={qType === 'SingleChoice' ? 'radio' : 'checkbox'}
-                                {...register(isCorrectField)}
-                                className="accent-primary"
-                            />
+                            {qType === 'SingleChoice' ? (
+                                <input
+                                    type="radio"
+                                    name={`questions.${qIdx}.singleCorrect`}
+                                    checked={watch(isCorrectField)}
+                                    onChange={() =>
+                                        optionFields.forEach((_, i) =>
+                                            setValue(
+                                                `questions.${qIdx}.options.${i}.isCorrect`,
+                                                i === oIdx,
+                                                { shouldValidate: true },
+                                            )
+                                        )
+                                    }
+                                    className="accent-primary"
+                                />
+                            ) : (
+                                <input
+                                    type="checkbox"
+                                    {...register(isCorrectField)}
+                                    className="accent-primary"
+                                />
+                            )}
                             <input
                                 {...register(`questions.${qIdx}.options.${oIdx}.text`)}
                                 placeholder={INSTRUCTOR.FIELD_OPTION_TEXT}

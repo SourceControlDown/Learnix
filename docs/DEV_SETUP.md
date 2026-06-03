@@ -4,6 +4,28 @@ This guide walks you through getting a fully working dev environment from a fres
 
 ---
 
+## Contents
+
+1. [Stack Overview](#stack-overview)
+2. [Prerequisites](#prerequisites)
+3. [Step 1 — Start Infrastructure](#step-1--start-infrastructure)
+4. [Step 2 — Backend Environment](#step-2--backend-environment)
+   - [2.1 Copy the template](#21-copy-the-template)
+   - [2.2 Variable Reference](#22-variable-reference)
+   - [2.3 Summary: what actually needs values](#23-summary-what-actually-needs-values)
+5. [Step 3 — Run Backend Migrations and Start](#step-3--run-backend-migrations-and-start)
+6. [Step 4 — Frontend Environment](#step-4--frontend-environment)
+   - [4.1 Copy the template](#41-copy-the-template)
+   - [4.2 Variable Reference](#42-variable-reference)
+   - [4.3 Install dependencies and start](#43-install-dependencies-and-start)
+7. [Seeded Accounts](#seeded-accounts)
+8. [Service URLs](#service-urls)
+9. [Inspecting Databases](#inspecting-databases)
+   - [PostgreSQL](#postgresql)
+   - [MongoDB](#mongodb)
+
+---
+
 ## Stack Overview
 
 | Layer | Technology | Notes |
@@ -370,3 +392,63 @@ Register a new account through the UI to get a Student role.
 | PostgreSQL | localhost:5432 | DB: `learnix`, user: `learnix`, pass: `learnix` |
 | MongoDB | localhost:27017 | user: `learnix`, pass: `learnix` |
 | Redis | localhost:6379 | No auth in dev |
+
+---
+
+## Inspecting Databases
+
+### PostgreSQL
+
+**Option A — psql inside the container (no extra tools needed)**
+
+```bash
+docker exec -it learnix-postgres psql -U learnix -d learnix
+```
+
+Useful commands once inside:
+```sql
+\dt                         -- list all tables
+\d "Courses"                -- describe a table
+SELECT * FROM "Courses" LIMIT 10;
+\q                          -- quit
+```
+
+**Option B — GUI client (DBeaver, TablePlus, DataGrip, pgAdmin)**
+
+Connection settings:
+
+| Field | Value |
+|---|---|
+| Host | `localhost` |
+| Port | `5432` |
+| Database | `learnix` |
+| Username | `learnix` |
+| Password | `learnix` |
+
+---
+
+### MongoDB
+
+**Option A — mongosh inside the container (no extra tools needed)**
+
+```bash
+docker exec -it learnix-mongo mongosh "mongodb://learnix:learnix@localhost:27017/learnix?authSource=admin"
+```
+
+Useful commands once inside:
+```js
+show collections          // list collections
+db.chat_sessions.find().pretty()   // view all chat sessions
+db.chat_sessions.find({ isActive: true })
+db.chat_sessions.deleteMany({})    // clear all sessions
+exit
+```
+
+**Option B — MongoDB Compass (official GUI)**
+
+Connection string:
+```
+mongodb://learnix:learnix@localhost:27017/learnix?authSource=admin
+```
+
+Paste it into the connection dialog in MongoDB Compass and click **Connect**.

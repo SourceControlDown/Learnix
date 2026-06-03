@@ -1,16 +1,10 @@
-import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Users, BookOpen, FileText, Pencil, Trash2, Globe, EyeOff, Archive } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BookOpen, Users, PlusCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useMyCoursesQuery } from '@/hooks/useMyCoursesQuery';
-import {
-    useDeleteCourse,
-    usePublishCourse,
-    useUnpublishCourse,
-    useArchiveCourse,
-} from '@/hooks/useCourseMutations';
 import { INSTRUCTOR } from '@/const/localization/instructor';
-import type { ManageCourseCardDto, CourseStatus } from '@/types/course.types';
+import { PAGINATION } from '@/const/ui.constants';
+import type { CourseStatus } from '@/types/course.types';
 
 const STATUS_STYLES: Record<CourseStatus, string> = {
     Published: 'bg-success/20 text-success',
@@ -24,51 +18,12 @@ const STATUS_LABELS: Record<CourseStatus, string> = {
     Archived: INSTRUCTOR.STATUS_ARCHIVED,
 };
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-    return (
-        <div className="rounded-xl border border-border bg-card p-5">
-            <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="mt-1 font-heading text-3xl font-bold text-foreground">{value}</p>
-            {sub && <p className="mt-2 text-xs text-muted-foreground">{sub}</p>}
-        </div>
-    );
-}
-
 export default function InstructorDashboardPage() {
-    const navigate = useNavigate();
-    const [search, setSearch] = useState('');
+    const { data, isLoading } = useMyCoursesQuery({ take: PAGINATION.DASHBOARD_RECENT });
 
-    const { data, isLoading } = useMyCoursesQuery({ take: 100 });
-    const publishMutation = usePublishCourse();
-    const unpublishMutation = useUnpublishCourse();
-    const archiveMutation = useArchiveCourse();
-    const deleteMutation = useDeleteCourse();
-
-    const courses = data?.items ?? [];
-
-    const totalStudents = useMemo(
-        () => courses.reduce((sum, c) => sum + c.enrollmentsCount, 0),
-        [courses],
-    );
-    const publishedCount = useMemo(
-        () => courses.filter((c) => c.status === 'Published').length,
-        [courses],
-    );
-    const draftCount = useMemo(
-        () => courses.filter((c) => c.status !== 'Published').length,
-        [courses],
-    );
-
-    const filtered = useMemo(() => {
-        const q = search.trim().toLowerCase();
-        if (!q) return courses;
-        return courses.filter((c) => c.title.toLowerCase().includes(q));
-    }, [courses, search]);
-
-    function handleDelete(course: ManageCourseCardDto) {
-        if (!confirm(`Delete "${course.title}"? This cannot be undone.`)) return;
-        deleteMutation.mutate(course.id);
-    }
+    const recentCourses = data?.items ?? [];
+    const totalCourses = data?.totalCount ?? 0;
+    const totalStudents = recentCourses.reduce((sum, c) => sum + c.enrollmentsCount, 0);
 
     return (
         <div className="p-8">
@@ -89,157 +44,135 @@ export default function InstructorDashboardPage() {
             </div>
 
             {/* Stats */}
-            <div className="mb-8 grid gap-4 md:grid-cols-3">
-                <StatCard
-                    label={INSTRUCTOR.STAT_TOTAL_STUDENTS}
-                    value={totalStudents.toLocaleString()}
-                />
-                <StatCard
-                    label={INSTRUCTOR.STAT_PUBLISHED}
-                    value={publishedCount}
-                    sub={`${draftCount} draft / archived`}
-                />
-                <StatCard label={INSTRUCTOR.STAT_DRAFT} value={draftCount} />
+            <div className="mb-8 grid gap-4 md:grid-cols-2">
+                <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5">
+                    <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10">
+                        <BookOpen size={20} className="text-primary" />
+                    </div>
+                    <div>
+                        <p className="text-sm text-muted-foreground">
+                            {INSTRUCTOR.STAT_TOTAL_COURSES}
+                        </p>
+                        <p className="font-heading text-2xl font-bold text-foreground">
+                            {totalCourses}
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5">
+                    <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10">
+                        <Users size={20} className="text-primary" />
+                    </div>
+                    <div>
+                        <p className="text-sm text-muted-foreground">
+                            {INSTRUCTOR.STAT_TOTAL_STUDENTS}
+                        </p>
+                        <p className="font-heading text-2xl font-bold text-foreground">
+                            {totalStudents.toLocaleString()}
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            {/* Courses table */}
+            {/* Quick actions */}
+            <div className="mb-8 grid gap-4 md:grid-cols-2">
+                <Link
+                    to="/instructor/courses/new"
+                    className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-card p-5 transition-colors hover:border-primary/50 hover:bg-primary/5"
+                >
+                    <PlusCircle size={20} className="text-primary" />
+                    <div>
+                        <p className="font-medium text-foreground">{INSTRUCTOR.BTN_NEW_COURSE}</p>
+                        <p className="text-xs text-muted-foreground">Start creating a new course</p>
+                    </div>
+                </Link>
+                <Link
+                    to="/instructor/courses"
+                    className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-card p-5 transition-colors hover:border-primary/50 hover:bg-primary/5"
+                >
+                    <BookOpen size={20} className="text-primary" />
+                    <div>
+                        <p className="font-medium text-foreground">{INSTRUCTOR.MY_COURSES_TITLE}</p>
+                        <p className="text-xs text-muted-foreground">
+                            Manage, publish and track courses
+                        </p>
+                    </div>
+                </Link>
+            </div>
+
+            {/* Recent courses */}
             <div className="overflow-hidden rounded-xl border border-border bg-card">
-                <div className="flex items-center justify-between border-b border-border p-5">
+                <div className="flex items-center justify-between border-b border-border px-5 py-4">
                     <h3 className="font-heading font-semibold text-foreground">
-                        {INSTRUCTOR.COURSES_TABLE_TITLE}
+                        {INSTRUCTOR.RECENT_COURSES_TITLE}
                     </h3>
-                    <input
-                        type="text"
-                        placeholder={INSTRUCTOR.COURSES_TABLE_SEARCH}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
+                    {totalCourses > 0 && (
+                        <Link
+                            to="/instructor/courses"
+                            className="text-sm text-primary hover:underline"
+                        >
+                            {INSTRUCTOR.RECENT_COURSES_VIEW_ALL}
+                        </Link>
+                    )}
                 </div>
 
                 {isLoading ? (
-                    <div className="py-16 text-center text-sm text-muted-foreground">
-                        Loading courses...
+                    <div className="py-12 text-center text-sm text-muted-foreground">
+                        Loading...
                     </div>
-                ) : filtered.length === 0 ? (
-                    <div className="py-16 text-center">
-                        <p className="text-sm text-muted-foreground">{INSTRUCTOR.EMPTY_COURSES}</p>
+                ) : recentCourses.length === 0 ? (
+                    <div className="py-12 text-center">
+                        <p className="text-sm text-muted-foreground">
+                            {INSTRUCTOR.DASHBOARD_EMPTY}
+                        </p>
                         <Link
                             to="/instructor/courses/new"
                             className="mt-3 inline-block text-sm text-primary hover:underline"
                         >
-                            {INSTRUCTOR.EMPTY_COURSES_CTA}
+                            {INSTRUCTOR.DASHBOARD_EMPTY_CTA}
                         </Link>
                     </div>
                 ) : (
-                    <table className="w-full text-sm">
-                        <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
-                            <tr>
-                                <th className="px-5 py-3 text-left font-medium">
-                                    {INSTRUCTOR.COL_COURSE}
-                                </th>
-                                <th className="px-5 py-3 text-left font-medium">
-                                    {INSTRUCTOR.COL_STATUS}
-                                </th>
-                                <th className="px-5 py-3 text-left font-medium">
-                                    {INSTRUCTOR.COL_STUDENTS}
-                                </th>
-                                <th className="px-5 py-3 text-right font-medium">
-                                    {INSTRUCTOR.COL_ACTIONS}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {filtered.map((course) => (
-                                <tr key={course.id} className="hover:bg-secondary/30">
-                                    <td className="px-5 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-gradient-to-br from-primary/30 to-accent/30">
-                                                {course.coverImageUrl && (
-                                                    <img
-                                                        src={course.coverImageUrl}
-                                                        alt=""
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                )}
-                                            </div>
-                                            <span className="font-medium text-foreground">
-                                                {course.title}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-3">
-                                        <span
-                                            className={cn(
-                                                'rounded px-2 py-0.5 text-xs',
-                                                STATUS_STYLES[course.status],
-                                            )}
-                                        >
-                                            {STATUS_LABELS[course.status]}
-                                        </span>
-                                    </td>
-                                    <td className="px-5 py-3 text-muted-foreground">
-                                        {course.enrollmentsCount}
-                                    </td>
-                                    <td className="px-5 py-3">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() =>
-                                                    navigate(
-                                                        `/instructor/courses/${course.id}/edit`,
-                                                    )
-                                                }
-                                                className="rounded p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
-                                                title={INSTRUCTOR.BTN_EDIT}
-                                            >
-                                                <Pencil size={14} />
-                                            </button>
-                                            {course.status === 'Draft' && (
-                                                <button
-                                                    onClick={() =>
-                                                        publishMutation.mutate(course.id)
-                                                    }
-                                                    className="rounded p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
-                                                    title={INSTRUCTOR.BTN_PUBLISH}
-                                                >
-                                                    <Globe size={14} />
-                                                </button>
-                                            )}
-                                            {course.status === 'Published' && (
-                                                <button
-                                                    onClick={() =>
-                                                        unpublishMutation.mutate(course.id)
-                                                    }
-                                                    className="rounded p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-warning"
-                                                    title={INSTRUCTOR.BTN_UNPUBLISH}
-                                                >
-                                                    <EyeOff size={14} />
-                                                </button>
-                                            )}
-                                            {course.status !== 'Archived' && (
-                                                <button
-                                                    onClick={() =>
-                                                        archiveMutation.mutate(course.id)
-                                                    }
-                                                    className="rounded p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-warning"
-                                                    title={INSTRUCTOR.BTN_ARCHIVE}
-                                                >
-                                                    <Archive size={14} />
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => handleDelete(course)}
-                                                className="rounded p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
-                                                title={INSTRUCTOR.BTN_DELETE}
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <ul className="divide-y divide-border">
+                        {recentCourses.map((course) => (
+                            <li
+                                key={course.id}
+                                className="flex items-center gap-4 px-5 py-3 hover:bg-secondary/30"
+                            >
+                                <div className="h-10 w-14 shrink-0 overflow-hidden rounded bg-gradient-to-br from-primary/30 to-accent/30">
+                                    {course.coverImageUrl && (
+                                        <img
+                                            src={course.coverImageUrl}
+                                            alt=""
+                                            className="h-full w-full object-cover"
+                                        />
+                                    )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate font-medium text-foreground">
+                                        {course.title}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {course.enrollmentsCount} student
+                                        {course.enrollmentsCount !== 1 ? 's' : ''}
+                                    </p>
+                                </div>
+                                <span
+                                    className={cn(
+                                        'shrink-0 rounded px-2 py-0.5 text-xs font-medium',
+                                        STATUS_STYLES[course.status],
+                                    )}
+                                >
+                                    {STATUS_LABELS[course.status]}
+                                </span>
+                                <Link
+                                    to={`/instructor/courses/${course.id}/edit`}
+                                    className="shrink-0 text-xs text-muted-foreground hover:text-primary"
+                                >
+                                    {INSTRUCTOR.BTN_EDIT}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
                 )}
             </div>
         </div>

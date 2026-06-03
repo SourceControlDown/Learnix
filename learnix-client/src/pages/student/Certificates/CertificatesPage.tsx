@@ -1,4 +1,3 @@
-import { format } from 'date-fns';
 import { GraduationCap, Download, Link as LinkIcon, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMyCertificates } from '@/hooks/useMyCertificates';
@@ -79,7 +78,11 @@ export default function CertificatesPage() {
                                 </p>
                                 <p className="mt-0.5 text-sm text-muted-foreground">
                                     {CERTIFICATES.ISSUED_ON}{' '}
-                                    {format(new Date(cert.issuedAt), 'MMMM d, yyyy')}
+                                    {new Date(cert.issuedAt).toLocaleDateString('en-US', {
+                                        month: 'long',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                    })}
                                 </p>
                                 {!cert.isReady && (
                                     <p className="mt-1 flex items-center gap-1 text-xs text-warning">

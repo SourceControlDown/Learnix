@@ -13,7 +13,8 @@ public sealed record CourseDetailDto(
     IReadOnlyList<string> Tags,
     IReadOnlyList<SectionDto> Sections,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    string InstructorFullName);
 
 public sealed record SectionDto(
     Guid Id,

@@ -3,12 +3,18 @@ using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Courses.Specifications;
+using Learnix.Application.Common.Abstractions.Storage;
+using Learnix.Application.Users.Abstractions;
+using Learnix.Application.Users.Specifications;
 using Learnix.Domain.Enums;
 using MediatR;
 
 namespace Learnix.Application.Courses.Queries.GetCourseById;
 
-public sealed class GetCourseByIdQueryHandler(ICourseRepository courseRepository)
+public sealed class GetCourseByIdQueryHandler(
+    ICourseRepository courseRepository,
+    IUserRepository userRepository,
+    IBlobStorageService blobStorage)
     : IRequestHandler<GetCourseByIdQuery, Result<CourseDetailDto>>
 {
     public async Task<Result<CourseDetailDto>> Handle(GetCourseByIdQuery request, CancellationToken cancellationToken)
@@ -20,13 +26,23 @@ public sealed class GetCourseByIdQueryHandler(ICourseRepository courseRepository
         if (course is null || course.Status != CourseStatus.Published)
             return Result.Fail(new NotFoundError(CommonMessages.CourseNotFound(request.CourseId)));
 
+        var instructor = await userRepository.FirstOrDefaultAsync(
+            new UserByIdSpecification(course.InstructorId),
+            cancellationToken);
+
+        var instructorFullName = instructor is not null
+            ? $"{instructor.FirstName} {instructor.LastName}"
+            : string.Empty;
+
         var dto = new CourseDetailDto(
             course.Id,
             course.InstructorId,
             course.CategoryId,
             course.Title,
             course.Description,
-            course.CoverBlobPath,
+            course.CoverBlobPath is not null
+                ? blobStorage.GenerateReadUrl(course.CoverBlobPath, TimeSpan.FromHours(24))
+                : null,
             course.Price,
             course.Price == 0m,
             course.EnrollmentsCount,
@@ -48,7 +64,8 @@ public sealed class GetCourseByIdQueryHandler(ICourseRepository courseRepository
                         .ToList()))
                 .ToList(),
             course.CreatedAt,
-            course.UpdatedAt);
+            course.UpdatedAt,
+            instructorFullName);
 
         return Result.Ok(dto);
     }

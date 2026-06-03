@@ -1,5 +1,6 @@
 using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
+using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Users.Abstractions;
 using Learnix.Application.Users.Specifications;
@@ -9,6 +10,7 @@ namespace Learnix.Application.Users.Queries.GetMyProfile;
 
 internal sealed class GetMyProfileQueryHandler(
     IUserRepository userRepository,
+    IBlobStorageService blobStorage,
     ICurrentUserService currentUser)
     : IRequestHandler<GetMyProfileQuery, Result<MyProfileResponse>>
 {
@@ -30,6 +32,8 @@ internal sealed class GetMyProfileQueryHandler(
             user.FirstName,
             user.LastName,
             user.Bio,
-            user.AvatarBlobPath));
+            user.AvatarBlobPath is not null
+                ? blobStorage.GenerateReadUrl(user.AvatarBlobPath, TimeSpan.FromHours(24))
+                : null));
     }
 }

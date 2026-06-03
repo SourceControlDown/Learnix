@@ -33,6 +33,13 @@ public sealed class TestAttemptConfiguration : IEntityTypeConfiguration<TestAtte
             .HasForeignKey(a => a.CourseId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(a => new { a.StudentId, a.TestLessonId });
+        // Partial unique index: at most one in-progress attempt per student per test.
+        // Enforces DB-level idempotency for concurrent start calls.
+        // Also covers general (StudentId, TestLessonId) lookups via index scan for in-progress queries.
+        // Submitted-attempt queries use a seq scan on small datasets; add a separate index if scale demands it.
+        builder.HasIndex(a => new { a.StudentId, a.TestLessonId })
+            .HasFilter("\"SubmittedAt\" IS NULL")
+            .IsUnique()
+            .HasDatabaseName("IX_TestAttempts_OneInProgress");
     }
 }
