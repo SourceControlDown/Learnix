@@ -1,4 +1,5 @@
 using Learnix.API.Extensions;
+using Learnix.Application.Admin.Queries.GetAdminStats;
 using Learnix.Application.Courses.Commands.AdminDeleteCourse;
 using Learnix.Application.Courses.Commands.AdminRecoverCourse;
 using Learnix.Application.Courses.Commands.AdminUnpublishCourse;
@@ -23,6 +24,15 @@ namespace Learnix.API.Controllers;
 [Authorize(Roles = Roles.Admin)]
 public sealed class AdminController(ISender sender) : ControllerBase
 {
+    // ── Stats ────────────────────────────────────────────────────────────────
+
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetStats(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetAdminStatsQuery(), ct);
+        return result.ToActionResult(onSuccess: value => Ok(value));
+    }
+
     // ── Users ────────────────────────────────────────────────────────────────
 
     [HttpGet("users")]

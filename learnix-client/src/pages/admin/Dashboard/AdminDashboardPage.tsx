@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Users, BookOpen, FileCheck, CreditCard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import { adminApi } from '@/api/admin.api';
+import { queryKeys } from '@/api/queryKeys';
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub: string }) {
     return (
@@ -15,11 +18,37 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub: st
 export default function AdminDashboardPage() {
     const { t } = useTranslation('admin');
 
-    const MOCK_STATS = [
-        { label: t('statTotalUsers'), value: '1,247', sub: 'Registered accounts' },
-        { label: t('statTotalCourses'), value: '83', sub: '61 published, 22 draft' },
-        { label: t('statPendingApps'), value: '5', sub: 'Awaiting review' },
-        { label: t('statRevenue'), value: '$12,480', sub: 'Simulated total' },
+    const { data: stats } = useQuery({
+        queryKey: queryKeys.admin.stats(),
+        queryFn: adminApi.getStats,
+    });
+
+    const statCards = [
+        {
+            label: t('statTotalUsers'),
+            value: stats ? stats.totalUsers.toLocaleString() : '—',
+            sub: t('statTotalUsersSub'),
+        },
+        {
+            label: t('statTotalCourses'),
+            value: stats ? stats.totalCourses.toLocaleString() : '—',
+            sub: stats
+                ? t('statTotalCoursesSub', {
+                      published: stats.publishedCourses,
+                      draft: stats.draftCourses,
+                  })
+                : '—',
+        },
+        {
+            label: t('statPendingApps'),
+            value: stats ? stats.pendingApplications.toLocaleString() : '—',
+            sub: t('statPendingAppsSub'),
+        },
+        {
+            label: t('statRevenue'),
+            value: '$12,480',
+            sub: t('statRevenueSub'),
+        },
     ];
 
     const QUICK_LINKS = [
@@ -64,7 +93,7 @@ export default function AdminDashboardPage() {
 
             {/* Stats */}
             <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {MOCK_STATS.map((s) => (
+                {statCards.map((s) => (
                     <StatCard key={s.label} {...s} />
                 ))}
             </div>
