@@ -141,7 +141,7 @@
 | # | Task | Status | Notes |
 |---|---|---|---|
 | F-09 | Course catalog page (grid, filters, search, pagination) | done | Server-side search/sort/filter (sortBy, isFree, minRating added to backend). URL-synced filters via useSearchParams. PublicCourseCardDto enriched with averageRating, reviewsCount, categoryName, instructorFullName. |
-| F-10 | Course detail page (description, sections, lessons list, enroll button) | not started | |
+| F-10 | Course detail page (description, sections, lessons list, enroll button) | done | |
 | F-11 | Enrollment flow (free + paid) | done | Added PaymentPage for mock premium course enrollment checkout. Uses react-hook-form + zod for card input. |
 | F-11.5 | Wishlist page (view, remove) | done | Implemented WishlistPage with WishlistCard utilizing backend Wishlist API |
 
@@ -149,21 +149,21 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| F-12 | Lesson viewer: video player | not started | |
-| F-13 | Lesson viewer: post (markdown rendering) | not started | |
-| F-14 | Lesson viewer: test (quiz UI, submit, results) | not started | |
-| F-15 | Lesson progress tracking (mark complete, sidebar state) | not started | |
+| F-12 | Lesson viewer: video player | done | |
+| F-13 | Lesson viewer: post (markdown rendering) | done | |
+| F-14 | Lesson viewer: test (quiz UI, submit, results) | done | |
+| F-15 | Lesson progress tracking (mark complete, sidebar state) | done | |
 | F-16 | Lesson likes | not started | |
 
 ### Phase 4 — Instructor Dashboard
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| F-17 | Course creation/edit form (React Hook Form + Zod) | not started | |
-| F-18 | Section & lesson management (drag-and-drop reorder) | not started | |
+| F-17 | Course creation/edit form (React Hook Form + Zod) | done | |
+| F-18 | Section & lesson management (drag-and-drop reorder) | done | |
 | F-19 | Lesson editors: video upload, post markdown editor, test builder | not started | |
 | F-20 | Instructor dashboard: course list, enrollment stats | done | Dashboard (take:5, overview) + MyCourses page (/instructor/courses, paginated take:20, search, all actions) |
-| F-21 | Instructor application form | not started | |
+| F-21 | Instructor application form | done | |
 
 ### Phase 5 — Profile & Social
 
@@ -197,8 +197,8 @@
 |---|---|---|---|
 | F-33 | Homepage: hero, popular courses, recommendations | not started | |
 | F-34 | Responsive design pass (mobile) | not started | |
-| F-35 | Loading states, error boundaries, empty states | not started | |
-| F-36 | Dark mode (optional) | not started | Low priority |
+| F-35 | Loading states, error boundaries, empty states | done | QueryError component; error+empty states on Landing (categories+featured), CourseCatalog (skeleton+error), CourseDetail (network error+empty curriculum); removed mock fallbacks from useCategories/useFeaturedCourses |
+| F-36 | Dark mode (optional) | done | Low priority |
 | F-37 | Refactor unread-count to pure-reactive (remove polling) | done | Removed `refetchInterval: 30_000` and set `staleTime: Infinity` in NotificationBell; SignalR `UnreadCountChanged` already called `setQueryData` directly — no HTTP request on push |
 
 ---
@@ -209,9 +209,9 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| D-01 | Dockerfile for API (.NET 8, multi-stage build) | not started | |
-| D-02 | Dockerfile for frontend (Vite build → nginx) | not started | |
-| D-03 | Docker Compose: full stack (API + client + postgres + mongo + redis) | not started | |
+| D-01 | Dockerfile for API (.NET 8, multi-stage build) | done | Learnix.Backend/Dockerfile; non-root appuser; publishes Learnix.API on port 8080 |
+| D-02 | Dockerfile for frontend (Vite build → nginx) | done | learnix-client/Dockerfile + nginx.conf; SPA fallback; gzip; immutable asset cache |
+| D-03 | Docker Compose: full stack (API + client + postgres + mongo + redis) | done | api + client сервіси додано; api залежить від postgres/mongo/redis healthcheck |
 
 ### Phase 2 — CI/CD
 
@@ -240,9 +240,11 @@
 
 ## Summary
 
+> CANCELED tasks excluded from count.
+
 | Section | Total | Done | Remaining |
 |---|---|---|---|
-| Backend | 53 | 21 | 32 |
-| Frontend | 36 | 0 | 36 |
-| Deploy | 15 | 0 | 15 |
-| **Total** | **104** | **21** | **83** |
+| Backend | 54 | 50 | 4 |
+| Frontend | 38 | 25 | 13 |
+| Deploy | 14 | 3 | 11 |
+| **Total** | **106** | **78** | **28** |
