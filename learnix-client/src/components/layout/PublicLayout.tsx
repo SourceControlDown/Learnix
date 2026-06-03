@@ -3,14 +3,12 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { AiChatWidget } from '@/components/common/AiChatWidget/AiChatWidget';
 import { EmailConfirmationBanner } from '@/components/common/EmailConfirmationBanner';
-import { useChatHub } from '@/hooks/useChatHub';
-import { useAchievementsHub } from '@/hooks/useAchievementsHub';
+import { useNotificationsHub } from '@/hooks/useNotificationsHub';
 
 const NO_FOOTER_ROUTES = ['/messages', '/instructor/messages'];
 
 export function PublicLayout() {
-    useChatHub();
-    useAchievementsHub();
+    useNotificationsHub();
     const { pathname } = useLocation();
     const hideFooter = NO_FOOTER_ROUTES.some((p) => pathname.startsWith(p));
 

@@ -18,3 +18,8 @@ export interface CourseCertificateResponse {
     downloadUrl: string | null;
     verificationUrl: string;
 }
+
+export interface CertificateReadyNotification {
+    certificateId: string;
+    courseTitle: string;
+}

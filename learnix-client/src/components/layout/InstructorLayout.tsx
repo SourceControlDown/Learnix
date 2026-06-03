@@ -1,8 +1,7 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AiChatWidget } from '@/components/common/AiChatWidget/AiChatWidget';
-import { useChatHub } from '@/hooks/useChatHub';
-import { useAchievementsHub } from '@/hooks/useAchievementsHub';
+import { useNotificationsHub } from '@/hooks/useNotificationsHub';
 import {
     LayoutDashboard,
     BookOpen,
@@ -33,7 +32,12 @@ const navItems: NavItem[] = [
         icon: <LayoutDashboard size={16} />,
         end: true,
     },
-    { to: '/instructor/courses', label: INSTRUCTOR.NAV_MY_COURSES, icon: <BookOpen size={16} />, end: true },
+    {
+        to: '/instructor/courses',
+        label: INSTRUCTOR.NAV_MY_COURSES,
+        icon: <BookOpen size={16} />,
+        end: true,
+    },
     {
         to: '/instructor/courses/new',
         label: INSTRUCTOR.NAV_NEW_COURSE,
@@ -48,8 +52,7 @@ const navItems: NavItem[] = [
 ];
 
 export function InstructorLayout() {
-    useChatHub();
-    useAchievementsHub();
+    useNotificationsHub();
     const navigate = useNavigate();
     const { logout } = useAuthStore();
     const queryClient = useQueryClient();

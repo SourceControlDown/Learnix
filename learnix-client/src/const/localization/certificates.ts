@@ -16,4 +16,9 @@ export const CERTIFICATES = {
     MESSAGES: {
         LINK_COPIED: 'Verification link copied',
     },
+    NOTIFICATION: {
+        TITLE: 'Certificate ready!',
+        DESCRIPTION_PREFIX: 'Your certificate for ',
+        ACTION: 'View certificates',
+    },
 } as const;
