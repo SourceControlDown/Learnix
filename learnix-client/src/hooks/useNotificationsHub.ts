@@ -10,6 +10,7 @@ import { env } from '@/utils/env';
 import { ACHIEVEMENT_META } from '@/const/localization/achievements';
 import type { NewMessageNotification, UnreadCountNotification } from '@/types/message.types';
 import type { CertificateReadyNotification } from '@/types/certificate.types';
+import type { NotificationReceivedPayload } from '@/types/notification.types';
 
 interface AchievementUnlockedPayload {
     achievementId: string;
@@ -68,6 +69,14 @@ export function useNotificationsHub() {
                 },
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.certificates.mine() });
+        });
+
+        connection.on('NotificationReceived', (payload: NotificationReceivedPayload) => {
+            queryClient.setQueryData<{ count: number }>(
+                queryKeys.notifications.unreadCount(),
+                (old) => ({ count: (old?.count ?? 0) + 1 }),
+            );
+            queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
         });
 
         connection.start().catch(() => {});

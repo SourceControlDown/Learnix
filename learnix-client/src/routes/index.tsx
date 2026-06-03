@@ -32,6 +32,7 @@ const BecomeInstructorPage = lazy(
 const LoginPage = lazy(() => import('@/pages/public/Login/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/public/Register/RegisterPage'));
 const MessagesPage = lazy(() => import('@/pages/student/Messages/MessagesPage'));
+const NotificationsPage = lazy(() => import('@/pages/student/Notifications/NotificationsPage'));
 const InstructorMessagesPage = lazy(
     () => import('@/pages/instructor/Messages/InstructorMessagesPage'),
 );
@@ -95,6 +96,10 @@ export const router = createBrowserRouter([
             {
                 path: '/messages',
                 element: guardStudent(wrap(<MessagesPage />)),
+            },
+            {
+                path: '/notifications',
+                element: guardStudent(wrap(<NotificationsPage />)),
             },
             {
                 path: '/wishlist',

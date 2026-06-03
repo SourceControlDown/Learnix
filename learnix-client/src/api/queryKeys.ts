@@ -63,6 +63,11 @@ export const queryKeys = {
             [...queryKeys.messages.all, 'messages', conversationId] as const,
         unreadCount: () => [...queryKeys.messages.all, 'unread-count'] as const,
     },
+    notifications: {
+        all: ['notifications'] as const,
+        list: () => [...queryKeys.notifications.all, 'list'] as const,
+        unreadCount: () => [...queryKeys.notifications.all, 'unread-count'] as const,
+    },
     wishlist: {
         mine: () => ['wishlist', 'mine'] as const,
     },

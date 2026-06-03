@@ -22,6 +22,7 @@ import enPayment from './locales/en/payment.json';
 import enProfile from './locales/en/profile.json';
 import enTestLesson from './locales/en/testLesson.json';
 import enWishlist from './locales/en/wishlist.json';
+import enNotifications from './locales/en/notifications.json';
 
 import ukHeader from './locales/uk/header.json';
 import ukAuth from './locales/uk/auth.json';
@@ -43,6 +44,7 @@ import ukPayment from './locales/uk/payment.json';
 import ukProfile from './locales/uk/profile.json';
 import ukTestLesson from './locales/uk/testLesson.json';
 import ukWishlist from './locales/uk/wishlist.json';
+import ukNotifications from './locales/uk/notifications.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'uk'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -72,6 +74,7 @@ i18n.use(LanguageDetector)
                 profile: enProfile,
                 testLesson: enTestLesson,
                 wishlist: enWishlist,
+                notifications: enNotifications,
             },
             uk: {
                 header: ukHeader,
@@ -94,6 +97,7 @@ i18n.use(LanguageDetector)
                 profile: ukProfile,
                 testLesson: ukTestLesson,
                 wishlist: ukWishlist,
+                notifications: ukNotifications,
             },
         },
         fallbackLng: 'en',
