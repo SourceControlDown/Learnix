@@ -49,12 +49,7 @@ function NotificationItem({
         >
             <div className="mt-0.5 shrink-0">{TYPE_ICON[notification.type]}</div>
             <div className="min-w-0 flex-1">
-                <p
-                    className={cn(
-                        'text-sm text-foreground',
-                        !notification.isRead && 'font-medium',
-                    )}
-                >
+                <p className={cn('text-sm text-foreground', !notification.isRead && 'font-medium')}>
                     {notification.title}
                 </p>
                 <p className="mt-0.5 text-sm text-muted-foreground">{notification.body}</p>

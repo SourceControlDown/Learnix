@@ -42,14 +42,20 @@
     "tag": "Browse",
     "heading": "Explore by category",
     "viewAll": "All categories →",
-    "coursesLabel": "courses"
+    "coursesLabel": "courses",
+    "error": "Failed to load categories",
+    "retry": "Try again",
+    "empty": "No categories yet"
   },
   "featuredCourses": {
     "tag": "Popular",
     "heading": "Top courses this week",
     "subtitle": "Hand-picked by our community of learners",
     "viewAll": "View all courses →",
-    "viewMore": "View all {{count}} courses →"
+    "viewMore": "View all {{count}} courses →",
+    "error": "Failed to load courses",
+    "retry": "Try again",
+    "empty": "Courses coming soon"
   },
   "howItWorks": {
     "tag": "Process",

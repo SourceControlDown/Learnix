@@ -31,6 +31,10 @@
     "paid": "Paid",
     "rating": "{{n}}★ & up"
   },
+  "error": {
+    "title": "Failed to load courses",
+    "retry": "Try again"
+  },
   "pagination": { "prev": "‹", "next": "›" },
   "students_one": "{{count}} student",
   "students_other": "{{count}} students"

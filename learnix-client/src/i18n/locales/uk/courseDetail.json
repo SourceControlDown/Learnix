@@ -7,8 +7,15 @@
     "lessonCount_one": "{{count}} урок",
     "lessonCount_few": "{{count}} уроки",
     "lessonCount_many": "{{count}} уроків",
-    "lessonTypes": { "Video": "Відео", "Post": "Стаття", "Test": "Тест" }
+    "lessonTypes": { "Video": "Відео", "Post": "Стаття", "Test": "Тест" },
+    "empty": "Зміст курсу ще не додано"
   },
+  "error": {
+    "title": "Не вдалося завантажити курс",
+    "retry": "Спробувати знову"
+  },
+  "notFound": "Курс не знайдено.",
+  "backToCatalog": "Назад до каталогу",
   "enroll": {
     "free": "Записатись безкоштовно",
     "paid": "Записатись — ${{price}}",

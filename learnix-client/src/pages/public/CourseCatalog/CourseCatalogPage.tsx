@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CourseCard } from '@/components/common/CourseCard';
+import { QueryError } from '@/components/common/QueryError';
 import { useCategories } from '@/hooks/useCategories';
 import { useCatalogCourses } from '@/hooks/useCatalogCourses';
 import { PAGINATION } from '@/const/ui.constants';
@@ -184,7 +185,7 @@ export default function CourseCatalogPage() {
     const { data: categoriesData } = useCategories();
     const categories = categoriesData ?? [];
 
-    const { data, isFetching } = useCatalogCourses({
+    const { data, isFetching, isLoading, isError, refetch } = useCatalogCourses({
         search: debouncedSearch,
         categoryId,
         sortBy,
@@ -296,34 +297,51 @@ export default function CourseCatalogPage() {
                         )}
 
                         {/* Grid */}
-                        <div
-                            className={cn(
-                                'grid gap-5 transition-opacity sm:grid-cols-2 lg:grid-cols-3',
-                                isFetching && 'opacity-60',
-                            )}
-                        >
-                            {courses.length > 0
-                                ? courses.map((course) => (
-                                      <CourseCard key={course.id} course={course} />
-                                  ))
-                                : !isFetching && (
-                                      <div className="col-span-full py-20 text-center">
-                                          <p className="font-heading text-lg font-semibold text-foreground">
-                                              {t('noResultsTitle')}
-                                          </p>
-                                          <p className="mt-2 text-sm text-muted-foreground">
-                                              {t('noResultsDesc')}
-                                          </p>
-                                          <button
-                                              type="button"
-                                              onClick={clearAllFilters}
-                                              className="mt-4 text-sm text-primary underline hover:text-primary/80"
-                                          >
-                                              {t('clearFilters')}
-                                          </button>
-                                      </div>
-                                  )}
-                        </div>
+                        {isLoading && courses.length === 0 ? (
+                            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className="h-72 animate-pulse rounded-xl border border-border bg-card"
+                                    />
+                                ))}
+                            </div>
+                        ) : isError ? (
+                            <QueryError
+                                message={t('error.title')}
+                                onRetry={refetch}
+                                retryLabel={t('error.retry')}
+                            />
+                        ) : (
+                            <div
+                                className={cn(
+                                    'grid gap-5 transition-opacity sm:grid-cols-2 lg:grid-cols-3',
+                                    isFetching && 'opacity-60',
+                                )}
+                            >
+                                {courses.length > 0
+                                    ? courses.map((course) => (
+                                          <CourseCard key={course.id} course={course} />
+                                      ))
+                                    : !isFetching && (
+                                          <div className="col-span-full py-20 text-center">
+                                              <p className="font-heading text-lg font-semibold text-foreground">
+                                                  {t('noResultsTitle')}
+                                              </p>
+                                              <p className="mt-2 text-sm text-muted-foreground">
+                                                  {t('noResultsDesc')}
+                                              </p>
+                                              <button
+                                                  type="button"
+                                                  onClick={clearAllFilters}
+                                                  className="mt-4 text-sm text-primary underline hover:text-primary/80"
+                                              >
+                                                  {t('clearFilters')}
+                                              </button>
+                                          </div>
+                                      )}
+                            </div>
+                        )}
 
                         <Pagination
                             page={page}

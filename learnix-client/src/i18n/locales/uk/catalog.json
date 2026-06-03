@@ -33,6 +33,10 @@
     "paid": "Платні",
     "rating": "{{n}}★ і вище"
   },
+  "error": {
+    "title": "Не вдалося завантажити курси",
+    "retry": "Спробувати знову"
+  },
   "pagination": { "prev": "‹", "next": "›" },
   "students_one": "{{count}} студент",
   "students_few": "{{count}} студенти",

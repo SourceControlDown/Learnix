@@ -181,10 +181,10 @@ export function Header() {
                             <NotificationBell />
                             <WishlistButton />
                             <UserMenu
-                                    fullName={user.fullName}
-                                    email={user.email}
-                                    avatarUrl={user.avatarUrl}
-                                />
+                                fullName={user.fullName}
+                                email={user.email}
+                                avatarUrl={user.avatarUrl}
+                            />
                         </>
                     ) : (
                         <>

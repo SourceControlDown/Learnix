@@ -191,7 +191,9 @@ export default function PaymentHistoryPage() {
                         <table className="w-full text-sm">
                             <thead className="sticky top-0 bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
                                 <tr>
-                                    <th className="px-5 py-3 text-left font-medium">{t('colPayer')}</th>
+                                    <th className="px-5 py-3 text-left font-medium">
+                                        {t('colPayer')}
+                                    </th>
                                     <th className="px-5 py-3 text-left font-medium">
                                         {t('colCourseTitle')}
                                     </th>
@@ -201,19 +203,25 @@ export default function PaymentHistoryPage() {
                                     <th className="px-5 py-3 text-left font-medium">
                                         {t('colPayStatus')}
                                     </th>
-                                    <th className="px-5 py-3 text-left font-medium">{t('colDate')}</th>
+                                    <th className="px-5 py-3 text-left font-medium">
+                                        {t('colDate')}
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {displayed.map((p) => (
                                     <tr key={p.id} className="hover:bg-secondary/30">
                                         <td className="px-5 py-3">
-                                            <p className="font-medium text-foreground">{p.userName}</p>
+                                            <p className="font-medium text-foreground">
+                                                {p.userName}
+                                            </p>
                                             <p className="text-xs text-muted-foreground">
                                                 {p.userEmail}
                                             </p>
                                         </td>
-                                        <td className="px-5 py-3 text-foreground">{p.courseTitle}</td>
+                                        <td className="px-5 py-3 text-foreground">
+                                            {p.courseTitle}
+                                        </td>
                                         <td className="px-5 py-3 font-medium text-foreground">
                                             ${p.amount.toFixed(2)}
                                         </td>

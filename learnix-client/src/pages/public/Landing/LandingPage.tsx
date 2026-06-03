@@ -14,8 +14,18 @@ import { StatsSection } from './components/StatsSection';
 import { TestimonialsSection } from './components/TestimonialsSection';
 
 export default function LandingPage() {
-    const { data: categories = [], isLoading: categoriesLoading } = useCategories();
-    const { data: featuredCourses = [], isLoading: coursesLoading } = useFeaturedCourses();
+    const {
+        data: categories = [],
+        isLoading: categoriesLoading,
+        isError: categoriesError,
+        refetch: refetchCategories,
+    } = useCategories();
+    const {
+        data: featuredCourses = [],
+        isLoading: coursesLoading,
+        isError: coursesError,
+        refetch: refetchCourses,
+    } = useFeaturedCourses();
     const { data: courseCount } = useCourseCount();
 
     return (
@@ -23,10 +33,17 @@ export default function LandingPage() {
             <AnnouncementBar />
             <HeroSection />
             <StatsSection />
-            <CategoriesSection categories={categories} isLoading={categoriesLoading} />
+            <CategoriesSection
+                categories={categories}
+                isLoading={categoriesLoading}
+                isError={categoriesError}
+                onRetry={refetchCategories}
+            />
             <FeaturedCoursesSection
                 courses={featuredCourses}
                 isLoading={coursesLoading}
+                isError={coursesError}
+                onRetry={refetchCourses}
                 totalCount={courseCount}
             />
             <HowItWorksSection />

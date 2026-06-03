@@ -9,6 +9,7 @@ import { useEnroll } from '@/hooks/useEnroll';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useAddToWishlist, useRemoveFromWishlist } from '@/hooks/useWishlistMutations';
 import { useAuthStore } from '@/store/auth.store';
+import { QueryError } from '@/components/common/QueryError';
 import { CurriculumAccordion } from './components/CurriculumAccordion';
 import { ReviewsList } from './components/ReviewsList';
 import { ReviewForm } from './components/ReviewForm';
@@ -19,7 +20,12 @@ export default function CourseDetailPage() {
     const user = useAuthStore((s) => s.user);
     const { t } = useTranslation('courseDetail');
 
-    const { data: course, isLoading: courseLoading } = useCourseDetail(courseId!);
+    const {
+        data: course,
+        isLoading: courseLoading,
+        isError: courseError,
+        refetch: refetchCourse,
+    } = useCourseDetail(courseId!);
     const { data: reviewsData } = useCourseReviews(courseId!);
     const { data: myReview } = useMyReview(courseId!);
     const { data: enrollmentsData } = useMyEnrollments();
@@ -61,12 +67,31 @@ export default function CourseDetailPage() {
         );
     }
 
+    if (courseError) {
+        return (
+            <div className="mx-auto max-w-5xl px-6 py-12">
+                <Link
+                    to="/courses"
+                    className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('backToCatalog')}
+                </Link>
+                <QueryError
+                    message={t('error.title')}
+                    onRetry={refetchCourse}
+                    retryLabel={t('error.retry')}
+                />
+            </div>
+        );
+    }
+
     if (!course) {
         return (
             <div className="mx-auto max-w-5xl px-6 py-20 text-center">
-                <p className="text-muted-foreground">Course not found.</p>
+                <p className="text-muted-foreground">{t('notFound')}</p>
                 <Link to="/courses" className="mt-4 inline-block text-primary hover:underline">
-                    Back to catalog
+                    {t('backToCatalog')}
                 </Link>
             </div>
         );
@@ -79,7 +104,7 @@ export default function CourseDetailPage() {
                 className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
                 <ArrowLeft className="h-4 w-4" />
-                Back to catalog
+                {t('backToCatalog')}
             </Link>
 
             <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
@@ -130,8 +155,10 @@ export default function CourseDetailPage() {
                     </div>
 
                     {/* Curriculum */}
-                    {course.sections.length > 0 && (
+                    {course.sections.length > 0 ? (
                         <CurriculumAccordion sections={course.sections} />
+                    ) : (
+                        <p className="text-sm text-muted-foreground">{t('curriculum.empty')}</p>
                     )}
 
                     {/* Reviews */}

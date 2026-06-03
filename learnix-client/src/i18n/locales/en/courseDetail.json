@@ -5,8 +5,15 @@
     "sectionCount_other": "{{count}} sections",
     "lessonCount_one": "{{count}} lesson",
     "lessonCount_other": "{{count}} lessons",
-    "lessonTypes": { "Video": "Video", "Post": "Article", "Test": "Quiz" }
+    "lessonTypes": { "Video": "Video", "Post": "Article", "Test": "Quiz" },
+    "empty": "Course content not added yet"
   },
+  "error": {
+    "title": "Failed to load course",
+    "retry": "Try again"
+  },
+  "notFound": "Course not found.",
+  "backToCatalog": "Back to catalog",
   "enroll": {
     "free": "Enroll for Free",
     "paid": "Enroll — ${{price}}",
