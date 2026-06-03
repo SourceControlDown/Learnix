@@ -32,7 +32,7 @@ ADRs are never deleted. If a decision is superseded, mark the old ADR with `Supe
 **ORM:** Entity Framework Core (PostgreSQL via Npgsql)
 **Blob storage:** Azure Blob Storage (via Azure SDK, SAS URLs)
 **NoSQL:** MongoDB.Driver — **[Planned Phase 7+]**
-**Cache:** Redis (StackExchange.Redis) — **[Planned Phase 7+]**
+**Cache:** Redis (StackExchange.Redis) — distributed cache via `ICacheable<TValue>` + `CachingBehavior` (see ADR-INFRA-004)
 **Message Broker:** MassTransit + Azure Service Bus — **[Planned Phase 6+]**
 
 ---

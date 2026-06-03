@@ -72,17 +72,88 @@ ADR не видаляються. Якщо рішення переглянуто 
 
 ---
 
-## ADR-004: Redis для кешування queries
+## ADR-004: Redis distributed cache — ICacheable<TValue> + MediatR pipeline behavior
 
-**Рішення:** Queries, що імплементують `ICacheable`, автоматично кешуються в Redis через `CachingBehavior`.
+**Рішення:** Queries, що реалізують `ICacheable<TValue>`, автоматично кешуються в Redis через `CachingBehavior<TRequest, TValue>`. Commands, що змінюють кешовані дані, явно інвалідують відповідні ключі після `SaveChangesAsync`.
+
+---
+
+### Реалізація
+
+**Інтерфейс:**
+```csharp
+public interface ICacheable<TValue>
+{
+    string CacheKey { get; }
+    TimeSpan Expiration { get; }
+}
+```
+
+**Pipeline behavior** реалізує `IPipelineBehavior<TRequest, Result<TValue>>`, де `TValue` — другий generic-параметр. MediatR закриває тип автоматично: для `GetAllCategoriesQuery : ICacheable<IReadOnlyList<CategoryListItemDto>>` MediatR виводить `TValue = IReadOnlyList<CategoryListItemDto>`. Рефлексії немає — `response.Value` і `Result.Ok(value)` типізовані на рівні компілятора.
+
+**Серіалізація:** кешується тільки `Value` з `Result<T>`, не весь Result-wrapper. `FluentResults.Result<T>` не підтримує JSON roundtrip (private setter на `Value`). `System.Text.Json` серіалізує payload напряму, десеріалізує назад, і behavior обгортає в `Result.Ok(value)`.
+
+**Інвалідація:** у command handlers після `SaveChangesAsync` викликається `IDistributedCache.RemoveAsync(key)`. `IDistributedCache` — це офіційна Microsoft abstraction (не інфраструктурна деталь), тому живе в Application layer поруч з handlers.
+
+---
+
+### Які queries кешуються і чому
+
+| Query | Ключ | TTL | Чому |
+|---|---|---|---|
+| `GetAllCategoriesQuery` | `categories:all` | 24 год | Список категорій змінюється лише через адмін-дії. Читається при кожному відкритті каталогу та фільтрів. Найдовший TTL — найнижчий churn. |
+| `GetFeaturedCoursesQuery` | `courses:featured` | 30 хв | Вибірка популярних курсів — expensive JOIN з сортуванням по enrollments/rating. Запит однаковий для всіх користувачів (public, без per-user контексту). |
+| `GetCourseByIdQuery` | `course:{id}` | 10 хв | Сторінка деталей курсу читається масово студентами перед записом. Включає `AverageRating` та `ReviewsCount` — змінюються кожним відгуком. Явна інвалідація при зміні курсу та відгуків. |
+| `GetPublicCoursesQuery` | `courses:public:{всі 8 параметрів}` | 5 хв | Каталог — найнавантаженіший endpoint (пошук + фільтри + сортування + пагінація). Унікальний ключ на кожну комбінацію параметрів — неможливо інвалідувати за патерном через `IDistributedCache` без підключення `IConnectionMultiplexer` напряму. Короткий TTL компенсує відсутність явної інвалідації. |
+
+**Що навмисно НЕ кешується:**
+- Per-user queries (`GetMyProfile`, `GetMyEnrollments`, `GetMyAchievements`) — у кожного користувача свій стан, частих мутацій багато, ключ включав би userId → мала ймовірність cache hit для конкретного запиту.
+- Admin queries — низький трафік, не впливає на продуктивність.
+- Real-time дані (chat, SignalR notifications) — завжди актуальні.
+
+---
+
+### Інвалідація — де і чому
+
+**Явна інвалідація `course:{id}` + `courses:featured`** після кожної мутації курсу:
+- `PublishCourse`, `UnpublishCourse` — статус курсу змінюється, він з'являється або зникає з каталогу
+- `ArchiveCourse`, `UnarchiveCourse` — аналогічно
+- `UpdateCourseDetails` — змінюється title, price, cover, category — все є в закешованому DTO
+- `DeleteCourse`, `AdminDeleteCourse`, `AdminRecoverCourse`, `AdminUnpublishCourse` — курс повністю змінює стан
+
+**Явна інвалідація `course:{id}`** при мутаціях відгуків:
+- `CreateReview`, `UpdateReview`, `DeleteReview` — всі три змінюють `AverageRating` та `ReviewsCount` на `Course` entity. `CourseDetailDto` включає ці поля — без інвалідації кешована сторінка показувала б застарілий рейтинг.
+
+**Явна інвалідація `categories:all`** при будь-якій зміні категорій:
+- `CreateCategory`, `UpdateCategory`, `DeleteCategory`, `SetCategoryImage`, `DeleteCategoryImage`
+
+**`GetPublicCoursesQuery` — тільки TTL (5 хв):** оскільки ключ включає всі 8 filter-параметрів (search, skip, take, categoryId, instructorId, sortBy, isFree, minRating), різних комбінацій можуть бути сотні. Видалення за префіксом `courses:public:*` потребує `IConnectionMultiplexer.GetServer().Keys()` — дорога O(N) операція на Redis. Для каталогу 5-хвилинна затримка видимості після публікації курсу прийнятна.
+
+---
+
+### Чому Redis, а не IMemoryCache
+
+`IDistributedCache` (Redis) — єдиний centralized store, `RemoveAsync(key)` є Redis `DEL` command. При горизонтальному масштабуванні (декілька API instances) інвалідація на одному instance автоматично поширюється на всі: наступний запит на будь-якому instance отримає cache miss і перечитає з БД.
+
+`IMemoryCache` — per-process. Інвалідація на instance A не впливає на instances B і C, які продовжують роздавати stale дані до свого TTL. Неприйнятно для даних що явно інвалідуються (category list, course detail).
 
 **Чому:**
 - Популярні курси, каталог категорій — read-heavy, рідко змінюються
 - Redis дає O(1) lookup і TTL з коробки
-- Pipeline behavior — кешування прозоре для handler, без boilerplate
+- Pipeline behavior — кешування прозоре для handler, без boilerplate в кожному query
+- Distributed cache коректно працює при scale-out
 
-**Інвалідація:**
-- Commands, що змінюють дані, явно викликають `ICacheService.RemoveAsync(key)` після SaveChanges
+**Альтернативи:**
+- `IMemoryCache` — простіше, але stale data при multiple instances. Відхилено для публічних запитів.
+- Lazy invalidation (тільки TTL для всього) — простіше, але `CourseDetailDto` з рейтингом показував би застарілий rating хвилинами після відгуку. Відхилено для `course:{id}`.
+- Response caching middleware (`[ResponseCache]`) — HTTP-level cache, не контролює per-key invalidation. Відхилено.
+
+**Наслідки:**
+- `ICacheable<TValue>` в `Application/Common/Caching/`
+- `CachingBehavior<TRequest, TValue>` в `Application/Common/Behaviors/`
+- `CacheKeys` static class в `Application/Common/Constants/`
+- Redis connection string: `ConnectionStrings:Redis` в `appsettings.json`
+- Пакети: `Microsoft.Extensions.Caching.StackExchangeRedis` (Infrastructure), `Microsoft.Extensions.Caching.Abstractions` (Application)
 
 ---
 

@@ -41,7 +41,7 @@
 | # | Task | Status | Notes |
 |---|---|---|---|
 | B-17 | Domain entities: Category, Course, Section, Lesson (TPH), Question, QuestionOption, TextAnswerConfig | done (part: Category, Course, Section, Lesson TPH — Question-related deferred to Test-subsystem chat) | |
-| B-17.1 | Domain: Question, QuestionOption, TextAnswerConfig, TestAttempt, TestAttemptAnswer entities | not started | Feeds B-29 |
+| B-17.1 | Domain: Question, QuestionOption, TextAnswerConfig, TestAttempt, TestAttemptAnswer entities | done | Feeds B-29 |
 | B-18 | EF Configurations + міграція для course-related entities | done | |
 | B-19 | Category CRUD (seed initial categories) | done | |
 | B-20 | Course CRUD (create/edit/delete/publish/archive) — Instructor only | done | |
@@ -61,16 +61,16 @@
 | B-28 | Lesson likes | CANCELED | |
 | B-29 | Test system: submit attempt, score calculation, attempt limits + cooldown | done | Order-based answer matching (not GUID) — EF8 JSON collections require ordinal keys |
 | B-30 | Course completion detection + Certificate generation (PDF) | done | Async PDF gen via BackgroundService (PeriodicTimer 30s); QuestPDF; Azure Blob upload; SAS URL for download |
-| B-31 | Student profile (edit name, avatar, bio, category preferences) | not started | |
+| B-31 | Student profile (edit name, avatar, bio, category preferences) | done | |
 
 ### Phase 5 — Payments
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| B-32 | Stripe integration (test mode): create checkout session | not started | |
-| B-33 | Stripe webhook handler (payment completed → activate enrollment) | not started | |
-| B-34 | Payment history queries | not started | |
-| B-34.5 | Outbox pattern: OutboxMessage entity + EF config + background publisher worker (замінити пряму публікацію domain events в ApplicationDbContext) | not started | Передумова для надійної асинхронної обробки в Phase 6 |
+| B-32 | Stripe integration (test mode): create checkout session | CANCELED | Залишається mock-оплата |
+| B-33 | Stripe webhook handler (payment completed → activate enrollment) | CANCELED | Залишається mock-оплата |
+| B-34 | Payment history queries | done | GetMyPayments, GetInstructorEarnings, GetAdminPayments |
+| B-34.5 | Outbox pattern: OutboxMessage entity + EF config + background publisher worker (замінити пряму публікацію domain events в ApplicationDbContext) | done | OutboxProcessorService + OutboxDbContextHolder |
 | B-34.6 | Розділити `UserRegisteredDomainEvent` на два events: `UserRegistered` (raised в Register flow) і `EmailConfirmationRequested` (raised в Resend flow). Поточна реалізація використовує `RaiseUserRegistered` в обох місцях — семантичний запах. Рефакторити одночасно з міграцією email на integration events через MassTransit (B-36). | not started | Залежить від B-35 |
 
 ### Phase 6 — Async Processing (MassTransit)
@@ -86,8 +86,8 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| B-39 | Achievement entities + seed data | not started | |
-| B-40 | Achievement checking logic (lesson/course/test/social conditions) | not started | |
+| B-39 | Achievement entities + seed data | done | Achievement, UserAchievement, UserAchievementProgress entities |
+| B-40 | Achievement checking logic (lesson/course/test/social conditions) | done | AchievementEvaluator service |
 | B-41 | Notification system (create, list, mark read) | not started | |
 | B-42 | Domain events → notifications (achievement earned, enrollment confirmed, certificate ready) | not started | |
 
@@ -115,8 +115,8 @@
 |---|---|---|---|
 | B-50 | Admin: user management (list, search, ban/unban, role change) | Done | |
 | B-51 | Admin: course management (view all, unpublish, delete) | Done | |
-| B-52 | Redis caching: CachingBehavior + ICacheable queries | not started | |
-| B-53 | Cache invalidation in relevant commands | not started | |
+| B-52 | Redis caching: CachingBehavior + ICacheable queries | done | ICacheable<TValue> + CachingBehavior<TRequest,TValue> : IPipelineBehavior<TRequest,Result<TValue>>; categories (24h), featured courses (30m), course detail (10m), public catalog (5m) |
+| B-53 | Cache invalidation in relevant commands | done | Course commands (Publish/Unpublish/Archive/Unarchive/Update/Delete × instructor+admin) + Review commands (Create/Update/Delete) |
 
 ---
 
