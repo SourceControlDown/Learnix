@@ -71,16 +71,16 @@
 | B-33 | Stripe webhook handler (payment completed → activate enrollment) | CANCELED | Залишається mock-оплата |
 | B-34 | Payment history queries | done | GetMyPayments, GetInstructorEarnings, GetAdminPayments |
 | B-34.5 | Outbox pattern: OutboxMessage entity + EF config + background publisher worker (замінити пряму публікацію domain events в ApplicationDbContext) | done | OutboxProcessorService + OutboxDbContextHolder |
-| B-34.6 | Розділити `UserRegisteredDomainEvent` на два events: `UserRegistered` (raised в Register flow) і `EmailConfirmationRequested` (raised в Resend flow). Поточна реалізація використовує `RaiseUserRegistered` в обох місцях — семантичний запах. Рефакторити одночасно з міграцією email на integration events через MassTransit (B-36). | not started | Залежить від B-35 |
+| B-34.6 | Розділити `UserRegisteredDomainEvent` на два events: `UserRegistered` (raised в Register flow) і `EmailConfirmationRequested` (raised в Resend flow). Поточна реалізація використовує `RaiseUserRegistered` в обох місцях — семантичний запах. | not started | |
 
-### Phase 6 — Async Processing (MassTransit)
+### Phase 6 — Async Processing ~~(MassTransit)~~
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| B-35 | MassTransit + Azure Service Bus setup | not started | |
-| B-36 | Email consumers (verification, enrollment, approval) | not started | |
-| B-37 | Certificate generation consumer | not started | |
-| B-38 | Achievement checking consumer | not started | |
+| B-35 | MassTransit + Azure Service Bus setup | CANCELED | Оверкіл для пет-проекту. Email і achievements вже обробляються через Outbox + BackgroundService |
+| B-36 | Email consumers (verification, enrollment, approval) | CANCELED | Замінено Outbox (OutboxMessageTypes + OutboxProcessorService) |
+| B-37 | Certificate generation consumer | CANCELED | Замінено CertificatePdfGenerationService (BackgroundService + PeriodicTimer) |
+| B-38 | Achievement checking consumer | CANCELED | Замінено Outbox (EvaluateLessonCompleted, EvaluateEnrollmentCompleted тощо) |
 
 ### Phase 7 — Achievements & Notifications
 
@@ -89,7 +89,8 @@
 | B-39 | Achievement entities + seed data | done | Achievement, UserAchievement, UserAchievementProgress entities |
 | B-40 | Achievement checking logic (lesson/course/test/social conditions) | done | AchievementEvaluator service |
 | B-41 | Notification system (create, list, mark read) | not started | |
-| B-42 | Domain events → notifications (achievement earned, enrollment confirmed, certificate ready) | not started | |
+| B-42 | Domain events → notifications (achievement earned, enrollment confirmed, certificate ready) | in progress | Certificate ready: NotificationsHub SignalR push після генерації PDF. Achievement: вже є. Решта (enrollment confirmed) — not started |
+| B-42.5 | Merge AchievementsHub + ChatHub → NotificationsHub (single WS connection) | done | INotificationsHubClient; /hubs/notifications; ICertificateNotifier + SignalRCertificateNotifier |
 
 ### Phase 8 — Chat & AI
 
@@ -230,7 +231,7 @@
 | D-09 | Azure Cosmos DB for MongoDB API | not started | |
 | D-10 | Azure Cache for Redis | not started | |
 | D-11 | Azure Blob Storage account + containers | not started | |
-| D-12 | Azure Service Bus namespace + queues | not started | |
+| D-12 | Azure Service Bus namespace + queues | CANCELED | MassTransit не використовується |
 | D-13 | Azure Key Vault для секретів | not started | |
 | D-14 | Custom domain + SSL | not started | |
 | D-15 | Application Insights (Serilog sink) | not started | |

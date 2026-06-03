@@ -100,18 +100,20 @@
 
 ---
 
-## ADR-ACHIEVEMENT-007: `NotifyAchievementUnlocked` as Phase-2 No-Op Placeholder
+## ADR-ACHIEVEMENT-007: `NotifyAchievementUnlocked` via Outbox → SignalR
 
-**Decision:** When a `UserAchievement` is created, `AchievementUnlockedDomainEvent` is raised. An Infrastructure MediatR handler (`AchievementUnlockedNotificationHandler`) writes a `NotifyAchievementUnlocked` outbox message. The `OutboxProcessorService` acknowledges this message type (marks it processed) but takes no action. Phase 2 will replace the no-op with a SignalR push.
+> **Updated:** Originally written as a Phase-2 placeholder; SignalR push is now implemented.
+
+**Decision:** When a `UserAchievement` is created, `AchievementUnlockedDomainEvent` is raised. An Infrastructure MediatR handler (`AchievementUnlockedNotificationHandler`) writes a `NotifyAchievementUnlocked` outbox message. The `OutboxProcessorService` dispatches it to `IAchievementNotifier.NotifyAsync`, which pushes `AchievementUnlocked` to the user's SignalR group via `NotificationsHub`.
 
 **Why:**
-- The outbox message type, payload, and dispatch wiring must be present before Phase 2 to avoid a migration or schema change when SignalR is wired. The no-op placeholder means the outbox table schema is finalized in Phase 1; Phase 2 only adds behaviour inside the already-present `case` block.
-- Keeping the `AchievementUnlockedDomainEvent` → outbox flow active in Phase 1 allows verifying that the event is raised and the message is written (observable in the `OutboxMessages` table) without requiring a working SignalR hub.
-- Silently discarding `NotifyAchievementUnlocked` messages (marking them processed) prevents the outbox table from accumulating unprocessed rows that would be retried indefinitely before Phase 2 ships.
+- Going through the outbox (rather than calling `IAchievementNotifier` directly in the domain event handler) provides at-least-once delivery: if the server crashes after the achievement row is saved but before the notification fires, the outbox message is retried on the next poll cycle.
+- `IAchievementNotifier` is injected into `OutboxProcessorService` from the DI scope; `SignalRAchievementNotifier` wraps `IHubContext<NotificationsHub, INotificationsHubClient>`, which is singleton-safe to resolve from any scope.
+- The frontend `useNotificationsHub` hook handles `AchievementUnlocked` by showing a toast and invalidating `queryKeys.achievements.mine()`.
 
 **Rejected alternatives:**
-- Skip the outbox message entirely in Phase 1; add it in Phase 2 — requires a migration or new `OutboxMessageTypes` constant and a new event handler in Phase 2, making the Phase 2 diff larger and more risky.
-- Throw `NotImplementedException` from the `case` block — causes every `NotifyAchievementUnlocked` message to fail, increment retry count, and eventually become permanently failed. Achievement unlock still works; the notification simply never fires. But the outbox table fills with failed messages and noisy error logs.
+- Call `IAchievementNotifier` directly inside the domain event handler (in-process, no outbox) — loses at-least-once delivery. If the process crashes between `SaveChangesAsync` and the notification dispatch, the push is lost forever.
+- Throw `NotImplementedException` from the `case` block — would cause every `NotifyAchievementUnlocked` message to fail and retry indefinitely, filling the outbox table with error logs.
 
 ---
 
