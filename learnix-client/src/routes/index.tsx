@@ -50,6 +50,9 @@ const InstructorApplicationsPage = lazy(
     () => import('@/pages/admin/InstructorApplications/InstructorApplicationsPage'),
 );
 const PaymentHistoryPage = lazy(() => import('@/pages/admin/PaymentHistory/PaymentHistoryPage'));
+const CategoryManagementPage = lazy(
+    () => import('@/pages/admin/Categories/CategoryManagementPage'),
+);
 
 const wrap = (el: React.ReactElement) => <Suspense fallback={<PageFallback />}>{el}</Suspense>;
 
@@ -136,6 +139,7 @@ export const router = createBrowserRouter([
             { path: 'courses', element: wrap(<CourseModerationPage />) },
             { path: 'applications', element: wrap(<InstructorApplicationsPage />) },
             { path: 'payments', element: wrap(<PaymentHistoryPage />) },
+            { path: 'categories', element: wrap(<CategoryManagementPage />) },
         ],
     },
     {

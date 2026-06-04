@@ -12,6 +12,7 @@ export const queryKeys = {
     categories: {
         all: ['categories'] as const,
         lists: () => [...queryKeys.categories.all, 'list'] as const,
+        adminList: () => [...queryKeys.categories.all, 'admin-list'] as const,
     },
     lessons: {
         all: ['lessons'] as const,
