@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/store/auth.store';
 import { useThemeStore } from '@/store/theme.store';
+import { authApi } from '@/api/auth.api';
 import { NotificationBell } from './NotificationBell';
 import { WishlistButton } from './WishlistButton';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
@@ -44,6 +45,7 @@ function UserMenu({
     }, []);
 
     function handleSignOut() {
+        authApi.logout().catch(() => {});
         logout();
         queryClient.clear();
         navigate('/login');

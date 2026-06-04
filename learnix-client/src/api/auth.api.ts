@@ -37,6 +37,8 @@ export interface VerifyEmailRequest {
 }
 
 export const authApi = {
+    logout: () => api.post('/auth/logout').then((r) => r.data),
+
     login: (data: LoginRequest) => api.post<LoginResponse>('/auth/login', data).then((r) => r.data),
 
     register: (data: RegisterRequest) =>

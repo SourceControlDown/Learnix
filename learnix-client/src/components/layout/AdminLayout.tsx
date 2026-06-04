@@ -6,12 +6,15 @@ import {
     BookOpen,
     FileCheck,
     CreditCard,
+    Tag,
     ArrowLeft,
     LogOut,
 } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/store/auth.store';
+import { authApi } from '@/api/auth.api';
 
 export function AdminLayout() {
     const { t } = useTranslation('admin');
@@ -34,15 +37,21 @@ export function AdminLayout() {
             icon: <FileCheck size={16} />,
         },
         { to: '/admin/payments', label: t('navPayments'), icon: <CreditCard size={16} /> },
+        { to: '/admin/categories', label: t('navCategories'), icon: <Tag size={16} /> },
     ];
 
     function handleSignOut() {
+        authApi.logout().catch(() => {});
         logout();
         queryClient.clear();
         navigate('/login');
     }
 
     return (
+        <>
+        <Helmet>
+            <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="grid h-screen grid-cols-[240px_1fr] overflow-hidden bg-background">
             {/* Sidebar */}
             <aside className="flex flex-col overflow-y-auto border-r border-border bg-card">
@@ -112,5 +121,6 @@ export function AdminLayout() {
                 <Outlet />
             </main>
         </div>
+        </>
     );
 }

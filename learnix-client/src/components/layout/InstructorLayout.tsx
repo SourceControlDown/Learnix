@@ -11,9 +11,11 @@ import {
     ArrowLeft,
     LogOut,
 } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/store/auth.store';
+import { authApi } from '@/api/auth.api';
 import { messagesApi } from '@/api/messages.api';
 import { queryKeys } from '@/api/queryKeys';
 
@@ -58,6 +60,7 @@ export function InstructorLayout() {
     ];
 
     function handleSignOut() {
+        authApi.logout().catch(() => {});
         logout();
         queryClient.clear();
         navigate('/login');
@@ -65,6 +68,9 @@ export function InstructorLayout() {
 
     return (
         <>
+            <Helmet>
+                <meta name="robots" content="noindex,nofollow" />
+            </Helmet>
             <div className="grid h-screen grid-cols-[240px_1fr] overflow-hidden bg-background">
                 {/* Sidebar */}
                 <aside className="flex flex-col border-r border-border bg-card">

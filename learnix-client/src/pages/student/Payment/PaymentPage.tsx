@@ -88,9 +88,9 @@ export default function PaymentPage() {
     if (!course) {
         return (
             <div className="mx-auto max-w-4xl px-6 py-20 text-center">
-                <p className="text-muted-foreground">Course not found.</p>
+                <p className="text-muted-foreground">{t('courseNotFound')}</p>
                 <Link to="/courses" className="mt-4 inline-block text-primary hover:underline">
-                    Back to catalog
+                    {t('backToCatalog')}
                 </Link>
             </div>
         );

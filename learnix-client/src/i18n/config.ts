@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
+import enCommon from './locales/en/common.json';
 import enHeader from './locales/en/header.json';
 import enAuth from './locales/en/auth.json';
 import enLanding from './locales/en/landing.json';
@@ -24,6 +25,7 @@ import enTestLesson from './locales/en/testLesson.json';
 import enWishlist from './locales/en/wishlist.json';
 import enNotifications from './locales/en/notifications.json';
 
+import ukCommon from './locales/uk/common.json';
 import ukHeader from './locales/uk/header.json';
 import ukAuth from './locales/uk/auth.json';
 import ukLanding from './locales/uk/landing.json';
@@ -54,6 +56,7 @@ i18n.use(LanguageDetector)
     .init({
         resources: {
             en: {
+                common: enCommon,
                 header: enHeader,
                 auth: enAuth,
                 landing: enLanding,
@@ -77,6 +80,7 @@ i18n.use(LanguageDetector)
                 notifications: enNotifications,
             },
             uk: {
+                common: ukCommon,
                 header: ukHeader,
                 auth: ukAuth,
                 landing: ukLanding,
