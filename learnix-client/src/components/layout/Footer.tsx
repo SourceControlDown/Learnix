@@ -38,10 +38,10 @@ const companyLinks: FooterLink[] = [
 const legalLinks = ['Privacy', 'Terms', 'Cookies', 'Accessibility'];
 
 const socialLinks = [
-    { name: 'twitter', Icon: TwitterIcon },
-    { name: 'github', Icon: GitHubIcon },
-    { name: 'linkedin', Icon: LinkedInIcon },
-    { name: 'youtube', Icon: YouTubeIcon },
+    { name: 'twitter', Icon: TwitterIcon, href: '#' },
+    { name: 'github', Icon: GitHubIcon, href: 'https://github.com/Oleh-Bashtovyi/Learnix' },
+    { name: 'linkedin', Icon: LinkedInIcon, href: '#' },
+    { name: 'youtube', Icon: YouTubeIcon, href: '#' },
 ];
 
 function renderLink(link: FooterLink) {
@@ -77,11 +77,15 @@ export function Footer() {
                             learn — with AI assistance, real projects, and lifetime access.
                         </p>
                         <div className="mt-6 flex gap-3">
-                            {socialLinks.map(({ name, Icon }) => (
+                            {socialLinks.map(({ name, Icon, href }) => (
                                 <a
                                     key={name}
-                                    href="#"
+                                    href={href}
                                     aria-label={name}
+                                    {...(href !== '#' && {
+                                        target: '_blank',
+                                        rel: 'noopener noreferrer',
+                                    })}
                                     className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-secondary hover:text-primary"
                                 >
                                     <Icon className="h-4 w-4" />

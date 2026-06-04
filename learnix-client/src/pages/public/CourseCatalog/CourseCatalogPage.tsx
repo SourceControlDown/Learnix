@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
@@ -222,6 +223,13 @@ export default function CourseCatalogPage() {
         });
 
     return (
+        <>
+        <Helmet>
+            <title>{t('seo.title')}</title>
+            <meta name="description" content={t('seo.description')} />
+            <meta property="og:title" content={t('seo.title')} />
+            <meta property="og:description" content={t('seo.description')} />
+        </Helmet>
         <div className="min-h-screen bg-background">
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
                 {/* Page title */}
@@ -354,5 +362,6 @@ export default function CourseCatalogPage() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

@@ -102,5 +102,9 @@
     "subtitle": "Our support team typically replies within 24 hours",
     "contactCta": "Contact support",
     "discordCta": "Join Discord community"
+  },
+  "seo": {
+    "title": "FAQ — Learnix Help Center",
+    "description": "Find answers to common questions about courses, payments, certificates, and instructor applications on Learnix."
   }
 }

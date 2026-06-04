@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Clock, Users, Star, Tag, ArrowLeft, BookOpen, Heart } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -97,7 +98,21 @@ export default function CourseDetailPage() {
         );
     }
 
+    const description = course.description.slice(0, 160);
+    const ogTitle = `${course.title} — Learnix`;
+
     return (
+        <>
+        <Helmet>
+            <title>{ogTitle}</title>
+            <meta name="description" content={description} />
+            <meta property="og:title" content={ogTitle} />
+            <meta property="og:description" content={description} />
+            {course.coverImageUrl && (
+                <meta property="og:image" content={course.coverImageUrl} />
+            )}
+            <meta property="og:type" content="article" />
+        </Helmet>
         <div className="mx-auto max-w-5xl px-6 py-12">
             <Link
                 to="/courses"
@@ -290,5 +305,6 @@ export default function CourseDetailPage() {
                 </aside>
             </div>
         </div>
+        </>
     );
 }

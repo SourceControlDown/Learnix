@@ -40,5 +40,9 @@
   "pagination": { "prev": "‹", "next": "›" },
   "students_one": "{{count}} студент",
   "students_few": "{{count}} студенти",
-  "students_many": "{{count}} студентів"
+  "students_many": "{{count}} студентів",
+  "seo": {
+    "title": "Усі курси — Learnix",
+    "description": "Переглядайте сотні курсів з програмування, дизайну та науки про дані. Фільтруйте за категорією, ціною та рейтингом."
+  }
 }

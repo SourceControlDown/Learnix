@@ -1261,6 +1261,37 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
 
 ---
 
+## FADR-014: SEO — react-helmet-async, без SSR
+
+**Рішення:** Базова SEO-оптимізація реалізована через `react-helmet-async` у клієнтському SPA без SSR. Підхід охоплює чотири рівні:
+
+1. **`index.html`** — статичні fallback-теги (`<title>`, `<meta name="description">`, OG-теги, Twitter Card), які бачать краулери до виконання JS.
+2. **`react-helmet-async`** — перезаписує теги на рівні сторінки при рендері React. `<HelmetProvider>` обгортає застосунок у `main.tsx`.
+3. **Публічні сторінки** — `LandingPage`, `CourseCatalogPage`, `FaqPage` використовують `t('seo.title')` / `t('seo.description')` з відповідних i18n namespace-ів. `CourseDetailPage` будує теги динамічно з `CourseDetailDto` (title, description[:160], coverImageUrl).
+4. **Приватні layouts** — `AdminLayout` та `InstructorLayout` рендерять `<meta name="robots" content="noindex,nofollow">` — краулери не індексують сторінки навіть якщо доберуться до них.
+5. **`public/robots.txt`** — забороняє краулерам `/admin/`, `/instructor/`, та всі приватні student-маршрути.
+6. **`public/sitemap.xml`** — статичні публічні URL (`/`, `/courses`, `/faq`). Динамічні URL курсів потребують build-time генератора або серверного ендпоінту (не реалізовано у v1).
+
+**Чому без SSR:**
+- Learnix — Vite SPA. Міграція на Vite SSR або Remix — тиждень роботи і суттєве ускладнення деплою.
+- Googlebot рендерить JS, тому теги через `react-helmet-async` ефективні для Google.
+- Для соцмереж (og:image в Twitter, Facebook) fallback-теги в `index.html` достатні для лендингу, а для курсів Googlebot все одно потрібен JS.
+- Для MVP-рівня портфоліо-проєкту цей підхід дає 80% цінності SEO за 5% зусиль SSR.
+
+**Альтернативи:**
+- **Vite SSR / Vike** — повний контроль, але складний деплой (Node.js сервер, не статика).
+- **Remix або Next.js** — найкраще для SEO, але потребує рефакторингу роутингу і стейт-менеджменту.
+- **`vite-plugin-prerender`** — statically prerenders known routes at build time. Має сенс для статичних публічних сторінок (`/`, `/faq`), але не для динамічних курсів.
+- **Без бібліотеки** — маніпуляція `document.title` через `useEffect`. Не підтримує OG-теги і SSR-rendering.
+
+**Наслідки:**
+- Нова публічна сторінка → додати `<Helmet>` з `<title>` та `<meta name="description">` в компонент сторінки; додати `seo.title` / `seo.description` ключі у відповідний i18n namespace (en + uk).
+- Нова приватна сторінка / layout → додати `<meta name="robots" content="noindex,nofollow">` у layout-компонент.
+- `robots.txt` оновлювати вручну при додаванні нових приватних маршрутів.
+- `sitemap.xml` у `public/` — тільки статичні URL. Динамічні URL курсів потребують окремого рішення (server endpoint або build-time скрипт).
+
+---
+
 ## Шаблон для нових записів
 
 ```

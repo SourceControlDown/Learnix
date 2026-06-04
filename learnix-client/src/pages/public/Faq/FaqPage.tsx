@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { FlaskConical, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { FaqSidebar } from './FaqSidebar';
@@ -19,6 +20,13 @@ export default function FaqPage() {
     const accountAndPrivacy = t('categories.accountAndPrivacy', { returnObjects: true }) as object;
 
     return (
+        <>
+        <Helmet>
+            <title>{t('seo.title')}</title>
+            <meta name="description" content={t('seo.description')} />
+            <meta property="og:title" content={t('seo.title')} />
+            <meta property="og:description" content={t('seo.description')} />
+        </Helmet>
         <div className="bg-background">
             {/* Pet-project disclaimer */}
             <div className="border-b border-warning/30 bg-warning/10">
@@ -135,5 +143,6 @@ export default function FaqPage() {
                 </div>
             </div>
         </div>
+        </>
     );
 }
