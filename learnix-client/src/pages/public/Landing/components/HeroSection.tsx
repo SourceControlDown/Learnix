@@ -16,7 +16,7 @@ export function HeroSection() {
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
             </div>
 
-            <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-16 px-6 md:grid-cols-2">
+            <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-16 px-6 lg:gap-24 md:grid-cols-2">
                 <div className="flex flex-col justify-center">
                     <h1 className="font-heading text-5xl font-extrabold tracking-tight md:text-6xl lg:text-7xl lg:leading-[1.1]">
                         {t('hero.heading.line1')}
@@ -84,72 +84,82 @@ export function HeroSection() {
                     </div>
                 </div>
 
-                {/* Floating decorative cards — redesigned for modern feel */}
-                <div className="relative hidden h-[600px] w-full md:block">
-                    <div className="absolute right-0 top-[10%] h-[340px] w-[90%] overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-transform duration-700 hover:-translate-y-2">
-                        <div className="absolute inset-0 bg-[url('/video_thumbnail.png')] bg-cover bg-center" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-80" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="group flex h-20 w-20 cursor-pointer items-center justify-center rounded-full bg-white/10 shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white/20">
-                                <svg
-                                    className="ml-1 h-8 w-8 text-white drop-shadow-md transition-transform duration-300 group-hover:scale-110"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path d="M8 5v14l11-7z" />
-                                </svg>
+                {/* Floating decorative cards — redesigned for better composition */}
+                <div className="relative hidden w-full md:flex md:flex-col md:items-end">
+                    <div className="relative w-[95%] max-w-[540px]">
+                        {/* AI Tutor Card - Top Right Corner */}
+                        <div className="absolute -right-6 -top-8 z-20 w-[290px] rounded-2xl border border-white/10 bg-card/95 p-4 backdrop-blur-xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] transition-transform duration-500 hover:-translate-y-1">
+                            <div className="mb-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent">
+                                ✨ {t('hero.aiTutorCard.label')}
+                            </div>
+                            <div className="flex flex-col gap-3">
+                                <div className="self-end max-w-[90%] rounded-2xl rounded-tr-sm bg-primary px-3 py-2 text-[13px] text-primary-foreground shadow-sm">
+                                    {t('hero.aiTutorCard.question')}{' '}
+                                    <code className="rounded bg-primary-foreground/20 px-1 py-0.5 text-[11px] font-mono">
+                                        {t('hero.aiTutorCard.codeSnippet')}
+                                    </code>{' '}
+                                    {t('hero.aiTutorCard.questionEnd')}
+                                </div>
+                                <div className="self-start max-w-[95%] rounded-2xl rounded-tl-sm bg-muted px-3 py-2.5 text-[13px] leading-relaxed text-foreground/90 shadow-sm border border-border/50">
+                                    {t('hero.aiTutorCard.answer')}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="absolute -left-[2%] top-[30%] z-20 max-w-[280px] rounded-2xl border border-white/10 bg-card/70 p-5 backdrop-blur-xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] transition-transform duration-500 hover:-translate-y-2">
-                        <div className="mb-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
-                                <span className="h-2 w-2 animate-pulse rounded-full bg-accent shadow-[0_0_10px_rgba(var(--accent),0.8)]" />
-                                {t('hero.aiTutorCard.label')}
+                        {/* Main Video Card */}
+                        <div className="relative z-10 h-[340px] w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-transform duration-700 hover:-translate-y-1">
+                            <div className="absolute inset-0 bg-[url('/video_thumbnail.png')] bg-cover bg-center" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-80" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="group flex h-20 w-20 cursor-pointer items-center justify-center rounded-full bg-white/10 shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-white/20">
+                                    <svg
+                                        className="ml-1 h-8 w-8 text-white drop-shadow-md transition-transform duration-300 group-hover:scale-110"
+                                        fill="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                </div>
                             </div>
                         </div>
-                        <p className="text-sm text-foreground/90 leading-relaxed">
-                            {t('hero.aiTutorCard.question')}{' '}
-                            <code className="rounded bg-secondary/50 px-1.5 py-0.5 text-xs font-mono text-primary">
-                                {t('hero.aiTutorCard.codeSnippet')}
-                            </code>{' '}
-                            {t('hero.aiTutorCard.questionEnd')}
-                        </p>
-                        <div className="mt-4 rounded-xl bg-background/50 p-3 text-xs text-muted-foreground/90 border border-white/5">
-                            {t('hero.aiTutorCard.answer')}
-                        </div>
-                    </div>
 
-                    <div className="absolute bottom-[10%] right-[5%] z-30 flex items-center gap-4 rounded-2xl border border-white/10 bg-card/60 p-4 backdrop-blur-xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)] transition-transform duration-500 hover:-translate-y-1 hover:scale-105">
-                        <div className="grid h-14 w-14 place-items-center rounded-xl bg-gradient-to-br from-success/20 to-success/5 border border-success/20 text-2xl drop-shadow-sm">
-                            🏆
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                {t('hero.achievementCard.label')}
-                            </p>
-                            <p className="mt-0.5 text-sm font-bold text-foreground">{t('hero.achievementCard.title')}</p>
-                            <p className="mt-0.5 text-xs font-semibold text-success">{t('hero.achievementCard.xp')}</p>
-                        </div>
-                    </div>
+                        {/* Grouped Bottom Cards */}
+                        <div className="relative z-10 mt-6 grid grid-cols-2 gap-4">
+                            {/* Progress Card */}
+                            <div className="rounded-2xl border border-white/10 bg-card/60 p-5 backdrop-blur-xl shadow-lg transition-transform duration-500 hover:-translate-y-1">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                    {t('hero.progressCard.label')}
+                                </p>
+                                <p className="mt-1 text-sm font-bold text-foreground truncate">{t('hero.progressCard.title')}</p>
+                                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-secondary/50 shadow-inner">
+                                    <div
+                                        className="h-full rounded-full bg-gradient-to-r from-primary to-accent relative"
+                                        style={{ width: '68%' }}
+                                    >
+                                        <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] animate-[progress_1s_linear_infinite]" />
+                                    </div>
+                                </div>
+                                <p className="mt-2 text-xs font-medium text-muted-foreground">
+                                    {t('hero.progressCard.progress')}
+                                </p>
+                            </div>
 
-                    <div className="absolute -left-[10%] bottom-[5%] z-10 w-[240px] rounded-2xl border border-white/10 bg-card/70 p-5 backdrop-blur-xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] transition-transform duration-500 hover:-translate-y-1">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                            {t('hero.progressCard.label')}
-                        </p>
-                        <p className="mt-1 text-sm font-bold text-foreground">{t('hero.progressCard.title')}</p>
-                        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-secondary/50 shadow-inner">
-                            <div
-                                className="h-full rounded-full bg-gradient-to-r from-primary to-accent relative"
-                                style={{ width: '68%' }}
-                            >
-                                <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] animate-[progress_1s_linear_infinite]" />
+                            {/* Achievement Card */}
+                            <div className="flex flex-col justify-center rounded-2xl border border-white/10 bg-card/60 p-5 backdrop-blur-xl shadow-lg transition-transform duration-500 hover:-translate-y-1">
+                                <div className="flex items-center gap-4">
+                                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-success/20 to-success/5 border border-success/20 text-xl drop-shadow-sm">
+                                        🏆
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground truncate">
+                                            {t('hero.achievementCard.label')}
+                                        </p>
+                                        <p className="mt-0.5 text-sm font-bold text-foreground truncate">{t('hero.achievementCard.title')}</p>
+                                        <p className="mt-0.5 text-xs font-semibold text-success">{t('hero.achievementCard.xp')}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <p className="mt-2 text-xs font-medium text-muted-foreground">
-                            {t('hero.progressCard.progress')}
-                        </p>
                     </div>
                 </div>
             </div>

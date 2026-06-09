@@ -34,36 +34,32 @@ export function AIAssistantSection() {
                 {/* Mock chat panel */}
                 <div className="overflow-hidden rounded-2xl border border-border bg-card text-foreground shadow-2xl">
                     <div className="flex items-center gap-3 border-b border-border p-4">
-                        <div className="grid h-10 w-10 place-items-center rounded-full bg-accent/20 text-accent">
+                        <div className="grid h-8 w-8 place-items-center rounded-full bg-accent/20 text-accent text-sm">
                             ✨
                         </div>
                         <div>
-                            <p className="text-sm font-medium">{t('aiAssistant.chat.title')}</p>
-                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                            <p className="font-heading text-sm font-semibold text-foreground leading-none">
+                                {t('aiAssistant.chat.title')}
+                            </p>
+                            <p className="mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                <span className="h-1.5 w-1.5 rounded-full bg-success shadow-[0_0_5px_rgba(var(--success),0.8)]" />
                                 {t('aiAssistant.chat.status')}
                             </p>
                         </div>
                     </div>
 
-                    <div className="max-h-[420px] min-h-[340px] space-y-4 overflow-y-auto p-5">
-                        <div className="flex gap-3">
-                            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/20 text-xs font-medium">
-                                {t('aiAssistant.chat.userLabel')}
-                            </div>
-                            <div className="max-w-[80%] rounded-xl rounded-tl-sm bg-secondary p-3 text-sm">
+                    <div className="max-h-[420px] min-h-[340px] space-y-5 overflow-y-auto p-5">
+                        <div className="flex justify-end">
+                            <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary px-3.5 py-2.5 text-sm text-primary-foreground shadow-sm">
                                 {t('aiAssistant.chat.messages.q1')}{' '}
-                                <code className="rounded bg-card px-1 py-0.5 text-xs">
+                                <code className="rounded bg-primary-foreground/20 px-1.5 py-0.5 text-xs font-mono">
                                     {t('aiAssistant.chat.messages.q1Code')}
                                 </code>{' '}
                                 {t('aiAssistant.chat.messages.q1End')}
                             </div>
                         </div>
-                        <div className="flex gap-3">
-                            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent/20 text-xs text-accent">
-                                {t('aiAssistant.chat.aiLabel')}
-                            </div>
-                            <div className="max-w-[80%] rounded-xl rounded-tl-sm bg-primary/10 p-3 text-sm">
+                        <div className="flex justify-start">
+                            <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-muted px-3.5 py-2.5 text-sm text-foreground shadow-sm border border-border/50">
                                 {t('aiAssistant.chat.messages.a1')}{' '}
                                 <strong>{t('aiAssistant.chat.messages.a1Bold')}</strong>{' '}
                                 {t('aiAssistant.chat.messages.a1End')}
@@ -72,27 +68,21 @@ export function AIAssistantSection() {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex gap-3">
-                            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/20 text-xs font-medium">
-                                {t('aiAssistant.chat.userLabel')}
-                            </div>
-                            <div className="max-w-[80%] rounded-xl rounded-tl-sm bg-secondary p-3 text-sm">
+                        <div className="flex justify-end">
+                            <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary px-3.5 py-2.5 text-sm text-primary-foreground shadow-sm">
                                 {t('aiAssistant.chat.messages.q2')}
                             </div>
                         </div>
-                        <div className="flex gap-3">
-                            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent/20 text-xs text-accent">
-                                {t('aiAssistant.chat.aiLabel')}
-                            </div>
-                            <div className="max-w-[80%] rounded-xl rounded-tl-sm bg-primary/10 p-3 text-sm">
-                                <span className="inline-flex gap-1">
-                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+                        <div className="flex justify-start">
+                            <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-muted px-3.5 py-2.5 text-sm text-foreground shadow-sm border border-border/50">
+                                <span className="inline-flex gap-1 py-1">
+                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-foreground/40" />
                                     <span
-                                        className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent"
+                                        className="h-1.5 w-1.5 animate-pulse rounded-full bg-foreground/40"
                                         style={{ animationDelay: '0.2s' }}
                                     />
                                     <span
-                                        className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent"
+                                        className="h-1.5 w-1.5 animate-pulse rounded-full bg-foreground/40"
                                         style={{ animationDelay: '0.4s' }}
                                     />
                                 </span>
