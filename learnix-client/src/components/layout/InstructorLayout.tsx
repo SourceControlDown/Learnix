@@ -18,6 +18,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { authApi } from '@/api/auth.api';
 import { messagesApi } from '@/api/messages.api';
 import { queryKeys } from '@/api/queryKeys';
+import { Logo } from '@/components/common/Logo';
 
 export function InstructorLayout() {
     const { t } = useTranslation('instructor');
@@ -77,12 +78,12 @@ export function InstructorLayout() {
                     <div className="flex items-center gap-2 px-4 py-5">
                         <Link
                             to="/"
-                            className="flex items-center gap-2 font-heading font-bold text-foreground"
+                            className="flex items-center gap-2.5 font-heading font-bold text-foreground transition-opacity hover:opacity-90"
                         >
-                            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-                                L
+                            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                                <Logo className="h-6 w-6" />
                             </div>
-                            <span>Learnix</span>
+                            <span className="tracking-tight">Learnix</span>
                         </Link>
                     </div>
 

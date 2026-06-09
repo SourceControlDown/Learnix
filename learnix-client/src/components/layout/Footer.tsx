@@ -5,6 +5,7 @@ import {
     LinkedInIcon,
     YouTubeIcon,
 } from '@/components/common/icons/SocialIcons';
+import { Logo } from '@/components/common/Logo';
 
 interface FooterLink {
     label: string;
@@ -66,11 +67,11 @@ export function Footer() {
             <div className="mx-auto max-w-7xl px-6">
                 <div className="grid gap-10 border-b border-border pb-12 md:grid-cols-5">
                     <div className="md:col-span-2">
-                        <Link to="/" className="flex items-center gap-2">
-                            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary font-heading font-bold text-primary-foreground">
-                                L
+                        <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
+                            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                                <Logo className="h-6 w-6" />
                             </div>
-                            <span className="font-heading text-lg font-bold">Learnix</span>
+                            <span className="font-heading text-lg font-bold tracking-tight">Learnix</span>
                         </Link>
                         <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
                             A modern learning platform built around the way developers actually
