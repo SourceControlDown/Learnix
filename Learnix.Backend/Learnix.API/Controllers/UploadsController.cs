@@ -9,7 +9,7 @@ namespace Learnix.API.Controllers;
 [ApiController]
 [Route("api/uploads")]
 [Authorize]
-public class UploadsController(ISender mediator) : ControllerBase
+public sealed class UploadsController(ISender mediator) : ControllerBase
 {
     [HttpPost("request-url")]
     public async Task<IActionResult> RequestUploadUrl(
