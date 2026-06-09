@@ -1,7 +1,7 @@
 {
   "disclaimer": {
     "badge": "Portfolio project",
-    "text": "Learnix is a pet project built for learning and demonstration purposes — not a real commercial product. No real payments are processed, no real courses are sold, and no personal data is stored beyond what is needed for local testing."
+    "text": "Learnix is a full-stack portfolio project built for learning and demonstration purposes — not a real commercial product. While the database securely stores your progress and account data, all payments are completely simulated and no real money is ever processed."
   },
   "hero": {
     "badge": "Help center",
