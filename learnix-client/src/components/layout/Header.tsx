@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useThemeStore } from '@/store/theme.store';
 import { authApi } from '@/api/auth.api';
 import { NotificationBell } from './NotificationBell';
+import { MessagesButton } from './MessagesButton';
 import { WishlistButton } from './WishlistButton';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 
@@ -180,6 +181,7 @@ export function Header() {
                     </button>
                     {user ? (
                         <>
+                            <MessagesButton />
                             <NotificationBell />
                             <WishlistButton />
                             <UserMenu
