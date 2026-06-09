@@ -65,13 +65,10 @@ export function FeaturedCoursesSection({
     };
 
     return (
-        <section id="courses" className="bg-secondary/40 py-20">
+        <section id="courses" className="bg-secondary/40 pt-12 pb-20">
             <div className="mx-auto max-w-7xl px-6">
                 <div className="mb-10 flex items-end justify-between">
                     <div>
-                        <span className="text-sm font-semibold text-primary">
-                            {t('featuredCourses.tag')}
-                        </span>
                         <h2 className="mt-2 font-heading text-3xl font-bold md:text-4xl">
                             {t('featuredCourses.heading')}
                         </h2>

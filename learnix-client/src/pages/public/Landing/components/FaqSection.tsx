@@ -10,11 +10,10 @@ export function FaqSection() {
     }>;
 
     return (
-        <section id="faq" className="py-20">
+        <section id="faq" className="pt-10 pb-20">
             <div className="mx-auto max-w-3xl px-6">
-                <div className="mb-12 text-center">
-                    <span className="text-sm font-semibold text-primary">{t('faq.tag')}</span>
-                    <h2 className="mt-2 font-heading text-3xl font-bold md:text-4xl">
+                <div className="mb-14 text-center">
+                    <h2 className="font-heading text-3xl font-bold md:text-4xl">
                         {t('faq.heading')}
                     </h2>
                     <p className="mt-3 text-muted-foreground">
@@ -30,13 +29,17 @@ export function FaqSection() {
                         <details
                             key={i}
                             open={item.defaultOpen}
-                            className="group rounded-xl border border-border bg-card"
+                            className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm transition-all hover:border-primary/30 shadow-sm"
                         >
-                            <summary className="flex cursor-pointer items-center justify-between rounded-xl p-5 hover:bg-secondary/50">
-                                <span className="font-heading font-semibold">{item.q}</span>
-                                <span className="faq-icon text-2xl font-light text-primary">+</span>
+                            <summary className="flex cursor-pointer items-center justify-between p-6 transition-colors hover:bg-secondary/20">
+                                <span className="font-heading text-[15px] font-semibold text-foreground/90 transition-colors group-hover:text-primary pr-6">
+                                    {item.q}
+                                </span>
+                                <span className="faq-icon grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xl font-light text-primary transition-all group-hover:bg-primary/20">
+                                    +
+                                </span>
                             </summary>
-                            <div className="px-5 pb-5 text-sm leading-relaxed text-muted-foreground">
+                            <div className="px-6 pb-6 text-[14px] leading-relaxed text-muted-foreground/90">
                                 {item.a}
                             </div>
                         </details>
