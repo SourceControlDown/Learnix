@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -81,5 +81,14 @@
     }
     .faq-icon {
         transition: transform 0.2s;
+    }
+
+    @keyframes progress {
+        0% {
+            background-position: 0 0;
+        }
+        100% {
+            background-position: 1rem 0;
+        }
     }
 }

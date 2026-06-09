@@ -40,8 +40,8 @@ export default function LandingPage() {
                 <meta property="og:title" content={t('seo.title')} />
                 <meta property="og:description" content={t('seo.description')} />
             </Helmet>
-            <AnnouncementBar />
-            <PetProjectBanner />
+            {/* <AnnouncementBar /> */}
+            {/* <PetProjectBanner /> */}
             <HeroSection />
             <StatsSection />
             <CategoriesSection

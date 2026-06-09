@@ -85,10 +85,7 @@ export function CategoriesSection({
             <div className="mx-auto max-w-7xl px-6">
                 <div className="mb-10 flex items-end justify-between">
                     <div>
-                        <span className="text-sm font-semibold text-primary">
-                            {t('categories.tag')}
-                        </span>
-                        <h2 className="mt-2 font-heading text-3xl font-bold md:text-4xl">
+                        <h2 className="font-heading text-3xl font-bold md:text-4xl">
                             {t('categories.heading')}
                         </h2>
                     </div>
