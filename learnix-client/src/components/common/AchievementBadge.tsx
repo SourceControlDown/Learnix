@@ -38,13 +38,8 @@ export function AchievementBadge({
             ? { background: `linear-gradient(135deg, ${meta.gradient[0]}, ${meta.gradient[1]})` }
             : undefined;
 
-    // Use i18n translations for name and description if available, fall back to meta
-    const name = code
-        ? t(`meta.${code}.name`, { defaultValue: meta?.name ?? code })
-        : (meta?.name ?? code);
-    const description = code
-        ? t(`meta.${code}.description`, { defaultValue: meta?.description ?? '' })
-        : (meta?.description ?? '');
+    const name = t(`meta.${code}.name`, { defaultValue: code });
+    const description = t(`meta.${code}.description`, { defaultValue: '' });
 
     return (
         <button

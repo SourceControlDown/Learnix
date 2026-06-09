@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/auth.store';
 import { queryKeys } from '@/api/queryKeys';
 import { env } from '@/utils/env';
-import { ACHIEVEMENT_META } from '@/const/localization/achievements';
 import type { NewMessageNotification, UnreadCountNotification } from '@/types/message.types';
 import type { CertificateReadyNotification } from '@/types/certificate.types';
 import type { NotificationReceivedPayload } from '@/types/notification.types';
@@ -26,6 +25,7 @@ export function useNotificationsHub() {
     navigateRef.current = navigate;
     const connectionRef = useRef<signalR.HubConnection | null>(null);
     const { t } = useTranslation('certificates');
+    const { t: tAchievements } = useTranslation('achievements');
 
     useEffect(() => {
         if (!accessToken) return;
@@ -51,11 +51,13 @@ export function useNotificationsHub() {
         });
 
         connection.on('AchievementUnlocked', (payload: AchievementUnlockedPayload) => {
-            const meta = ACHIEVEMENT_META[payload.code];
-            toast.success(`🏆 ${meta?.name ?? payload.code}`, {
-                description: meta?.description,
-                duration: 6000,
-            });
+            toast.success(
+                `🏆 ${tAchievements(`meta.${payload.code}.name`, { defaultValue: payload.code })}`,
+                {
+                    description: tAchievements(`meta.${payload.code}.description`),
+                    duration: 6000,
+                },
+            );
             queryClient.invalidateQueries({ queryKey: queryKeys.achievements.mine() });
         });
 
