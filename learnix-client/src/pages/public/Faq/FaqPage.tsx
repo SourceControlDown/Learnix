@@ -3,6 +3,9 @@ import { FlaskConical, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { FaqSidebar } from './FaqSidebar';
 import { FaqCategory } from './FaqCategory';
+import { GitHubIcon } from '@/components/common/icons/SocialIcons';
+
+const GITHUB_URL = 'https://github.com/Oleh-Bashtovyi/Learnix';
 
 export default function FaqPage() {
     const { t } = useTranslation('faq');
@@ -30,10 +33,23 @@ export default function FaqPage() {
             <div className="bg-background">
                 {/* Pet-project disclaimer */}
                 <div className="border-b border-warning/30 bg-warning/10">
-                    <div className="mx-auto flex max-w-7xl items-center gap-3 px-6 py-3 text-sm">
-                        <FlaskConical className="h-4 w-4 shrink-0 text-warning" />
-                        <span className="font-semibold text-warning">{t('disclaimer.badge')}:</span>
-                        <span className="text-muted-foreground">{t('disclaimer.text')}</span>
+                    <div className="mx-auto flex max-w-7xl items-start gap-3 px-6 py-3 text-sm md:items-center">
+                        <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-warning md:mt-0" />
+                        <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
+                            <div>
+                                <span className="font-semibold text-warning">{t('disclaimer.badge')}:</span>{' '}
+                                <span className="text-muted-foreground">{t('disclaimer.text')}</span>
+                            </div>
+                            <a
+                                href={GITHUB_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ml-auto flex shrink-0 items-center gap-1.5 font-medium text-warning hover:underline"
+                            >
+                                <GitHubIcon className="h-3.5 w-3.5" />
+                                View source on GitHub ↗
+                            </a>
+                        </div>
                     </div>
                 </div>
 
