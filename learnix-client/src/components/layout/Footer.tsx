@@ -23,17 +23,17 @@ const productLinks: FooterLink[] = [
 
 const teachLinks: FooterLink[] = [
     { label: 'Become instructor', to: '/become-instructor' },
-    { label: 'Instructor handbook', to: '#', external: true },
-    { label: 'Revenue & payouts', to: '#', external: true },
-    { label: 'Course guidelines', to: '#', external: true },
+    { label: 'Instructor handbook', to: '/faq' },
+    { label: 'Revenue & payouts', to: '/faq' },
+    { label: 'Course guidelines', to: '/faq' },
 ];
 
 const companyLinks: FooterLink[] = [
-    { label: 'About', to: '#', external: true },
-    { label: 'Blog', to: '#', external: true },
+    { label: 'About', to: '/faq' },
+    { label: 'Blog', to: '/faq' },
     { label: 'FAQ', to: '/faq' },
-    { label: 'Contact', to: '#', external: true },
-    { label: 'Status', to: '#', external: true },
+    { label: 'Contact', to: '/faq' },
+    { label: 'Status', to: '/faq' },
 ];
 
 const legalLinks = ['Privacy', 'Terms', 'Cookies', 'Accessibility'];
@@ -65,8 +65,8 @@ export function Footer() {
     return (
         <footer className="border-t border-border bg-card pb-8 pt-16">
             <div className="mx-auto max-w-7xl px-6">
-                <div className="grid gap-10 border-b border-border pb-12 md:grid-cols-5">
-                    <div className="md:col-span-2">
+                <div className="flex flex-col gap-10 border-b border-border pb-12 md:flex-row md:justify-between">
+                    <div className="max-w-xs md:w-2/5">
                         <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
                             <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                                 <Logo className="h-6 w-6" />
@@ -95,31 +95,33 @@ export function Footer() {
                         </div>
                     </div>
 
-                    <div>
-                        <h4 className="mb-4 font-heading text-sm font-semibold">Product</h4>
-                        <ul className="space-y-3 text-sm text-muted-foreground">
-                            {productLinks.map((l) => (
-                                <li key={l.label}>{renderLink(l)}</li>
-                            ))}
-                        </ul>
-                    </div>
+                    <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:w-3/5 md:justify-items-end">
+                        <div className="md:text-left">
+                            <h4 className="mb-4 font-heading text-sm font-semibold">Product</h4>
+                            <ul className="space-y-3 text-sm text-muted-foreground">
+                                {productLinks.map((l) => (
+                                    <li key={l.label}>{renderLink(l)}</li>
+                                ))}
+                            </ul>
+                        </div>
 
-                    <div>
-                        <h4 className="mb-4 font-heading text-sm font-semibold">Teach</h4>
-                        <ul className="space-y-3 text-sm text-muted-foreground">
-                            {teachLinks.map((l) => (
-                                <li key={l.label}>{renderLink(l)}</li>
-                            ))}
-                        </ul>
-                    </div>
+                        <div className="md:text-left">
+                            <h4 className="mb-4 font-heading text-sm font-semibold">Teach</h4>
+                            <ul className="space-y-3 text-sm text-muted-foreground">
+                                {teachLinks.map((l) => (
+                                    <li key={l.label}>{renderLink(l)}</li>
+                                ))}
+                            </ul>
+                        </div>
 
-                    <div>
-                        <h4 className="mb-4 font-heading text-sm font-semibold">Company</h4>
-                        <ul className="space-y-3 text-sm text-muted-foreground">
-                            {companyLinks.map((l) => (
-                                <li key={l.label}>{renderLink(l)}</li>
-                            ))}
-                        </ul>
+                        <div className="md:text-left">
+                            <h4 className="mb-4 font-heading text-sm font-semibold">Company</h4>
+                            <ul className="space-y-3 text-sm text-muted-foreground">
+                                {companyLinks.map((l) => (
+                                    <li key={l.label}>{renderLink(l)}</li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -127,11 +129,11 @@ export function Footer() {
                     <div>
                         © 2026 Learnix. Portfolio project — not affiliated with any commercial LMS.
                     </div>
-                    <div className="flex gap-6">
+                    <div className="flex flex-wrap gap-x-6 gap-y-2">
                         {legalLinks.map((label) => (
-                            <a key={label} href="#" className="hover:text-primary">
+                            <Link key={label} to="/faq" className="hover:text-primary">
                                 {label}
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

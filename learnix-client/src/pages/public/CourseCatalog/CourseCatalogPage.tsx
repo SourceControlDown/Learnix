@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, X } from 'lucide-react';
+import { Search, X, SlidersHorizontal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CourseCard } from '@/components/common/CourseCard';
 import { QueryError } from '@/components/common/QueryError';
@@ -114,6 +114,7 @@ export default function CourseCatalogPage() {
     const [searchInput, setSearchInput] = useState(searchParam);
     const debouncedSearch = useDebounce(searchInput, 350);
     const isFirstMount = useRef(true);
+    const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
     useEffect(() => {
         if (isFirstMount.current) {
@@ -233,8 +234,8 @@ export default function CourseCatalogPage() {
             <div className="min-h-screen bg-background">
                 <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
                     {/* Page title */}
-                    <div className="mb-5">
-                        <h1 className="font-heading text-3xl font-bold">{t('pageTitle')}</h1>
+                    <div className="mb-6 text-center md:mb-8 md:text-left">
+                        <h1 className="font-heading text-3xl font-bold md:text-4xl">{t('pageTitle')}</h1>
                         <p className="mt-1 text-muted-foreground">
                             {debouncedSearch
                                 ? t('resultsCountQuery', {
@@ -246,18 +247,32 @@ export default function CourseCatalogPage() {
                     </div>
 
                     {/* Body: sidebar + courses */}
-                    <div className="grid gap-8 md:grid-cols-[260px_1fr]">
+                    <div className="grid gap-6 md:grid-cols-[260px_1fr] md:gap-8">
+                        {/* Mobile Filters Toggle */}
+                        <div className="md:hidden">
+                            <button
+                                type="button"
+                                onClick={() => setIsFiltersOpen((prev) => !prev)}
+                                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3.5 font-semibold shadow-sm transition-all hover:bg-secondary active:scale-[0.98]"
+                            >
+                                <SlidersHorizontal className="h-5 w-5" />
+                                {t('filters.title')}
+                            </button>
+                        </div>
+
                         {/* Filters */}
-                        <FilterSidebar
-                            categories={categories}
-                            selectedCategoryId={categoryId}
-                            isFree={isFree}
-                            minRating={minRating}
-                            onCategoryChange={setCategoryId}
-                            onPriceChange={setIsFree}
-                            onRatingChange={setMinRating}
-                            onClear={clearAllFilters}
-                        />
+                        <div className={cn("md:block", isFiltersOpen ? "block" : "hidden")}>
+                            <FilterSidebar
+                                categories={categories}
+                                selectedCategoryId={categoryId}
+                                isFree={isFree}
+                                minRating={minRating}
+                                onCategoryChange={setCategoryId}
+                                onPriceChange={setIsFree}
+                                onRatingChange={setMinRating}
+                                onClear={clearAllFilters}
+                            />
+                        </div>
 
                         {/* Main */}
                         <div>

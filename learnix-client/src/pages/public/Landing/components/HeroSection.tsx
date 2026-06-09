@@ -17,8 +17,8 @@ export function HeroSection() {
             </div>
 
             <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-16 px-6 lg:gap-24 md:grid-cols-2">
-                <div className="flex flex-col justify-center">
-                    <h1 className="font-heading text-5xl font-extrabold tracking-tight md:text-6xl lg:text-7xl lg:leading-[1.1]">
+                <div className="flex flex-col justify-center text-center md:text-left">
+                    <h1 className="font-heading text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl lg:leading-[1.1]">
                         {t('hero.heading.line1')}
                         <br />
                         {t('hero.heading.line2')}{' '}
@@ -26,10 +26,10 @@ export function HeroSection() {
                             {t('hero.heading.highlight')}
                         </span>.
                     </h1>
-                    <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground/90 md:text-xl">
+                    <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed text-muted-foreground/90 sm:text-lg md:mx-0 md:text-xl">
                         {t('hero.subtitle')}
                     </p>
-                    <div className="mt-10 flex flex-wrap gap-4">
+                    <div className="mt-10 flex flex-col sm:flex-row flex-wrap justify-center md:justify-start gap-4">
                         <Link
                             to="/courses"
                             className="group relative inline-flex h-14 items-center justify-center overflow-hidden rounded-full bg-primary px-8 font-medium text-primary-foreground shadow-[0_0_40px_-10px_rgba(var(--primary),0.8)] transition-all hover:scale-[1.02] hover:shadow-[0_0_60px_-15px_rgba(var(--primary),0.8)] active:scale-[0.98]"
@@ -57,7 +57,7 @@ export function HeroSection() {
                         </Link>
                     </div>
                     
-                    <div className="mt-12 flex items-center gap-5">
+                    <div className="mt-12 flex flex-col items-center gap-5 sm:flex-row md:justify-start">
                         <div className="flex -space-x-3">
                             {[...Array(4)].map((_, i) => (
                                 <img 
@@ -85,10 +85,10 @@ export function HeroSection() {
                 </div>
 
                 {/* Floating decorative cards — redesigned for better composition */}
-                <div className="relative hidden w-full md:flex md:flex-col md:items-end">
-                    <div className="relative w-[95%] max-w-[540px]">
-                        {/* AI Tutor Card - Top Right Corner */}
-                        <div className="absolute -right-6 -top-8 z-20 w-[290px] rounded-2xl border border-white/10 bg-card/95 p-4 backdrop-blur-xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] transition-transform duration-500 hover:-translate-y-1">
+                <div className="relative mt-16 flex w-full flex-col items-center md:mt-0 md:items-end">
+                    <div className="relative w-full max-w-[540px]">
+                        {/* AI Tutor Card - Top Right Corner - hidden on small mobile to avoid clutter */}
+                        <div className="absolute -right-6 -top-8 z-20 hidden w-[290px] rounded-2xl border border-white/10 bg-card/95 p-4 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-transform duration-500 hover:-translate-y-1 lg:block">
                             <div className="mb-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent">
                                 ✨ {t('hero.aiTutorCard.label')}
                             </div>
@@ -107,7 +107,7 @@ export function HeroSection() {
                         </div>
 
                         {/* Main Video Card */}
-                        <div className="relative z-10 h-[340px] w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-transform duration-700 hover:-translate-y-1">
+                        <div className="relative z-10 h-[240px] sm:h-[340px] w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-transform duration-700 hover:-translate-y-1">
                             <div className="absolute inset-0 bg-[url('/video_thumbnail.png')] bg-cover bg-center" />
                             <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-80" />
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -124,7 +124,7 @@ export function HeroSection() {
                         </div>
 
                         {/* Grouped Bottom Cards */}
-                        <div className="relative z-10 mt-6 grid grid-cols-2 gap-4">
+                        <div className="relative z-10 mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Progress Card */}
                             <div className="rounded-2xl border border-white/10 bg-card/60 p-5 backdrop-blur-xl shadow-lg transition-transform duration-500 hover:-translate-y-1">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">

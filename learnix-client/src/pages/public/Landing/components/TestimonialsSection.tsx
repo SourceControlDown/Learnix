@@ -12,12 +12,9 @@ export function TestimonialsSection() {
     }>;
 
     return (
-        <section className="py-20">
+        <section className="py-12 md:py-20">
             <div className="mx-auto max-w-7xl px-6">
-                <div className="mb-14 text-center">
-                    <span className="text-sm font-semibold text-primary">
-                        {t('testimonials.tag')}
-                    </span>
+                <div className="mb-10 md:mb-14 text-center">
                     <h2 className="mt-2 font-heading text-3xl font-bold md:text-4xl">
                         {t('testimonials.heading')}
                     </h2>

@@ -7,7 +7,7 @@ export function FinalCTASection() {
     return (
         <section className="py-20">
             <div className="mx-auto max-w-5xl px-6">
-                <div className="relative overflow-hidden rounded-3xl bg-foreground p-12 text-center text-background md:p-16">
+                <div className="relative overflow-hidden rounded-3xl bg-foreground p-8 text-center text-background md:p-16">
                     <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
                     <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
 
@@ -20,7 +20,7 @@ export function FinalCTASection() {
                         <p className="mx-auto mt-5 max-w-xl text-lg text-background/70">
                             {t('finalCta.subtitle')}
                         </p>
-                        <div className="mt-8 flex flex-wrap justify-center gap-3">
+                        <div className="mt-8 flex flex-col sm:flex-row flex-wrap justify-center gap-3">
                             <Link
                                 to="/register"
                                 className="rounded-lg bg-primary px-8 py-3.5 font-medium text-primary-foreground transition-colors hover:bg-primary/90"

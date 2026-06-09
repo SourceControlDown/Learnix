@@ -12,7 +12,7 @@ export function InstructorsCTASection() {
             className="bg-gradient-to-br from-accent/10 via-background to-primary/10 py-20"
         >
             <div className="mx-auto max-w-7xl px-6">
-                <div className="grid items-center gap-12 rounded-3xl border border-border bg-card p-10 shadow-xl md:grid-cols-2 md:p-16">
+                <div className="grid items-center gap-12 rounded-3xl border border-border bg-card p-6 shadow-xl md:grid-cols-2 md:p-16">
                     <div>
                         <span className="text-sm font-semibold text-accent">
                             {t('instructorsCta.tag')}
@@ -45,16 +45,16 @@ export function InstructorsCTASection() {
                             </div>
                         </div>
 
-                        <div className="mt-8 flex gap-3">
+                        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                             <Link
                                 to="/become-instructor"
-                                className="rounded-lg bg-foreground px-6 py-3 font-medium text-background hover:opacity-90"
+                                className="rounded-lg bg-foreground px-6 py-3 text-center font-medium text-background hover:opacity-90"
                             >
                                 {t('instructorsCta.cta.primary')}
                             </Link>
                             <a
                                 href="#"
-                                className="rounded-lg border border-border px-6 py-3 font-medium hover:bg-secondary"
+                                className="rounded-lg border border-border px-6 py-3 text-center font-medium hover:bg-secondary"
                             >
                                 {t('instructorsCta.cta.secondary')}
                             </a>
