@@ -299,7 +299,11 @@ export default function ProfilePage() {
                     <div className="mt-6 flex justify-end">
                         <button
                             type="submit"
-                            disabled={updateProfile.isPending || isUploading}
+                            disabled={
+                                updateProfile.isPending ||
+                                isUploading ||
+                                (!form.formState.isDirty && avatarBlobPath === null)
+                            }
                             className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                         >
                             {updateProfile.isPending ? t('actions.saving') : t('actions.save')}

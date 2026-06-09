@@ -185,7 +185,7 @@ export default function NotificationsPage() {
                         {t('emptyMessages')}
                     </p>
                 ) : (
-                    <div className="divide-y divide-border">
+                    <div className="max-h-72 divide-y divide-border overflow-y-auto">
                         {conversations.map((c) => (
                             <ConversationItem key={c.id} conversation={c} />
                         ))}
