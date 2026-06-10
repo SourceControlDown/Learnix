@@ -35,9 +35,7 @@ export default function CourseDetailPage() {
     const addToWishlist = useAddToWishlist();
     const removeFromWishlist = useRemoveFromWishlist();
 
-    const isEnrolled = enrollmentsData?.items.some(
-        (e) => e.courseId === courseId && e.enrollmentStatus === 'Active',
-    );
+    const isEnrolled = enrollmentsData?.items.some((e) => e.courseId === courseId);
 
     const isOwnCourse = !!user && !!course && user.id === course.instructorId;
     const inWishlist = isInWishlist(courseId!);
@@ -136,8 +134,8 @@ export default function CourseDetailPage() {
                                 <div className="flex items-center gap-1">
                                     <Star className="h-4 w-4 fill-warning text-warning" />
                                     <span className="font-medium text-foreground">
-                                        {course.enrollmentsCount > 0
-                                            ? (Math.random() * 1.5 + 3.5).toFixed(1)
+                                        {course.reviewsCount > 0
+                                            ? course.averageRating.toFixed(1)
                                             : '—'}
                                     </span>
                                 </div>
@@ -179,8 +177,8 @@ export default function CourseDetailPage() {
                         {/* Reviews */}
                         <ReviewsList
                             reviews={reviewsData?.items ?? []}
-                            averageRating={0}
-                            totalCount={reviewsData?.totalCount ?? 0}
+                            averageRating={course.averageRating}
+                            totalCount={course.reviewsCount}
                         />
 
                         {/* Review form */}

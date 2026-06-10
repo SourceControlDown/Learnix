@@ -46,6 +46,8 @@ public sealed class GetCourseByIdQueryHandler(
             course.Price,
             course.Price == 0m,
             course.EnrollmentsCount,
+            course.AverageRating,
+            course.ReviewsCount,
             course.Tags.ToList(),
             course.Sections
                 .OrderBy(s => s.DisplayOrder)

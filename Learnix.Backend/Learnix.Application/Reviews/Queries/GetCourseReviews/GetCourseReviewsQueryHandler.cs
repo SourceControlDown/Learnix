@@ -1,5 +1,6 @@
 using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
+using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Common.Pagination;
@@ -14,7 +15,8 @@ namespace Learnix.Application.Reviews.Queries.GetCourseReviews;
 
 public sealed class GetCourseReviewsQueryHandler(
     ICourseRepository courseRepository,
-    ICourseReviewRepository reviewRepository)
+    ICourseReviewRepository reviewRepository,
+    IBlobStorageService blobStorage)
     : IRequestHandler<GetCourseReviewsQuery, Result<PaginatedResult<CourseReviewDto>>>
 {
     public async Task<Result<PaginatedResult<CourseReviewDto>>> Handle(
@@ -44,7 +46,9 @@ public sealed class GetCourseReviewsQueryHandler(
             r.StudentId,
             r.Student!.FirstName,
             r.Student.LastName,
-            r.Student.AvatarBlobPath,
+            r.Student.AvatarBlobPath is not null
+                ? blobStorage.GenerateReadUrl(r.Student.AvatarBlobPath, TimeSpan.FromHours(24))
+                : null,
             r.Rating,
             r.Comment,
             r.CreatedAt,
