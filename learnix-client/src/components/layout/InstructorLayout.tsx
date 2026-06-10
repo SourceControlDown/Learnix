@@ -1,4 +1,5 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AiChatWidget } from '@/components/common/AiChatWidget/AiChatWidget';
 import { useNotificationsHub } from '@/hooks/useNotificationsHub';
@@ -10,15 +11,21 @@ import {
     TrendingUp,
     ArrowLeft,
     LogOut,
+    Sun,
+    Moon,
+    Menu,
+    X,
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/store/auth.store';
+import { useThemeStore } from '@/store/theme.store';
 import { authApi } from '@/api/auth.api';
 import { messagesApi } from '@/api/messages.api';
 import { queryKeys } from '@/api/queryKeys';
 import { Logo } from '@/components/common/Logo';
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 
 export function InstructorLayout() {
     const { t } = useTranslation('instructor');
@@ -26,6 +33,13 @@ export function InstructorLayout() {
     const navigate = useNavigate();
     const { logout } = useAuthStore();
     const queryClient = useQueryClient();
+    const { theme, toggleTheme } = useThemeStore();
+    const location = useLocation();
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    useEffect(() => {
+        setMobileOpen(false);
+    }, [location.pathname]);
 
     const { data: unreadData } = useQuery({
         queryKey: queryKeys.messages.unreadCount(),
@@ -72,10 +86,34 @@ export function InstructorLayout() {
             <Helmet>
                 <meta name="robots" content="noindex,nofollow" />
             </Helmet>
-            <div className="grid h-screen grid-cols-[240px_1fr] overflow-hidden bg-background">
+            <div className="flex h-screen flex-col overflow-hidden bg-background md:grid md:grid-cols-[240px_1fr]">
+                {/* Mobile header */}
+                <div className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 md:hidden">
+                    <Link
+                        to="/"
+                        className="flex items-center gap-2 font-heading font-bold text-foreground"
+                    >
+                        <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                            <Logo className="h-5 w-5" />
+                        </div>
+                        <span className="tracking-tight">Learnix</span>
+                    </Link>
+                    <button
+                        onClick={() => setMobileOpen(!mobileOpen)}
+                        className="p-2 text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+                    </button>
+                </div>
+
                 {/* Sidebar */}
-                <aside className="flex flex-col border-r border-border bg-card">
-                    <div className="flex items-center gap-2 px-4 py-5">
+                <aside 
+                    className={cn(
+                        "fixed inset-0 top-14 z-40 flex flex-col border-r border-border bg-card transition-transform duration-200 md:static md:translate-x-0 md:top-0",
+                        mobileOpen ? "translate-x-0" : "-translate-x-full"
+                    )}
+                >
+                    <div className="hidden items-center gap-2 px-4 py-5 md:flex">
                         <Link
                             to="/"
                             className="flex items-center gap-2.5 font-heading font-bold text-foreground transition-opacity hover:opacity-90"
@@ -138,6 +176,17 @@ export function InstructorLayout() {
                                 {t('navSignOut')}
                             </button>
                         </nav>
+                        <div className="mt-4 flex items-center justify-between px-2">
+                            <LanguageSwitcher />
+                            <button
+                                type="button"
+                                onClick={toggleTheme}
+                                aria-label="Toggle theme"
+                                className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                            >
+                                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                            </button>
+                        </div>
                     </div>
                 </aside>
 
