@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { queryKeys } from '@/api/queryKeys';
 import { messagesApi } from '@/api/messages.api';
+import { ChevronLeft } from 'lucide-react';
 import { ChatMessage } from '@/components/common/ChatMessage';
 import { MessageInput } from '@/components/common/MessageInput';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -10,9 +11,10 @@ import type { ConversationSummary } from '@/types/message.types';
 
 interface ConversationViewProps {
     conversation: ConversationSummary;
+    onBack?: () => void;
 }
 
-export function ConversationView({ conversation }: ConversationViewProps) {
+export function ConversationView({ conversation, onBack }: ConversationViewProps) {
     const { t } = useTranslation('messages');
     const queryClient = useQueryClient();
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -68,9 +70,21 @@ export function ConversationView({ conversation }: ConversationViewProps) {
 
     return (
         <div className="flex h-full flex-col">
-            <div className="border-b border-border px-4 py-3">
-                <p className="font-semibold text-foreground">{conversation.otherUserName}</p>
-                <p className="text-sm text-muted-foreground">{conversation.courseName}</p>
+            <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+                {onBack && (
+                    <button
+                        type="button"
+                        onClick={onBack}
+                        className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+                        aria-label="Back to conversations"
+                    >
+                        <ChevronLeft className="h-5 w-5" />
+                    </button>
+                )}
+                <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-foreground">{conversation.otherUserName}</p>
+                    <p className="truncate text-sm text-muted-foreground">{conversation.courseName}</p>
+                </div>
             </div>
 
             <div className="flex-1 overflow-y-auto">
