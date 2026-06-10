@@ -80,7 +80,7 @@ internal sealed class RefreshTokenCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var avatarUrl = user.AvatarBlobPath is not null
-            ? blobStorage.GenerateReadUrl(user.AvatarBlobPath, TimeSpan.FromHours(24))
+            ? blobStorage.GetPublicUrl(user.AvatarBlobPath)
             : null;
 
         return Result.Ok(new LoginResponse(

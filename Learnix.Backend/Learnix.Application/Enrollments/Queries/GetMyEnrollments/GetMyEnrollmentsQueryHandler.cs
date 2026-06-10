@@ -50,7 +50,7 @@ public sealed class GetMyEnrollmentsQueryHandler(
             e.EnrolledAt,
             e.CompletedAt,
             e.Course.CoverBlobPath is not null
-                ? blobStorage.GenerateReadUrl(e.Course.CoverBlobPath, TimeSpan.FromHours(24))
+                ? blobStorage.GetPublicUrl(e.Course.CoverBlobPath)
                 : null));
 
         return Result.Ok(PaginatedResult<EnrolledCourseDto>.Create(

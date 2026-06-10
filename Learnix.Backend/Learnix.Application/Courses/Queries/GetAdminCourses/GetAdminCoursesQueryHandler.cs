@@ -67,7 +67,7 @@ public sealed class GetAdminCoursesQueryHandler(
                 c.Title,
                 c.Description,
                 c.CoverBlobPath is not null
-                    ? blobStorage.GenerateReadUrl(c.CoverBlobPath, TimeSpan.FromHours(24))
+                    ? blobStorage.GetPublicUrl(c.CoverBlobPath)
                     : null,
                 c.Price,
                 c.Price == 0m,

@@ -47,7 +47,7 @@ public sealed class GetCourseReviewsQueryHandler(
             r.Student!.FirstName,
             r.Student.LastName,
             r.Student.AvatarBlobPath is not null
-                ? blobStorage.GenerateReadUrl(r.Student.AvatarBlobPath, TimeSpan.FromHours(24))
+                ? blobStorage.GetPublicUrl(r.Student.AvatarBlobPath)
                 : null,
             r.Rating,
             r.Comment,

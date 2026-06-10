@@ -41,7 +41,7 @@ public sealed class GetCourseByIdQueryHandler(
             course.Title,
             course.Description,
             course.CoverBlobPath is not null
-                ? blobStorage.GenerateReadUrl(course.CoverBlobPath, TimeSpan.FromHours(24))
+                ? blobStorage.GetPublicUrl(course.CoverBlobPath)
                 : null,
             course.Price,
             course.Price == 0m,

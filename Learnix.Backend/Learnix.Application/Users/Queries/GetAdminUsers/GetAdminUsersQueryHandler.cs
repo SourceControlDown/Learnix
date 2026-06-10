@@ -49,7 +49,7 @@ internal sealed class GetAdminUsersQueryHandler(
             user.FirstName,
             user.LastName,
             user.AvatarBlobPath is not null
-                ? blobStorage.GenerateReadUrl(user.AvatarBlobPath, TimeSpan.FromHours(24))
+                ? blobStorage.GetPublicUrl(user.AvatarBlobPath)
                 : null,
             roleMap.TryGetValue(user.Id, out var roles) ? roles : [],
             user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow,

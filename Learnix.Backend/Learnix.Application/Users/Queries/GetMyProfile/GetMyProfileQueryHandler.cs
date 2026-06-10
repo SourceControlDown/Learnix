@@ -33,7 +33,7 @@ internal sealed class GetMyProfileQueryHandler(
             user.LastName,
             user.Bio,
             user.AvatarBlobPath is not null
-                ? blobStorage.GenerateReadUrl(user.AvatarBlobPath, TimeSpan.FromHours(24))
+                ? blobStorage.GetPublicUrl(user.AvatarBlobPath)
                 : null));
     }
 }

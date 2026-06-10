@@ -38,7 +38,7 @@ public sealed class GetMyCertificatesQueryHandler(
                 : null;
 
             string? coverUrl = c.Course!.CoverBlobPath is not null
-                ? blobStorageService.GenerateReadUrl(c.Course.CoverBlobPath, TimeSpan.FromHours(24))
+                ? blobStorageService.GetPublicUrl(c.Course.CoverBlobPath)
                 : null;
 
             return new MyCertificateDto(

@@ -52,7 +52,7 @@ internal sealed class GoogleLoginCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var avatarUrl = authInfo.AvatarBlobPath is not null
-            ? blobStorage.GenerateReadUrl(authInfo.AvatarBlobPath, TimeSpan.FromHours(24))
+            ? blobStorage.GetPublicUrl(authInfo.AvatarBlobPath)
             : null;
 
         return Result.Ok(new LoginResponse(
