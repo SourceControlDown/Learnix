@@ -1,5 +1,6 @@
 services:
   api:
+    profiles: ["apps"]
     build:
       context: ./Learnix.Backend
       dockerfile: Dockerfile
@@ -21,6 +22,7 @@ services:
         condition: service_healthy
 
   client:
+    profiles: ["apps"]
     build:
       context: ./learnix-client
       dockerfile: Dockerfile
