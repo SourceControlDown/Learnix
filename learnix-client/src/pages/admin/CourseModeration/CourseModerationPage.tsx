@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { EyeOff, Trash2, RefreshCw } from 'lucide-react';
+import { EyeOff, Eye, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/api/admin.api';
@@ -19,6 +19,7 @@ const STATUS_STYLES: Record<CourseStatus, string> = {
 };
 
 type PendingAction =
+    | { type: 'publish'; course: ManageCourseCardDto }
     | { type: 'unpublish'; course: ManageCourseCardDto }
     | { type: 'delete'; course: ManageCourseCardDto }
     | { type: 'recover'; course: ManageCourseCardDto };
@@ -62,6 +63,15 @@ export default function CourseModerationPage() {
         qc.invalidateQueries({ queryKey: queryKeys.admin.coursesList() });
     }
 
+    const publishMutation = useMutation({
+        mutationFn: (id: string) => adminApi.publishCourse(id),
+        onSuccess: () => {
+            toast.success(t('toastPublished'));
+            invalidateCourses();
+            setPending(null);
+        },
+    });
+
     const unpublishMutation = useMutation({
         mutationFn: (id: string) => adminApi.unpublishCourse(id),
         onSuccess: () => {
@@ -94,11 +104,12 @@ export default function CourseModerationPage() {
     const currentPage = Math.floor(skip / PAGE_SIZE) + 1;
 
     const isAnyPending =
-        unpublishMutation.isPending || deleteMutation.isPending || recoverMutation.isPending;
+        publishMutation.isPending || unpublishMutation.isPending || deleteMutation.isPending || recoverMutation.isPending;
 
     function handleConfirm() {
         if (!pending) return;
-        if (pending.type === 'unpublish') unpublishMutation.mutate(pending.course.id);
+        if (pending.type === 'publish') publishMutation.mutate(pending.course.id);
+        else if (pending.type === 'unpublish') unpublishMutation.mutate(pending.course.id);
         else if (pending.type === 'delete') deleteMutation.mutate(pending.course.id);
         else if (pending.type === 'recover') recoverMutation.mutate(pending.course.id);
     }
@@ -110,6 +121,13 @@ export default function CourseModerationPage() {
         variant: 'destructive' | 'warning' | 'default';
     } | null {
         if (!pending) return null;
+        if (pending.type === 'publish')
+            return {
+                title: t('btnPublish'),
+                description: t('confirmPublish', { title: pending.course.title }),
+                confirmLabel: t('btnPublish'),
+                variant: 'default',
+            };
         if (pending.type === 'unpublish')
             return {
                 title: t('btnUnpublish'),
@@ -258,6 +276,17 @@ export default function CourseModerationPage() {
                                     {/* Actions */}
                                     <td className="px-5 py-3">
                                         <div className="flex items-center justify-end gap-1">
+                                            {!c.isDeleted && c.status === 'Draft' && (
+                                                <button
+                                                    onClick={() =>
+                                                        setPending({ type: 'publish', course: c })
+                                                    }
+                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
+                                                    title={t('btnPublish')}
+                                                >
+                                                    <Eye size={14} />
+                                                </button>
+                                            )}
                                             {!c.isDeleted && c.status === 'Published' && (
                                                 <button
                                                     onClick={() =>

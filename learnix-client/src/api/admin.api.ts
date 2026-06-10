@@ -53,6 +53,9 @@ export const adminApi = {
             .get<PaginatedResult<ManageCourseCardDto>>('/admin/courses', { params })
             .then((r) => r.data),
 
+    publishCourse: (courseId: string) =>
+        api.post(`/admin/courses/${courseId}/publish`).then((r) => r.data),
+
     unpublishCourse: (courseId: string) =>
         api.post(`/admin/courses/${courseId}/unpublish`).then((r) => r.data),
 
