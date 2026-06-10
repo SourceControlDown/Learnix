@@ -18,6 +18,7 @@ interface CourseSidebarProps {
     courseId: string;
     totalLessons: number;
     completedLessons: number;
+    onCloseMobile?: () => void;
 }
 
 const lessonTypeIcon = {
@@ -32,6 +33,7 @@ export function CourseSidebar({
     courseId,
     totalLessons,
     completedLessons,
+    onCloseMobile,
 }: CourseSidebarProps) {
     const { t } = useTranslation('lessonPlayer');
     const progressPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
@@ -61,14 +63,25 @@ export function CourseSidebar({
     }
 
     return (
-        <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-border bg-card">
+        <aside className="flex h-full w-72 shrink-0 flex-col overflow-hidden border-r border-border bg-card">
             <div className="border-b border-border p-4">
-                <p className="mb-2 text-xs font-medium text-muted-foreground">
-                    {t('sidebar.progressLabel', {
-                        completed: completedLessons,
-                        total: totalLessons,
-                    })}
-                </p>
+                <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-medium text-muted-foreground">
+                        {t('sidebar.progressLabel', {
+                            completed: completedLessons,
+                            total: totalLessons,
+                        })}
+                    </p>
+                    {onCloseMobile && (
+                        <button
+                            onClick={onCloseMobile}
+                            className="lg:hidden rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        >
+                            <span className="sr-only">Close sidebar</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                    )}
+                </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
                     <div
                         className="h-full rounded-full bg-primary transition-all duration-300"
