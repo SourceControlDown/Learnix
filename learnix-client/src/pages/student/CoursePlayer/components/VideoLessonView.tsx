@@ -19,7 +19,7 @@ export function VideoLessonView({ lesson, courseId }: VideoLessonViewProps) {
                 <video
                     key={data.videoUrl}
                     controls
-                    className="w-full aspect-video rounded-xl bg-black shadow-lg"
+                    className="aspect-video w-full rounded-xl bg-black shadow-lg"
                     preload="metadata"
                 >
                     <source src={data.videoUrl} />

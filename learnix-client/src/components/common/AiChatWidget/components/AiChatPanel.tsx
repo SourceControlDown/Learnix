@@ -58,11 +58,11 @@ export function AiChatPanel({ isOpen, onClose, isExpanded, onToggleExpand }: AiC
                 {/* Header */}
                 <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2.5">
                     <div className="flex items-center gap-3">
-                        <div className="grid h-8 w-8 place-items-center rounded-full bg-accent/20 text-accent text-sm">
+                        <div className="grid h-8 w-8 place-items-center rounded-full bg-accent/20 text-sm text-accent">
                             ✨
                         </div>
                         <div>
-                            <p className="font-heading text-sm font-semibold text-foreground leading-none">
+                            <p className="font-heading text-sm font-semibold leading-none text-foreground">
                                 {t('title')}
                             </p>
                             <p className="mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground">

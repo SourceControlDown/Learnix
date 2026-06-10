@@ -10,7 +10,7 @@ export function FaqSection() {
     }>;
 
     return (
-        <section id="faq" className="pt-10 pb-20">
+        <section id="faq" className="pb-20 pt-10">
             <div className="mx-auto max-w-3xl px-6">
                 <div className="mb-14 text-center">
                     <h2 className="font-heading text-3xl font-bold md:text-4xl">
@@ -29,10 +29,10 @@ export function FaqSection() {
                         <details
                             key={i}
                             open={item.defaultOpen}
-                            className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm transition-all hover:border-primary/30 shadow-sm"
+                            className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/40 shadow-sm backdrop-blur-sm transition-all hover:border-primary/30"
                         >
                             <summary className="flex cursor-pointer items-center justify-between p-6 transition-colors hover:bg-secondary/20">
-                                <span className="font-heading text-[15px] font-semibold text-foreground/90 transition-colors group-hover:text-primary pr-6">
+                                <span className="pr-6 font-heading text-[15px] font-semibold text-foreground/90 transition-colors group-hover:text-primary">
                                     {item.q}
                                 </span>
                                 <span className="faq-icon grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xl font-light text-primary transition-all group-hover:bg-primary/20">

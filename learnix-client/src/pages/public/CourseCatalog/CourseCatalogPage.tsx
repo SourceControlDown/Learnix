@@ -235,7 +235,9 @@ export default function CourseCatalogPage() {
                 <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
                     {/* Page title */}
                     <div className="mb-6 text-center md:mb-8 md:text-left">
-                        <h1 className="font-heading text-3xl font-bold md:text-4xl">{t('pageTitle')}</h1>
+                        <h1 className="font-heading text-3xl font-bold md:text-4xl">
+                            {t('pageTitle')}
+                        </h1>
                         <p className="mt-1 text-muted-foreground">
                             {debouncedSearch
                                 ? t('resultsCountQuery', {
@@ -261,7 +263,7 @@ export default function CourseCatalogPage() {
                         </div>
 
                         {/* Filters */}
-                        <div className={cn("md:block", isFiltersOpen ? "block" : "hidden")}>
+                        <div className={cn('md:block', isFiltersOpen ? 'block' : 'hidden')}>
                             <FilterSidebar
                                 categories={categories}
                                 selectedCategoryId={categoryId}

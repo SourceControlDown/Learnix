@@ -81,7 +81,7 @@ export function CategoriesSection({
     };
 
     return (
-        <section id="categories" className="pt-20 pb-12">
+        <section id="categories" className="pb-12 pt-20">
             <div className="mx-auto max-w-7xl px-6">
                 <div className="mb-10 flex items-end justify-between">
                     <div>

@@ -20,7 +20,7 @@ export function FinalCTASection() {
                         <p className="mx-auto mt-5 max-w-xl text-lg text-background/70">
                             {t('finalCta.subtitle')}
                         </p>
-                        <div className="mt-8 flex flex-col sm:flex-row flex-wrap justify-center gap-3">
+                        <div className="mt-8 flex flex-col flex-wrap justify-center gap-3 sm:flex-row">
                             <Link
                                 to="/register"
                                 className="rounded-lg bg-primary px-8 py-3.5 font-medium text-primary-foreground transition-colors hover:bg-primary/90"

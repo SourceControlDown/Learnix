@@ -15,9 +15,7 @@ export function StudentDashboardLayout() {
         <div className="flex min-h-full flex-col bg-background">
             <div className="bg-zinc-900 text-zinc-50 dark:bg-zinc-950">
                 <div className="mx-auto max-w-7xl px-4 pt-12 sm:px-6">
-                    <h1 className="font-heading text-3xl font-bold md:text-4xl">
-                        {t('title')}
-                    </h1>
+                    <h1 className="font-heading text-3xl font-bold md:text-4xl">{t('title')}</h1>
                     <nav className="mt-8 flex gap-6 overflow-x-auto text-sm font-medium">
                         {tabs.map((tab) => (
                             <NavLink

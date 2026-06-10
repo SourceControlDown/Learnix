@@ -104,7 +104,10 @@ export default function CourseModerationPage() {
     const currentPage = Math.floor(skip / PAGE_SIZE) + 1;
 
     const isAnyPending =
-        publishMutation.isPending || unpublishMutation.isPending || deleteMutation.isPending || recoverMutation.isPending;
+        publishMutation.isPending ||
+        unpublishMutation.isPending ||
+        deleteMutation.isPending ||
+        recoverMutation.isPending;
 
     function handleConfirm() {
         if (!pending) return;

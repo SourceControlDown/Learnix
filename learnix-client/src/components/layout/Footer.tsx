@@ -67,11 +67,16 @@ export function Footer() {
             <div className="mx-auto max-w-7xl px-6">
                 <div className="flex flex-col gap-10 border-b border-border pb-12 md:flex-row md:justify-between">
                     <div className="max-w-xs md:w-2/5">
-                        <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
+                        <Link
+                            to="/"
+                            className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
+                        >
                             <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                                 <Logo className="h-6 w-6" />
                             </div>
-                            <span className="font-heading text-lg font-bold tracking-tight">Learnix</span>
+                            <span className="font-heading text-lg font-bold tracking-tight">
+                                Learnix
+                            </span>
                         </Link>
                         <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
                             A modern learning platform built around the way developers actually

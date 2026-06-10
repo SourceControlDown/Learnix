@@ -87,10 +87,10 @@ export function AdminLayout() {
                 </div>
 
                 {/* Sidebar */}
-                <aside 
+                <aside
                     className={cn(
-                        "fixed inset-0 top-14 z-40 flex flex-col overflow-y-auto border-r border-border bg-card transition-transform duration-200 md:static md:translate-x-0 md:top-0",
-                        mobileOpen ? "translate-x-0" : "-translate-x-full"
+                        'fixed inset-0 top-14 z-40 flex flex-col overflow-y-auto border-r border-border bg-card transition-transform duration-200 md:static md:top-0 md:translate-x-0',
+                        mobileOpen ? 'translate-x-0' : '-translate-x-full',
                     )}
                 >
                     <div className="hidden items-center gap-2 px-4 py-5 md:flex">

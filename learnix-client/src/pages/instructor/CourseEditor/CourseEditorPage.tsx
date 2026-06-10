@@ -138,7 +138,7 @@ export default function CourseEditorPage() {
                                     <button
                                         onClick={() => setShowUnpublishConfirm(true)}
                                         disabled={unpublishCourse.isPending}
-                                        className="rounded-lg bg-warning px-4 py-1.5 text-sm font-medium text-warning-foreground transition-colors hover:bg-warning/90 disabled:opacity-60"
+                                        className="text-warning-foreground rounded-lg bg-warning px-4 py-1.5 text-sm font-medium transition-colors hover:bg-warning/90 disabled:opacity-60"
                                     >
                                         {t('btnUnpublishCourse')}
                                     </button>
@@ -146,7 +146,7 @@ export default function CourseEditorPage() {
                                     <button
                                         onClick={() => setShowPublishConfirm(true)}
                                         disabled={publishCourse.isPending}
-                                        className="rounded-lg bg-success px-4 py-1.5 text-sm font-medium text-success-foreground transition-colors hover:bg-success/90 disabled:opacity-60"
+                                        className="text-success-foreground rounded-lg bg-success px-4 py-1.5 text-sm font-medium transition-colors hover:bg-success/90 disabled:opacity-60"
                                     >
                                         {t('btnPublishCourse')}
                                     </button>

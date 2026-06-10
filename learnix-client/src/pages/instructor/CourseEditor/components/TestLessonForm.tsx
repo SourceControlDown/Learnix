@@ -33,15 +33,14 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
             passingThreshold: lesson?.passingThreshold ?? 70,
             attemptLimit: lesson?.attemptLimit ?? undefined,
             cooldownMinutes: lesson?.cooldownMinutes ?? undefined,
-            questions: lesson?.questions
-                ?.map((q) => ({
-                    text: q.text,
-                    type: q.type,
-                    options: q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
-                    correctAnswer: q.correctAnswer ?? '',
-                    ignoreCase: q.ignoreCase ?? false,
-                    allowFuzzy: q.allowFuzzy ?? false,
-                })) ?? [
+            questions: lesson?.questions?.map((q) => ({
+                text: q.text,
+                type: q.type,
+                options: q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
+                correctAnswer: q.correctAnswer ?? '',
+                ignoreCase: q.ignoreCase ?? false,
+                allowFuzzy: q.allowFuzzy ?? false,
+            })) ?? [
                 {
                     text: '',
                     type: 'SingleChoice',
@@ -236,11 +235,20 @@ function QuestionEditor({
                     />
                     <select
                         {...register(`questions.${qIdx}.type`)}
-                        className="cursor-pointer appearance-none rounded-lg border border-input bg-background py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%20stroke%3D%22%236b7280%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22M6%208l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px_18px] bg-[position:right_8px_center] bg-no-repeat"
+                        className="cursor-pointer appearance-none rounded-lg border border-input bg-background bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%20stroke%3D%22%236b7280%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22M6%208l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px_18px] bg-[position:right_8px_center] bg-no-repeat py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     >
-                        <option value="SingleChoice" className="bg-background text-foreground py-1">{t('questionTypeSingle')}</option>
-                        <option value="MultipleChoice" className="bg-background text-foreground py-1">{t('questionTypeMultiple')}</option>
-                        <option value="TextInput" className="bg-background text-foreground py-1">{t('questionTypeTextInput')}</option>
+                        <option value="SingleChoice" className="bg-background py-1 text-foreground">
+                            {t('questionTypeSingle')}
+                        </option>
+                        <option
+                            value="MultipleChoice"
+                            className="bg-background py-1 text-foreground"
+                        >
+                            {t('questionTypeMultiple')}
+                        </option>
+                        <option value="TextInput" className="bg-background py-1 text-foreground">
+                            {t('questionTypeTextInput')}
+                        </option>
                     </select>
                     <button
                         type="button"
@@ -298,7 +306,8 @@ function QuestionEditor({
                 ) : (
                     <>
                         {optionFields.map((optField, oIdx) => {
-                            const isCorrectField = `questions.${qIdx}.options.${oIdx}.isCorrect` as const;
+                            const isCorrectField =
+                                `questions.${qIdx}.options.${oIdx}.isCorrect` as const;
                             return (
                                 <div key={optField.id} className="flex items-center gap-2">
                                     {qType === 'SingleChoice' ? (

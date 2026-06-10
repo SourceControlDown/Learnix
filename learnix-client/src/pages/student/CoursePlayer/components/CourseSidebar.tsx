@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import {
-    CheckCircle2,
-    PlayCircle,
-    FileText,
-    ClipboardList,
-    ChevronDown,
-} from 'lucide-react';
+import { CheckCircle2, PlayCircle, FileText, ClipboardList, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import type { SectionProgressDto } from '@/types/progress.types';
@@ -62,17 +56,30 @@ export function CourseSidebar({
 
     return (
         <aside className="flex h-full w-72 shrink-0 flex-col overflow-hidden border-r border-border bg-card">
-            <div className="border-b border-border p-4 flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-border p-4">
                 <span className="text-sm font-semibold uppercase tracking-wider text-foreground">
                     {t('sidebar.courseContent')}
                 </span>
                 {onCloseMobile && (
                     <button
                         onClick={onCloseMobile}
-                        className="lg:hidden rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        className="rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground lg:hidden"
                     >
                         <span className="sr-only">Close sidebar</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <path d="M18 6 6 18" />
+                            <path d="m6 6 12 12" />
+                        </svg>
                     </button>
                 )}
             </div>
@@ -90,7 +97,7 @@ export function CourseSidebar({
                                 onClick={() => toggleSection(section.sectionId)}
                                 className="flex w-full items-center justify-between px-4 py-2 text-left hover:bg-secondary/50"
                             >
-                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex-1">
+                                <span className="flex-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     {t('sidebar.sectionPrefix')} {sIdx + 1} · {section.title}
                                 </span>
                                 <div className="flex items-center gap-2">
@@ -130,7 +137,7 @@ export function CourseSidebar({
                                                         )}
                                                     >
                                                         <Icon className="h-4 w-4 shrink-0 opacity-60" />
-                                                        <span className="line-clamp-2 leading-snug flex-1">
+                                                        <span className="line-clamp-2 flex-1 leading-snug">
                                                             {lesson.title}
                                                         </span>
                                                         {lesson.isCompleted && (

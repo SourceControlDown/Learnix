@@ -104,7 +104,7 @@ export default function CoursePlayerPage() {
 
                 <div className="flex shrink-0 items-center gap-2">
                     {course && (
-                        <div className="hidden sm:block border-r border-border pr-2 mr-1">
+                        <div className="mr-1 hidden border-r border-border pr-2 sm:block">
                             <CourseCertificateDropdown
                                 courseId={courseId!}
                                 completedLessons={progress?.completedLessons ?? 0}
@@ -132,17 +132,19 @@ export default function CoursePlayerPage() {
             <div className="relative flex min-h-0 flex-1">
                 {/* Mobile sidebar overlay */}
                 {isSidebarOpen && (
-                    <div 
+                    <div
                         className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
                         onClick={() => setIsSidebarOpen(false)}
                     />
                 )}
 
                 {/* Sidebar */}
-                <div className={cn(
-                    "fixed inset-y-0 left-0 z-50 transform bg-card transition-transform duration-300 lg:static lg:z-0 lg:translate-x-0",
-                    isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-                )}>
+                <div
+                    className={cn(
+                        'fixed inset-y-0 left-0 z-50 transform bg-card transition-transform duration-300 lg:static lg:z-0 lg:translate-x-0',
+                        isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+                    )}
+                >
                     <CourseSidebar
                         sections={progress?.sections ?? []}
                         currentLessonId={lessonId!}
@@ -190,36 +192,40 @@ export default function CoursePlayerPage() {
                     </main>
 
                     {/* Bottom navigation bar */}
-                    <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card px-4 sm:px-6 py-3">
+                    <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 sm:px-6">
                         {/* Prev */}
-                        <div className="w-auto sm:w-32 order-1">
+                        <div className="order-1 w-auto sm:w-32">
                             {prevLesson && (
                                 <Link
                                     to={`/courses/${courseId}/learn/${prevLesson.lessonId}`}
                                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                 >
                                     <ChevronLeft className="h-4 w-4" />
-                                    <span className="hidden sm:inline">{t('actions.previousLesson')}</span>
+                                    <span className="hidden sm:inline">
+                                        {t('actions.previousLesson')}
+                                    </span>
                                     <span className="sm:hidden">Prev</span>
                                 </Link>
                             )}
                         </div>
 
                         {/* Mark complete — hidden for test lessons (completed via submission) */}
-                        <div className="order-3 sm:order-2 flex-1 sm:flex-none flex justify-center w-full sm:w-auto mt-2 sm:mt-0">
+                        <div className="order-3 mt-2 flex w-full flex-1 justify-center sm:order-2 sm:mt-0 sm:w-auto sm:flex-none">
                             {currentLesson && currentLesson.lessonType !== 'Test' && (
                                 <button
                                     type="button"
                                     onClick={handleMarkComplete}
                                     disabled={currentLesson.isCompleted || markComplete.isPending}
                                     className={cn(
-                                        'inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-5 py-2.5 sm:py-2 text-sm font-medium transition-colors',
+                                        'inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-colors sm:w-auto sm:py-2',
                                         currentLesson.isCompleted
                                             ? 'cursor-default bg-success/15 text-success'
                                             : 'bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60',
                                     )}
                                 >
-                                    {currentLesson.isCompleted && <CheckCircle2 className="h-4 w-4" />}
+                                    {currentLesson.isCompleted && (
+                                        <CheckCircle2 className="h-4 w-4" />
+                                    )}
                                     {currentLesson.isCompleted
                                         ? t('actions.completed')
                                         : markComplete.isPending
@@ -231,7 +237,7 @@ export default function CoursePlayerPage() {
                             {currentLesson &&
                                 currentLesson.lessonType === 'Test' &&
                                 currentLesson.isCompleted && (
-                                    <span className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-success/15 px-5 py-2.5 sm:py-2 text-sm font-medium text-success">
+                                    <span className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-success/15 px-5 py-2.5 text-sm font-medium text-success sm:w-auto sm:py-2">
                                         <CheckCircle2 className="h-4 w-4" />
                                         {t('actions.completed')}
                                     </span>
@@ -239,18 +245,24 @@ export default function CoursePlayerPage() {
                         </div>
 
                         {/* Next or Certificate */}
-                        <div className="w-auto sm:w-32 flex justify-end order-2 sm:order-3">
+                        <div className="order-2 flex w-auto justify-end sm:order-3 sm:w-32">
                             {nextLesson ? (
                                 <Link
                                     to={`/courses/${courseId}/learn/${nextLesson.lessonId}`}
                                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                 >
-                                    <span className="hidden sm:inline">{t('actions.nextLesson')}</span>
+                                    <span className="hidden sm:inline">
+                                        {t('actions.nextLesson')}
+                                    </span>
                                     <span className="sm:hidden">Next</span>
                                     <ChevronRight className="h-4 w-4" />
                                 </Link>
                             ) : progress?.completedLessons === progress?.totalLessons ? (
-                                <CourseCertificateButton courseId={courseId!} variant="primary" showIconOnlyOnMobile />
+                                <CourseCertificateButton
+                                    courseId={courseId!}
+                                    variant="primary"
+                                    showIconOnlyOnMobile
+                                />
                             ) : null}
                         </div>
                     </div>

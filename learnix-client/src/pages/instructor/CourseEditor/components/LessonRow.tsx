@@ -69,9 +69,7 @@ export function LessonRow({ lesson, onEdit, onDelete, onToggleVisibility }: Prop
             >
                 {TYPE_LABELS[lesson.lessonType]}
             </span>
-            <span className="flex-1 truncate text-sm text-foreground">
-                {lesson.title}
-            </span>
+            <span className="flex-1 truncate text-sm text-foreground">{lesson.title}</span>
             <span className="shrink-0 text-xs text-muted-foreground">{lessonMeta(lesson)}</span>
             <button
                 onClick={onToggleVisibility}

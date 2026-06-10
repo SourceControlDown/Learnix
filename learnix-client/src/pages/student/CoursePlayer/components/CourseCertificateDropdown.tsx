@@ -43,17 +43,19 @@ export function CourseCertificateDropdown({
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
-                <Trophy className={cn("h-4 w-4", isCompleted ? "text-primary" : "")} />
+                <Trophy className={cn('h-4 w-4', isCompleted ? 'text-primary' : '')} />
                 <span className="hidden sm:inline-block">
-                    {isCompleted ? "Get certificate" : "Your progress"}
+                    {isCompleted ? 'Get certificate' : 'Your progress'}
                 </span>
-                <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                    className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                />
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-border bg-card p-4 shadow-lg z-50 animate-in fade-in zoom-in-95 duration-200">
+                <div className="animate-in fade-in zoom-in-95 absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-border bg-card p-4 shadow-lg duration-200">
                     <div className="mb-4">
-                        <div className="flex justify-between items-center mb-1.5">
+                        <div className="mb-1.5 flex items-center justify-between">
                             <span className="text-sm font-medium text-foreground">
                                 {completedLessons} of {totalLessons} complete
                             </span>
@@ -67,7 +69,10 @@ export function CourseCertificateDropdown({
                             <div
                                 className="h-full rounded-full bg-primary transition-all duration-300"
                                 style={{
-                                    width: totalLessons > 0 ? `${(completedLessons / totalLessons) * 100}%` : '0%',
+                                    width:
+                                        totalLessons > 0
+                                            ? `${(completedLessons / totalLessons) * 100}%`
+                                            : '0%',
                                 }}
                             />
                         </div>
@@ -78,7 +83,7 @@ export function CourseCertificateDropdown({
                         <button
                             type="button"
                             disabled
-                            className="w-full rounded-lg bg-primary/50 px-4 py-2 text-sm font-medium text-primary-foreground opacity-50 cursor-not-allowed"
+                            className="w-full cursor-not-allowed rounded-lg bg-primary/50 px-4 py-2 text-sm font-medium text-primary-foreground opacity-50"
                         >
                             Get certificate
                         </button>

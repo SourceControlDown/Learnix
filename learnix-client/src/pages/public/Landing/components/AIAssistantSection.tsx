@@ -34,11 +34,11 @@ export function AIAssistantSection() {
                 {/* Mock chat panel */}
                 <div className="overflow-hidden rounded-2xl border border-border bg-card text-foreground shadow-2xl">
                     <div className="flex items-center gap-3 border-b border-border p-4">
-                        <div className="grid h-8 w-8 place-items-center rounded-full bg-accent/20 text-accent text-sm">
+                        <div className="grid h-8 w-8 place-items-center rounded-full bg-accent/20 text-sm text-accent">
                             ✨
                         </div>
                         <div>
-                            <p className="font-heading text-sm font-semibold text-foreground leading-none">
+                            <p className="font-heading text-sm font-semibold leading-none text-foreground">
                                 {t('aiAssistant.chat.title')}
                             </p>
                             <p className="mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground">
@@ -52,14 +52,14 @@ export function AIAssistantSection() {
                         <div className="flex justify-end">
                             <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary px-3.5 py-2.5 text-sm text-primary-foreground shadow-sm">
                                 {t('aiAssistant.chat.messages.q1')}{' '}
-                                <code className="rounded bg-primary-foreground/20 px-1.5 py-0.5 text-xs font-mono">
+                                <code className="rounded bg-primary-foreground/20 px-1.5 py-0.5 font-mono text-xs">
                                     {t('aiAssistant.chat.messages.q1Code')}
                                 </code>{' '}
                                 {t('aiAssistant.chat.messages.q1End')}
                             </div>
                         </div>
                         <div className="flex justify-start">
-                            <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-muted px-3.5 py-2.5 text-sm text-foreground shadow-sm border border-border/50">
+                            <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/50 bg-muted px-3.5 py-2.5 text-sm text-foreground shadow-sm">
                                 {t('aiAssistant.chat.messages.a1')}{' '}
                                 <strong>{t('aiAssistant.chat.messages.a1Bold')}</strong>{' '}
                                 {t('aiAssistant.chat.messages.a1End')}
@@ -74,7 +74,7 @@ export function AIAssistantSection() {
                             </div>
                         </div>
                         <div className="flex justify-start">
-                            <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-muted px-3.5 py-2.5 text-sm text-foreground shadow-sm border border-border/50">
+                            <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/50 bg-muted px-3.5 py-2.5 text-sm text-foreground shadow-sm">
                                 <span className="inline-flex gap-1 py-1">
                                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-foreground/40" />
                                     <span

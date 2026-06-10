@@ -5,18 +5,18 @@ export function HeroSection() {
     const { t } = useTranslation('landing');
 
     return (
-        <section className="relative overflow-hidden bg-background pt-24 pb-32">
+        <section className="relative overflow-hidden bg-background pb-32 pt-24">
             {/* Ambient Background Effects */}
             <div className="absolute inset-0 z-0">
-                <div className="absolute -top-[30%] left-[20%] h-[600px] w-[600px] rounded-full bg-primary/20 blur-[120px] mix-blend-screen" />
-                <div className="absolute top-[20%] right-[10%] h-[500px] w-[500px] rounded-full bg-accent/20 blur-[100px] mix-blend-screen" />
-                <div className="absolute bottom-[-10%] left-[40%] h-[400px] w-[400px] rounded-full bg-warning/10 blur-[80px] mix-blend-screen" />
+                <div className="absolute -top-[30%] left-[20%] h-[600px] w-[600px] rounded-full bg-primary/20 mix-blend-screen blur-[120px]" />
+                <div className="absolute right-[10%] top-[20%] h-[500px] w-[500px] rounded-full bg-accent/20 mix-blend-screen blur-[100px]" />
+                <div className="absolute bottom-[-10%] left-[40%] h-[400px] w-[400px] rounded-full bg-warning/10 mix-blend-screen blur-[80px]" />
                 <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
                 {/* Optional Grid pattern */}
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
             </div>
 
-            <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-16 px-6 lg:gap-24 md:grid-cols-2">
+            <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-16 px-6 md:grid-cols-2 lg:gap-24">
                 <div className="flex flex-col justify-center text-center md:text-left">
                     <h1 className="font-heading text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl lg:leading-[1.1]">
                         {t('hero.heading.line1')}
@@ -24,12 +24,13 @@ export function HeroSection() {
                         {t('hero.heading.line2')}{' '}
                         <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                             {t('hero.heading.highlight')}
-                        </span>.
+                        </span>
+                        .
                     </h1>
                     <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed text-muted-foreground/90 sm:text-lg md:mx-0 md:text-xl">
                         {t('hero.subtitle')}
                     </p>
-                    <div className="mt-10 flex flex-col sm:flex-row flex-wrap justify-center md:justify-start gap-4">
+                    <div className="mt-10 flex flex-col flex-wrap justify-center gap-4 sm:flex-row md:justify-start">
                         <Link
                             to="/courses"
                             className="group relative inline-flex h-14 items-center justify-center overflow-hidden rounded-full bg-primary px-8 font-medium text-primary-foreground shadow-[0_0_40px_-10px_rgba(var(--primary),0.8)] transition-all hover:scale-[1.02] hover:shadow-[0_0_60px_-15px_rgba(var(--primary),0.8)] active:scale-[0.98]"
@@ -45,7 +46,12 @@ export function HeroSection() {
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
                                 >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M14 5l7 7m0 0l-7 7m7-7H3"
+                                    />
                                 </svg>
                             </span>
                         </Link>
@@ -56,15 +62,15 @@ export function HeroSection() {
                             {t('hero.cta.secondary')}
                         </Link>
                     </div>
-                    
+
                     <div className="mt-12 flex flex-col items-center gap-5 sm:flex-row md:justify-start">
                         <div className="flex -space-x-3">
                             {[...Array(4)].map((_, i) => (
-                                <img 
-                                    key={i} 
+                                <img
+                                    key={i}
                                     src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 15}&backgroundColor=b6e3f4,c0aede,d1d4f9`}
                                     alt="Learner avatar"
-                                    className={`h-10 w-10 rounded-full border-2 border-background shadow-sm z-[${4-i}] object-cover bg-muted`} 
+                                    className={`h-10 w-10 rounded-full border-2 border-background shadow-sm z-[${4 - i}] bg-muted object-cover`}
                                 />
                             ))}
                             <div className="grid h-10 w-10 place-items-center rounded-full border-2 border-background bg-card text-xs font-bold text-foreground shadow-sm">
@@ -74,12 +80,18 @@ export function HeroSection() {
                         <div className="flex flex-col">
                             <div className="flex text-warning">
                                 {[...Array(5)].map((_, i) => (
-                                    <svg key={i} className="h-4 w-4 fill-current" viewBox="0 0 24 24">
+                                    <svg
+                                        key={i}
+                                        className="h-4 w-4 fill-current"
+                                        viewBox="0 0 24 24"
+                                    >
                                         <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                                     </svg>
                                 ))}
                             </div>
-                            <span className="text-sm font-medium text-muted-foreground mt-0.5">{t('hero.socialProof')}</span>
+                            <span className="mt-0.5 text-sm font-medium text-muted-foreground">
+                                {t('hero.socialProof')}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -93,21 +105,21 @@ export function HeroSection() {
                                 ✨ {t('hero.aiTutorCard.label')}
                             </div>
                             <div className="flex flex-col gap-3">
-                                <div className="self-end max-w-[90%] rounded-2xl rounded-tr-sm bg-primary px-3 py-2 text-[13px] text-primary-foreground shadow-sm">
+                                <div className="max-w-[90%] self-end rounded-2xl rounded-tr-sm bg-primary px-3 py-2 text-[13px] text-primary-foreground shadow-sm">
                                     {t('hero.aiTutorCard.question')}{' '}
-                                    <code className="rounded bg-primary-foreground/20 px-1 py-0.5 text-[11px] font-mono">
+                                    <code className="rounded bg-primary-foreground/20 px-1 py-0.5 font-mono text-[11px]">
                                         {t('hero.aiTutorCard.codeSnippet')}
                                     </code>{' '}
                                     {t('hero.aiTutorCard.questionEnd')}
                                 </div>
-                                <div className="self-start max-w-[95%] rounded-2xl rounded-tl-sm bg-muted px-3 py-2.5 text-[13px] leading-relaxed text-foreground/90 shadow-sm border border-border/50">
+                                <div className="max-w-[95%] self-start rounded-2xl rounded-tl-sm border border-border/50 bg-muted px-3 py-2.5 text-[13px] leading-relaxed text-foreground/90 shadow-sm">
                                     {t('hero.aiTutorCard.answer')}
                                 </div>
                             </div>
                         </div>
 
                         {/* Main Video Card */}
-                        <div className="relative z-10 h-[240px] sm:h-[340px] w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-transform duration-700 hover:-translate-y-1">
+                        <div className="relative z-10 h-[240px] w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-transform duration-700 hover:-translate-y-1 sm:h-[340px]">
                             <div className="absolute inset-0 bg-[url('/video_thumbnail.png')] bg-cover bg-center" />
                             <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-80" />
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -124,19 +136,21 @@ export function HeroSection() {
                         </div>
 
                         {/* Grouped Bottom Cards */}
-                        <div className="relative z-10 mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="relative z-10 mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             {/* Progress Card */}
-                            <div className="rounded-2xl border border-white/10 bg-card/60 p-5 backdrop-blur-xl shadow-lg transition-transform duration-500 hover:-translate-y-1">
+                            <div className="rounded-2xl border border-white/10 bg-card/60 p-5 shadow-lg backdrop-blur-xl transition-transform duration-500 hover:-translate-y-1">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                     {t('hero.progressCard.label')}
                                 </p>
-                                <p className="mt-1 text-sm font-bold text-foreground truncate">{t('hero.progressCard.title')}</p>
+                                <p className="mt-1 truncate text-sm font-bold text-foreground">
+                                    {t('hero.progressCard.title')}
+                                </p>
                                 <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-secondary/50 shadow-inner">
                                     <div
-                                        className="h-full rounded-full bg-gradient-to-r from-primary to-accent relative"
+                                        className="relative h-full rounded-full bg-gradient-to-r from-primary to-accent"
                                         style={{ width: '68%' }}
                                     >
-                                        <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] animate-[progress_1s_linear_infinite]" />
+                                        <div className="absolute inset-0 animate-[progress_1s_linear_infinite] bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem]" />
                                     </div>
                                 </div>
                                 <p className="mt-2 text-xs font-medium text-muted-foreground">
@@ -145,17 +159,21 @@ export function HeroSection() {
                             </div>
 
                             {/* Achievement Card */}
-                            <div className="flex flex-col justify-center rounded-2xl border border-white/10 bg-card/60 p-5 backdrop-blur-xl shadow-lg transition-transform duration-500 hover:-translate-y-1">
+                            <div className="flex flex-col justify-center rounded-2xl border border-white/10 bg-card/60 p-5 shadow-lg backdrop-blur-xl transition-transform duration-500 hover:-translate-y-1">
                                 <div className="flex items-center gap-4">
-                                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-success/20 to-success/5 border border-success/20 text-xl drop-shadow-sm">
+                                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-success/20 bg-gradient-to-br from-success/20 to-success/5 text-xl drop-shadow-sm">
                                         🏆
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground truncate">
+                                        <p className="truncate text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                             {t('hero.achievementCard.label')}
                                         </p>
-                                        <p className="mt-0.5 text-sm font-bold text-foreground truncate">{t('hero.achievementCard.title')}</p>
-                                        <p className="mt-0.5 text-xs font-semibold text-success">{t('hero.achievementCard.xp')}</p>
+                                        <p className="mt-0.5 truncate text-sm font-bold text-foreground">
+                                            {t('hero.achievementCard.title')}
+                                        </p>
+                                        <p className="mt-0.5 text-xs font-semibold text-success">
+                                            {t('hero.achievementCard.xp')}
+                                        </p>
                                     </div>
                                 </div>
                             </div>

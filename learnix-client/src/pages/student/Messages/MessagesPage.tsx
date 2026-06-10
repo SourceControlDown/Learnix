@@ -61,10 +61,10 @@ export default function MessagesPage() {
     return (
         <div className="flex h-full overflow-hidden">
             {/* Conversation list sidebar */}
-            <aside 
+            <aside
                 className={cn(
-                    "w-full shrink-0 flex-col overflow-hidden border-r border-border bg-card md:flex md:w-80 lg:w-96",
-                    selected ? "hidden" : "flex"
+                    'w-full shrink-0 flex-col overflow-hidden border-r border-border bg-card md:flex md:w-80 lg:w-96',
+                    selected ? 'hidden' : 'flex',
                 )}
             >
                 <div className="shrink-0 border-b border-border px-4 py-3">
@@ -82,10 +82,10 @@ export default function MessagesPage() {
             </aside>
 
             {/* Chat area */}
-            <main 
+            <main
                 className={cn(
-                    "min-w-0 flex-1 flex-col overflow-hidden bg-background",
-                    selected ? "flex" : "hidden md:flex"
+                    'min-w-0 flex-1 flex-col overflow-hidden bg-background',
+                    selected ? 'flex' : 'hidden md:flex',
                 )}
             >
                 {selected ? (

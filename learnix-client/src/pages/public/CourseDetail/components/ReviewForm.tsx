@@ -60,7 +60,7 @@ export function ReviewForm({ courseId, existing }: ReviewFormProps) {
 
     const isPending = createReview.isPending || updateReview.isPending;
     const title = existing ? t('reviews.editReview') : t('reviews.writeReview');
-    
+
     const commentValue = form.watch('comment') || '';
     const isUnchanged = existing
         ? form.watch('rating') === existing.rating && commentValue === (existing.comment || '')
@@ -112,9 +112,7 @@ export function ReviewForm({ courseId, existing }: ReviewFormProps) {
                         )}
                     />
                     <div className="mt-1 flex justify-between text-xs">
-                        <p className="text-destructive">
-                            {form.formState.errors.comment?.message}
-                        </p>
+                        <p className="text-destructive">{form.formState.errors.comment?.message}</p>
                         <p
                             className={cn(
                                 'ml-auto transition-colors',

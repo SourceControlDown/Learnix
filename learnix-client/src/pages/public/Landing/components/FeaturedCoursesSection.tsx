@@ -65,7 +65,7 @@ export function FeaturedCoursesSection({
     };
 
     return (
-        <section id="courses" className="bg-secondary/40 pt-12 pb-20">
+        <section id="courses" className="bg-secondary/40 pb-20 pt-12">
             <div className="mx-auto max-w-7xl px-6">
                 <div className="mb-10 flex items-end justify-between">
                     <div>

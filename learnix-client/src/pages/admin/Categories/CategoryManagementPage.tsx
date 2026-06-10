@@ -130,7 +130,9 @@ export default function CategoryManagementPage() {
                                 </th>
                                 <th className="px-5 py-3 text-left font-medium">{t('colName')}</th>
                                 <th className="px-5 py-3 text-left font-medium">{t('colSlug')}</th>
-                                <th className="px-5 py-3 text-left font-medium">{t('colCourses')}</th>
+                                <th className="px-5 py-3 text-left font-medium">
+                                    {t('colCourses')}
+                                </th>
                                 <th className="w-24 px-5 py-3 text-right font-medium">
                                     {t('colActions')}
                                 </th>

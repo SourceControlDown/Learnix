@@ -129,13 +129,17 @@ export default function ProfilePage() {
 
     return (
         <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-            <h1 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">{t('pageTitle')}</h1>
+            <h1 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
+                {t('pageTitle')}
+            </h1>
 
-            <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 sm:mt-8 space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-6 sm:mt-8">
                 {/* Profile Information */}
                 <section className="rounded-xl border border-border bg-card">
                     <div className="border-b border-border px-4 py-4 sm:px-6">
-                        <h2 className="font-heading text-lg font-semibold">{t('sections.personal')}</h2>
+                        <h2 className="font-heading text-lg font-semibold">
+                            {t('sections.personal')}
+                        </h2>
                     </div>
 
                     <div className="flex flex-col gap-8 p-4 sm:p-6 md:flex-row md:items-start">
@@ -158,7 +162,7 @@ export default function ProfilePage() {
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={isUploading}
                                     title={isUploading ? t('avatar.uploading') : t('avatar.upload')}
-                                    className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-md transition-transform hover:scale-105 hover:opacity-90 disabled:scale-100 disabled:opacity-50 border-2 border-background"
+                                    className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-background bg-accent text-accent-foreground shadow-md transition-transform hover:scale-105 hover:opacity-90 disabled:scale-100 disabled:opacity-50"
                                 >
                                     <Camera className="h-4 w-4" />
                                 </button>
@@ -171,10 +175,10 @@ export default function ProfilePage() {
                                 />
                             </div>
                             <div className="mt-4">
-                                <h3 className="font-heading font-semibold text-foreground text-lg">
+                                <h3 className="font-heading text-lg font-semibold text-foreground">
                                     {profile?.firstName} {profile?.lastName}
                                 </h3>
-                                <p className="mt-1 text-xs text-muted-foreground max-w-[200px]">
+                                <p className="mt-1 max-w-[200px] text-xs text-muted-foreground">
                                     {t('avatar.hint')}
                                 </p>
                             </div>
@@ -192,7 +196,7 @@ export default function ProfilePage() {
                                             {...form.register('firstName')}
                                             className={cn(
                                                 'w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm outline-none transition-all',
-                                                'focus:border-primary focus:bg-background focus:ring-1 focus:ring-primary hover:border-primary/50',
+                                                'hover:border-primary/50 focus:border-primary focus:bg-background focus:ring-1 focus:ring-primary',
                                                 form.formState.errors.firstName
                                                     ? 'border-destructive'
                                                     : 'border-border',
@@ -215,7 +219,7 @@ export default function ProfilePage() {
                                             {...form.register('lastName')}
                                             className={cn(
                                                 'w-full rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm outline-none transition-all',
-                                                'focus:border-primary focus:bg-background focus:ring-1 focus:ring-primary hover:border-primary/50',
+                                                'hover:border-primary/50 focus:border-primary focus:bg-background focus:ring-1 focus:ring-primary',
                                                 form.formState.errors.lastName
                                                     ? 'border-destructive'
                                                     : 'border-border',
@@ -243,7 +247,9 @@ export default function ProfilePage() {
                                         readOnly
                                         className={cn(
                                             'w-full cursor-not-allowed rounded-lg border bg-muted/30 py-2.5 pl-9 pr-9 text-sm text-muted-foreground transition-colors',
-                                            user?.emailVerified ? 'border-success/50' : 'border-border'
+                                            user?.emailVerified
+                                                ? 'border-success/50'
+                                                : 'border-border',
                                         )}
                                     />
                                     {user?.emailVerified && (
@@ -287,10 +293,12 @@ export default function ProfilePage() {
                                         type="button"
                                         onClick={() => resendEmail()}
                                         disabled={resendCooldown > 0 || isResending}
-                                        className="mt-3 rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-800 dark:bg-transparent dark:text-amber-300 shadow-sm"
+                                        className="mt-3 rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-800 shadow-sm transition-colors hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-800 dark:bg-transparent dark:text-amber-300"
                                     >
                                         {resendCooldown > 0
-                                            ? tEmail('profile.resendCooldown', { seconds: resendCooldown })
+                                            ? tEmail('profile.resendCooldown', {
+                                                  seconds: resendCooldown,
+                                              })
                                             : tEmail('profile.resend')}
                                     </button>
                                 </div>
@@ -306,8 +314,10 @@ export default function ProfilePage() {
                                     placeholder={t('fields.bioPlaceholder')}
                                     className={cn(
                                         'mt-1.5 w-full resize-none rounded-lg border border-border bg-muted/30 p-3 text-sm outline-none transition-all',
-                                        'focus:border-primary focus:bg-background focus:ring-1 focus:ring-primary hover:border-primary/50',
-                                        form.formState.errors.bio ? 'border-destructive' : 'border-border',
+                                        'hover:border-primary/50 focus:border-primary focus:bg-background focus:ring-1 focus:ring-primary',
+                                        form.formState.errors.bio
+                                            ? 'border-destructive'
+                                            : 'border-border',
                                     )}
                                 />
                                 {form.formState.errors.bio && (
@@ -319,7 +329,7 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row justify-end border-t border-border bg-muted/20 px-4 py-4 sm:px-6">
+                    <div className="flex flex-col justify-end border-t border-border bg-muted/20 px-4 py-4 sm:flex-row sm:px-6">
                         <button
                             type="submit"
                             disabled={
@@ -327,7 +337,7 @@ export default function ProfilePage() {
                                 isUploading ||
                                 (!form.formState.isDirty && avatarBlobPath === null)
                             }
-                            className="w-full sm:w-auto rounded-lg bg-primary px-10 py-3 text-sm font-medium text-primary-foreground shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all hover:bg-primary/90 hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] disabled:opacity-50 disabled:shadow-none"
+                            className="w-full rounded-lg bg-primary px-10 py-3 text-sm font-medium text-primary-foreground shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all hover:bg-primary/90 hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] disabled:opacity-50 disabled:shadow-none sm:w-auto"
                         >
                             {updateProfile.isPending ? t('actions.saving') : t('actions.save')}
                         </button>
@@ -352,7 +362,7 @@ export default function ProfilePage() {
 
                 {/* Achievements */}
                 <section className="rounded-xl border border-border bg-card p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
+                    <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center sm:gap-0">
                         <h2 className="font-heading text-lg font-semibold">
                             {t('achievements.sectionTitle')}
                         </h2>
@@ -400,7 +410,7 @@ export default function ProfilePage() {
                 {/* Certificates */}
                 <Link
                     to="/certificates"
-                    className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 sm:p-5 transition-colors hover:bg-secondary"
+                    className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary sm:p-5"
                 >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                         <Award className="h-5 w-5 text-primary" />
@@ -418,7 +428,7 @@ export default function ProfilePage() {
                 {user?.role === 'Student' && (
                     <Link
                         to="/become-instructor"
-                        className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 sm:p-5 transition-colors hover:bg-secondary"
+                        className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary sm:p-5"
                     >
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">
                             <GraduationCap className="h-5 w-5 text-accent" />

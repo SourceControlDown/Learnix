@@ -14,7 +14,7 @@ export function TestimonialsSection() {
     return (
         <section className="py-12 md:py-20">
             <div className="mx-auto max-w-7xl px-6">
-                <div className="mb-10 md:mb-14 text-center">
+                <div className="mb-10 text-center md:mb-14">
                     <h2 className="mt-2 font-heading text-3xl font-bold md:text-4xl">
                         {t('testimonials.heading')}
                     </h2>

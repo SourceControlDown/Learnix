@@ -56,7 +56,7 @@ function ReviewItem({ review }: { review: CourseReviewDto }) {
                         <div className="mt-2">
                             <p
                                 className={cn(
-                                    'text-sm text-foreground whitespace-pre-wrap break-words',
+                                    'whitespace-pre-wrap break-words text-sm text-foreground',
                                     !isExpanded && 'line-clamp-6',
                                 )}
                             >

@@ -75,15 +75,19 @@ export function ConversationView({ conversation, onBack }: ConversationViewProps
                     <button
                         type="button"
                         onClick={onBack}
-                        className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted md:hidden"
                         aria-label="Back to conversations"
                     >
                         <ChevronLeft className="h-5 w-5" />
                     </button>
                 )}
                 <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-foreground">{conversation.otherUserName}</p>
-                    <p className="truncate text-sm text-muted-foreground">{conversation.courseName}</p>
+                    <p className="truncate font-semibold text-foreground">
+                        {conversation.otherUserName}
+                    </p>
+                    <p className="truncate text-sm text-muted-foreground">
+                        {conversation.courseName}
+                    </p>
                 </div>
             </div>
 

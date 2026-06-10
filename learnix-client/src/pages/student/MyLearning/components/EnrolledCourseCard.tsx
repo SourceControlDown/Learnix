@@ -43,7 +43,7 @@ export function EnrolledCourseCard({ enrollment, className }: EnrolledCourseCard
         <div
             onClick={() => navigate(destination)}
             className={cn(
-                'group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all cursor-pointer',
+                'group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-card transition-all',
                 'hover:-translate-y-1 hover:shadow-xl',
                 className,
             )}
@@ -96,18 +96,21 @@ export function EnrolledCourseCard({ enrollment, className }: EnrolledCourseCard
 
                 <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
                     {isCompleted ? (
-                        <div className="flex-1 flex" onClick={(e) => e.stopPropagation()}>
-                            <CourseCertificateButton 
-                                courseId={enrollment.courseId} 
-                                variant="outline" 
+                        <div className="flex flex-1" onClick={(e) => e.stopPropagation()}>
+                            <CourseCertificateButton
+                                courseId={enrollment.courseId}
+                                variant="outline"
                                 className="h-9 py-0"
                             />
                         </div>
                     ) : (
                         <div className="flex-1" />
                     )}
-                    <span className="text-sm font-medium text-primary ml-auto">
-                        {isCompleted ? t('continueLearning', { defaultValue: 'Review Course' }) : t('continueLearning')} →
+                    <span className="ml-auto text-sm font-medium text-primary">
+                        {isCompleted
+                            ? t('continueLearning', { defaultValue: 'Review Course' })
+                            : t('continueLearning')}{' '}
+                        →
                     </span>
                 </div>
             </div>

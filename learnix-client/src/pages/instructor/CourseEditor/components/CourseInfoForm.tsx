@@ -181,7 +181,7 @@ export function CourseInfoForm({ course, isPending, onSubmit }: Props) {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="rounded-lg bg-success px-6 py-2.5 text-sm font-medium text-success-foreground transition-colors hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="text-success-foreground rounded-lg bg-success px-6 py-2.5 text-sm font-medium transition-colors hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     {isPending ? t('editorUnsaved') : t('btnSave')}
                 </button>

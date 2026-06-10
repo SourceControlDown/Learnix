@@ -37,8 +37,12 @@ export default function FaqPage() {
                         <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-warning md:mt-0" />
                         <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
                             <div>
-                                <span className="font-semibold text-warning">{t('disclaimer.badge')}:</span>{' '}
-                                <span className="text-muted-foreground">{t('disclaimer.text')}</span>
+                                <span className="font-semibold text-warning">
+                                    {t('disclaimer.badge')}:
+                                </span>{' '}
+                                <span className="text-muted-foreground">
+                                    {t('disclaimer.text')}
+                                </span>
                             </div>
                             <a
                                 href={GITHUB_URL}
