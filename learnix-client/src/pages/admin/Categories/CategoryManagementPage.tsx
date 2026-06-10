@@ -130,6 +130,7 @@ export default function CategoryManagementPage() {
                                 </th>
                                 <th className="px-5 py-3 text-left font-medium">{t('colName')}</th>
                                 <th className="px-5 py-3 text-left font-medium">{t('colSlug')}</th>
+                                <th className="px-5 py-3 text-left font-medium">{t('colCourses')}</th>
                                 <th className="w-24 px-5 py-3 text-right font-medium">
                                     {t('colActions')}
                                 </th>
@@ -164,6 +165,7 @@ export default function CategoryManagementPage() {
                                             }
                                         />
                                     </td>
+                                    <td className="px-5 py-3 text-muted-foreground">-</td>
                                     <td className="px-5 py-3">
                                         <div className="flex items-center justify-end gap-1">
                                             <button
@@ -267,6 +269,11 @@ export default function CategoryManagementPage() {
                                                 {cat.slug}
                                             </span>
                                         )}
+                                    </td>
+
+                                    {/* Courses Count */}
+                                    <td className="px-5 py-3 text-muted-foreground">
+                                        {cat.coursesCount}
                                     </td>
 
                                     {/* Actions */}

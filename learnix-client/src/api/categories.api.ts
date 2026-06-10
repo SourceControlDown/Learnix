@@ -16,6 +16,7 @@ export interface AdminCategoryListItemDto {
     slug: string;
     imageUrl: string | null;
     isSystem: boolean;
+    coursesCount: number;
 }
 
 export interface CreateCategoryRequest {

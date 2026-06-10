@@ -34,7 +34,8 @@ internal sealed class GetAdminCategoriesQueryHandler(
                     c.Id, c.Name, c.Slug, c.IsSystem,
                     c.ImageBlobPath is not null
                         ? blobStorage.GenerateReadUrl(c.ImageBlobPath, TimeSpan.FromHours(24))
-                        : null))
+                        : null,
+                    c.CoursesCount))
                 .ToList());
     }
 }
