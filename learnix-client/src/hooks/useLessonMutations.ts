@@ -98,6 +98,20 @@ export function useUpdateTestLesson(courseId: string) {
     });
 }
 
+export function useToggleLessonVisibility(courseId: string) {
+    const { t } = useTranslation('instructor');
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ lessonId, isHidden }: { lessonId: string; isHidden: boolean }) =>
+            lessonsApi.toggleVisibility(courseId, lessonId, isHidden),
+        onSuccess: () => {
+            toast.success(t('toastLessonSaved'));
+            invalidateEdit(qc, courseId);
+        },
+        onError: () => toast.error(t('toastError')),
+    });
+}
+
 export function useDeleteLesson(courseId: string) {
     const { t } = useTranslation('instructor');
     const qc = useQueryClient();

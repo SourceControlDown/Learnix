@@ -38,7 +38,9 @@
     "reviewCount_one": "{{count}} review",
     "reviewCount_other": "{{count}} reviews",
     "enrollToReview": "Enroll in this course to leave a review",
-    "completeToReview": "Complete lessons to unlock reviews"
+    "completeToReview": "Complete lessons to unlock reviews",
+    "showMore": "Show more",
+    "showLess": "Show less"
   },
   "instructor": { "label": "Instructor" },
   "price": { "free": "Free" },

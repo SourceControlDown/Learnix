@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     CheckCircle2,
-    Circle,
     PlayCircle,
     FileText,
     ClipboardList,
@@ -36,7 +35,6 @@ export function CourseSidebar({
     onCloseMobile,
 }: CourseSidebarProps) {
     const { t } = useTranslation('lessonPlayer');
-    const progressPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
     const activeSectionId = sections.find((s) =>
         s.lessons.some((l) => l.lessonId === currentLessonId),
@@ -64,35 +62,27 @@ export function CourseSidebar({
 
     return (
         <aside className="flex h-full w-72 shrink-0 flex-col overflow-hidden border-r border-border bg-card">
-            <div className="border-b border-border p-4">
-                <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-muted-foreground">
-                        {t('sidebar.progressLabel', {
-                            completed: completedLessons,
-                            total: totalLessons,
-                        })}
-                    </p>
-                    {onCloseMobile && (
-                        <button
-                            onClick={onCloseMobile}
-                            className="lg:hidden rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                        >
-                            <span className="sr-only">Close sidebar</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                        </button>
-                    )}
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                    <div
-                        className="h-full rounded-full bg-primary transition-all duration-300"
-                        style={{ width: `${progressPct}%` }}
-                    />
-                </div>
+            <div className="border-b border-border p-4 flex items-center justify-between">
+                <span className="text-sm font-semibold uppercase tracking-wider text-foreground">
+                    {t('sidebar.courseContent')}
+                </span>
+                {onCloseMobile && (
+                    <button
+                        onClick={onCloseMobile}
+                        className="lg:hidden rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    >
+                        <span className="sr-only">Close sidebar</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                )}
             </div>
 
             <nav className="flex-1 overflow-y-auto py-2">
                 {sections.map((section, sIdx) => {
                     const isOpen = openSections.has(section.sectionId);
+                    const sectionCompleted = section.lessons.filter((l) => l.isCompleted).length;
+                    const sectionTotal = section.lessons.length;
+
                     return (
                         <div key={section.sectionId} className="mb-1">
                             <button
@@ -100,15 +90,20 @@ export function CourseSidebar({
                                 onClick={() => toggleSection(section.sectionId)}
                                 className="flex w-full items-center justify-between px-4 py-2 text-left hover:bg-secondary/50"
                             >
-                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex-1">
                                     {t('sidebar.sectionPrefix')} {sIdx + 1} · {section.title}
                                 </span>
-                                <ChevronDown
-                                    className={cn(
-                                        'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200',
-                                        isOpen && 'rotate-180',
-                                    )}
-                                />
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-medium text-muted-foreground/70">
+                                        {sectionCompleted} / {sectionTotal}
+                                    </span>
+                                    <ChevronDown
+                                        className={cn(
+                                            'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200',
+                                            isOpen && 'rotate-180',
+                                        )}
+                                    />
+                                </div>
                             </button>
 
                             {isOpen && (
@@ -134,17 +129,13 @@ export function CourseSidebar({
                                                                 : 'text-muted-foreground',
                                                         )}
                                                     >
-                                                        <span className="shrink-0">
-                                                            {lesson.isCompleted ? (
-                                                                <CheckCircle2 className="h-4 w-4 text-success" />
-                                                            ) : (
-                                                                <Circle className="h-4 w-4" />
-                                                            )}
-                                                        </span>
                                                         <Icon className="h-4 w-4 shrink-0 opacity-60" />
-                                                        <span className="line-clamp-2 leading-snug">
+                                                        <span className="line-clamp-2 leading-snug flex-1">
                                                             {lesson.title}
                                                         </span>
+                                                        {lesson.isCompleted && (
+                                                            <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+                                                        )}
                                                     </Link>
                                                 </li>
                                             );

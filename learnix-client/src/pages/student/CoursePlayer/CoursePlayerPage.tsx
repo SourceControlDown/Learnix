@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { MessageSquare, ChevronLeft, ChevronRight, CheckCircle2, Menu, X } from 'lucide-react';
@@ -14,6 +14,7 @@ import { PostLessonView } from './components/PostLessonView';
 import { TestLessonPreview } from './components/TestLessonPreview';
 import { CourseCertificateButton } from '@/components/common/CourseCertificateButton';
 import { CourseCertificateDropdown } from './components/CourseCertificateDropdown';
+import { Logo } from '@/components/common/Logo';
 
 export default function CoursePlayerPage() {
     const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
@@ -85,9 +86,7 @@ export default function CoursePlayerPage() {
                         to="/"
                         className="flex shrink-0 items-center gap-2 font-heading font-bold"
                     >
-                        <div className="grid h-7 w-7 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-                            L
-                        </div>
+                        <Logo className="h-7 w-7 text-primary" />
                         <span className="hidden text-sm sm:block">Learnix</span>
                     </Link>
                     {course && (

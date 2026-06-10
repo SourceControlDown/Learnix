@@ -41,7 +41,9 @@
     "reviewCount_few": "{{count}} відгуки",
     "reviewCount_many": "{{count}} відгуків",
     "enrollToReview": "Запишіться на курс, щоб залишити відгук",
-    "completeToReview": "Пройдіть уроки, щоб розблокувати відгуки"
+    "completeToReview": "Пройдіть уроки, щоб розблокувати відгуки",
+    "showMore": "Показати більше",
+    "showLess": "Показати менше"
   },
   "instructor": { "label": "Інструктор" },
   "price": { "free": "Безкоштовно" },

@@ -4,8 +4,9 @@
     "messageInstructor": "Написати інструктору"
   },
   "sidebar": {
-    "progressLabel": "{{completed}} / {{total}} пройдено",
-    "sectionPrefix": "Розділ"
+    "progressLabel": "{{completed}} / {{total}} завершено",
+    "sectionPrefix": "Секція",
+    "courseContent": "Вміст курсу"
   },
   "lessonType": { "Video": "Відео", "Post": "Стаття", "Test": "Тест" },
   "actions": {

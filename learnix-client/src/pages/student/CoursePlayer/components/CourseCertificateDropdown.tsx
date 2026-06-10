@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Trophy, ChevronDown } from 'lucide-react';
+import { cn } from '@/utils/cn';
 import { useTranslation } from 'react-i18next';
 import { CourseCertificateButton } from '@/components/common/CourseCertificateButton';
 
@@ -42,16 +43,35 @@ export function CourseCertificateDropdown({
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
-                <Trophy className="h-4 w-4" />
-                <span className="hidden sm:inline-block">Get course certificate</span>
+                <Trophy className={cn("h-4 w-4", isCompleted ? "text-primary" : "")} />
+                <span className="hidden sm:inline-block">
+                    {isCompleted ? "Get certificate" : "Your progress"}
+                </span>
                 <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (
                 <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-border bg-card p-4 shadow-lg z-50 animate-in fade-in zoom-in-95 duration-200">
-                    <p className="mb-4 text-sm font-medium text-foreground">
-                        {completedLessons} of {totalLessons} complete.
-                    </p>
+                    <div className="mb-4">
+                        <div className="flex justify-between items-center mb-1.5">
+                            <span className="text-sm font-medium text-foreground">
+                                {completedLessons} of {totalLessons} complete
+                            </span>
+                            {totalLessons > 0 && (
+                                <span className="text-xs font-semibold text-muted-foreground">
+                                    {Math.round((completedLessons / totalLessons) * 100)}%
+                                </span>
+                            )}
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                            <div
+                                className="h-full rounded-full bg-primary transition-all duration-300"
+                                style={{
+                                    width: totalLessons > 0 ? `${(completedLessons / totalLessons) * 100}%` : '0%',
+                                }}
+                            />
+                        </div>
+                    </div>
                     {isCompleted ? (
                         <CourseCertificateButton courseId={courseId} variant="primary" />
                     ) : (

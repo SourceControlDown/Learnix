@@ -5,7 +5,8 @@
   },
   "sidebar": {
     "progressLabel": "{{completed}} / {{total}} completed",
-    "sectionPrefix": "Section"
+    "sectionPrefix": "Section",
+    "courseContent": "Course content"
   },
   "lessonType": { "Video": "Video", "Post": "Article", "Test": "Test" },
   "actions": {

@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react';
+import { Star, StarHalf } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 interface RatingStarsProps {
@@ -28,7 +28,8 @@ export function RatingStars({
         <div className={cn('flex items-center gap-0.5', className)}>
             {Array.from({ length: max }, (_, i) => {
                 const starValue = i + 1;
-                const filled = starValue <= value;
+                const isFull = value >= starValue;
+                const isHalf = !isFull && value > i;
 
                 return (
                     <button
@@ -37,20 +38,30 @@ export function RatingStars({
                         disabled={!isInteractive}
                         onClick={() => onChange?.(starValue)}
                         className={cn(
-                            'transition-colors',
+                            'transition-transform',
                             isInteractive && 'cursor-pointer hover:scale-110',
                             !isInteractive && 'cursor-default',
                         )}
                         aria-label={`${starValue} star${starValue !== 1 ? 's' : ''}`}
                     >
-                        <Star
-                            className={cn(
-                                SIZE_MAP[size],
-                                filled
-                                    ? 'fill-warning text-warning'
-                                    : 'fill-none text-muted-foreground/40',
+                        <div className="relative">
+                            <Star
+                                className={cn(
+                                    SIZE_MAP[size],
+                                    isFull
+                                        ? 'fill-warning text-warning'
+                                        : 'fill-none text-muted-foreground/40',
+                                )}
+                            />
+                            {isHalf && (
+                                <StarHalf
+                                    className={cn(
+                                        SIZE_MAP[size],
+                                        'absolute left-0 top-0 fill-warning text-warning',
+                                    )}
+                                />
                             )}
-                        />
+                        </div>
                     </button>
                 );
             })}

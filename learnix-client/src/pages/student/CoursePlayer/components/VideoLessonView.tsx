@@ -10,31 +10,21 @@ export function VideoLessonView({ lesson, courseId }: VideoLessonViewProps) {
     const { data, isLoading } = useLessonContent(courseId, lesson.lessonId);
 
     return (
-        <div className="mx-auto max-w-4xl">
-            <h1 className="mb-4 font-heading text-2xl font-bold">{lesson.title}</h1>
-
+        <div className="mx-auto max-w-5xl">
             {isLoading && (
                 <div className="flex aspect-video w-full animate-pulse items-center justify-center rounded-xl bg-secondary" />
             )}
 
             {!isLoading && data?.videoUrl && (
-                <>
-                    <video
-                        key={data.videoUrl}
-                        controls
-                        className="w-full rounded-xl bg-black"
-                        preload="metadata"
-                    >
-                        <source src={data.videoUrl} />
-                        Your browser does not support the video element.
-                    </video>
-
-                    {data.description && (
-                        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                            {data.description}
-                        </p>
-                    )}
-                </>
+                <video
+                    key={data.videoUrl}
+                    controls
+                    className="w-full aspect-video rounded-xl bg-black shadow-lg"
+                    preload="metadata"
+                >
+                    <source src={data.videoUrl} />
+                    Your browser does not support the video element.
+                </video>
             )}
 
             {!isLoading && !data?.videoUrl && (
@@ -42,6 +32,15 @@ export function VideoLessonView({ lesson, courseId }: VideoLessonViewProps) {
                     No video attached to this lesson yet.
                 </div>
             )}
+
+            <div className="mt-8">
+                <h1 className="font-heading text-2xl font-bold text-foreground">{lesson.title}</h1>
+                {!isLoading && data?.description && (
+                    <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                        {data.description}
+                    </p>
+                )}
+            </div>
         </div>
     );
 }
