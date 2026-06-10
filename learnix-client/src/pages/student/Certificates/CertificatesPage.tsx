@@ -15,7 +15,7 @@ export default function CertificatesPage() {
 
     if (isLoading) {
         return (
-            <div className="mx-auto max-w-4xl px-6 py-12">
+            <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
                 <div className="animate-pulse space-y-4">
                     <div className="h-8 w-56 rounded bg-muted" />
                     {Array.from({ length: 3 }).map((_, i) => (
@@ -27,9 +27,9 @@ export default function CertificatesPage() {
     }
 
     return (
-        <div className="mx-auto max-w-4xl px-6 py-12">
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
             <div>
-                <h1 className="font-heading text-3xl font-bold text-foreground">
+                <h1 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
                     {t('pageTitle')}
                 </h1>
                 <p className="mt-1 text-muted-foreground">{t('subtitle')}</p>
@@ -44,34 +44,33 @@ export default function CertificatesPage() {
                     <p className="max-w-sm text-muted-foreground">{t('emptyDescription')}</p>
                 </div>
             ) : (
-                <div className="mt-8 space-y-4">
+                <div className="mt-6 sm:mt-8 space-y-4">
                     {certificates.map((cert) => (
                         <div
                             key={cert.certificateId}
-                            className="flex items-center gap-5 rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-sm"
+                            className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 rounded-xl border border-border bg-card p-4 sm:p-5 transition-shadow hover:shadow-sm"
                         >
-                            {/* Cover / icon */}
-                            <div
-                                className={cn(
-                                    'flex h-16 w-16 shrink-0 items-center justify-center rounded-lg',
-                                    cert.courseCoverBlobPath ? 'overflow-hidden' : 'bg-accent/10',
-                                )}
-                            >
-                                {cert.courseCoverBlobPath ? (
-                                    <img
-                                        src={cert.courseCoverBlobPath}
-                                        alt={cert.courseTitle}
-                                        className="h-full w-full object-cover"
-                                    />
-                                ) : (
-                                    <GraduationCap className="h-8 w-8 text-accent" />
-                                )}
-                            </div>
-
                             {/* Info */}
-                            <div className="min-w-0 flex-1">
-                                <p className="line-clamp-1 font-heading font-semibold text-foreground">
-                                    {cert.courseTitle}
+                            <div className="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
+                                <div
+                                    className={cn(
+                                        'flex h-12 w-12 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-lg',
+                                        cert.courseCoverBlobPath ? 'overflow-hidden' : 'bg-accent/10',
+                                    )}
+                                >
+                                    {cert.courseCoverBlobPath ? (
+                                        <img
+                                            src={cert.courseCoverBlobPath}
+                                            alt={cert.courseTitle}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-accent" />
+                                    )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="line-clamp-2 sm:line-clamp-1 font-heading text-sm sm:text-base font-semibold text-foreground">
+                                        {cert.courseTitle}
                                 </p>
                                 <p className="mt-0.5 text-sm text-muted-foreground">
                                     {t('issuedOn')}{' '}
@@ -87,10 +86,11 @@ export default function CertificatesPage() {
                                         {t('status.generatingHint')}
                                     </p>
                                 )}
+                                </div>
                             </div>
 
                             {/* Actions */}
-                            <div className="flex shrink-0 items-center gap-2">
+                            <div className="flex shrink-0 items-center gap-2 justify-end sm:justify-start w-full sm:w-auto">
                                 <button
                                     type="button"
                                     onClick={() => copyLink(cert.verificationUrl)}
@@ -105,13 +105,13 @@ export default function CertificatesPage() {
                                         href={cert.downloadUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 flex-1 sm:flex-initial"
                                     >
                                         <Download className="h-4 w-4" />
                                         {t('actions.download')}
                                     </a>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-4 py-2 text-sm text-muted-foreground">
+                                    <span className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1 rounded-lg bg-muted px-4 py-2 text-sm text-muted-foreground">
                                         <Clock className="h-4 w-4" />
                                         {t('status.generating')}
                                     </span>

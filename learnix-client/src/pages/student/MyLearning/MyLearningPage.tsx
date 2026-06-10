@@ -10,11 +10,11 @@ export default function MyLearningPage() {
     const { data, isLoading } = useMyEnrollments();
 
     return (
-        <div className="mx-auto max-w-7xl px-6 py-10">
-            <h1 className="font-heading text-3xl font-bold md:text-4xl">{t('title')}</h1>
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+            <h1 className="font-heading text-2xl sm:text-3xl font-bold md:text-4xl">{t('title')}</h1>
 
             {isLoading ? (
-                <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="mt-6 sm:mt-8 grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {[1, 2, 3, 4].map((i) => (
                         <div key={i} className="h-[280px] animate-pulse rounded-xl bg-card" />
                     ))}
@@ -28,13 +28,13 @@ export default function MyLearningPage() {
                     <p className="mt-2 text-muted-foreground">{t('emptyDescription')}</p>
                     <Link
                         to="/courses"
-                        className="mt-8 inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 font-medium text-primary-foreground hover:bg-primary/90"
+                        className="mt-6 sm:mt-8 inline-flex h-11 w-full sm:w-auto items-center justify-center rounded-md bg-primary px-8 font-medium text-primary-foreground hover:bg-primary/90"
                     >
                         {t('browseCourses')}
                     </Link>
                 </div>
             ) : (
-                <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="mt-6 sm:mt-8 grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {data?.items.map((enrollment) => (
                         <EnrolledCourseCard key={enrollment.enrollmentId} enrollment={enrollment} />
                     ))}

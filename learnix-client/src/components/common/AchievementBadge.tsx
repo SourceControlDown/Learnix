@@ -45,12 +45,13 @@ export function AchievementBadge({
         <button
             type="button"
             onClick={onClick}
+            title={!isUnlocked ? t('achievements.lockedHint', { defaultValue: 'Keep learning to unlock this achievement!' }) : undefined}
             className={cn(
-                'group relative flex flex-col items-center rounded-xl border text-center transition-all',
+                'group relative flex flex-col items-center rounded-xl border text-center transition-all duration-300',
                 isSm ? 'gap-2 p-3' : 'gap-3 p-5',
                 isUnlocked
-                    ? 'border-accent/30 bg-accent/5 hover:border-accent/60 hover:bg-accent/10'
-                    : 'border-border bg-muted/30 opacity-50',
+                    ? 'border-accent/30 bg-accent/5 hover:border-accent/60 hover:bg-accent/10 shadow-[0_0_15px_rgba(0,0,0,0)] hover:shadow-[0_0_20px_rgba(var(--accent),0.15)]'
+                    : 'border-border/50 bg-muted/20 opacity-60 hover:opacity-100 hover:bg-muted/40',
                 onClick ? 'cursor-pointer' : 'cursor-default',
                 className,
             )}
@@ -83,8 +84,9 @@ export function AchievementBadge({
                         src={resolvedImage}
                         alt={name}
                         className={cn(
-                            'h-full w-full object-cover',
-                            !isUnlocked && 'opacity-40 grayscale',
+                            'h-full w-full object-cover transition-all duration-500',
+                            !isUnlocked && 'opacity-30 grayscale sepia-[0.3]',
+                            isUnlocked && 'drop-shadow-lg'
                         )}
                     />
                 ) : isUnlocked ? (
