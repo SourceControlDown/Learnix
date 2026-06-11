@@ -143,14 +143,9 @@ export function QuestionCard({
                         rows={3}
                         className="w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-default disabled:opacity-70"
                     />
-                    {hasResult && (
-                        <p
-                            className={cn(
-                                'mt-1 text-xs font-medium',
-                                isCorrect ? 'text-success' : 'text-destructive',
-                            )}
-                        >
-                            {isCorrect ? t('results.correct') : t('results.incorrect')}
+                    {hasResult && !isCorrect && result?.correctTextAnswer && (
+                        <p className="mt-2 text-sm font-medium text-success">
+                            {t('results.correctAnswer')}: <span className="font-semibold">{result.correctTextAnswer}</span>
                         </p>
                     )}
                 </div>
