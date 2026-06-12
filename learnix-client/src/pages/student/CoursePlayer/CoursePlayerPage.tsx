@@ -176,7 +176,11 @@ export default function CoursePlayerPage() {
                         {!isLoading && currentLesson && (
                             <>
                                 {currentLesson.lessonType === 'Video' && (
-                                    <VideoLessonView lesson={currentLesson} courseId={courseId!} />
+                                    <VideoLessonView
+                                        lesson={currentLesson}
+                                        courseId={courseId!}
+                                        onVideoEnded={handleMarkComplete}
+                                    />
                                 )}
                                 {currentLesson.lessonType === 'Post' && (
                                     <PostLessonView lesson={currentLesson} courseId={courseId!} />
