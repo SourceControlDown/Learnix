@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import MDEditor from '@uiw/react-md-editor';
 import { useTranslation } from 'react-i18next';
 import { postLessonSchema, type PostLessonFormData } from '@/schemas/lesson.schema';
+import { LESSON_LIMITS } from '@/const/lesson.constants';
 import type { CourseForEditLessonDto } from '@/types/course.types';
 
 interface Props {
@@ -20,6 +21,7 @@ export function PostLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
         register,
         handleSubmit,
         control,
+        watch,
         formState: { errors, isDirty },
     } = useForm<PostLessonFormData>({
         resolver: zodResolver(postLessonSchema),
@@ -33,13 +35,22 @@ export function PostLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
         onDirtyChange?.(isDirty);
     }, [isDirty, onDirtyChange]);
 
+    const title = watch('title') || '';
+    const content = watch('content') || '';
+
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-                <label className="mb-1 block text-sm font-medium">{t('fieldTitle')}</label>
+                <div className="mb-1 flex items-center justify-between">
+                    <label className="block text-sm font-medium">{t('fieldTitle')}</label>
+                    <span className="text-xs text-muted-foreground">
+                        {title.length} / {LESSON_LIMITS.TITLE_MAX}
+                    </span>
+                </div>
                 <input
                     {...register('title')}
                     placeholder={t('fieldTitlePlaceholder')}
+                    maxLength={LESSON_LIMITS.TITLE_MAX}
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 {errors.title && (
@@ -48,7 +59,12 @@ export function PostLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
             </div>
 
             <div>
-                <label className="mb-1 block text-sm font-medium">{t('fieldContent')}</label>
+                <div className="mb-1 flex items-center justify-between">
+                    <label className="block text-sm font-medium">{t('fieldContent')}</label>
+                    <span className={`text-xs ${content.length > LESSON_LIMITS.POST_CONTENT_MAX ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {content.length} / {LESSON_LIMITS.POST_CONTENT_MAX}
+                    </span>
+                </div>
                 <Controller
                     control={control}
                     name="content"
@@ -56,7 +72,14 @@ export function PostLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
                         <div data-color-mode="light">
                             <MDEditor
                                 value={field.value}
-                                onChange={(val) => field.onChange(val ?? '')}
+                                onChange={(val) => {
+                                    const newVal = val ?? '';
+                                    if (newVal.length <= LESSON_LIMITS.POST_CONTENT_MAX) {
+                                        field.onChange(newVal);
+                                    } else {
+                                        field.onChange(newVal.slice(0, LESSON_LIMITS.POST_CONTENT_MAX));
+                                    }
+                                }}
                                 height={300}
                                 preview="edit"
                             />

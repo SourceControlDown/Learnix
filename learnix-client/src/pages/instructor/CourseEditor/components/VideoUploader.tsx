@@ -6,7 +6,23 @@ import { useRequestUploadUrl } from '@/hooks/useRequestUploadUrl';
 
 interface Props {
     value: string;
-    onChange: (blobPath: string) => void;
+    onChange: (blobPath: string, durationSeconds?: number) => void;
+}
+
+function extractVideoDuration(file: File): Promise<number> {
+    return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+            URL.revokeObjectURL(video.src);
+            resolve(video.duration);
+        };
+        video.onerror = () => {
+            URL.revokeObjectURL(video.src);
+            resolve(0); // fallback if it fails
+        };
+        video.src = URL.createObjectURL(file);
+    });
 }
 
 export function VideoUploader({ value, onChange }: Props) {
@@ -17,8 +33,9 @@ export function VideoUploader({ value, onChange }: Props) {
     async function handleFile(file: File) {
         if (!file.type.startsWith('video/')) return;
         try {
+            const duration = await extractVideoDuration(file);
             const blobPath = await uploadFile('LessonVideo', file);
-            onChange(blobPath);
+            onChange(blobPath, Math.round(duration));
         } catch {
             // error surfaced via hook state
         }
