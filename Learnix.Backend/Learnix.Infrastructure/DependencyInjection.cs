@@ -295,6 +295,8 @@ public static class DependencyInjection
         services.AddHostedService<DevCourseSeederHostedService>();
         services.AddHostedService<DevStudentSeederHostedService>();
         services.AddHostedService<RefreshTokenCleanupHostedService>();
+        services.AddSingleton<OutboxSignal>();
+        services.AddHostedService<OutboxNotificationListener>();
         services.AddHostedService<OutboxProcessorService>();
         services.AddHostedService<MongoIndexInitializer>();
         services.AddHostedService<ChatSessionCleanupService>();

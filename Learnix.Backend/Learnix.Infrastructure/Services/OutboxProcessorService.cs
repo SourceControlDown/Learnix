@@ -19,18 +19,29 @@ namespace Learnix.Infrastructure.Services;
 
 internal sealed class OutboxProcessorService(
     IServiceScopeFactory scopeFactory,
+    OutboxSignal outboxSignal,
     ILogger<OutboxProcessorService> logger)
     : BackgroundService
 {
-    private static readonly TimeSpan Interval = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan FallbackInterval = TimeSpan.FromSeconds(10);
     private const int BatchSize = 10;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(Interval);
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                // Wake on LISTEN/NOTIFY signal OR after fallback timeout (whichever comes first)
+                await outboxSignal.WaitAsync(FallbackInterval, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
 
-        while (await timer.WaitForNextTickAsync(stoppingToken))
             await ProcessBatchAsync(stoppingToken);
+        }
     }
 
     private async Task ProcessBatchAsync(CancellationToken ct)
@@ -45,10 +56,26 @@ internal sealed class OutboxProcessorService(
             var achievementNotifier = scope.ServiceProvider.GetRequiredService<IAchievementNotifier>();
             var notificationSender = scope.ServiceProvider.GetRequiredService<INotificationSender>();
 
+            // Add a 1-second buffer to account for PostgreSQL timestamp rounding.
+            // .NET DateTime has 100ns precision, while PostgreSQL has 1us precision.
+            // PostgreSQL can round up the NextRetryAt timestamp, causing it to be slightly
+            // in the future compared to the next immediate poll's DateTime.UtcNow.
+            var now = DateTime.UtcNow.AddSeconds(1);
+
+            // Explicit transaction: FOR UPDATE locks are held until COMMIT,
+            // preventing other instances from picking the same messages.
+            await using var transaction = await db.Database.BeginTransactionAsync(ct);
+
+            // FOR UPDATE SKIP LOCKED — row-level distributed lock:
+            // if another instance already locked a row, skip it instead of waiting.
+            // No LINQ composition after FromSqlRaw → EF passes SQL directly (no subquery wrapping).
             var messages = await db.OutboxMessages
-                .Where(m => m.ProcessedAt == null && m.NextRetryAt <= DateTime.UtcNow)
-                .OrderBy(m => m.OccurredAt)
-                .Take(BatchSize)
+                .FromSqlRaw(@"
+                    SELECT * FROM ""OutboxMessages""
+                    WHERE ""ProcessedAt"" IS NULL AND ""NextRetryAt"" <= {0}
+                    ORDER BY ""OccurredAt""
+                    LIMIT {1}
+                    FOR UPDATE SKIP LOCKED", now, BatchSize)
                 .ToListAsync(ct);
 
             foreach (var message in messages)
@@ -75,6 +102,14 @@ internal sealed class OutboxProcessorService(
 
                 await db.SaveChangesAsync(ct);
             }
+
+            await transaction.CommitAsync(ct);
+
+            // If we processed any messages, there might be more (either from a full batch,
+            // or new ones generated during processing of this batch).
+            // Signal self to check again immediately.
+            if (messages.Count > 0)
+                outboxSignal.Notify();
         }
         catch (Exception ex) when (!ct.IsCancellationRequested)
         {
