@@ -153,7 +153,7 @@
 | F-13 | Lesson viewer: post (markdown rendering) | done | |
 | F-14 | Lesson viewer: test (quiz UI, submit, results) | done | |
 | F-15 | Lesson progress tracking (mark complete, sidebar state) | done | |
-| F-16 | Lesson likes | not started | |
+| F-16 | Lesson likes | CANCELED | |
 
 ### Phase 4 — Instructor Dashboard
 
@@ -196,7 +196,7 @@
 | # | Task | Status | Notes |
 |---|---|---|---|
 | F-33 | Homepage: hero, popular courses, recommendations | done | |
-| F-34 | Responsive design pass (mobile) | in progress | |
+| F-34 | Responsive design pass (mobile) | done | |
 | F-35 | Loading states, error boundaries, empty states | done | QueryError component; error+empty states on Landing (categories+featured), CourseCatalog (skeleton+error), CourseDetail (network error+empty curriculum); removed mock fallbacks from useCategories/useFeaturedCourses |
 | F-36 | Dark mode (optional) | done | Low priority |
 | F-37 | Refactor unread-count to pure-reactive (remove polling) | done | Removed `refetchInterval: 30_000` and set `staleTime: Infinity` in NotificationBell; SignalR `UnreadCountChanged` already called `setQueryData` directly — no HTTP request on push |
@@ -245,6 +245,6 @@
 | Section | Total | Done | Remaining |
 |---|---|---|---|
 | Backend | 54 | 50 | 4 |
-| Frontend | 38 | 25 | 13 |
+| Frontend | 37 | 37 | 0 |
 | Deploy | 14 | 3 | 11 |
-| **Total** | **106** | **78** | **28** |
+| **Total** | **105** | **90** | **15** |
