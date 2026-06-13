@@ -292,8 +292,8 @@ public static class DependencyInjection
         services.AddHostedService<RoleSeederHostedService>();
         services.AddHostedService<AdminSeederHostedService>();
         services.AddHostedService<CategorySeederHostedService>();
-        services.AddHostedService<DevCourseSeederHostedService>();
-        services.AddHostedService<DevStudentSeederHostedService>();
+        services.AddHostedService<CourseSeederHostedService>();
+        services.AddHostedService<StudentSeederHostedService>();
         services.AddHostedService<RefreshTokenCleanupHostedService>();
         services.AddSingleton<OutboxSignal>();
         services.AddHostedService<OutboxNotificationListener>();

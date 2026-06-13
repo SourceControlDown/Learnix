@@ -39,10 +39,18 @@ internal sealed class AdminSeederHostedService(
         {
             // User exists but has no Admin role yet — just promote them.
             var addResult = await userManager.AddToRoleAsync(existing, Roles.Admin);
-            if (addResult.Succeeded)
-                logger.LogInformation("Promoted existing user {Email} to Admin.", email);
-            else
+            if (!addResult.Succeeded)
+            {
                 logger.LogError("Failed to promote {Email}: {Errors}", email, string.Join("; ", addResult.Errors.Select(e => e.Description)));
+                return;
+            }
+
+            // Also ensure the base Student role is present so the admin can learn.
+            var existingRoles = await userManager.GetRolesAsync(existing);
+            if (!existingRoles.Contains(Roles.Student))
+                await userManager.AddToRoleAsync(existing, Roles.Student);
+
+            logger.LogInformation("Promoted existing user {Email} to Admin.", email);
             return;
         }
 
@@ -60,11 +68,20 @@ internal sealed class AdminSeederHostedService(
         }
 
         var roleResult = await userManager.AddToRoleAsync(admin, Roles.Admin);
-        if (roleResult.Succeeded)
+        if (!roleResult.Succeeded)
+        {
+            logger.LogError("Admin user created but Admin role assignment failed: {Errors}",
+                string.Join("; ", roleResult.Errors.Select(e => e.Description)));
+            return;
+        }
+
+        // Admin is also a Student — can learn on the platform.
+        var studentResult = await userManager.AddToRoleAsync(admin, Roles.Student);
+        if (studentResult.Succeeded)
             logger.LogInformation("Seeded admin account: {Email}", email);
         else
-            logger.LogError("Admin user created but role assignment failed: {Errors}",
-                string.Join("; ", roleResult.Errors.Select(e => e.Description)));
+            logger.LogError("Admin user created but Student role assignment failed: {Errors}",
+                string.Join("; ", studentResult.Errors.Select(e => e.Description)));
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
