@@ -82,7 +82,7 @@
       "id": "faq-ai", "icon": "✨", "title": "AI Tutor", "subtitle": "How the assistant works", "colorClass": "bg-accent/10 text-accent",
       "items": [
         { "q": "Does the AI tutor cost extra?", "a": "No. AI tutor usage is included with any course you've enrolled in (free or paid). Heavy usage may be subject to fair-use rate limits." },
-        { "q": "What model powers the AI tutor?", "a": "Anthropic's Claude. Conversations stream in real time as Claude generates the response." },
+        { "q": "What model powers the AI tutor?", "a": "We use {{aiProvider}}. Conversations stream in real time as the AI generates the response." },
         { "q": "Is my chat history saved?", "a": "Yes — your conversations are stored in your account so you can pick up where you left off across devices. You can clear history anytime from Profile → Privacy." },
         { "q": "Can the AI tutor see my course progress?", "a": "It knows which course and lesson you're currently on (so it can answer in context). It does not see your test answers or scores unless you share them in the conversation." }
       ]

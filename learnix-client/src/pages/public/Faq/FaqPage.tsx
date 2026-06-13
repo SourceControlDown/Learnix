@@ -4,11 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { FaqSidebar } from './FaqSidebar';
 import { FaqCategory } from './FaqCategory';
 import { GitHubIcon } from '@/components/common/icons/SocialIcons';
+import { usePublicConfig } from '@/hooks/usePublicConfig';
 
 const GITHUB_URL = 'https://github.com/Oleh-Bashtovyi/Learnix';
 
 export default function FaqPage() {
     const { t } = useTranslation('faq');
+
+    const { data: config } = usePublicConfig();
+    const provider = config?.aiProvider || 'AI';
 
     const gettingStarted = t('categories.gettingStarted', { returnObjects: true }) as object;
     const coursesAndLearning = t('categories.coursesAndLearning', {
@@ -19,7 +23,7 @@ export default function FaqPage() {
     }) as object;
     const certificates = t('categories.certificates', { returnObjects: true }) as object;
     const forInstructors = t('categories.forInstructors', { returnObjects: true }) as object;
-    const aiTutor = t('categories.aiTutor', { returnObjects: true }) as object;
+    const aiTutor = t('categories.aiTutor', { returnObjects: true, aiProvider: provider }) as object;
     const accountAndPrivacy = t('categories.accountAndPrivacy', { returnObjects: true }) as object;
 
     return (
