@@ -149,9 +149,12 @@ internal sealed class CertificatePdfGenerator : ICertificatePdfGenerator
                             // Right: QR Code & Verify
                             row.RelativeItem().AlignBottom().AlignRight().Column(c =>
                             {
-                                c.Item().AlignRight().Width(60).Height(60).Image(qrCodeBytes);
+                                c.Item().AlignRight().Width(90).Height(90).Hyperlink(data.VerificationUrl).Image(qrCodeBytes);
                                 c.Item().Height(4);
-                                c.Item().AlignRight().Text("Scan to verify").FontSize(9).FontColor(mutedColor);
+                                c.Item().AlignRight().Hyperlink(data.VerificationUrl).Text("Verify Certificate")
+                                    .FontSize(9)
+                                    .FontColor(primaryColor)
+                                    .Underline();
                             });
                         });
                     });

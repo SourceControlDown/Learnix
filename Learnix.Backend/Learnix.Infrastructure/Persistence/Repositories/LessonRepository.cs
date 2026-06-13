@@ -1,4 +1,4 @@
-﻿using Ardalis.Specification.EntityFrameworkCore;
+using Ardalis.Specification.EntityFrameworkCore;
 using Learnix.Application.Lessons.Abstractions;
 using Learnix.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +47,17 @@ internal sealed class LessonRepository(ApplicationDbContext context)
             join section in context.Set<Section>() on lesson.SectionId equals section.Id
             where section.CourseId == courseId && !lesson.IsHidden
             select lesson
+        ).CountAsync(ct);
+    }
+
+    public Task<int> GetCompletedVisibleLessonCountAsync(Guid studentId, Guid courseId, CancellationToken ct = default)
+    {
+        return (
+            from lp in context.Set<LessonProgress>()
+            join lesson in context.Set<Lesson>() on lp.LessonId equals lesson.Id
+            join section in context.Set<Section>() on lesson.SectionId equals section.Id
+            where lp.StudentId == studentId && section.CourseId == courseId && lp.IsCompleted && !lesson.IsHidden
+            select lp
         ).CountAsync(ct);
     }
 

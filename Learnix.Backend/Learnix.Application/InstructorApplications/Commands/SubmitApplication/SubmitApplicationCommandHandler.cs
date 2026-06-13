@@ -23,8 +23,11 @@ internal sealed class SubmitApplicationCommandHandler(
         if (currentUser.UserId is null)
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
 
-        if (currentUser.IsInRole(Roles.Instructor) || currentUser.IsInRole(Roles.Admin))
+        if (currentUser.IsInRole(Roles.Instructor))
             return Result.Fail(new ConflictError("You are already an instructor."));
+
+        if (currentUser.IsInRole(Roles.Admin))
+            return Result.Fail(new ConflictError("Admins cannot submit applications. You can assign the Instructor role to yourself via User Management."));
 
         var existing = await repo.FirstOrDefaultAsync(
             new ApplicationByUserIdSpecification(currentUser.UserId.Value, forUpdate: true),

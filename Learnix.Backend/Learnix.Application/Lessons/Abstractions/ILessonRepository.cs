@@ -1,4 +1,4 @@
-﻿using Ardalis.Specification;
+using Ardalis.Specification;
 using Learnix.Domain.Entities;
 
 namespace Learnix.Application.Lessons.Abstractions;
@@ -23,6 +23,11 @@ public interface ILessonRepository : IRepositoryBase<Lesson>
     /// Returns the count of visible (non-hidden) lessons across all sections of the given course.
     /// </summary>
     Task<int> GetVisibleLessonCountAsync(Guid courseId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the count of completed visible lessons for a student in a given course.
+    /// </summary>
+    Task<int> GetCompletedVisibleLessonCountAsync(Guid studentId, Guid courseId, CancellationToken ct = default);
 
     /// <summary>
     /// Returns a visible lesson that belongs to the given course, preserving the derived EF type

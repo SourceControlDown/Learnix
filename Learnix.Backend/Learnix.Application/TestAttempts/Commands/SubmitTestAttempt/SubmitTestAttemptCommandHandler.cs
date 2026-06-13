@@ -123,8 +123,7 @@ public sealed class SubmitTestAttemptCommandHandler(
         var visibleCount = await lessonRepository.GetVisibleLessonCountAsync(courseId, ct);
         if (visibleCount == 0) return;
 
-        var completedCount = await lessonProgressRepository.CountAsync(
-            new CompletedLessonCountByStudentAndCourseSpecification(studentId, courseId), ct);
+        var completedCount = await lessonRepository.GetCompletedVisibleLessonCountAsync(studentId, courseId, ct);
 
         if (completedCount + 1 < visibleCount) return;
 

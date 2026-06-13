@@ -80,9 +80,8 @@ public sealed class MarkLessonCompleteCommandHandler(
         var visibleCount = await lessonRepository.GetVisibleLessonCountAsync(courseId, ct);
         if (visibleCount == 0) return;
 
-        // Count already-completed lessons in DB; the current lesson will make it +1 after save
-        var completedCount = await lessonProgressRepository.CountAsync(
-            new CompletedLessonCountByStudentAndCourseSpecification(studentId, courseId), ct);
+        // Count already-completed visible lessons in DB; the current lesson will make it +1 after save
+        var completedCount = await lessonRepository.GetCompletedVisibleLessonCountAsync(studentId, courseId, ct);
 
         if (completedCount + 1 < visibleCount) return;
 
