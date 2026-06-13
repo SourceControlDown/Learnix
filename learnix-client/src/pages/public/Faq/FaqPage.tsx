@@ -23,7 +23,10 @@ export default function FaqPage() {
     }) as object;
     const certificates = t('categories.certificates', { returnObjects: true }) as object;
     const forInstructors = t('categories.forInstructors', { returnObjects: true }) as object;
-    const aiTutor = t('categories.aiTutor', { returnObjects: true, aiProvider: provider }) as object;
+    const aiTutor = t('categories.aiTutor', {
+        returnObjects: true,
+        aiProvider: provider,
+    }) as object;
     const accountAndPrivacy = t('categories.accountAndPrivacy', { returnObjects: true }) as object;
 
     return (

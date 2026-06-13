@@ -67,7 +67,7 @@ export function InstructorLayout() {
             icon: <PlusCircle size={16} />,
         },
         {
-            to: '/instructor/messages',
+            to: '/messages',
             label: t('navMessages'),
             icon: <MessageSquare size={16} />,
         },
@@ -146,7 +146,7 @@ export function InstructorLayout() {
                                 >
                                     {item.icon}
                                     {item.label}
-                                    {item.to === '/instructor/messages' && unreadCount > 0 && (
+                                    {item.to === '/messages' && unreadCount > 0 && (
                                         <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
                                             {unreadCount > 99 ? '99+' : unreadCount}
                                         </span>

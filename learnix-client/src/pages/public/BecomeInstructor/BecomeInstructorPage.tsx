@@ -59,7 +59,7 @@ export default function BecomeInstructorPage() {
             )}
 
             {/* Already an instructor */}
-            {user?.role === 'Instructor' && (
+            {user?.roles.includes('Instructor') && (
                 <div className="rounded-xl border border-border bg-card p-8 text-center">
                     <CheckCircle className="mx-auto mb-3 text-success" size={40} />
                     <h2 className="mb-2 font-heading text-xl font-semibold">
@@ -76,24 +76,27 @@ export default function BecomeInstructorPage() {
             )}
 
             {/* Loading application status */}
-            {user && user.role === 'Student' && isLoading && (
+            {user && user.roles.includes('Student') && isLoading && (
                 <div className="py-16 text-center text-sm text-muted-foreground">Loading...</div>
             )}
 
             {/* Pending application */}
-            {user && user.role === 'Student' && !isLoading && application?.status === 'Pending' && (
-                <div className="rounded-xl border border-border bg-card p-8 text-center">
-                    <Clock className="mx-auto mb-3 text-warning" size={40} />
-                    <h2 className="mb-2 font-heading text-xl font-semibold">
-                        {t('applicationPendingTitle')}
-                    </h2>
-                    <p className="text-muted-foreground">{t('applicationPendingBody')}</p>
-                </div>
-            )}
+            {user &&
+                user.roles.includes('Student') &&
+                !isLoading &&
+                application?.status === 'Pending' && (
+                    <div className="rounded-xl border border-border bg-card p-8 text-center">
+                        <Clock className="mx-auto mb-3 text-warning" size={40} />
+                        <h2 className="mb-2 font-heading text-xl font-semibold">
+                            {t('applicationPendingTitle')}
+                        </h2>
+                        <p className="text-muted-foreground">{t('applicationPendingBody')}</p>
+                    </div>
+                )}
 
             {/* Approved */}
             {user &&
-                user.role === 'Student' &&
+                user.roles.includes('Student') &&
                 !isLoading &&
                 application?.status === 'Approved' && (
                     <div className="rounded-xl border border-border bg-card p-8 text-center">
@@ -113,7 +116,7 @@ export default function BecomeInstructorPage() {
 
             {/* Rejected */}
             {user &&
-                user.role === 'Student' &&
+                user.roles.includes('Student') &&
                 !isLoading &&
                 application?.status === 'Rejected' && (
                     <div className="space-y-6">
@@ -151,7 +154,7 @@ export default function BecomeInstructorPage() {
                 )}
 
             {/* No application yet */}
-            {user && user.role === 'Student' && !isLoading && !application && (
+            {user && user.roles.includes('Student') && !isLoading && !application && (
                 <ApplicationForm
                     register={register}
                     handleSubmit={handleSubmit}

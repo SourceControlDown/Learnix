@@ -192,8 +192,9 @@ export default function CoursePlayerPage() {
                                     <VideoLessonView
                                         lesson={currentLesson}
                                         courseId={courseId!}
+                                        nextLessonTitle={nextLesson?.title}
                                         onVideoNearEnd={handleAutoMarkComplete}
-                                        onVideoFullyEnded={handleVideoFullyEnded}
+                                        onPlayNext={handleVideoFullyEnded}
                                     />
                                 )}
                                 {currentLesson.lessonType === 'Post' && (

@@ -19,7 +19,7 @@ export function MessagesButton() {
     });
 
     const unread = messagesData?.totalUnread ?? 0;
-    const to = user?.role === 'Instructor' ? '/instructor/messages' : '/messages';
+    const to = '/messages';
 
     return (
         <Link

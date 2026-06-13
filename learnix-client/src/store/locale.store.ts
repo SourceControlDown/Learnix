@@ -17,7 +17,7 @@ export const useLocaleStore = create<LocaleState>()(
             },
         }),
         {
-            name: 'learnix-language',
+            name: 'locale-store',
             onRehydrateStorage: () => (state) => {
                 if (state) i18n.changeLanguage(state.language);
             },

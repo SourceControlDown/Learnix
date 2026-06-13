@@ -86,7 +86,12 @@ function CertificateCard({ cert }: { cert: any }) {
                             title="Regenerate Certificate"
                             className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                         >
-                            <RefreshCw className={cn('h-4 w-4', generateMutation.isPending && 'animate-spin')} />
+                            <RefreshCw
+                                className={cn(
+                                    'h-4 w-4',
+                                    generateMutation.isPending && 'animate-spin',
+                                )}
+                            />
                             <span className="hidden sm:inline">Regenerate</span>
                         </button>
                     </>

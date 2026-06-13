@@ -4,7 +4,7 @@ export interface UserSummary {
     id: string;
     email: string;
     fullName: string;
-    role: 'Student' | 'Instructor' | 'Admin';
+    roles: ('Student' | 'Instructor' | 'Admin')[];
     emailVerified: boolean;
     avatarUrl: string | null;
 }

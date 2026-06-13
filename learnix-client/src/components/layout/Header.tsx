@@ -133,10 +133,10 @@ export function Header() {
 
     const navItems = [
         { to: '/courses', label: t('navCourses') },
-        ...(user?.role === 'Instructor'
+        ...(user?.roles.includes('Instructor')
             ? [{ to: '/instructor', label: t('navInstructorPanel') }]
             : []),
-        ...(user?.role === 'Admin' ? [{ to: '/admin', label: t('navAdminPanel') }] : []),
+        ...(user?.roles.includes('Admin') ? [{ to: '/admin', label: t('navAdminPanel') }] : []),
     ];
 
     return (

@@ -11,12 +11,12 @@ interface JwtPayload {
 export function parseAccessToken(token: string): UserSummary | null {
     try {
         const payload = JSON.parse(atob(token.split('.')[1])) as JwtPayload;
-        const role = Array.isArray(payload.role) ? payload.role[0] : payload.role;
+        const roles = Array.isArray(payload.role) ? payload.role : [payload.role];
         return {
             id: payload.sub,
             email: payload.email,
             fullName: payload.name,
-            role: role as UserSummary['role'],
+            roles: roles as UserSummary['roles'],
             emailVerified: payload.email_verified === 'true',
             avatarUrl: null,
         };

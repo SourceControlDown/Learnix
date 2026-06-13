@@ -425,7 +425,7 @@ export default function ProfilePage() {
                 </Link>
 
                 {/* Become instructor — only for students */}
-                {user?.role === 'Student' && (
+                {user?.roles.includes('Student') && (
                     <Link
                         to="/become-instructor"
                         className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary sm:p-5"

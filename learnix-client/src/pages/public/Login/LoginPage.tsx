@@ -59,7 +59,7 @@ export default function LoginPage() {
             const user = parseAccessToken(response.accessToken);
             if (user) setUser({ ...user, avatarUrl: response.avatarUrl });
             toast.success(t('login.successRedirect'));
-            navigate(from ?? (user ? getRoleHome(user.role) : '/courses'), { replace: true });
+            navigate(from ?? (user ? getRoleHome(user.roles) : '/courses'), { replace: true });
         } catch (err) {
             resetField('password');
             if (isValidationError(err)) {

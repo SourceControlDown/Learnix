@@ -234,7 +234,7 @@ export default function CourseCatalogPage() {
             <div className="min-h-screen bg-background">
                 <div className="mx-auto max-w-7xl px-4 pb-8 pt-4 sm:px-6 md:pt-6">
                     {/* Page title */}
-                    <div className="mb-6 flex flex-col items-center justify-between gap-2 md:flex-row md:items-end md:justify-start md:gap-4 text-center md:text-left">
+                    <div className="mb-6 flex flex-col items-center justify-between gap-2 text-center md:flex-row md:items-end md:justify-start md:gap-4 md:text-left">
                         <h1 className="font-heading text-3xl font-bold md:text-4xl">
                             {t('pageTitle')}
                         </h1>

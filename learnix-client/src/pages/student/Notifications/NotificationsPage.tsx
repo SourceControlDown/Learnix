@@ -67,7 +67,7 @@ function NotificationItem({
 function ConversationItem({ conversation }: { conversation: ConversationSummary }) {
     const navigate = useNavigate();
     const user = useAuthStore((s) => s.user);
-    const messagesPath = user?.role === 'Instructor' ? '/instructor/messages' : '/messages';
+    const messagesPath = '/messages';
 
     return (
         <button

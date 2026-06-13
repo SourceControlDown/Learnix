@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { getErrorMessage } from '@/utils/errors';
 import {
     instructorApplicationsApi,
     type SubmitApplicationRequest,
@@ -16,6 +17,6 @@ export function useSubmitApplication() {
             toast.success(t('toastApplicationSubmitted'));
             qc.invalidateQueries({ queryKey: queryKeys.applications.mine() });
         },
-        onError: () => toast.error(t('toastError')),
+        onError: (error) => toast.error(getErrorMessage(error, t('toastError'))),
     });
 }

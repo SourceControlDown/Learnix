@@ -16,14 +16,14 @@ export function useUpdateProfile() {
 
             const updatedProfile = await queryClient.fetchQuery({
                 queryKey: queryKeys.users.myProfile(),
-                queryFn: usersApi.getMyProfile
+                queryFn: usersApi.getMyProfile,
             });
 
             if (user) {
                 setUser({
                     ...user,
                     fullName: `${updatedProfile.firstName} ${updatedProfile.lastName}`.trim(),
-                    avatarUrl: updatedProfile.avatarUrl
+                    avatarUrl: updatedProfile.avatarUrl,
                 });
             }
         },

@@ -19,7 +19,7 @@ export function useGoogleAuth() {
             setAccessToken(data.accessToken);
             const user = parseAccessToken(data.accessToken);
             if (user) setUser({ ...user, avatarUrl: data.avatarUrl });
-            navigate(from ?? (user ? getRoleHome(user.role) : '/courses'), { replace: true });
+            navigate(from ?? (user ? getRoleHome(user.roles) : '/courses'), { replace: true });
         },
     });
 

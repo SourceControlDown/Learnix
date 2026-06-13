@@ -1,7 +1,17 @@
 import { useState } from 'react';
 import { useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Pencil, Trash2, Check, X, Plus, FolderOpen, ShieldCheck, Upload, Loader2 } from 'lucide-react';
+import {
+    Pencil,
+    Trash2,
+    Check,
+    X,
+    Plus,
+    FolderOpen,
+    ShieldCheck,
+    Upload,
+    Loader2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { categoriesApi } from '@/api/categories.api';
@@ -24,16 +34,16 @@ function nameToSlug(name: string): string {
 const inputCls =
     'w-full rounded border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring';
 
-function ThumbnailCell({ 
-    imageUrl, 
-    isEditing, 
-    previewUrl, 
-    onUpload 
-}: { 
-    imageUrl: string | null; 
-    isEditing: boolean; 
+function ThumbnailCell({
+    imageUrl,
+    isEditing,
+    previewUrl,
+    onUpload,
+}: {
+    imageUrl: string | null;
+    isEditing: boolean;
     previewUrl?: string;
-    onUpload?: (blobPath: string, previewUrl: string) => void; 
+    onUpload?: (blobPath: string, previewUrl: string) => void;
 }) {
     const { uploadFile, isUploading } = useRequestUploadUrl();
     const fileRef = useRef<HTMLInputElement>(null);
@@ -62,7 +72,7 @@ function ThumbnailCell({
     }
 
     return (
-        <div 
+        <div
             className="group relative flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded bg-muted hover:bg-muted/80"
             onClick={() => fileRef.current?.click()}
         >
@@ -78,12 +88,12 @@ function ThumbnailCell({
             ) : (
                 <Upload size={14} className="text-muted-foreground" />
             )}
-            <input 
-                type="file" 
-                ref={fileRef} 
-                className="hidden" 
-                accept="image/jpeg,image/png,image/webp" 
-                onChange={handleFile} 
+            <input
+                type="file"
+                ref={fileRef}
+                className="hidden"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleFile}
             />
         </div>
     );
@@ -110,7 +120,10 @@ export default function CategoryManagementPage() {
 
     const createMutation = useMutation({
         mutationFn: async () => {
-            const res = await categoriesApi.create({ name: createForm.name, slug: createForm.slug });
+            const res = await categoriesApi.create({
+                name: createForm.name,
+                slug: createForm.slug,
+            });
             if (createForm.blobPath) {
                 await categoriesApi.setImage(res.id, createForm.blobPath);
             }
@@ -224,7 +237,13 @@ export default function CategoryManagementPage() {
                                             imageUrl={null}
                                             previewUrl={createForm.previewUrl}
                                             isEditing={true}
-                                            onUpload={(blobPath, previewUrl) => setCreateForm(f => ({ ...f, blobPath, previewUrl }))}
+                                            onUpload={(blobPath, previewUrl) =>
+                                                setCreateForm((f) => ({
+                                                    ...f,
+                                                    blobPath,
+                                                    previewUrl,
+                                                }))
+                                            }
                                         />
                                     </td>
                                     <td className="px-5 py-3">
@@ -295,9 +314,15 @@ export default function CategoryManagementPage() {
                                     <td className="px-5 py-3">
                                         <ThumbnailCell
                                             imageUrl={cat.imageUrl}
-                                            previewUrl={editingId === cat.id ? editForm.previewUrl : undefined}
+                                            previewUrl={
+                                                editingId === cat.id
+                                                    ? editForm.previewUrl
+                                                    : undefined
+                                            }
                                             isEditing={editingId === cat.id}
-                                            onUpload={(blobPath, previewUrl) => setEditForm(f => ({ ...f, blobPath, previewUrl }))}
+                                            onUpload={(blobPath, previewUrl) =>
+                                                setEditForm((f) => ({ ...f, blobPath, previewUrl }))
+                                            }
                                         />
                                     </td>
 

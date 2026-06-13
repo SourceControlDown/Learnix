@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore, type UserSummary } from '@/store/auth.store';
 
 interface Props {
-    roles: UserSummary['role'][];
+    roles: UserSummary['roles'];
     children: React.ReactNode;
 }
 
@@ -16,7 +16,8 @@ export function RequireRole({ roles, children }: Props) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (!roles.includes(user.role)) {
+    const hasRole = user.roles.some((r) => roles.includes(r));
+    if (!hasRole) {
         return <Navigate to="/" replace />;
     }
 

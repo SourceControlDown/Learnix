@@ -23,7 +23,9 @@
     "startButton": "Start test",
     "starting": "Starting...",
     "startError": "Failed to start the attempt.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "incompleteTitle": "Incomplete Test",
+    "incompleteDesc": "You haven't answered all questions. Are you sure you want to submit the test?"
   },
   "results": {
     "heading": "Test results",

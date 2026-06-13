@@ -5,7 +5,7 @@ export function AIAssistantSection() {
     const { t } = useTranslation('landing');
     const { data: config } = usePublicConfig();
     const provider = config?.aiProvider || 'AI';
-    
+
     const features = t('aiAssistant.features', { returnObjects: true }) as string[];
 
     return (

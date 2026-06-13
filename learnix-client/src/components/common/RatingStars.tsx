@@ -67,7 +67,11 @@ export function RatingStars({
                 }
 
                 return (
-                    <span key={i} className="cursor-default" aria-label={`${starValue} star${starValue !== 1 ? 's' : ''}`}>
+                    <span
+                        key={i}
+                        className="cursor-default"
+                        aria-label={`${starValue} star${starValue !== 1 ? 's' : ''}`}
+                    >
                         {content}
                     </span>
                 );

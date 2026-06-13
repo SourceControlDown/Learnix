@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/api/admin.api';
 import { cn } from '@/utils/cn';
+import { useAuthStore } from '@/store/auth.store';
 import type { AdminUserDto } from '@/types/admin.types';
 
 const ALL_ROLES = ['Student', 'Instructor', 'Admin'] as const;
@@ -23,6 +24,7 @@ interface Props {
 
 export function ChangeRoleDialog({ user, onClose, onRolesChanged }: Props) {
     const { t } = useTranslation('admin');
+    const currentUser = useAuthStore((s) => s.user);
     const [selectedRole, setSelectedRole] = useState<string>(ALL_ROLES[0]);
 
     const assignMutation = useMutation({
@@ -91,17 +93,18 @@ export function ChangeRoleDialog({ user, onClose, onRolesChanged }: Props) {
                                         )}
                                     >
                                         {role}
-                                        {/* Student is the base role and cannot be removed */}
-                                        {role !== 'Student' && (
-                                            <button
-                                                onClick={() => removeMutation.mutate(role)}
-                                                disabled={isLoading}
-                                                className="ml-0.5 opacity-60 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
-                                                title={`Remove ${role}`}
-                                            >
-                                                <X size={10} />
-                                            </button>
-                                        )}
+                                        {/* Student is the base role and cannot be removed. Admin cannot be removed from self */}
+                                        {role !== 'Student' &&
+                                            !(role === 'Admin' && user.id === currentUser?.id) && (
+                                                <button
+                                                    onClick={() => removeMutation.mutate(role)}
+                                                    disabled={isLoading}
+                                                    className="ml-0.5 opacity-60 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
+                                                    title={`Remove ${role}`}
+                                                >
+                                                    <X size={10} />
+                                                </button>
+                                            )}
                                     </span>
                                 ))}
                             </div>

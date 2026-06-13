@@ -145,7 +145,8 @@ export function QuestionCard({
                     />
                     {hasResult && !isCorrect && result?.correctTextAnswer && (
                         <p className="mt-2 text-sm font-medium text-success">
-                            {t('results.correctAnswer')}: <span className="font-semibold">{result.correctTextAnswer}</span>
+                            {t('results.correctAnswer')}:{' '}
+                            <span className="font-semibold">{result.correctTextAnswer}</span>
                         </p>
                     )}
                 </div>

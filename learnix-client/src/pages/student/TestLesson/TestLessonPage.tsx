@@ -13,6 +13,7 @@ import type { SubmitAttemptResponse, SubmittedAnswerDto } from '@/types/lesson.t
 import { QuestionCard } from './components/QuestionCard';
 import { TestResults } from './components/TestResults';
 import { TestAttemptHistory } from './components/TestAttemptHistory';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 
 // ---------------------------------------------------------------------------
 // SessionStorage draft helpers — keyed by lessonId so each test has its own slot
@@ -72,6 +73,7 @@ export default function TestLessonPage() {
     const [submitResult, setSubmitResult] = useState<SubmitAttemptResponse | null>(null);
     const [submittedAnswers, setSubmittedAnswers] = useState<Record<number, AnswerState>>({});
     const [draftRestored, setDraftRestored] = useState(false);
+    const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
 
     // Cooldown countdown (seconds)
     const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null);
@@ -250,9 +252,31 @@ export default function TestLessonPage() {
     }
 
     // ---------------------------------------------------------------------------
+    // Progress indicator
+    // ---------------------------------------------------------------------------
+    const answeredCount =
+        test?.questions.filter((q) => {
+            const ans = answers[q.order];
+            if (!ans) return false;
+            if (q.type === 'TextInput') return ans.textValue.trim().length > 0;
+            return ans.selectedOptions.length > 0;
+        }).length ?? 0;
+
+    const totalQuestions = test?.questions.length ?? 0;
+
+    // ---------------------------------------------------------------------------
     // Submit
     // ---------------------------------------------------------------------------
-    const handleSubmit = () => {
+    const handleSubmitClick = () => {
+        if (!test || !attemptId) return;
+        if (answeredCount < totalQuestions) {
+            setShowConfirmSubmit(true);
+        } else {
+            executeSubmit();
+        }
+    };
+
+    const executeSubmit = () => {
         if (!test || !attemptId) return;
 
         const submittedAnswersList: SubmittedAnswerDto[] = test.questions.map((q) => {
@@ -312,19 +336,6 @@ export default function TestLessonPage() {
             },
         });
     };
-
-    // ---------------------------------------------------------------------------
-    // Progress indicator
-    // ---------------------------------------------------------------------------
-    const answeredCount =
-        test?.questions.filter((q) => {
-            const ans = answers[q.order];
-            if (!ans) return false;
-            if (q.type === 'TextInput') return ans.textValue.trim().length > 0;
-            return ans.selectedOptions.length > 0;
-        }).length ?? 0;
-
-    const totalQuestions = test?.questions.length ?? 0;
 
     // canRetake based on freshly-refetched status (after invalidation from submit)
     const canRetake = test?.studentStatus?.canAttempt === true;
@@ -516,7 +527,7 @@ export default function TestLessonPage() {
                                     ) : (
                                         <button
                                             type="button"
-                                            onClick={handleSubmit}
+                                            onClick={handleSubmitClick}
                                             disabled={submit.isPending || !attemptId}
                                             className={cn(
                                                 'rounded-lg px-8 py-3 text-sm font-medium text-primary-foreground transition-colors',
@@ -541,6 +552,22 @@ export default function TestLessonPage() {
                     </div>
                 )}
             </div>
+
+            {/* Unanswered questions confirm */}
+            {showConfirmSubmit && (
+                <ConfirmDialog
+                    title={t('form.incompleteTitle')}
+                    description={t('form.incompleteDesc')}
+                    confirmLabel={t('form.submitButton')}
+                    variant="warning"
+                    isPending={submit.isPending}
+                    onConfirm={() => {
+                        setShowConfirmSubmit(false);
+                        executeSubmit();
+                    }}
+                    onClose={() => setShowConfirmSubmit(false)}
+                />
+            )}
         </div>
     );
 }

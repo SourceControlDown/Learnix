@@ -36,9 +36,6 @@ const ForgotPasswordPage = lazy(() => import('@/pages/public/ForgotPassword/Forg
 const ResetPasswordPage = lazy(() => import('@/pages/public/ResetPassword/ResetPasswordPage'));
 const MessagesPage = lazy(() => import('@/pages/student/Messages/MessagesPage'));
 const NotificationsPage = lazy(() => import('@/pages/student/Notifications/NotificationsPage'));
-const InstructorMessagesPage = lazy(
-    () => import('@/pages/instructor/Messages/InstructorMessagesPage'),
-);
 const InstructorEarningsPage = lazy(
     () => import('@/pages/instructor/Earnings/InstructorEarningsPage'),
 );
@@ -60,11 +57,11 @@ const CategoryManagementPage = lazy(
 const wrap = (el: React.ReactElement) => <Suspense fallback={<PageFallback />}>{el}</Suspense>;
 
 const guardStudent = (el: React.ReactElement) => (
-    <RequireRole roles={['Student', 'Instructor', 'Admin']}>{el}</RequireRole>
+    <RequireRole roles={['Student']}>{el}</RequireRole>
 );
 
 const guardInstructor = (el: React.ReactElement) => (
-    <RequireRole roles={['Instructor', 'Admin']}>{el}</RequireRole>
+    <RequireRole roles={['Instructor']}>{el}</RequireRole>
 );
 
 export const router = createBrowserRouter([
@@ -136,7 +133,6 @@ export const router = createBrowserRouter([
             { path: 'courses', element: wrap(<InstructorMyCoursesPage />) },
             { path: 'courses/new', element: wrap(<CourseEditorPage />) },
             { path: 'courses/:id/edit', element: wrap(<CourseEditorPage />) },
-            { path: 'messages', element: wrap(<InstructorMessagesPage />) },
             { path: 'earnings', element: wrap(<InstructorEarningsPage />) },
         ],
     },

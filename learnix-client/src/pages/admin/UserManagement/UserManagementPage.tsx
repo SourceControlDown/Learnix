@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/api/admin.api';
 import { queryKeys } from '@/api/queryKeys';
+import { useAuthStore } from '@/store/auth.store';
 import { ChangeRoleDialog } from './ChangeRoleDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { PAGINATION } from '@/const/ui.constants';
@@ -31,6 +32,7 @@ function userInitials(u: AdminUserDto) {
 
 export default function UserManagementPage() {
     const { t } = useTranslation('admin');
+    const currentUser = useAuthStore((s) => s.user);
     const qc = useQueryClient();
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -288,48 +290,64 @@ export default function UserManagementPage() {
                                             >
                                                 <Key size={14} />
                                             </button>
-                                            {!u.isDeleted &&
-                                                (u.isBanned ? (
-                                                    <button
-                                                        onClick={() =>
-                                                            setPending({ type: 'unban', user: u })
-                                                        }
-                                                        className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
-                                                        title={t('btnUnban')}
-                                                    >
-                                                        <ShieldCheck size={14} />
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        onClick={() =>
-                                                            setPending({ type: 'ban', user: u })
-                                                        }
-                                                        className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-warning"
-                                                        title={t('btnBan')}
-                                                    >
-                                                        <Ban size={14} />
-                                                    </button>
-                                                ))}
-                                            {u.isDeleted ? (
-                                                <button
-                                                    onClick={() =>
-                                                        setPending({ type: 'recover', user: u })
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
-                                                    title={t('btnRecover')}
-                                                >
-                                                    <RefreshCw size={14} />
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() =>
-                                                        setPending({ type: 'delete', user: u })
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
-                                                    title={t('btnDelete')}
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                                            {u.id !== currentUser?.id && (
+                                                <>
+                                                    {!u.isDeleted &&
+                                                        (u.isBanned ? (
+                                                            <button
+                                                                onClick={() =>
+                                                                    setPending({
+                                                                        type: 'unban',
+                                                                        user: u,
+                                                                    })
+                                                                }
+                                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
+                                                                title={t('btnUnban')}
+                                                            >
+                                                                <ShieldCheck size={14} />
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() =>
+                                                                    setPending({
+                                                                        type: 'ban',
+                                                                        user: u,
+                                                                    })
+                                                                }
+                                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-warning"
+                                                                title={t('btnBan')}
+                                                            >
+                                                                <Ban size={14} />
+                                                            </button>
+                                                        ))}
+                                                    {u.isDeleted ? (
+                                                        <button
+                                                            onClick={() =>
+                                                                setPending({
+                                                                    type: 'recover',
+                                                                    user: u,
+                                                                })
+                                                            }
+                                                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
+                                                            title={t('btnRecover')}
+                                                        >
+                                                            <RefreshCw size={14} />
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() =>
+                                                                setPending({
+                                                                    type: 'delete',
+                                                                    user: u,
+                                                                })
+                                                            }
+                                                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
+                                                            title={t('btnDelete')}
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </td>

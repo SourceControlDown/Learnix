@@ -61,7 +61,9 @@ export function PostLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
             <div>
                 <div className="mb-1 flex items-center justify-between">
                     <label className="block text-sm font-medium">{t('fieldContent')}</label>
-                    <span className={`text-xs ${content.length > LESSON_LIMITS.POST_CONTENT_MAX ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    <span
+                        className={`text-xs ${content.length > LESSON_LIMITS.POST_CONTENT_MAX ? 'text-destructive' : 'text-muted-foreground'}`}
+                    >
                         {content.length} / {LESSON_LIMITS.POST_CONTENT_MAX}
                     </span>
                 </div>
@@ -77,7 +79,9 @@ export function PostLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
                                     if (newVal.length <= LESSON_LIMITS.POST_CONTENT_MAX) {
                                         field.onChange(newVal);
                                     } else {
-                                        field.onChange(newVal.slice(0, LESSON_LIMITS.POST_CONTENT_MAX));
+                                        field.onChange(
+                                            newVal.slice(0, LESSON_LIMITS.POST_CONTENT_MAX),
+                                        );
                                     }
                                 }}
                                 height={300}

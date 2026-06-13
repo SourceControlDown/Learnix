@@ -39,5 +39,12 @@
     "noAttemptsLeft": "No attempts remaining for this test."
   },
   "loading": "Loading lesson...",
-  "lessonNotFound": "Lesson not found in this course."
+  "lessonNotFound": "Lesson not found in this course.",
+  "autoplay": {
+    "label": "Autoplay",
+    "upNext": "Up next: {{title}}",
+    "startingIn": "Starting in {{seconds}}...",
+    "cancel": "Cancel",
+    "playNow": "Play Now"
+  }
 }
