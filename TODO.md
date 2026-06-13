@@ -217,24 +217,24 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| D-04 | GitHub Actions: build + test on PR | not started | |
-| D-05 | GitHub Actions: build Docker images + push to ACR | not started | |
+| D-04 | GitHub Actions: build + test on PR | done | `backend-ci.yml` + `frontend-ci.yml` written, commented out (uncomment to activate) |
+| D-05 | GitHub Actions: build Docker images + push to ACR + deploy | done | `deploy.yml` written and commented out; all secrets documented in file header |
 
 ### Phase 3 — Azure Deployment
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| D-06 | Azure Container Apps (or App Service) for API | not started | |
+| D-06 | Azure Container Apps for API | not started | See docs/AZURE_DEPLOY.md Steps 8-9 |
 | D-06.5 | Configure ForwardedHeaders for rate limiting partition-by-real-IP behind reverse proxy | done | Prerequisite for rate limiter to work correctly in Azure |
-| D-07 | Azure Static Web Apps (or Container App) for frontend | not started | |
-| D-08 | Azure Database for PostgreSQL (Flexible Server) | not started | |
-| D-09 | Azure Cosmos DB for MongoDB API | not started | |
-| D-10 | Azure Cache for Redis | not started | |
-| D-11 | Azure Blob Storage account + containers | not started | |
+| D-07 | Azure Static Web Apps for frontend | not started | `staticwebapp.config.json` + `.env.production` created; see AZURE_DEPLOY.md Step 10 |
+| D-08 | Azure Database for PostgreSQL (Flexible Server) | not started | See AZURE_DEPLOY.md Step 3 |
+| D-09 | Azure Cosmos DB for MongoDB API | not started | See AZURE_DEPLOY.md Step 4 |
+| D-10 | Azure Cache for Redis | not started | See AZURE_DEPLOY.md Step 5 |
+| D-11 | Azure Blob Storage account + containers | not started | See AZURE_DEPLOY.md Step 6; containers: avatars, course-covers, course-videos, certificates |
 | D-12 | Azure Service Bus namespace + queues | CANCELED | MassTransit is not used |
-| D-13 | Azure Key Vault for secrets | not started | |
-| D-14 | Custom domain + SSL | not started | |
-| D-15 | Application Insights (Serilog sink) | not started | |
+| D-13 | Azure Key Vault for secrets | not started | Deferred — secrets stored in Container Apps env vars for now |
+| D-14 | Custom domain + SSL | not started | After D-06, D-07 done |
+| D-15 | Application Insights (Serilog sink) | not started | After D-06 done |
 
 ---
 
@@ -246,5 +246,5 @@
 |---|---|---|---|
 | Backend | 54 | 50 | 4 |
 | Frontend | 37 | 37 | 0 |
-| Deploy | 14 | 3 | 11 |
-| **Total** | **105** | **90** | **15** |
+| Deploy | 14 | 7 | 7 |
+| **Total** | **105** | **94** | **11** |
