@@ -1,6 +1,6 @@
 # Learnix — Frontend Architecture
 
-> Для архітектурних рішень і обґрунтувань — див. [DECISIONS_FRONTEND.md](./DECISIONS_FRONTEND.md).
+> Для архітектурних рішень і обґрунтувань — див. відповідні файли `DECISIONS_FRONTEND_*.md`.
 
 ---
 
@@ -24,7 +24,7 @@
 
 ## Styling System
 
-**Все на Tailwind. Без SCSS, без CSS Modules.** (див. FADR-009)
+**Все на Tailwind. Без SCSS, без CSS Modules.** (див. FADR-UI-001)
 
 - **shadcn/ui** — примітиви генеруються через `npx shadcn-ui add`, вони стають нашим кодом у `src/components/ui/`
 - **Design tokens** — CSS custom properties в `src/index.css` (для темної теми) + `tailwind.config.ts` (для статичних значень)
@@ -50,7 +50,7 @@ Key tokens:
 | `--muted-foreground` | `215 16% 47%` | `215 20% 65%` | Supporting text |
 | `--border` | `214 32% 91%` | `217 33% 20%` | Borders |
 
-Повний список — див. `src/index.css`. Точні значення — в FADR-009.
+Повний список — див. `src/index.css`. Точні значення — в FADR-UI-001.
 
 ### Tailwind config
 
@@ -130,12 +130,12 @@ src/
 │   │   ├── MarkdownRenderer.tsx
 │   │   ├── VideoPlayer.tsx
 │   │   ├── ThemeToggle.tsx
-│   │   ├── ProtectedRoute.tsx
+│   │   ├── RequireRole.tsx
 │   │   ├── ErrorBoundary.tsx
 │   │   └── ErrorFallback.tsx
 │   └── layout/
 │       ├── PublicLayout.tsx
-│       ├── StudentLayout.tsx
+│       ├── StudentDashboardLayout.tsx
 │       ├── InstructorLayout.tsx
 │       ├── AdminLayout.tsx
 │       ├── Header.tsx
@@ -165,25 +165,28 @@ src/
 │   │   ├── ForgotPassword/
 │   │   ├── ResetPassword/
 │   │   ├── VerifyEmail/
-│   │   ├── OAuthCallback/
+│   │   ├── BecomeInstructor/
 │   │   ├── Faq/
 │   │   └── NotFound/
 │   │
 │   ├── student/                  # Role: Student (or higher)
-│   │   ├── Dashboard/
+│   │   ├── MyLearning/
+│   │   ├── Wishlist/
 │   │   ├── CoursePlayer/
 │   │   │   ├── CoursePlayerPage.tsx
+│   │   │   ├── CourseStartPage.tsx
 │   │   │   └── components/             # 4+ components: subfolder
 │   │   │       ├── LessonSidebar.tsx
 │   │   │       ├── VideoLessonView.tsx
 │   │   │       ├── PostLessonView.tsx
-│   │   │       ├── TestLessonView.tsx
 │   │   │       └── LessonNavigation.tsx
+│   │   ├── TestLesson/
 │   │   ├── Profile/
 │   │   ├── Achievements/
 │   │   ├── Certificates/
 │   │   ├── Messages/
-│   │   └── BecomeInstructor/
+│   │   ├── Notifications/
+│   │   └── Payment/
 │   │
 │   ├── instructor/               # Role: Instructor
 │   │   ├── Dashboard/
@@ -197,7 +200,8 @@ src/
 │   │   │       ├── QuestionEditor.tsx
 │   │   │       ├── DragDropList.tsx
 │   │   │       └── VideoUploader.tsx
-│   │   └── Messages/
+│   │   ├── Messages/
+│   │   └── Earnings/
 │   │
 │   └── admin/                    # Role: Admin
 │       ├── Dashboard/
@@ -205,6 +209,7 @@ src/
 │       ├── CourseModeration/
 │       ├── InstructorApplications/
 │       ├── PaymentHistory/
+│       ├── Categories/
 │       └── PlatformLogs/
 │
 ├── hooks/                        # Custom React hooks
@@ -270,19 +275,17 @@ src/
 ├── routes/
 │   ├── index.tsx                 # createBrowserRouter definition
 │   ├── publicRoutes.tsx
-│   ├── studentRoutes.tsx
-│   ├── instructorRoutes.tsx
-│   └── adminRoutes.tsx
+│   └── ...
 │
 ├── styles/
 │   └── index.css                 # Tailwind layers + CSS variables (light/dark)
 │
-├── App.tsx                       # RouterProvider + silent refresh on start
+├── App.tsx                       # RouterProvider
 ├── main.tsx                      # ReactDOM + QueryClient + Toaster + ErrorBoundary
 └── vite-env.d.ts                 # Typed import.meta.env
 ```
 
-### Key structural rules (FADR-001, FADR-002)
+### Key structural rules (FADR-ARCH-001, FADR-ARCH-002)
 
 1. **`components/ui/`** — тільки shadcn/ui. Генеруємо через `npx shadcn-ui add <component>`. Вручну файли тут не створюємо.
 2. **`components/common/`** — компоненти що використовуються на 2+ сторінках.
@@ -309,7 +312,7 @@ src/
 | `/forgot-password` | `ForgotPasswordPage` | Email input, sends reset link |
 | `/reset-password` | `ResetPasswordPage` | New password form (token from URL) |
 | `/verify-email` | `VerifyEmailPage` | Confirm token, show status |
-| `/auth/google/callback` | `OAuthCallbackPage` | Handle OAuth redirect, refresh, navigate |
+| `/become-instructor` | `BecomeInstructorPage` | Application form |
 | `/faq` | `FaqPage` | Accordion with common questions |
 | `*` | `NotFoundPage` | 404 |
 
@@ -317,13 +320,17 @@ src/
 
 | Route | Page | Description |
 |---|---|---|
-| `/dashboard` | `StudentDashboard` | Enrolled courses progress, recommendations |
-| `/learn/:courseId` | `CoursePlayerPage` | Lesson viewer: video/post/test + sidebar |
+| `/my-learning` | `MyLearningPage` | Enrolled courses progress |
+| `/wishlist` | `WishlistPage` | Saved courses |
+| `/courses/:courseId/learn` | `CourseStartPage` | Welcome to course |
+| `/courses/:courseId/learn/:lessonId` | `CoursePlayerPage` | Lesson viewer: video/post/test + sidebar |
+| `/courses/:courseId/learn/:lessonId/test` | `TestLessonPage` | Taking a test lesson |
 | `/profile` | `ProfilePage` | Edit name, avatar, bio, category preferences |
 | `/achievements` | `AchievementsPage` | Grid of earned + locked achievements |
 | `/certificates` | `CertificatesPage` | List of earned certificates, download PDF |
 | `/messages` | `MessagesPage` | Conversations with instructors (per course) |
-| `/become-instructor` | `BecomeInstructorPage` | Application form |
+| `/notifications` | `NotificationsPage` | List of user notifications |
+| `/payment/:courseId` | `PaymentPage` | Stripe payment checkout |
 
 ### Instructor (requires `Instructor` role)
 
@@ -334,6 +341,7 @@ src/
 | `/instructor/courses/new` | `CourseEditorPage` | Create new course |
 | `/instructor/courses/:id/edit` | `CourseEditorPage` | Edit course: info, sections, lessons, tests |
 | `/instructor/messages` | `InstructorMessagesPage` | Reply to student messages |
+| `/instructor/earnings` | `InstructorEarningsPage` | Payouts and earnings summary |
 
 ### Admin (requires `Admin` role)
 
@@ -344,16 +352,16 @@ src/
 | `/admin/courses` | `CourseModerationPage` | All courses, unpublish/delete |
 | `/admin/applications` | `InstructorApplicationsPage` | Pending applications, approve/reject |
 | `/admin/payments` | `PaymentHistoryPage` | All payments with status filter |
-| `/admin/logs` | `PlatformLogsPage` | Error and action logs |
+| `/admin/categories` | `CategoryManagementPage` | Manage global categories |
 
-### Route protection (FADR-003)
+### Route protection (FADR-ARCH-003)
 
-`ProtectedRoute` — layout-компонент через `<Outlet />`. Перевіряє:
+`RequireRole` — компонент для захисту маршутів. Перевіряє:
 1. Чи завершилась ініціалізація auth (silent refresh)
 2. Чи юзер залогінений — якщо ні, редірект на `/login` з `state.from` для повернення
-3. Чи має потрібну роль — якщо ні, редірект на `/dashboard`
+3. Чи має потрібну роль (надається як масив `roles`) — якщо ні, редірект на базову сторінку.
 
-Lazy loading — кожна сторінка завантажується при переході через `React.lazy()` + `Suspense`.
+Lazy loading — кожна сторінка завантажується при переході через `React.lazy()` + `Suspense` у файлі `routes/index.tsx`.
 
 ---
 
@@ -421,7 +429,7 @@ export function CourseCard({ course, className }: CourseCardProps) {
 
 ---
 
-## State Management (FADR-005)
+## State Management (FADR-API-002)
 
 ### Server state — TanStack Query
 
@@ -444,7 +452,7 @@ export function CourseCard({ course, className }: CourseCardProps) {
 
 ---
 
-## API Layer & Token Refresh (FADR-004)
+## API Layer & Token Refresh (FADR-API-001)
 
 ### Flow
 
@@ -473,13 +481,13 @@ export function CourseCard({ course, className }: CourseCardProps) {
 
 - **Access token** зберігається в Zustand (in-memory). Додається request interceptor'ом як `Authorization: Bearer <token>`
 - **Refresh token** — HttpOnly cookie, браузер відправляє автоматично
-- На **401 response** interceptor викликає `POST /auth/refresh`. Успіх → original request retry з новим token. Невдача → clear auth store + redirect на `/login`
+- На **401 response** (з валідним Bearer токеном) interceptor викликає `POST /auth/refresh`. Успіх → original request retry з новим token. Невдача → clear auth store + redirect на `/login`
 - **Queue для concurrent 401s**: поки йде refresh, інші падаючі запити стають у чергу і повторюються після refresh. Запобігає multiple refresh calls
 - API модулі (`courses.api.ts`, etc.) імпортують спільний instance і експортують типізовані функції. Компоненти **ніколи** не імпортують axios напряму
 
 ---
 
-## React Query setup (FADR-010)
+## React Query setup (FADR-API-003)
 
 ### QueryClient defaults
 
@@ -506,7 +514,7 @@ const queryClient = new QueryClient({
 
 ### Query keys
 
-Ієрархічна структура в `src/api/queryKeys.ts` — дозволяє інвалідувати цілі групи queries одним викликом. Детально — FADR-010.
+Ієрархічна структура в `src/api/queryKeys.ts` — дозволяє інвалідувати цілі групи queries одним викликом. Детально — FADR-API-003.
 
 ### DevTools
 
@@ -519,7 +527,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 ---
 
-## Error Handling (FADR-007)
+## Error Handling (FADR-FORM-002)
 
 Три рівні:
 
@@ -603,7 +611,7 @@ import { cn } from '@/utils/cn';
 
 ---
 
-## Zod → FormValues → DTO (FADR-006)
+## Zod → FormValues → DTO (FADR-FORM-001)
 
 Zod схема — source of truth для **форми**. DTO — окремий інтерфейс у `types/`. Трансформація між ними — явна в `onSubmit`.
 
@@ -649,15 +657,17 @@ Zod **не** використовується для типізації response
 
 | Decision | Choice | ADR |
 |---|---|---|
-| Project structure | Layer-based with feature-split inside layers | FADR-001 |
-| Page scoping | Co-located with page (flat/subfolder rule) | FADR-002 |
-| Routing | React Router v6, nested layouts, layout-based guards | FADR-003 |
-| HTTP client | Axios + interceptors + queued refresh | FADR-004 |
-| Server state | TanStack Query (no API data in Zustand) | FADR-005 |
-| Client state | Zustand (auth, theme, ui, locale) | FADR-005 |
-| Forms | Zod schema → FormValues; DTO separate | FADR-006 |
-| Error handling | ProblemDetails → field/toast/boundary | FADR-007 |
-| Auth | Access in memory, refresh in HttpOnly cookie, silent refresh on start | FADR-008 |
-| Styling | Tailwind everywhere + shadcn/ui, CSS vars for theme | FADR-009 |
-| Query keys | Hierarchical; optimistic only for low-stakes | FADR-010 |
-| Localization | react-i18next, JSON namespaces, EN+UK, LanguageSwitcher in Header | FADR-012 |
+| Project structure | Layer-based with feature-split inside layers | [FADR-ARCH-001](./DECISIONS_FRONTEND_ARCH.md) |
+| Page scoping | Co-located with page (flat/subfolder rule) | [FADR-ARCH-002](./DECISIONS_FRONTEND_ARCH.md) |
+| Routing | React Router v6, nested layouts, `RequireRole` guards | [FADR-ARCH-003](./DECISIONS_FRONTEND_ARCH.md) |
+| Tooling & Libraries | npm 10+, Node 20 LTS, Prettier/Husky | [FADR-ARCH-004](./DECISIONS_FRONTEND_ARCH.md) |
+| HTTP client | Axios + interceptors + queued refresh | [FADR-API-001](./DECISIONS_FRONTEND_API.md) |
+| Server/Client state | TanStack Query (API) vs Zustand (Local UI/Auth) | [FADR-API-002](./DECISIONS_FRONTEND_API.md) |
+| Query setup | Hierarchical keys; optimistic only for low-stakes | [FADR-API-003](./DECISIONS_FRONTEND_API.md) |
+| Forms | Zod schema → FormValues; DTO separate | [FADR-FORM-001](./DECISIONS_FRONTEND_FORMS.md) |
+| Error handling | ProblemDetails → field/toast/boundary | [FADR-FORM-002](./DECISIONS_FRONTEND_FORMS.md) |
+| Auth | Access in memory, refresh in HttpOnly cookie, `AuthInitializer` | [FADR-AUTH-001](./DECISIONS_FRONTEND_AUTH.md) |
+| Styling | Tailwind everywhere + shadcn/ui, CSS vars for theme | [FADR-UI-001](./DECISIONS_FRONTEND_UI.md) |
+| Safe Markdown | `MarkdownRenderer` blocks `javascript:` protocols | [FADR-UI-002](./DECISIONS_FRONTEND_UI.md) |
+| Localization | react-i18next, JSON namespaces, EN+UK | [FADR-INTL-001](./DECISIONS_FRONTEND_I18N_SEO.md) |
+| SEO | react-helmet-async for tags, no SSR | [FADR-INTL-002](./DECISIONS_FRONTEND_I18N_SEO.md) |
