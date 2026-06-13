@@ -11,4 +11,7 @@ export const notificationsApi = {
         api.post(`/notifications/${notificationId}/read`).then((r) => r.data),
 
     markAllRead: () => api.post('/notifications/read-all').then((r) => r.data),
+    
+    markReadByType: (type: import('@/types/notification.types').NotificationEventType) => 
+        api.post(`/notifications/read-by-type?type=${type}`).then((r) => r.data),
 };

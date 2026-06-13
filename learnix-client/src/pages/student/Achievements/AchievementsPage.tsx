@@ -5,11 +5,14 @@ import { useMyAchievements } from '@/hooks/useMyAchievements';
 import { useMarkAchievementSeen } from '@/hooks/useMarkAchievementSeen';
 import { AchievementBadge } from '@/components/common/AchievementBadge';
 import { ALL_ACHIEVEMENT_CODES } from '@/const/localization/achievements';
-
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/api/queryKeys';
+import { notificationsApi } from '@/api/notifications.api';
 export default function AchievementsPage() {
     const { t } = useTranslation('achievements');
     const { data, isLoading } = useMyAchievements();
     const markSeen = useMarkAchievementSeen();
+    const queryClient = useQueryClient();
 
     const unlockedMap = new Map(data?.unlocked.map((a) => [a.code, a]));
     const unseenIds = data?.unlocked.filter((a) => !a.seen).map((a) => a.id) ?? [];
@@ -19,6 +22,14 @@ export default function AchievementsPage() {
             unseenIds.forEach((id) => markSeen.mutate(id));
         }
     }, [unseenIds.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        // Mark all achievement notifications as read when visiting this page
+        notificationsApi.markReadByType('AchievementEarned').then(() => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
+        }).catch(() => {});
+    }, [queryClient]);
 
     if (isLoading) {
         return (

@@ -28,4 +28,9 @@ internal sealed class NotificationRepository(ApplicationDbContext context)
         => context.Notifications
             .Where(n => n.UserId == userId && !n.IsRead)
             .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true), ct);
+
+    public Task MarkAllReadByTypeAsync(Guid userId, Learnix.Domain.Enums.NotificationType type, CancellationToken ct = default)
+        => context.Notifications
+            .Where(n => n.UserId == userId && n.Type == type && !n.IsRead)
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true), ct);
 }
