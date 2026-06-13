@@ -70,6 +70,19 @@ export default function CoursePlayerPage() {
         });
     };
 
+    // Called when video crosses the near-end threshold: mark as done, but do NOT redirect.
+    const handleAutoMarkComplete = () => {
+        if (!lessonId || currentLesson?.isCompleted) return;
+        markComplete.mutate(lessonId);
+    };
+
+    // Called only when the video reaches its true end: navigate to the next lesson.
+    const handleVideoFullyEnded = () => {
+        if (nextLesson) {
+            navigate(`/courses/${courseId}/learn/${nextLesson.lessonId}`);
+        }
+    };
+
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-background">
             {/* Top bar */}
@@ -179,7 +192,8 @@ export default function CoursePlayerPage() {
                                     <VideoLessonView
                                         lesson={currentLesson}
                                         courseId={courseId!}
-                                        onVideoEnded={handleMarkComplete}
+                                        onVideoNearEnd={handleAutoMarkComplete}
+                                        onVideoFullyEnded={handleVideoFullyEnded}
                                     />
                                 )}
                                 {currentLesson.lessonType === 'Post' && (

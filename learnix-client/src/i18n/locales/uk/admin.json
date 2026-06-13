@@ -52,6 +52,7 @@
   "toastUserRecovered": "Користувача відновлено",
   "toastRoleAssigned": "Роль «{{role}}» призначено",
   "toastRoleRemoved": "Роль «{{role}}» знято",
+  "toastRoleRemoveError": "Не вдалося зняти роль",
   "roleDialogTitle": "Управління ролями",
   "roleDialogCurrent": "Поточні ролі",
   "roleDialogAddLabel": "Призначити роль",

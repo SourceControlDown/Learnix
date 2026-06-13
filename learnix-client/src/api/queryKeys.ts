@@ -86,4 +86,7 @@ export const queryKeys = {
         applications: (params: Record<string, unknown>) =>
             ['admin', 'applications', params] as const,
     },
+    config: {
+        public: () => ['config', 'public'] as const,
+    },
 } as const;

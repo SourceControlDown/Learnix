@@ -52,6 +52,7 @@
   "toastUserRecovered": "User recovered",
   "toastRoleAssigned": "Role \"{{role}}\" assigned",
   "toastRoleRemoved": "Role \"{{role}}\" removed",
+  "toastRoleRemoveError": "Failed to remove role",
   "roleDialogTitle": "Manage roles",
   "roleDialogCurrent": "Current roles",
   "roleDialogAddLabel": "Assign role",

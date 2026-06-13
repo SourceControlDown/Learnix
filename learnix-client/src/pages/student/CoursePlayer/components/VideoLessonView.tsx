@@ -5,10 +5,13 @@ import type { LessonProgressItemDto } from '@/types/progress.types';
 interface VideoLessonViewProps {
     lesson: LessonProgressItemDto;
     courseId: string;
-    onVideoEnded?: () => void;
+    /** Called when the video crosses the auto-complete threshold (mark as done, no redirect). */
+    onVideoNearEnd?: () => void;
+    /** Called when the video plays all the way to the end (redirect to next lesson). */
+    onVideoFullyEnded?: () => void;
 }
 
-export function VideoLessonView({ lesson, courseId, onVideoEnded }: VideoLessonViewProps) {
+export function VideoLessonView({ lesson, courseId, onVideoNearEnd, onVideoFullyEnded }: VideoLessonViewProps) {
     const { data, isLoading } = useLessonContent(courseId, lesson.lessonId);
     const hasAutoCompleted = useRef(false);
 
@@ -17,18 +20,21 @@ export function VideoLessonView({ lesson, courseId, onVideoEnded }: VideoLessonV
     }, [lesson.lessonId]);
 
     const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-        if (!onVideoEnded || hasAutoCompleted.current) return;
+        if (!onVideoNearEnd || hasAutoCompleted.current) return;
 
         const video = e.currentTarget;
         if (!video.duration) return;
 
         const timeRemaining = video.duration - video.currentTime;
-        const percentageCompleted = video.currentTime / video.duration;
 
-        // Auto-complete if less than 10 seconds remaining, or 95% completed
-        if (timeRemaining < 10 || percentageCompleted > 0.95) {
+        // Threshold: the lesser of 120 s and 20 % of the video duration.
+        // Example: 10 s video → threshold = min(120, 2) = 2 s → fires at ~8 s.
+        // Example: 30 min video → threshold = min(120, 360) = 120 s → fires in last 2 min.
+        const threshold = Math.min(120, video.duration * 0.2);
+
+        if (timeRemaining <= threshold) {
             hasAutoCompleted.current = true;
-            onVideoEnded();
+            onVideoNearEnd(); // mark complete – no navigation
         }
     };
 
@@ -45,10 +51,13 @@ export function VideoLessonView({ lesson, courseId, onVideoEnded }: VideoLessonV
                     className="aspect-video w-full rounded-xl bg-black shadow-lg"
                     preload="metadata"
                     onEnded={() => {
-                        if (!hasAutoCompleted.current && onVideoEnded) {
+                        // Ensure completion is marked even if timeupdate missed it.
+                        if (!hasAutoCompleted.current && onVideoNearEnd) {
                             hasAutoCompleted.current = true;
-                            onVideoEnded();
+                            onVideoNearEnd();
                         }
+                        // Navigate to the next lesson only when the video truly ends.
+                        onVideoFullyEnded?.();
                     }}
                     onTimeUpdate={handleTimeUpdate}
                 >

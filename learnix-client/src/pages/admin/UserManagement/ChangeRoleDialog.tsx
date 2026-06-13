@@ -39,6 +39,9 @@ export function ChangeRoleDialog({ user, onClose, onRolesChanged }: Props) {
             toast.success(t('toastRoleRemoved', { role }));
             onRolesChanged();
         },
+        onError: (err: Error) => {
+            toast.error(err?.message ?? t('toastRoleRemoveError'));
+        },
     });
 
     const isLoading = assignMutation.isPending || removeMutation.isPending;
@@ -88,14 +91,17 @@ export function ChangeRoleDialog({ user, onClose, onRolesChanged }: Props) {
                                         )}
                                     >
                                         {role}
-                                        <button
-                                            onClick={() => removeMutation.mutate(role)}
-                                            disabled={isLoading}
-                                            className="ml-0.5 opacity-60 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
-                                            title={`Remove ${role}`}
-                                        >
-                                            <X size={10} />
-                                        </button>
+                                        {/* Student is the base role and cannot be removed */}
+                                        {role !== 'Student' && (
+                                            <button
+                                                onClick={() => removeMutation.mutate(role)}
+                                                disabled={isLoading}
+                                                className="ml-0.5 opacity-60 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
+                                                title={`Remove ${role}`}
+                                            >
+                                                <X size={10} />
+                                            </button>
+                                        )}
                                     </span>
                                 ))}
                             </div>
@@ -113,7 +119,8 @@ export function ChangeRoleDialog({ user, onClose, onRolesChanged }: Props) {
                                 onChange={(e) => setSelectedRole(e.target.value)}
                                 className="flex-1 rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                             >
-                                {ALL_ROLES.map((r) => (
+                                {/* Student is the base role — assigned automatically, not manually */}
+                                {ALL_ROLES.filter((r) => r !== 'Student').map((r) => (
                                     <option key={r} value={r}>
                                         {r}
                                     </option>
