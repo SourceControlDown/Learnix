@@ -7,6 +7,9 @@ import { adminApi } from '@/api/admin.api';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/store/auth.store';
 import type { AdminUserDto } from '@/types/admin.types';
+import axios from 'axios';
+import { env } from '@/utils/env';
+import { parseAccessToken } from '@/utils/parseAccessToken';
 
 const ALL_ROLES = ['Student', 'Instructor', 'Admin'] as const;
 
@@ -25,21 +28,42 @@ interface Props {
 export function ChangeRoleDialog({ user, onClose, onRolesChanged }: Props) {
     const { t } = useTranslation('admin');
     const currentUser = useAuthStore((s) => s.user);
-    const [selectedRole, setSelectedRole] = useState<string>(ALL_ROLES[0]);
+    const setAccessToken = useAuthStore((s) => s.setAccessToken);
+    const setUser = useAuthStore((s) => s.setUser);
+
+    const [selectedRole, setSelectedRole] = useState<string>('Instructor');
+
+    const refreshSelfIfNeeded = async () => {
+        if (user.id !== currentUser?.id) return;
+        try {
+            const { data } = await axios.post<{ accessToken: string; avatarUrl: string | null }>(
+                `${env.API_URL}/auth/refresh`,
+                {},
+                { withCredentials: true },
+            );
+            setAccessToken(data.accessToken);
+            const updatedUser = parseAccessToken(data.accessToken);
+            if (updatedUser) setUser({ ...updatedUser, avatarUrl: data.avatarUrl });
+        } catch (e) {
+            console.error('Failed to refresh token after self-role change', e);
+        }
+    };
 
     const assignMutation = useMutation({
         mutationFn: (role: string) => adminApi.assignRole(user.id, role),
-        onSuccess: (_, role) => {
+        onSuccess: async (_, role) => {
             toast.success(t('toastRoleAssigned', { role }));
             onRolesChanged();
+            await refreshSelfIfNeeded();
         },
     });
 
     const removeMutation = useMutation({
         mutationFn: (role: string) => adminApi.removeRole(user.id, role),
-        onSuccess: (_, role) => {
+        onSuccess: async (_, role) => {
             toast.success(t('toastRoleRemoved', { role }));
             onRolesChanged();
+            await refreshSelfIfNeeded();
         },
         onError: (err: Error) => {
             toast.error(err?.message ?? t('toastRoleRemoveError'));

@@ -37,7 +37,7 @@ export default function UserManagementPage() {
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [skip, setSkip] = useState(0);
-    const [roleDialogUser, setRoleDialogUser] = useState<AdminUserDto | null>(null);
+    const [roleDialogUserId, setRoleDialogUserId] = useState<string | null>(null);
     const [pending, setPending] = useState<PendingAction | null>(null);
 
     useEffect(() => {
@@ -102,6 +102,8 @@ export default function UserManagementPage() {
     const users = data?.items ?? [];
     const totalPages = data?.totalPages ?? 0;
     const currentPage = Math.floor(skip / PAGE_SIZE) + 1;
+
+    const roleDialogUser = roleDialogUserId ? users.find((u) => u.id === roleDialogUserId) : null;
 
     const isAnyPending =
         banMutation.isPending ||
@@ -284,7 +286,7 @@ export default function UserManagementPage() {
                                     <td className="px-5 py-3">
                                         <div className="flex items-center justify-end gap-1">
                                             <button
-                                                onClick={() => setRoleDialogUser(u)}
+                                                onClick={() => setRoleDialogUserId(u.id)}
                                                 className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
                                                 title={t('btnChangeRole')}
                                             >
@@ -387,7 +389,7 @@ export default function UserManagementPage() {
             {roleDialogUser && (
                 <ChangeRoleDialog
                     user={roleDialogUser}
-                    onClose={() => setRoleDialogUser(null)}
+                    onClose={() => setRoleDialogUserId(null)}
                     onRolesChanged={invalidateUsers}
                 />
             )}
