@@ -198,10 +198,10 @@ This project is deliberately built as a **monolith with clean separation** rathe
 - **Typed DTOs separate from Zod form schemas** — explicit transformation in `onSubmit`
 
 Full details:
-- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — backend
-- [`docs/ARCHITECTURE_FRONTEND.md`](./docs/ARCHITECTURE_FRONTEND.md) — frontend
-- [`docs/DECISIONS.md`](./docs/DECISIONS.md) — backend ADRs
-- [`docs/DECISIONS_FRONTEND.md`](./docs/DECISIONS_FRONTEND.md) — frontend ADRs
+- [`docs/backend/ARCHITECTURE.md`](./docs/backend/ARCHITECTURE.md) — backend
+- [`docs/frontend/ARCHITECTURE_FRONTEND.md`](./docs/frontend/ARCHITECTURE_FRONTEND.md) — frontend
+- [`docs/backend/`](./docs/backend/) — backend ADRs
+- [`docs/frontend/`](./docs/frontend/) — frontend ADRs
 
 ---
 
@@ -249,7 +249,7 @@ fix(frontend): correct CourseCard responsive layout
 ## Project Tracking
 
 - **[`TODO.md`](./TODO.md)** — task breakdown by phase (Backend / Frontend / Deploy), status per task
-- **[`docs/DECISIONS.md`](./docs/DECISIONS.md)** and **[`docs/DECISIONS_FRONTEND.md`](./docs/DECISIONS_FRONTEND.md)** — ADRs (what was decided, why, alternatives considered)
+- **[`docs/backend/`](./docs/backend/)** and **[`docs/frontend/`](./docs/frontend/)** — ADRs (what was decided, why, alternatives considered)
 
 ---
 
