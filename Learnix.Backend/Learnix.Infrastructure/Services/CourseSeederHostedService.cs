@@ -19,8 +19,8 @@ namespace Learnix.Infrastructure.Services;
 /// <summary>
 /// Opt-in dev seeder: creates a seed instructor and published courses across system categories.
 /// Activate by setting SeedDevData:Enabled = true in appsettings.Development.json.
-/// Idempotent вЂ” skips entirely if the seed instructor already owns any courses.
-/// Each course contains PostLessons, VideoLessons, and TestLessons (all 3 types, в‰Ґ5 each).
+/// Idempotent — skips entirely if the seed instructor already owns any courses.
+/// Each course contains PostLessons, VideoLessons, and TestLessons (all 3 types, ≥5 each).
 /// Tests deliberately vary PassingThreshold and AttemptLimit for app-testing purposes.
 /// </summary>
 public sealed class CourseSeederHostedService(
@@ -40,9 +40,13 @@ public sealed class CourseSeederHostedService(
         Learnix.Infrastructure.Services.CourseSeeders.NodeJsRestApiSeeder.GetDefinition(),
         Learnix.Infrastructure.Services.CourseSeeders.DigitalMarketingSeeder.GetDefinition(),
         Learnix.Infrastructure.Services.CourseSeeders.AdvancedAlgorithmsSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.CourseSeeders.CloudArchitectureSeeder.GetDefinition()
+        Learnix.Infrastructure.Services.CourseSeeders.CloudArchitectureSeeder.GetDefinition(),
+        Learnix.Infrastructure.Services.CourseSeeders.HtmlCssBasicsSeeder.GetDefinition(),
+        Learnix.Infrastructure.Services.CourseSeeders.GitVersionControlSeeder.GetDefinition(),
+        Learnix.Infrastructure.Services.CourseSeeders.DockerForBeginnersSeeder.GetDefinition(),
+        Learnix.Infrastructure.Services.CourseSeeders.IntroToLinuxSeeder.GetDefinition(),
+        Learnix.Infrastructure.Services.CourseSeeders.AgileMethodologiesSeeder.GetDefinition()
     ];
-    // в”Ђв”Ђ IHostedService в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -57,7 +61,7 @@ public sealed class CourseSeederHostedService(
         if (string.IsNullOrWhiteSpace(password))
         {
             logger.LogWarning(
-                "Course seeder: SeedData:InstructorPassword is not set вЂ” skipping course seeding.");
+                "Course seeder: SeedData:InstructorPassword is not set — skipping course seeding.");
             return;
         }
 
@@ -73,43 +77,93 @@ public sealed class CourseSeederHostedService(
         var alreadySeeded = await context.Courses
             .AnyAsync(c => c.InstructorId == instructor.Id, cancellationToken);
 
-        if (alreadySeeded)
+        if (!alreadySeeded)
         {
-            logger.LogInformation(
-                "Course seeder: courses already exist for {Email} вЂ” skipping.", email);
-            return;
-        }
+            var categoryIdBySlug = await context.Categories
+                .Where(c => c.IsSystem)
+                .ToDictionaryAsync(c => c.Slug, c => c.Id, cancellationToken);
 
-
-
-        var categoryIdBySlug = await context.Categories
-            .Where(c => c.IsSystem)
-            .ToDictionaryAsync(c => c.Slug, c => c.Id, cancellationToken);
-
-        var seededCount = 0;
-        foreach (var definition in SeedCourses)
-        {
-            if (!categoryIdBySlug.TryGetValue(definition.CategorySlug, out var categoryId))
+            var seededCount = 0;
+            foreach (var definition in SeedCourses)
             {
-                logger.LogWarning(
-                    "Course seeder: category '{Slug}' not found вЂ” skipping '{Title}'.",
-                    definition.CategorySlug, definition.Title);
-                continue;
+                if (!categoryIdBySlug.TryGetValue(definition.CategorySlug, out var categoryId))
+                {
+                    logger.LogWarning(
+                        "Course seeder: category '{Slug}' not found — skipping '{Title}'.",
+                        definition.CategorySlug, definition.Title);
+                    continue;
+                }
+
+                await SeedSingleCourseAsync(
+                    context, instructor.Id, categoryId, definition,
+                    blobStorage, blobOptions, logger, cancellationToken);
+                seededCount++;
             }
 
-            await SeedSingleCourseAsync(
-                context, instructor.Id, categoryId, definition,
-                blobStorage, blobOptions, logger, cancellationToken);
-            seededCount++;
+            logger.LogInformation(
+                "Course seeder: seeded {Count} courses for instructor {Email}.", seededCount, email);
+        }
+        else
+        {
+            logger.LogInformation(
+                "Course seeder: courses already exist for {Email} — skipping.", email);
         }
 
-        logger.LogInformation(
-            "Course seeder: seeded {Count} courses for instructor {Email}.", seededCount, email);
+        var instructor2Email = "instructor2@learnix.dev";
+        var instructor2 = await EnsureInstructorAsync(userManager, instructor2Email, password);
+        if (instructor2 != null)
+        {
+            var alreadySeeded2 = await context.Courses
+                .AnyAsync(c => c.InstructorId == instructor2.Id, cancellationToken);
+
+            if (!alreadySeeded2)
+            {
+                var categoryIdBySlug = await context.Categories
+                    .Where(c => c.IsSystem)
+                    .ToDictionaryAsync(c => c.Slug, c => c.Id, cancellationToken);
+
+                var categorySlugs = new[] { "programming", "web-development", "data-science", "design", "business", "marketing", "personal-development", "language-learning" };
+                var random = new Random();
+
+                for (int i = 1; i <= 10; i++)
+                {
+                    var catSlug = categorySlugs[random.Next(categorySlugs.Length)];
+                    if (!categoryIdBySlug.TryGetValue(catSlug, out var catId)) continue;
+
+                    var def = new SeedCourseDefinition(
+                        catSlug,
+                        $"Generic Test Course {i}",
+                        "This is a generic course created for testing pagination and display.",
+                        random.NextDouble() > 0.5 ? 0m : 19.99m,
+                        ["generic", "test"],
+                        [
+                            new SeedSection("Section 1", [
+                                new SeedVideo("Video Lesson 1", "Generic video lesson content."),
+                                new SeedPost("Post Lesson 2", "Generic post lesson content."),
+                                new SeedPost("Post Lesson 3", "Generic post lesson content.")
+                            ])
+                        ],
+                        "generic_thumbnail.png"
+                    );
+
+                    await SeedSingleCourseAsync(
+                        context, instructor2.Id, catId, def,
+                        blobStorage, blobOptions, logger, cancellationToken);
+                }
+
+                logger.LogInformation(
+                    "Course seeder: seeded 10 generic courses for instructor {Email}.", instructor2Email);
+            }
+            else
+            {
+                logger.LogInformation(
+                    "Course seeder: courses already exist for {Email} — skipping.", instructor2Email);
+            }
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    // в”Ђв”Ђ Private helpers в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
     private async Task<User?> EnsureInstructorAsync(
         UserManager<User> userManager,
@@ -138,6 +192,9 @@ public sealed class CourseSeederHostedService(
         if (!await userManager.IsInRoleAsync(instructor, Roles.Instructor))
             await userManager.AddToRoleAsync(instructor, Roles.Instructor);
 
+        if (!await userManager.IsInRoleAsync(instructor, Roles.Student))
+            await userManager.AddToRoleAsync(instructor, Roles.Student);
+
         return instructor;
     }
 
@@ -151,7 +208,7 @@ public sealed class CourseSeederHostedService(
         ILogger logger,
         CancellationToken ct)
     {
-        // Step 1 вЂ” persist course + sections so their IDs are stable before adding lessons.
+        // Step 1 — persist course + sections so their IDs are stable before adding lessons.
         var course = Course.Create(
             instructorId, categoryId,
             definition.Title, definition.Description,
@@ -182,7 +239,7 @@ public sealed class CourseSeederHostedService(
 
         await context.SaveChangesAsync(ct);
 
-        // Step 2 вЂ” add lessons via DbContext (Section.AddLesson is internal to the Domain assembly).
+        // Step 2 — add lessons via DbContext (Section.AddLesson is internal to the Domain assembly).
         // The unique (SectionId, DisplayOrder) index requires stable order values.
         //
         // Notes on visibility:
@@ -238,7 +295,7 @@ public sealed class CourseSeederHostedService(
 
         await context.SaveChangesAsync(ct);
 
-        // Step 3 вЂ” reload with full navigation so Publish() can validate the in-memory
+        // Step 3 — reload with full navigation so Publish() can validate the in-memory
         // lesson collection. Section._lessons is a backing field populated by EF on load.
         var fullCourse = await context.Courses
             .Include(c => c.Sections)

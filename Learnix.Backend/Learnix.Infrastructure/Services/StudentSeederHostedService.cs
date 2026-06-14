@@ -54,6 +54,56 @@ public sealed class StudentSeederHostedService(
         if (student is null)
             return;
 
+        for (int i = 1; i <= 9; i++)
+        {
+            var dummyEmail = $"learnix-student-dev-{i}@learnix.dev";
+            await EnsureStudentAsync(userManager, dummyEmail, password);
+        }
+
+        var courseIds = await db.Courses.Select(c => c.Id).ToListAsync(cancellationToken);
+        if (courseIds.Count > 0)
+        {
+            var random = new Random();
+            for (int i = 1; i <= 9; i++)
+            {
+                var dummyEmail = $"learnix-student-dev-{i}@learnix.dev";
+                var dummyUser = await userManager.FindByEmailAsync(dummyEmail);
+                if (dummyUser is null) continue;
+
+                int numEnrollments = random.Next(1, Math.Min(5, courseIds.Count + 1));
+                var selectedCourseIds = courseIds.OrderBy(x => random.Next()).Take(numEnrollments).ToList();
+
+                foreach (var cid in selectedCourseIds)
+                {
+                    var exists = await db.Set<Enrollment>().AnyAsync(e => e.CourseId == cid && e.StudentId == dummyUser.Id, cancellationToken);
+                    if (!exists)
+                    {
+                        var enrollment = Enrollment.Create(cid, dummyUser.Id, 0m);
+                        db.Set<Enrollment>().Add(enrollment);
+
+                        if (random.NextDouble() > 0.5)
+                        {
+                            var reviewExists = await db.Set<CourseReview>().AnyAsync(r => r.CourseId == cid && r.StudentId == dummyUser.Id, cancellationToken);
+                            if (!reviewExists)
+                            {
+                                int rating = random.Next(3, 6);
+                                string[] reviews = [
+                                    "Great course!",
+                                    "I really enjoyed this course. The materials were very clear and well organized.",
+                                    "This course completely exceeded my expectations. The instructor explained the complex topics in a very easy-to-understand manner, and the practical exercises were extremely helpful for solidifying my knowledge. Highly recommended to anyone looking to master this subject!"
+                                ];
+                                string comment = reviews[random.Next(reviews.Length)];
+                                var review = CourseReview.Create(cid, dummyUser.Id, rating, comment);
+                                db.Set<CourseReview>().Add(review);
+                            }
+                        }
+                    }
+                }
+            }
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+
         var alreadySeeded = await db.Set<UserAchievement>()
             .AnyAsync(a => a.UserId == student.Id, cancellationToken);
 
