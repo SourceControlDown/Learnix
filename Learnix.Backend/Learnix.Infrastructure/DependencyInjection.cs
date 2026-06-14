@@ -95,8 +95,6 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
-        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-
         // ASP.NET Core Identity
         services
             .AddIdentity<User, IdentityRole<Guid>>(options =>

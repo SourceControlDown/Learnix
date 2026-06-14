@@ -85,7 +85,7 @@ internal sealed class AzureBlobStorageService(
             .GetBlobClient(blobName);
 
         if (!await blob.ExistsAsync(ct))
-            return Result.Fail(new NotFoundError($"Blob not found: {blobPath}"));
+            return Result.Fail(new NotFoundError($"Image file not found or expired. Please upload it again."));
 
         var properties = await blob.GetPropertiesAsync(cancellationToken: ct);
         var size = properties.Value.ContentLength;
@@ -95,7 +95,7 @@ internal sealed class AzureBlobStorageService(
         {
             await blob.DeleteIfExistsAsync(cancellationToken: ct);
             return Result.Fail(new BlobValidationError(
-                $"File too large. Size: {size} bytes, max: {maxSize} bytes"));
+                $"File too large. Size: {FormatBytes(size)}, max: {FormatBytes(maxSize)}"));
         }
 
         var actualContentType = await DetectContentTypeAsync(blob, ct);
@@ -254,5 +254,18 @@ internal sealed class AzureBlobStorageService(
             return "application/pdf";
 
         return "application/octet-stream";
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] suffix = { "B", "KB", "MB", "GB", "TB" };
+        int i;
+        double dblSByte = bytes;
+        for (i = 0; i < suffix.Length && bytes >= 1024; i++, bytes /= 1024)
+        {
+            dblSByte = bytes / 1024.0;
+        }
+
+        return $"{dblSByte:0.##} {suffix[i]}";
     }
 }

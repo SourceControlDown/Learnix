@@ -156,12 +156,19 @@ internal sealed class SmtpEmailSender(
             await client.SendAsync(message, ct);
             await client.DisconnectAsync(true, ct);
 
-            logger.LogInformation("Email [{Subject}] sent to {Email}", subject, toEmail);
+            logger.LogInformation("Email [{Subject}] sent to {Email}", subject, MaskEmail(toEmail));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to send email [{Subject}] to {Email}", subject, toEmail);
+            logger.LogError(ex, "Failed to send email [{Subject}] to {Email}", subject, MaskEmail(toEmail));
             throw;
         }
+    }
+
+    private static string MaskEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@')) return "***";
+        var parts = email.Split('@');
+        return $"{parts[0][0]}***@{parts[1]}";
     }
 }
