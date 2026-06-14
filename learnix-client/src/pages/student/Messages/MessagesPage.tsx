@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { queryKeys } from '@/api/queryKeys';
 import { messagesApi } from '@/api/messages.api';
@@ -8,6 +8,7 @@ import { ConversationList } from './components/ConversationList';
 import { ConversationView } from '@/components/common/ConversationView';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { cn } from '@/utils/cn';
+import { useDebounce } from '@/hooks/useDebounce';
 import type { ConversationDetail, ConversationSummary } from '@/types/message.types';
 
 export default function MessagesPage() {
@@ -22,10 +23,25 @@ export default function MessagesPage() {
         return { ...initialConversation, lastMessagePreview: null, lastMessageAt: null };
     });
 
-    const { data: conversations = [], isLoading } = useQuery({
-        queryKey: queryKeys.messages.conversations(),
-        queryFn: messagesApi.getConversations,
+    const [searchQuery, setSearchQuery] = useState('');
+    const debouncedSearch = useDebounce(searchQuery, 500);
+
+    const {
+        data,
+        isLoading,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useInfiniteQuery({
+        queryKey: [...queryKeys.messages.conversations(), debouncedSearch],
+        queryFn: ({ pageParam = 0 }) =>
+            messagesApi.getConversations(pageParam, 20, debouncedSearch || undefined),
+        initialPageParam: 0,
+        getNextPageParam: (lastPage) =>
+            lastPage.hasNextPage ? lastPage.pageIndex * 20 + 20 : undefined,
     });
+
+    const conversations = data?.pages.flatMap((p) => p.items) ?? [];
 
     const initialSyncDone = useRef(false);
 
@@ -71,12 +87,32 @@ export default function MessagesPage() {
                     <h1 className="font-heading text-lg font-semibold text-foreground">
                         {t('pageTitle')}
                     </h1>
+                    <div className="px-4 pb-2">
+                        <input
+                            type="text"
+                            placeholder={t('searchPlaceholder', 'Search...')}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                    </div>
                 </div>
-                <div className="min-h-0 flex-1 overflow-y-auto">
+                <div 
+                    className="min-h-0 flex-1 overflow-y-auto"
+                    onScroll={(e) => {
+                        const target = e.target as HTMLDivElement;
+                        if (target.scrollHeight - target.scrollTop <= target.clientHeight + 100) {
+                            if (hasNextPage && !isFetchingNextPage) {
+                                fetchNextPage();
+                            }
+                        }
+                    }}
+                >
                     <ConversationList
                         conversations={conversations}
                         selectedId={selected?.id ?? null}
                         onSelect={setSelected}
+                        isFetchingNextPage={isFetchingNextPage}
                     />
                 </div>
             </aside>

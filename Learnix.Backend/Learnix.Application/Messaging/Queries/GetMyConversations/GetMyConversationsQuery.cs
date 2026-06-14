@@ -1,6 +1,8 @@
+using Learnix.Application.Common.Pagination;
 using FluentResults;
 using MediatR;
 
 namespace Learnix.Application.Messaging.Queries.GetMyConversations;
 
-public sealed record GetMyConversationsQuery : IRequest<Result<List<ConversationSummaryDto>>>;
+public sealed record GetMyConversationsQuery(int Skip = 0, int Take = 20, string? SearchQuery = null) 
+    : IRequest<Result<PaginatedResult<ConversationSummaryDto>>>;

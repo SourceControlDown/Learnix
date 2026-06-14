@@ -20,9 +20,13 @@ namespace Learnix.API.Controllers;
 public sealed class MessagesController(ISender sender) : ControllerBase
 {
     [HttpGet("conversations")]
-    public async Task<IActionResult> GetConversations(CancellationToken ct)
+    public async Task<IActionResult> GetConversations(
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 20,
+        [FromQuery] string? search = null,
+        CancellationToken ct = default)
     {
-        var result = await sender.Send(new GetMyConversationsQuery(), ct);
+        var result = await sender.Send(new GetMyConversationsQuery(skip, take, search), ct);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
