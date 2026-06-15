@@ -38,13 +38,9 @@ internal sealed class SetCategoryImageCommandHandler(
         if (category is null)
             return Result.Fail(new NotFoundError(CommonMessages.CourseCategoryNotFound(request.CategoryId)));
 
-        if (category.ImageBlobPath is not null)
-            await blobStorage.DeleteAsync(category.ImageBlobPath, ct);
-
         category.SetImage(request.BlobPath);
         await unitOfWork.SaveChangesAsync(ct);
 
-        await blobStorage.MarkConfirmedAsync(request.BlobPath, ct);
         await cache.RemoveAsync(CacheKeys.CategoriesAll, ct);
 
         return Result.Ok();

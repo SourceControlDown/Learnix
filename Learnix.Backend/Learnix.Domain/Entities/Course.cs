@@ -1,4 +1,4 @@
-﻿using Learnix.Domain.Common;
+using Learnix.Domain.Common;
 using Learnix.Domain.Common.Exceptions;
 using Learnix.Domain.Enums;
 using Learnix.Domain.Events.Course;
@@ -77,7 +77,17 @@ public class Course : SoftDeletableEntity
 
     public void SetCoverImage(string? coverImageUrl)
     {
+        if (CoverBlobPath == coverImageUrl)
+            return;
+
+        if (CoverBlobPath is not null)
+            RaiseDomainEvent(new CourseCoverRemovedDomainEvent(Id, CoverBlobPath));
+
         CoverBlobPath = coverImageUrl;
+
+        if (CoverBlobPath is not null)
+            RaiseDomainEvent(new CourseCoverSetDomainEvent(Id, CoverBlobPath));
+
         if (Status == CourseStatus.Published && string.IsNullOrWhiteSpace(CoverBlobPath))
             throw new DomainException("Published course must have a cover image.");
     }

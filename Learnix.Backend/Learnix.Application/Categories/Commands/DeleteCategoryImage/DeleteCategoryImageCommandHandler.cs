@@ -14,7 +14,6 @@ namespace Learnix.Application.Categories.Commands.DeleteCategoryImage;
 
 internal sealed class DeleteCategoryImageCommandHandler(
     ICategoryRepository categoryRepository,
-    IBlobStorageService blobStorage,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
     IDistributedCache cache)
@@ -37,7 +36,6 @@ internal sealed class DeleteCategoryImageCommandHandler(
         if (category.ImageBlobPath is null)
             return Result.Fail(new NotFoundError("Category has no image."));
 
-        await blobStorage.DeleteAsync(category.ImageBlobPath, ct);
         category.RemoveImage();
         await unitOfWork.SaveChangesAsync(ct);
 
