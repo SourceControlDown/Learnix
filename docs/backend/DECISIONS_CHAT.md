@@ -1,6 +1,5 @@
 # Learnix — ADR: AI Chat
 
-> Format: decision → why → rejected alternatives.
 > Covers Phase 8: B-44 (MongoDB), B-45 (AI providers + SSE), B-46 (session persistence), B-46.5 (cleanup).
 
 ---

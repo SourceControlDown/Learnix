@@ -1,367 +1,397 @@
-# Learnix — ADR: Автентифікація та авторизація
+# Learnix — ADR: Authentication & Authorization
 
-> Формат: що вирішили → чому → які альтернативи відкинули.
-> Оновлюється після кожного чату, де приймались архітектурні рішення.
+## Endpoints summary
 
-Суміжні файли: [DECISIONS_ARCHITECTURE.md](DECISIONS_ARCHITECTURE.md) · [DECISIONS_DOMAIN.md](DECISIONS_DOMAIN.md) · [DECISIONS_INFRA.md](DECISIONS_INFRA.md)
-
-## Конвенція статусів
-
-ADR не видаляються. Якщо рішення переглянуто — старий ADR помічається `Superseded by ADR-XXX`, новий — `Supersedes ADR-YYY`. Це зберігає історію мислення і показує як архітектура еволюціонувала.
-
----
-
-## ADR-001: JWT (short-lived) + Refresh Token (long-lived, HttpOnly cookie)
-
-**Рішення:** Аутентифікація через пару токенів:
-- **Access token (JWT):** 15 хвилин, передається в `Authorization: Bearer` header
-- **Refresh token:** 7 днів, зберігається в HttpOnly + Secure + SameSite=Strict cookie
-
-**Чому:**
-- Короткий JWT мінімізує вікно компрометації — навіть якщо токен вкрадено, він живе 15 хв
-- HttpOnly cookie захищає refresh token від XSS (JavaScript не має доступу)
-- Rotation: кожен refresh видає нову пару (access + refresh), старий refresh інвалідується
-- Хешування refresh token в БД (SHA-256) — навіть при витоку БД токени не compromised
-
-**Альтернативи:**
-- Session-based auth — простіше, але погано масштабується горизонтально без sticky sessions
-- JWT only (довгоживучий, без refresh) — небезпечно, немає механізму відкликання
-- OAuth2 + OpenID Connect (IdentityServer) — overkill для монолітного LMS
-
-**Деталі:**
-- Refresh token зберігається в таблиці `RefreshToken` (PostgreSQL), хешований
-- При кожному refresh: старий токен ревокується, створюється новий
-- Якщо використовується вже ревокований токен → ревокуються ВСІ токени юзера (захист від replay attack)
-- Google OAuth: після успішного OAuth flow сервер сам генерує JWT + refresh token пару
+| HTTP Method | Endpoint | Description | Rate Limit | Auth Required |
+|---|---|---|---|---|
+| `POST` | `/api/auth/register` | Register new user | Strict (5/15min) | No |
+| `POST` | `/api/auth/login` | Login (returns JWT + Refresh token) | Strict (5/15min) | No |
+| `POST` | `/api/auth/google` | Login via Google ID Token | Strict (5/15min) | No |
+| `POST` | `/api/auth/refresh` | Get new token pair using Refresh cookie | None | No |
+| `POST` | `/api/auth/logout` | Logout and invalidate Refresh token | None | No |
+| `POST` | `/api/auth/forgot-password` | Request password reset | Strict (5/15min) | No |
+| `POST` | `/api/auth/reset-password` | Set new password | Strict (5/15min) | No |
+| `POST` | `/api/auth/resend-confirmation`| Resend email confirmation | Strict (5/15min) | No |
+| `POST` | `/api/auth/confirm-email` | Confirm email via token from link | Strict (5/15min) | No |
 
 ---
 
-## ADR-002: ASP.NET Identity — наслідувати IdentityUser, свій DbContext
+## ADR-AUTH-001: JWT (short-lived) + Refresh Token (long-lived, HttpOnly cookie)
 
-**Рішення:** User entity наслідує IdentityUser<Guid>.
-Використовуємо свій ApplicationDbContext, не IdentityDbContext.
-Instructor-specific дані — НЕ в claims.
+**Decision:** Authentication via token pair:
+- **Access token (JWT):** 15 minutes, passed in `Authorization: Bearer` header
+- **Refresh token:** 7 days, stored in HttpOnly + Secure + SameSite=Strict cookie
 
-**Instructor-specific дані:** Якщо потрібні — nullable поля на User entity.
-Окрема таблиця InstructorProfile — out of scope для v1.
+**Why:**
+- A short-lived JWT minimizes the compromise window — even if stolen, it only lives for 15 minutes.
+- HttpOnly cookie protects the refresh token from XSS (JavaScript has no access).
+- Rotation: every refresh issues a new pair (access + refresh), the old refresh token is invalidated.
+- Hashing the refresh token in the DB (SHA-256) — even if the DB leaks, tokens aren't compromised.
 
-**Чому:**
-- Identity дає безкоштовно: password hashing, token generation,
-  lockout, email confirmation, external logins
-- Свій DbContext = контроль над схемою, без зайвих таблиць
-- Claims — для auth metadata (роль, permissions), не для бізнес-даних
+**Alternatives:**
+- Session-based auth — simpler, but harder to scale horizontally without sticky sessions.
+- JWT only (long-lived, no refresh) — dangerous, no revocation mechanism.
+- OAuth2 + OpenID Connect (IdentityServer) — overkill for a monolithic LMS.
 
-**Альтернативи:**
-- Identity повністю з коробки (IdentityDbContext) — тягне зайві таблиці,
-  менше контролю
-- Без Identity взагалі — місяці на написання auth вручну без користі
-
----
-
-## ADR-003: Чисті Identity ролі замість UserRole enum
-
-**Рішення:** Видалено `UserRole` enum з Domain. Ролі (Student / Instructor / Admin) живуть тільки в Identity (`AspNetRoles` + `AspNetUserRoles`). `Domain.Constants.Roles` — статичний клас з string-константами для типобезпечного посилання.
-
-**Чому:**
-- Дублювання enum-поля на User + Identity ролей — два источника правди, неминучий розсинхрон
-- `[Authorize(Roles = "Instructor")]` працює з Identity з коробки
-- JWT claims автоматично заповнюються Identity з ролей
-- Менше коду, менше шансів на помилку
-
-**Альтернативи:**
-- Тільки enum на User, без Identity ролей — втрачаємо `[Authorize(Roles=...)]` і вбудовану підтримку, треба писати свій authorization handler
-- Гібрид: enum + Identity, синхронізація через domain method — попередня рекомендація, відкинуто, бо дублювання навіть для 3 значень не вартує. Якщо додасться 4-та роль — треба міняти в двох місцях
+**Consequences:**
+- Refresh token is stored in the `RefreshToken` table (PostgreSQL), hashed.
+- On every refresh: old token is revoked, a new one is created.
+- If a revoked token is used → ALL user's tokens are revoked (replay attack protection).
+- Google OAuth: after successful OAuth flow, the server generates the JWT + refresh token pair.
 
 ---
 
-## ADR-004: IIdentityService як абстракція над UserManager
+## ADR-AUTH-002: ASP.NET Identity — inherit from IdentityUser, custom DbContext
 
-> **Status:** Superseded by ADR-006 (декомпозиція на три інтерфейси). Оригінальний принцип "Application не знає про UserManager" лишається в силі, але реалізований через три окремі інтерфейси замість одного `IIdentityService`. Цей ADR лишається для історичного контексту.
+**Decision:** The User entity inherits from `IdentityUser<Guid>`.
+We use our own `ApplicationDbContext`, not `IdentityDbContext`.
+Instructor-specific data is NOT stored in claims.
 
-**Рішення:** Інтерфейс `IIdentityService` живе в Application, реалізація `IdentityService` в Infrastructure. Application handlers не знають про `UserManager<User>` — викликають тільки `IIdentityService`.
+**Instructor-specific data:** If needed — nullable fields on the User entity.
+A separate `InstructorProfile` table is out of scope for v1.
 
-**Чому:**
-- `UserManager<User>` залежить від `IUserStore` → EF Core → це Infrastructure concern
-- Прямий виклик `UserManager` з handler у Application — порушення Clean Architecture (Application залежить від Infrastructure через MS.AspNetCore.Identity.EntityFrameworkCore)
-- Інтерфейс дає чітку межу: Application говорить "зареєструй / підтверди email", Infrastructure знає як саме (через Identity або інакше)
+**Why:**
+- Identity provides out of the box: password hashing, token generation, lockout, email confirmation, external logins.
+- Custom DbContext = full control over the schema, without redundant tables.
+- Claims — for auth metadata (role, permissions), not for business data.
 
-**Альтернативи:**
-- Прямий виклик `UserManager` з handler — простіше, але порушує dependency rule
-- Загорнути Identity в окремий "Auth module" — overengineering для одного сервісу
-
-**Наслідки:**
-- Усі auth-related handlers викликають `IIdentityService`, не `UserManager` напряму
-- Тестування handlers — мокаємо `IIdentityService`, не Identity інфраструктуру
-
----
-
-## ADR-005: JWT секрет — placeholder в base + dev-секрет в Development + env var в production
-
-**Рішення:** `appsettings.json` містить `Jwt.Secret = ""` (placeholder, валідація на старті падає якщо він порожній). `appsettings.Development.json` перевизначає його статичним рандомним рядком (>32 байт). У production значення передається через змінну оточення `JWT__Secret` (double underscore = nested config key в .NET configuration).
-
-**Чому:**
-- Розробник підняв `dotnet run` без зайвих кроків — БД мігрується автоматично (DECISIONS_INFRA.md ADR-012), JWT не падає на старті
-- `appsettings.Development.json` ніколи не йде в production билд — низький ризик витоку
-- Production-секрет ніколи не торкається диска чи git — тільки runtime env var (Azure Key Vault → App Service config → env var)
-- Перевірка `string.IsNullOrWhiteSpace(jwtSettings.Secret)` в `AddInfrastructure` — fail fast, краще впасти на старті ніж випустити токени підписані порожнім ключем
-
-**Альтернативи:**
-- Завжди через env var (включно з dev) — кожен новий розробник має окремо налаштувати `.env` чи user-secrets перед першим запуском. Тертя в onboarding
-- User Secrets (`dotnet user-secrets`) для dev — канонічний MS-підхід, але ховає секрет в окремому місці що ускладнює дебаг "звідки взялось значення"
-- Hardcoded fallback у коді (`?? "default-dev-secret"`) — небезпечно, легко проґавити в production-збірці
-
-**Наслідки:**
-- `appsettings.json`: секція `Jwt` з порожнім `Secret`
-- `appsettings.Development.json`: перевизначення `Jwt.Secret` рандомним рядком
-- `.env.example`: рядок `JWT__Secret=<generate 64+ char secret>` з коментарем "production only"
-- `AddInfrastructure`: явна перевірка наявності секрету з `InvalidOperationException` при порожньому
+**Alternatives:**
+- Fully out-of-the-box Identity (`IdentityDbContext`) — pulls in redundant tables, less control.
+- No Identity at all — months spent writing auth manually with no real benefit.
 
 ---
 
-## ADR-006: Декомпозиція Identity сервісу на три ролі за принципом "одна причина змінитись"
+## ADR-AUTH-003: Pure Identity roles instead of UserRole enum
 
-> **Supersedes:** ADR-004 (один IIdentityService → три інтерфейси)
+**Decision:** The `UserRole` enum was removed from Domain. Roles (Student / Instructor / Admin) live only in Identity (`AspNetRoles` + `AspNetUserRoles`). `Domain.Constants.Roles` is a static class with string constants for type-safe referencing.
 
-**Рішення:** Замість одного `IIdentityService` — три інтерфейси:
-- `IUserRegistrationService` — реєстрація + email-підтвердження (CRUD-life-cycle юзера)
-- `IUserAuthenticationService` — валідація креденшелів + вибірка info для побудови токена
-- `ITokenService` — генерація JWT + refresh token + хешування (чиста функція без знання про БД чи Identity)
+**Why:**
+- Duplicating an enum field on User and Identity roles — two sources of truth, inevitable desync.
+- `[Authorize(Roles = "Instructor")]` works with Identity out of the box.
+- JWT claims are automatically populated by Identity from roles.
+- Less code, fewer chances for errors.
 
-Усі три живуть у `Auth/Abstractions/` (DECISIONS_ARCHITECTURE.md ADR-009). Реалізації — в `Infrastructure/Identity/`.
-
-**Чому:**
-- **Different reasons to change.** Заміниш Identity provider (на Auth0/IdentityServer) — переписуєш `UserRegistration` + `UserAuthentication`, `TokenService` не знає. Поміняєш JWT на PASETO або змінити claims — переписуєш `TokenService`, решта не торкається. Single Responsibility у дії
-- **Тестабельність.** Login handler у unit-тесті мокаєш три легких інтерфейси, а не один товстий
-- **Читабельність handler.** `LoginCommandHandler` явно показує оркестрацію: validate → generate token pair → persist refresh → save. Кожен крок — окрема залежність
-
-**Альтернативи:**
-- Один `IIdentityService` з усіма методами — простіше менше файлів, але товстий контракт що змінюється з кожної причини
-- `IUserAuthenticationService.LoginAsync` повертає одразу JWT — змішує валідацію credentials з token generation, два різних concern в одному методі
-
-**Наслідки:**
-- 3 окремих DI-реєстрації в `AddInfrastructure`
-- `IdentityService.cs` (старий) видалено, на його місці `UserRegistrationService.cs` + `UserAuthenticationService.cs` + `JwtTokenService.cs`
-- Старі handlers (Register, ConfirmEmail, ResendConfirmationEmail) оновлено — параметр конструктора з `IIdentityService` на `IUserRegistrationService`
+**Alternatives:**
+- Only an enum on User, no Identity roles — we lose `[Authorize(Roles=...)]` and built-in support, requiring custom authorization handlers.
+- Hybrid: enum + Identity, synchronized via domain method — previous recommendation, rejected because duplication even for 3 values isn't worth it. If a 4th role is added, we'd need to change it in two places.
 
 ---
 
-## ADR-007: Refresh token rotation з replay-attack protection
+## ADR-AUTH-004: IIdentityService as an abstraction over UserManager
 
-**Рішення:** При кожному успішному `/api/auth/refresh` — старий refresh token revoked (не видаляється), новий створюється і повертається. Якщо приходить запит з токеном що **уже revoked** — це сигнал компрометації: всі активні токени юзера примусово revoked, юзер вилогінюється з усіх пристроїв, інцидент логується як warning з UserId.
+> **Status:** Superseded by ADR-AUTH-006 (decomposition into three interfaces). The original principle "Application doesn't know about UserManager" remains valid, but is implemented via three separate interfaces instead of a single `IIdentityService`. This ADR remains for historical context.
 
-Refresh tokens зберігаються в PostgreSQL у вигляді SHA-256 хешу (`TokenHash`, унікальний індекс). Plain-токен існує тільки в HttpOnly cookie клієнта. Витік БД ≠ компрометація сесій.
+**Decision:** The `IIdentityService` interface lives in Application, while `IdentityService` implementation is in Infrastructure. Application handlers do not know about `UserManager<User>` — they only call `IIdentityService`.
 
-Refresh token передається через HttpOnly + Secure + SameSite=Strict cookie з `Path = "/api/auth"`. Контролер відповідає за читання/запис cookie; handlers оперують голим рядком — Application шар нічого не знає про HTTP.
+**Why:**
+- `UserManager<User>` depends on `IUserStore` → EF Core → this is an Infrastructure concern.
+- Directly calling `UserManager` from a handler in Application violates Clean Architecture (Application depends on Infrastructure via MS.AspNetCore.Identity.EntityFrameworkCore).
+- An interface provides a clear boundary: Application says "register / confirm email", Infrastructure knows how exactly (via Identity or otherwise).
 
-**Чому:**
-- Rotation робить вікно компрометації мінімальним — токен живе один запит
-- Replay protection ловить сценарій "токен украли, обидва (атакувальник і юзер) ним користуються" — перший хто refresh-ить отримує новий, другий приходить зі старим (revoked) → всіх кидає в logout
-- Хешування в БД — захист від витоку дампа БД
-- Path-обмежений cookie не відправляється з кожним запитом до API, тільки до auth-endpoints — менше експозиції
+**Alternatives:**
+- Direct `UserManager` call from handler — simpler, but violates the dependency rule.
+- Wrap Identity in a separate "Auth module" — overengineering for a single service.
 
-**Альтернативи:**
-- Refresh без rotation (один довгоживучий токен) — простіше, але втрачаємо replay-detection
-- Refresh tokens у Redis — швидше, але втрачаємо durability (перезапуск Redis = всі юзери вилогінено)
-- JWT як refresh теж — symmetric з access, але втрачаємо центральний контроль revocation (JWT не можна "забрати назад")
-
-**Наслідки:**
-- `RefreshToken` entity з `TokenHash`, `ExpiresAt`, `IsRevoked`, `RevokedAt`
-- `IRefreshTokenRepository` + специфікації `RefreshTokenByHashSpecification`, `ActiveRefreshTokensByUserSpecification`
-- `RefreshTokenCleanupHostedService` (B-11.5) — фонова задача чистить токени старші `ExpiresAt + 7 днів` раз на 24h
-- Контролер `AuthController` керує cookie (`SetRefreshTokenCookie`, `ClearRefreshTokenCookie`) — handlers ні
+**Consequences:**
+- All auth-related handlers call `IIdentityService`, not `UserManager` directly.
+- Testing handlers — we mock `IIdentityService`, not Identity infrastructure.
 
 ---
 
-## ADR-008: JWT claims — стандартні OIDC + custom для ролей
+## ADR-AUTH-005: JWT secret — placeholder in base + dev-secret in Development + env var in production
 
-**Рішення:** Access token містить:
+**Decision:** `appsettings.json` contains `Jwt.Secret = ""` (placeholder, startup validation fails if empty). `appsettings.Development.json` overrides it with a static random string (>32 bytes). In production, the value is passed via the environment variable `JWT__Secret` (double underscore = nested config key in .NET configuration).
+
+**Why:**
+- Developer runs `dotnet run` without extra steps — DB migrates automatically (DECISIONS_INFRA.md ADR-012), JWT doesn't fail on startup.
+- `appsettings.Development.json` never goes into production build — low leak risk.
+- Production secret never touches disk or git — only runtime env var (Azure Key Vault → App Service config → env var).
+- Explicit check `string.IsNullOrWhiteSpace(jwtSettings.Secret)` in `AddInfrastructure` — fail fast, better to crash on startup than issue tokens signed with an empty key.
+
+**Alternatives:**
+- Always via env var (including dev) — every new developer has to manually configure `.env` or user-secrets before first run. Friction in onboarding.
+- User Secrets (`dotnet user-secrets`) for dev — canonical MS approach, but hides the secret in a separate location complicating "where did this value come from" debugging.
+- Hardcoded fallback in code (`?? "default-dev-secret"`) — dangerous, easily missed in production builds.
+
+**Consequences:**
+- `appsettings.json`: `Jwt` section with empty `Secret`.
+- `appsettings.Development.json`: override `Jwt.Secret` with a random string.
+- `.env.example`: line `JWT__Secret=<generate 64+ char secret>` with a "production only" comment.
+- `AddInfrastructure`: explicit check for secret presence throwing `InvalidOperationException` if empty.
+
+---
+
+## ADR-AUTH-006: Decomposition of Identity service into three roles based on SRP
+
+> **Supersedes:** ADR-AUTH-004 (one IIdentityService → three interfaces)
+
+**Decision:** Instead of a single `IIdentityService` — three interfaces:
+- `IUserRegistrationService` — registration + email confirmation (CRUD life-cycle of user).
+- `IUserAuthenticationService` — credentials validation + fetching info to build the token.
+- `ITokenService` — JWT generation + refresh token generation + hashing (pure function with no DB or Identity knowledge).
+
+All three live in `Auth/Abstractions/` (DECISIONS_ARCHITECTURE.md ADR-009). Implementations — in `Infrastructure/Identity/`.
+
+**Why:**
+- **Different reasons to change.** If you swap the Identity provider (for Auth0/IdentityServer) — you rewrite `UserRegistration` + `UserAuthentication`, `TokenService` is unaware. If you swap JWT for PASETO or change claims — you rewrite `TokenService`, the rest is untouched. Single Responsibility Principle in action.
+- **Testability.** In unit tests for the Login handler, you mock three lightweight interfaces instead of one fat interface.
+- **Handler readability.** `LoginCommandHandler` explicitly shows orchestration: validate → generate token pair → persist refresh → save. Each step is a separate dependency.
+
+**Alternatives:**
+- Single `IIdentityService` with all methods — simpler, fewer files, but a fat contract that changes for any reason.
+- `IUserAuthenticationService.LoginAsync` immediately returning a JWT — mixes credentials validation with token generation, two distinct concerns in one method.
+
+**Consequences:**
+- 3 separate DI registrations in `AddInfrastructure`.
+- Old `IdentityService.cs` removed, replaced by `UserRegistrationService.cs` + `UserAuthenticationService.cs` + `JwtTokenService.cs`.
+- Old handlers (Register, ConfirmEmail, ResendConfirmationEmail) updated — constructor parameter changed from `IIdentityService` to `IUserRegistrationService`.
+
+---
+
+## ADR-AUTH-007: Refresh token rotation with replay-attack protection
+
+**Decision:** On every successful `/api/auth/refresh` — the old refresh token is revoked (not deleted), a new one is created and returned. If a request arrives with an **already revoked** token — this indicates a compromise: all active tokens for the user are forcibly revoked, the user is logged out from all devices, and the incident is logged as a warning with the UserId.
+
+Refresh tokens are stored in PostgreSQL as a SHA-256 hash (`TokenHash`, unique index). The plain token exists only in the client's HttpOnly cookie. DB leak ≠ session compromise.
+
+The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with `Path = "/api/auth"`. The Controller handles reading/writing the cookie; handlers operate on raw strings — Application layer knows nothing about HTTP.
+
+**Why:**
+- Rotation minimizes the compromise window — a token lives for exactly one request.
+- Replay protection catches the "token was stolen, both attacker and user are using it" scenario — the first to refresh gets a new one, the second comes with the old (revoked) one → everyone gets logged out.
+- Hashing in DB — protection against database dump leaks.
+- Path-restricted cookie is not sent with every API request, only to auth endpoints — less exposure.
+
+**Alternatives:**
+- Refresh without rotation (single long-lived token) — simpler, but loses replay-detection.
+- Refresh tokens in Redis — faster, but loses durability (Redis restart = all users logged out).
+- JWT as refresh token too — symmetric with access tokens, but loses central revocation control (JWT cannot be "taken back").
+
+**Consequences:**
+- `RefreshToken` entity with `TokenHash`, `ExpiresAt`, `IsRevoked`, `RevokedAt`.
+- `IRefreshTokenRepository` + specifications `RefreshTokenByHashSpecification`, `ActiveRefreshTokensByUserSpecification`.
+- `RefreshTokenCleanupHostedService` (B-11.5) — background task cleaning up tokens older than `ExpiresAt + 7 days` every 24h.
+- Controller `AuthController` manages cookies (`SetRefreshTokenCookie`, `ClearRefreshTokenCookie`) — handlers do not.
+
+---
+
+## ADR-AUTH-008: JWT claims — standard OIDC + custom for roles
+
+**Decision:** Access token contains:
 - `sub` — User Id (Guid)
 - `email` — User email
-- `jti` — унікальний id токена (для трейсингу/blacklist у майбутньому)
+- `jti` — unique token id (for future tracing/blacklist)
 - `given_name` — FirstName
 - `family_name` — LastName
-- `name` — `"{FirstName} {LastName}"` (повне ім'я для display)
-- `role` — повторюваний claim для кожної ролі юзера
+- `name` — `"{FirstName} {LastName}"` (full name for display)
+- `role` — repeated claim for each user role
 
-`MapInboundClaims = false` у `AddJwtBearer` — щоб у коді API ми бачили claim names такими ж як у JWT (не перетворені на `ClaimTypes.NameIdentifier` тощо). `NameClaimType = "name"`, `RoleClaimType = "role"` — щоб `User.Identity.Name` і `[Authorize(Roles = "Instructor")]` працювали з нашими custom-claim-names.
+`MapInboundClaims = false` in `AddJwtBearer` — so that in our API code we see claim names exactly as they are in the JWT (not converted to `ClaimTypes.NameIdentifier`, etc.). `NameClaimType = "name"`, `RoleClaimType = "role"` — so that `User.Identity.Name` and `[Authorize(Roles = "Instructor")]` work with our custom claim names.
 
-**Чому:**
-- Стандартні OIDC claims (`sub`, `email`, `given_name`, `family_name`, `name`) — фронтенд або сторонні системи що очікують OIDC отримають що очікують
-- Окремі `given_name` + `family_name` + composite `name` — фронт може взяти будь-яке поле без додаткового парсингу
-- `role` як повторюваний claim — стандартний механізм Identity, працює з `[Authorize(Roles = ...)]` за замовчуванням
-- `MapInboundClaims = false` — узгодженість: те що у JWT == те що бачимо у коді. Дебаг простіший
+**Why:**
+- Standard OIDC claims (`sub`, `email`, `given_name`, `family_name`, `name`) — frontend or third-party systems expecting OIDC get what they expect.
+- Separate `given_name` + `family_name` + composite `name` — frontend can grab any field without extra parsing.
+- `role` as a repeated claim — standard Identity mechanism, works with `[Authorize(Roles = ...)]` by default.
+- `MapInboundClaims = false` — consistency: what is in JWT == what we see in code. Debugging is easier.
 
-**Альтернативи:**
-- Тільки `name` без розбиття — фронту доводиться парсити "First Last", ламається на іменах з пробілами/множинних
-- Власні короткі claim names (`uid`, `r`) для зменшення розміру токена — економія мінімальна, втрата сумісності з OIDC tooling
-- `ClaimTypes.*` URI-based claim names (.NET default) — multi-kilobyte токени, погана читабельність
+**Alternatives:**
+- Only `name` without splitting — frontend has to parse "First Last", breaks on names with spaces/multiples.
+- Custom short claim names (`uid`, `r`) to reduce token size — minimal savings, loss of compatibility with OIDC tooling.
+- `ClaimTypes.*` URI-based claim names (.NET default) — multi-kilobyte tokens, poor readability.
 
-**Наслідки:**
-- `JwtTokenService.GenerateAccessToken` приймає `firstName, lastName` (не тільки `firstName` як в першій ітерації)
-- `UserAuthenticationInfo` містить обидва імені
-- `AddJwtBearer` сконфігурований з `MapInboundClaims = false`, `NameClaimType`, `RoleClaimType`
-
----
-
-## ADR-009: Розділення `AuthenticationError` (401) і `ForbiddenError` (403)
-
-**Рішення:** Створено окремий typed error `AuthenticationError : Error` для 401 Unauthorized.
-`ForbiddenError` тепер семантично відповідає 403 Forbidden — "автентифікований, але не має прав".
-
-- `AuthenticationError` — invalid credentials, expired/replay refresh token, missing/invalid access token, locked out, unconfirmed email при логіні. Мапиться на 401.
-- `ForbiddenError` — юзер автентифікований, але не має права на операцію (наприклад, Student намагається редагувати чужий курс). Мапиться на 403.
-
-**Чому:**
-- HTTP 401 і 403 семантично різні. RFC 9110 розділяє їх чітко: 401 = "treba автентифікуватись", 403 = "автентифікація є, але не допомагає"
-- Попередня реалізація мапила `ForbiddenError` на 401 у контролері — це працювало, але плутало читача (ім'я типу → 403, маппінг → 401)
-- Окремі типи дозволяють `result.ToActionResult()` extension працювати однозначно без перевизначень на рівні action
-
-**Альтернативи:**
-- Залишити один `ForbiddenError` і мапити на різні коди залежно від контексту — магія у mapping, сервіс не знає який код поверне його помилка
-- Error codes (enum) в одному типі — менш виразно, втрачає compile-time check
-
-**Наслідки:**
-- `ResultExtensions.ToActionResult` має окремі гілки для обох типів
-- Існуючі handlers (`UserAuthenticationService`, `RefreshTokenCommandHandler`) мігровано на `AuthenticationError`
-- Майбутні authorization checks (роль-базовані) використовуватимуть `ForbiddenError`
+**Consequences:**
+- `JwtTokenService.GenerateAccessToken` accepts `firstName, lastName` (not just `firstName` like in the first iteration).
+- `UserAuthenticationInfo` contains both names.
+- `AddJwtBearer` configured with `MapInboundClaims = false`, `NameClaimType`, `RoleClaimType`.
 
 ---
 
-## ADR-010: Google OAuth через Google Identity Services (ID token) замість OAuth code flow
+## ADR-AUTH-009: Separation of `AuthenticationError` (401) and `ForbiddenError` (403)
 
-**Рішення:** Фронтенд отримує Google ID token через Google Identity Services (GIS) SDK прямо в браузері. Бек отримує token на `POST /api/auth/google`, валідує через `Google.Apis.Auth` (`GoogleJsonWebSignature.ValidateAsync`) і видає свої JWT+refresh. Authorization Code flow з redirect_uri на беці і Client Secret **не використовуємо**.
+**Decision:** Created a separate typed error `AuthenticationError : Error` for 401 Unauthorized.
+`ForbiddenError` now semantically maps to 403 Forbidden — "authenticated, but lacks permissions".
 
-**Чому:**
-- GIS — sanctioned Google's підхід для SPA з 2022+. Простіший, менше рухомих частин.
-- Client Secret не потрібен — ID token це self-contained JWT підписаний Google private key, бек валідує публічним ключем з JWKS. Secret потрібен тільки для обміну authorization code.
-- Немає redirect endpoint на беці → нема окремої машинерії для callback, state parameter, CSRF protection на callback.
-- ID token уже містить `email`, `email_verified`, `given_name`, `family_name`, `sub` — все що нам треба для find-or-create. Додаткових запитів на Google userinfo endpoint не робимо.
+- `AuthenticationError` — invalid credentials, expired/replay refresh token, missing/invalid access token, locked out, unconfirmed email during login. Maps to 401.
+- `ForbiddenError` — user is authenticated but doesn't have rights for the operation (e.g. Student trying to edit someone else's course). Maps to 403.
 
-**Альтернативи:**
-- **Authorization Code flow** — класика, "виглядає стандартніше" на інтерв'ю, але для SPA це anti-pattern у 2026. Потребує Client Secret, redirect endpoint, обміну code → tokens.
-- **Implicit flow** — deprecated Google'ом, не обговорюється.
+**Why:**
+- HTTP 401 and 403 are semantically different. RFC 9110 clearly separates them: 401 = "needs authentication", 403 = "authentication exists, but doesn't grant access".
+- Previous implementation mapped `ForbiddenError` to 401 in the controller — it worked but confused readers (type name → 403, mapping → 401).
+- Distinct types allow the `result.ToActionResult()` extension to work unambiguously without overrides at the action level.
 
-**Наслідки:**
-- `GoogleSettings.ClientId` — єдине що треба сконфігурувати. `ClientId` публічний (виявиться в front-end коді), не secret.
-- Endpoint `POST /api/auth/google` приймає `{ idToken }` → валідує → видає пару токенів (та сама `LoginResponse` як regular login).
-- Якщо Google колись deprecates GIS — треба буде переписати на Authorization Code flow. Ризик низький: GIS — це їх стратегічний напрямок.
+**Alternatives:**
+- Keep single `ForbiddenError` and map to different codes depending on context — magic in mapping, service doesn't know which code its error returns.
+- Error codes (enum) in a single type — less expressive, loses compile-time checks.
 
----
-
-## ADR-011: `GoogleId` як денормалізоване поле на User замість `AspNetUserLogins`
-
-**Рішення:** External provider linkage зберігається як `User.GoogleId` (nullable `string?`), не через Identity таблицю `AspNetUserLogins` / `UserManager.AddLoginAsync`.
-
-**Чому:**
-- У v1 Learnix тільки один external provider (Google). `AspNetUserLogins` — це таблиця для N провайдерів `(Provider, ProviderKey)`. Для одного — overhead без користі.
-- `WHERE GoogleId = ?` — один простий lookup без join на `AspNetUserLogins`.
-- Менше EF-конфігурації, менше рухомих частин у Identity schema.
-
-**Альтернативи:**
-- **`AspNetUserLogins` через `UserManager.AddLoginAsync`** — канонічний Identity шлях. Переваги: масштабується на N провайдерів з нульовими змінами коду (GitHub, Microsoft). Недолік: join на кожному Google login lookup.
-- **Гібрид: `GoogleId` для швидкого lookup + запис в `AspNetUserLogins`** — дублювання, розсинхрон можливий.
-
-**Наслідки:**
-- Додавання другого external provider (GitHub, Microsoft) — це міграція `string? GoogleId` → `AspNetUserLogins`-based flow. Помітна робота: нова міграція схеми, перенесення даних, переписування `FindOrCreateGoogleUserAsync` на polymorphic `FindOrCreateExternalUserAsync`.
-- Обмежено однопровайдерним сценарієм — документовано як свідомий tradeoff.
-
-**Future work:** при додаванні другого провайдера — рефакторити на `UserManager.AddLoginAsync` + `FindByLoginAsync`. Задача в TODO як `B-XX` (поза v1).
+**Consequences:**
+- `ResultExtensions.ToActionResult` has separate branches for both types.
+- Existing handlers (`UserAuthenticationService`, `RefreshTokenCommandHandler`) migrated to `AuthenticationError`.
+- Future role-based authorization checks will use `ForbiddenError`.
 
 ---
 
-## ADR-012: Rate limiting — in-memory FixedWindow per IP, один strict policy
+## ADR-AUTH-010: Google OAuth via Google Identity Services (ID token) instead of OAuth code flow
 
-**Рішення:** Sensitive auth endpoints (register, login, google login, forgot-password, reset-password, resend-confirmation, confirm-email) лімітовані вбудованим `Microsoft.AspNetCore.RateLimiting` — **5 запитів на 15 хвилин per IP**, FixedWindowLimiter, `QueueLimit = 0`. Refresh, logout не лімітовані. Перевищення → 429 `ProblemDetails` + `Retry-After` header.
+**Decision:** Frontend obtains a Google ID token via Google Identity Services (GIS) SDK directly in the browser. Backend receives the token via `POST /api/auth/google`, validates it via `Google.Apis.Auth` (`GoogleJsonWebSignature.ValidateAsync`), and issues its own JWT+refresh tokens. Authorization Code flow with redirect_uri on the backend and Client Secret is **not used**.
 
-**Чому:**
-- `Microsoft.AspNetCore.RateLimiting` — вбудований у .NET 8, нуль додаткових NuGet, підтримується Microsoft. AspNetCoreRateLimit — це legacy з часів .NET Core 2.
-- FixedWindow — найпрозоріший для юзера ("5 спроб на 15 хв, потім reset"). SlidingWindow і TokenBucket не дають переваг для sensitive auth де нам треба **strict cap**, а не smooth rate.
-- `QueueLimit = 0` — юзер що перебрав ліміт одразу отримує 429, не зависає у черзі.
-- Refresh без лімітування — легітимний клієнт з 3 вкладками може зробити 3 одночасних refresh при wake з sleep; strict ліміт створював би false positives без security-переваги (replay detection і так працює в `RefreshTokenCommandHandler` через ADR-007).
-- Per-IP партиціонування (не per IP+email) — простіше, достатньо для портфоліо. Per-user партиціонування потребує юзер знайдений на цій стадії — але rate limit застосовується **до** auth, коли юзера ще нема.
+**Why:**
+- GIS — sanctioned Google approach for SPAs since 2022+. Simpler, fewer moving parts.
+- Client Secret is not needed — an ID token is a self-contained JWT signed by Google's private key, the backend validates it using the public key from JWKS. Secret is only needed to exchange authorization codes.
+- No redirect endpoint on backend → no extra machinery for callback, state parameter, CSRF protection on callback.
+- ID token already contains `email`, `email_verified`, `given_name`, `family_name`, `sub` — everything we need for find-or-create. No extra requests to Google's userinfo endpoint are made.
 
-**Альтернативи:**
-- **AspNetCoreRateLimit (NuGet)** — legacy, більше коду, менше підтримки.
-- **Redis-backed distributed rate limiter** — правильно для scale-out. Поза scope v1: монолітний деплой на одному Container App instance → in-memory достатньо. Додавати при переході на multi-instance (Phase 10+).
-- **Per IP+email для login** — захищає конкретний акаунт від brute force при розподіленій атаці з багатьох IP. Trade-off: складніше, вимагає нестандартного partitioning key (email з body). Для v1 не виправдано.
+**Alternatives:**
+- **Authorization Code flow** — classic, "looks more standard" on interviews, but for SPAs it's an anti-pattern in 2026. Requires Client Secret, redirect endpoint, code → tokens exchange.
+- **Implicit flow** — deprecated by Google, not an option.
 
-**Наслідки:**
-- In-memory counters — **при scale-out лічильники розсинхронізовані**. Атакувальник може отримати 5×N спроб на N instance. Документований трейд-оф, поки один instance — не критично.
-- `HttpContext.Connection.RemoteIpAddress` за reverse proxy повертає IP проксі, не клієнта. При деплої в Azure App Service / Container Apps **обов'язково** додати `UseForwardedHeaders()` — інакше всі юзери отримують один partition key і rate limit стає одним глобальним лічильником. Задача D-06.5 у TODO.
-
----
-
-## ADR-013: Authorization checks live in handlers, not controllers
-
-**Рішення:** Перевірки "чи може поточний користувач виконати цю операцію над цим ресурсом" (owner check, role check) виконуються в command/query handlers через `ICurrentUserService`. Контролер не бере на себе цю відповідальність — він робить тільки HTTP-речі (read body, return ToActionResult).
-
-**Чому:**
-- Контролер не знає про `course.InstructorId` без fetch'у через repository. Якщо контролер робить fetch — він уже фактично робить частину роботи handler'а → порушення SRP
-- ASP.NET `[Authorize(Policy = ...)]` добре працює для статичних правил (роль у claims, claim value). Owner-check вимагає fetch resource → resource-based authorization → динамічно → природне місце — handler
-- Handler повертає `Result.Fail(new ForbiddenError(...))` → `ToActionResult()` маппить на 403. Узгоджено з існуючим pipeline (DECISIONS_ARCHITECTURE.md ADR-002, ADR-004)
-- Одне місце для look — усі business rules видно в одному шарі
-
-**Альтернативи:**
-- Authorization в контролері через кастомний `IAuthorizationRequirement + AuthorizationHandler` — офіційний ASP.NET підхід для resource-based auth. Відкинуто: додає шар непрямої взаємодії без виграшу для соло-проекту з одним типом owner-check (`InstructorId`)
-- Authorization в domain entity методі (`course.UpdateDetails(..., requestingUserId)`) — змішує знання про identity з бізнес-логікою entity, порушує SRP
-
-**Наслідки:**
-- Кожен mutating handler робить 2 перевірки: `currentUser.UserId is null` (401) + owner/admin (403)
-- Один додатковий fetch на mutation для entity що й так буде fetched — прийнятний трейд-оф
-- При зростанні кількості handler'ів можна винести в extension method: `ResultExtensions.EnsureOwnership(Guid resourceOwnerId, ICurrentUserService user)` — cosmetic refactor, не blocker
+**Consequences:**
+- `GoogleSettings.ClientId` is the only thing to configure. `ClientId` is public (exposed in front-end code), not a secret.
+- Endpoint `POST /api/auth/google` accepts `{ idToken }` → validates → issues a token pair (same `LoginResponse` as regular login).
+- If Google ever deprecates GIS — we will have to rewrite to Authorization Code flow. Low risk: GIS is their strategic direction.
 
 ---
 
-## ADR-014: Email confirmation soft restriction via ASP.NET Core authorization policy
+## ADR-AUTH-011: `GoogleId` as denormalized field on User instead of `AspNetUserLogins`
 
-**Рішення:** Після реєстрації юзер автоматично логіниться, але email залишається непідтвердженим. Persistent banner у UI нагадує підтвердити email. Write-дії з реальним платформним впливом захищені named policy `EmailConfirmed`, яка перевіряє claim `email_verified` у JWT. Непідтверджені юзери можуть вільно переглядати каталог і профіль; конкретні endpoints повертають 403 коли policy не виконується.
+**Decision:** External provider linkage is stored as `User.GoogleId` (nullable `string?`), not via the Identity table `AspNetUserLogins` / `UserManager.AddLoginAsync`.
 
-**Заблоковані endpoints:**
+**Why:**
+- In v1 Learnix, there is only one external provider (Google). `AspNetUserLogins` is a table for N providers `(Provider, ProviderKey)`. For just one — overhead without benefits.
+- `WHERE GoogleId = ?` — single simple lookup without joining `AspNetUserLogins`.
+- Less EF configuration, fewer moving parts in Identity schema.
 
-| Endpoint | Причина |
+**Alternatives:**
+- **`AspNetUserLogins` via `UserManager.AddLoginAsync`** — canonical Identity path. Pros: scales to N providers with zero code changes (GitHub, Microsoft). Cons: join on every Google login lookup.
+- **Hybrid: `GoogleId` for fast lookup + save in `AspNetUserLogins`** — duplication, desync possible.
+
+**Consequences:**
+- Adding a second external provider (GitHub, Microsoft) means a migration from `string? GoogleId` → `AspNetUserLogins`-based flow. Significant work: new schema migration, data transfer, rewriting `FindOrCreateGoogleUserAsync` to polymorphic `FindOrCreateExternalUserAsync`.
+- Limited to a single-provider scenario — documented as a deliberate tradeoff.
+
+**Future work:** when adding a second provider — refactor to `UserManager.AddLoginAsync` + `FindByLoginAsync`. Added as a `B-XX` task in TODO (outside v1).
+
+---
+
+## ADR-AUTH-012: Rate limiting — in-memory FixedWindow per IP, single strict policy
+
+**Decision:** Sensitive auth endpoints (register, login, google login, forgot-password, reset-password, resend-confirmation, confirm-email) are limited by the built-in `Microsoft.AspNetCore.RateLimiting` — **5 requests per 15 minutes per IP**, FixedWindowLimiter, `QueueLimit = 0`. Refresh and logout are not limited. Exceeding limit → 429 `ProblemDetails` + `Retry-After` header.
+
+**Why:**
+- `Microsoft.AspNetCore.RateLimiting` is built into .NET 8, zero extra NuGets, supported by Microsoft. AspNetCoreRateLimit is legacy from .NET Core 2 days.
+- FixedWindow — most transparent for users ("5 attempts per 15 min, then reset"). SlidingWindow and TokenBucket offer no benefits for sensitive auth where we need a **strict cap**, not a smooth rate.
+- `QueueLimit = 0` — a user exceeding the limit immediately gets 429, without hanging in a queue.
+- Refresh without limits — a legitimate client with 3 tabs might trigger 3 simultaneous refreshes on wake-from-sleep; a strict limit would cause false positives with no security benefit (replay detection already works in `RefreshTokenCommandHandler` via ADR-AUTH-007).
+- Per-IP partitioning (not per IP+email) — simpler, sufficient for a portfolio. Per-user partitioning requires identifying the user — but rate limiting applies **before** auth, when the user doesn't exist yet.
+
+**Alternatives:**
+- **AspNetCoreRateLimit (NuGet)** — legacy, more code, less support.
+- **Redis-backed distributed rate limiter** — correct for scale-out. Outside scope for v1: monolithic deployment on a single Container App instance → in-memory is enough. Add when migrating to multi-instance (Phase 10+).
+- **Per IP+email for login** — protects a specific account from brute force during distributed IP attacks. Trade-off: more complex, requires a custom partitioning key (extracting email from body). Not justified for v1.
+
+**Consequences:**
+- In-memory counters — **counters will drift upon scale-out**. An attacker might get 5×N attempts on N instances. Documented trade-off, not critical while single-instance.
+- `HttpContext.Connection.RemoteIpAddress` behind a reverse proxy returns the proxy's IP, not the client's. When deploying to Azure App Service / Container Apps, you **must** add `UseForwardedHeaders()` — otherwise, all users share one partition key and rate limiting becomes a global counter. Task D-06.5 in TODO.
+
+---
+
+## ADR-AUTH-013: Authorization checks live in handlers, not controllers
+
+**Decision:** Checks for "can the current user perform this operation on this resource" (owner check, role check) are performed inside command/query handlers via `ICurrentUserService`. The Controller does not take this responsibility — it only handles HTTP concerns (read body, return ToActionResult).
+
+**Why:**
+- The controller does not know `course.InstructorId` without fetching it via a repository. If the controller fetches it — it effectively performs part of the handler's job → SRP violation.
+- ASP.NET `[Authorize(Policy = ...)]` works well for static rules (role in claims, claim value). Owner checks require fetching the resource → resource-based authorization → dynamic → natural place is the handler.
+- Handler returns `Result.Fail(new ForbiddenError(...))` → `ToActionResult()` maps to 403. Aligned with existing pipeline (DECISIONS_ARCHITECTURE.md ADR-002, ADR-004).
+- One place to look — all business rules are visible in a single layer.
+
+**Alternatives:**
+- Authorization in controller via custom `IAuthorizationRequirement + AuthorizationHandler` — official ASP.NET approach for resource-based auth. Rejected: adds a layer of indirection with no benefit for a solo project with a single owner-check type (`InstructorId`).
+- Authorization in domain entity method (`course.UpdateDetails(..., requestingUserId)`) — mixes identity knowledge with entity business logic, violates SRP.
+
+**Consequences:**
+- Every mutating handler performs 2 checks: `currentUser.UserId is null` (401) + owner/admin (403).
+- One extra fetch on mutation for an entity that would be fetched anyway — acceptable trade-off.
+- As handlers grow, this can be extracted into an extension method: `ResultExtensions.EnsureOwnership(Guid resourceOwnerId, ICurrentUserService user)` — cosmetic refactor, non-blocker.
+
+---
+
+## ADR-AUTH-014: Email confirmation soft restriction via ASP.NET Core authorization policy
+
+**Decision:** After registration, the user is automatically logged in, but the email remains unconfirmed. A persistent banner in the UI reminds them to confirm their email. Write-actions with real platform impact are protected by a named policy `EmailConfirmed`, which checks the `email_verified` claim in the JWT. Unconfirmed users can freely browse the catalog and their profile; specific endpoints return 403 when the policy is not met.
+
+**Gated endpoints:**
+
+| Endpoint | Reason |
 |---|---|
-| `POST /api/enrollments` | Запис на безкоштовний курс — всі downstream дії (прогрес, тести, сертифікати) каскадують від цього gate |
-| Stripe checkout (Phase 9) | Запис на платний курс — при успішній оплаті створюється той самий `Enrollment` запис |
-| `POST /api/instructor-applications` | Запускає admin review; spam-заявки від неверифікованих email є модераційним ризиком |
-| `POST /api/courses/{id}/reviews` | Публічний контент прив'язаний до реальної ідентичності |
-| `PUT /api/courses/{id}/reviews/{reviewId}` | Те саме — редагування публічного контенту |
-| `POST /api/messages/conversations/start-or-get` | Перша точка людського контакту; вимагає довіри |
-| `POST /api/messages/conversations/{id}/messages` | Те саме |
+| `POST /api/enrollments` | Enrolling in a free course — all downstream actions (progress, tests, certificates) cascade from this gate. |
+| Stripe checkout (Phase 9) | Paid course enrollment — successful payment creates the same `Enrollment` record. |
+| `POST /api/instructor-applications` | Triggers admin review; spam applications from unverified emails are a moderation risk. |
+| `POST /api/courses/{id}/reviews` | Public content tied to a real identity. |
+| `PUT /api/courses/{id}/reviews/{reviewId}` | Same — editing public content. |
+| `POST /api/messages/conversations/start-or-get` | First point of human contact; requires trust. |
+| `POST /api/messages/conversations/{id}/messages` | Same. |
 
-**Вільні (не блокуємо):** перегляд каталогу, сторінка курсу, читання відгуків, профіль (read + edit), AI chat. Прогрес / тести / сертифікати каскадують з Enrollment — окремий gate не потрібен.
+**Free (not blocked):** catalog browsing, course page, reading reviews, profile (read + edit), AI chat. Progress / tests / certificates cascade from Enrollment — a separate gate isn't needed.
 
-**Чому:**
-- **Controller-level concern, not domain concern.** "Чи підтверджена ідентичність юзера?" — це питання автентифікації/авторизації, не бізнес-логіки. Природне місце — `[Authorize]` attribute (той самий рівень що і role checks), не всередині handlers — узгоджується з ADR-013, який резервує handler-level auth-перевірки для resource-based (owner) рішень.
-- **Один механізм, не сім.** Єдина named policy декорує 7 endpoints. Альтернатива (перевірка `ICurrentUserService.IsEmailConfirmed` в кожному handler) розсіює auth-логіку по Application шару і ускладнює аудит.
-- **Soft restriction (не hard block).** Hard-block логіну/доступу до підтвердження email дає високий abandonment rate. Дозволити досліджувати платформу перед підтвердженням — industry standard (Slack, GitHub, Vercel).
-- **JWT claim = нуль зайвих DB-запитів.** Claim `email_verified: "true"/"false"` встановлюється під час логіну/реєстрації і живе в токені — без додаткових запитів на кожен request. Frontend зчитує той самий claim для відображення banner.
+**Why:**
+- **Controller-level concern, not domain concern.** "Is the user's identity confirmed?" is an authentication/authorization question, not business logic. The natural place is an `[Authorize]` attribute (same level as role checks), not inside handlers — aligns with ADR-AUTH-013, which reserves handler-level auth checks for resource-based (owner) decisions.
+- **One mechanism, not seven.** A single named policy decorates 7 endpoints. The alternative (checking `ICurrentUserService.IsEmailConfirmed` in every handler) scatters auth logic across the Application layer and complicates auditing.
+- **Soft restriction (no hard block).** Hard-blocking login/access until email confirmation causes high abandonment rates. Allowing exploration before confirmation is an industry standard (Slack, GitHub, Vercel).
+- **JWT claim = zero extra DB queries.** The claim `email_verified: "true"/"false"` is set during login/registration and lives in the token — no extra queries per request. Frontend reads the same claim to display the banner.
 
-**Альтернативи:**
-- **Hard-block логіну** — максимальна безпека, але висока ціна: UX погіршується, abandonment зростає. Відкинуто.
-- **Перевірка `IsEmailConfirmed` в кожному handler** — auth concern потрапляє в Application шар, порушує принцип "auth at the gate". Також ускладнює аудит: перевірки розсіяні по 7 handlers. Відкинуто.
-- **Middleware з перевіркою конкретних шляхів** — fragile: string path matching ламається при рефакторингу маршрутів. Відкинуто.
-- **Кастомний атрибут `[RequireEmailConfirmed]`** — еквівалентний named policy, але менш стандартний; ASP.NET Core authorization policies — правильний механізм для іменованих правил авторизації. Відкинуто.
+**Alternatives:**
+- **Hard-block login** — maximum security, but high cost: UX degrades, abandonment rises. Rejected.
+- **Checking `IsEmailConfirmed` in every handler** — auth concerns bleed into Application layer, violating the "auth at the gate" principle. Complicates auditing: checks scattered across 7 handlers. Rejected.
+- **Middleware checking specific paths** — fragile: string path matching breaks during route refactoring. Rejected.
+- **Custom attribute `[RequireEmailConfirmed]`** — equivalent to named policy, but less standard; ASP.NET Core authorization policies are the proper mechanism for named authorization rules. Rejected.
 
-**Наслідки:**
-- `JwtTokenService.GenerateAccessToken` додає claim `email_verified: "true"/"false"` (string, consistent with OIDC standard)
-- `ICurrentUserService` розширюється: `bool IsEmailConfirmed`
-- `CurrentUserService` зчитує claim `email_verified` з `ClaimsPrincipal`
-- Нова named policy `EmailConfirmed` реєструється в `AddApiServices` (`Learnix.API`)
-- 7 endpoints отримують `[Authorize(Policy = "EmailConfirmed")]` поверх існуючого `[Authorize]`
-- Frontend: `isEmailConfirmed: boolean` додається до auth store; persistent banner відображається якщо `false`; при 403 від gated endpoint — modal "спочатку підтверди email" з кнопкою resend
+**Consequences:**
+- `JwtTokenService.GenerateAccessToken` adds `email_verified: "true"/"false"` claim (string, consistent with OIDC standard).
+- `ICurrentUserService` expanded: `bool IsEmailConfirmed`.
+- `CurrentUserService` reads `email_verified` claim from `ClaimsPrincipal`.
+- New named policy `EmailConfirmed` registered in `AddApiServices` (`Learnix.API`).
+- 7 endpoints receive `[Authorize(Policy = "EmailConfirmed")]` on top of existing `[Authorize]`.
+- Frontend: `isEmailConfirmed: boolean` added to auth store; persistent banner displayed if `false`; on 403 from gated endpoint — a modal "Confirm email first" with a resend button.
 
 ---
 
-## Шаблон для нових записів
+## ADR-AUTH-015: Infrastructure gets FrameworkReference to Microsoft.AspNetCore.App
 
-```
-## ADR-XXX: [Назва рішення]
+**Decision:** `Learnix.Infrastructure.csproj` declares `<FrameworkReference Include="Microsoft.AspNetCore.App" />`. This grants access to ASP.NET Core shared framework assemblies (`Microsoft.AspNetCore.Identity`, `Microsoft.AspNetCore.Authentication.*`, etc.) needed to implement auth-related services.
 
-**Рішення:** [Що саме вирішили]
+**Why:**
+- The `AddIdentity<,>()` extension method lives in the `Microsoft.AspNetCore.Identity` assembly, which is part of the shared framework, not a separate NuGet package.
+- A Class library targeting `Microsoft.NET.Sdk` (not `.Web`) does not have access to the shared framework by default, even if `Microsoft.AspNetCore.Identity.EntityFrameworkCore` packages are installed.
+- `FrameworkReference` — standard mechanism to access the shared framework from non-Web projects (documented Microsoft approach).
 
-**Чому:** [Обґрунтування]
+**Alternatives:**
+- Move Identity-related code to a separate project `Learnix.Infrastructure.Identity` with `Sdk="Microsoft.NET.Sdk.Web"` — artificial separation, EF configurations for User logically belong to the core Infrastructure, adds DI complexity without value.
+- Move Identity setup to the API project (where `Sdk` is already Web) — violates "Infrastructure implements all technical concerns", scatters auth logic across layers.
 
-**Альтернативи:** [Що розглядали і чому відкинули]
+**Consequences:**
+- `Learnix.Infrastructure` transitively has access to all of `Microsoft.AspNetCore.App` (MVC, SignalR, Authentication middleware). This is formally a scope expansion, but practically we only use Identity and (in the future) JWT bearer authentication.
+- Zero runtime overhead — the shared framework is already present on the host via the API project.
+- Same compromise as ADR-AUTH-002 (User : IdentityUser): formally less clean, pragmatically necessary.
 
-**Наслідки:** [Що це змінює в коді / архітектурі]
-```
+---
+
+## Request Lifecycle (Authorization Process)
+
+Simulation of a request journey from the client to business logic execution:
+
+1. **Client (Frontend):** 
+   Sends a request to a protected endpoint, adding `Authorization: Bearer <access_token>` in the headers. If it's a refresh token request, it automatically sends the HttpOnly cookie `learnix_refresh` via the browser (credentials: 'include').
+
+2. **Middleware (ASP.NET Core JwtBearer):** 
+   The request hits `JwtBearerMiddleware`. The token is validated: checks signature (using `Jwt.Secret`), expiration (`exp`), and integrity. `ClaimsPrincipal` is constructed from JWT claims and assigned to `HttpContext.User`. If the token is invalid or expired — middleware returns `401 Unauthorized` and the request goes no further.
+
+3. **Controller ([Authorize] and Policies):** 
+   The request reaches the controller. The `[Authorize]` attribute verifies authentication (whether a valid user is present). If the endpoint also has `[Authorize(Policy = "EmailConfirmed")]`, it verifies the policy (presence of `email_verified` = `true` claim). If policy verification fails — the controller returns `403 Forbidden`. The controller reads the request payload and dispatches a command/query via MediatR (`sender.Send(...)`).
+
+4. **Application Handler (Business Logic):** 
+   The command/query handler injects `ICurrentUserService` (which reads `HttpContext.User` under the hood). 
+   - The handler checks the current user: `if (currentUser.UserId is null) return Result.Fail(new AuthenticationError());`
+   - Performs owner check: E.g., whether the course belongs to the current `InstructorId`. `if (course.InstructorId != currentUser.UserId) return Result.Fail(new ForbiddenError());`
+   
+5. **Service Layer (Infrastructure/Identity):** 
+   If it's a login or registration request, the handler calls `IUserAuthenticationService` or `IUserRegistrationService` to validate passwords or generate new tokens (which in turn utilize `UserManager` from ASP.NET Core Identity).

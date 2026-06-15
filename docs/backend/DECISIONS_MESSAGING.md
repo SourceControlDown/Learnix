@@ -1,6 +1,5 @@
 # Learnix — ADR: Student ↔ Instructor Messaging
 
-> Format: decision → why → rejected alternatives.
 > Covers F-26 (chat UI), F-28 (notification bell), and the backend endpoints/hub.
 
 ---

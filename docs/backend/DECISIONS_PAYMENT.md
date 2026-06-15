@@ -1,7 +1,17 @@
 # Learnix — ADR: Платіжна система
 
-> Формат: що вирішили → чому → які альтернативи відкинули.
-> Суміжний файл: [DECISIONS_INFRA.md](DECISIONS_INFRA.md) (ADR-018 — рішення використати мок замість Stripe).
+## Підсумок: що реалізовано
+
+| Endpoint | Хто | Що робить |
+|---|---|---|
+| `POST /api/payments` | Student (EmailConfirmed) | Купує платний курс: створює `Payment` + `Enrollment` |
+| `GET /api/payments/mine` | Student | Власна історія платежів (paginated) |
+| `GET /api/instructor/earnings` | Instructor, Admin | Earnings по курсах інструктора (grouped summary) |
+| `GET /api/admin/payments` | Admin | Усі платежі платформи (paginated, search by email/course) |
+
+**Що НЕ реалізовано (known gaps):**
+- Refunds / failed payment simulation
+- Real payment provider (Stripe/LiqPay) — задокументоване рішення в ADR-PAY-006
 
 ---
 
@@ -90,20 +100,26 @@
 **Специфікація:** `InstructorPaymentsSpecification(instructorId)` — фільтрує по `p.Course.InstructorId == instructorId` і `p.Status == Completed`.
 
 **Наслідки:**
-- `InstructorController` (`/api/instructor`) — новий контролер для instructor-specific endpoints.
 - Earnings endpoint: `GET /api/instructor/earnings`.
 
 ---
 
-## Підсумок: що реалізовано
+## ADR-PAY-006: Мок-оплата замість реального Stripe
 
-| Endpoint | Хто | Що робить |
-|---|---|---|
-| `POST /api/payments` | Student (EmailConfirmed) | Купує платний курс: створює `Payment` + `Enrollment` |
-| `GET /api/payments/mine` | Student | Власна історія платежів (paginated) |
-| `GET /api/instructor/earnings` | Instructor, Admin | Earnings по курсах інструктора (grouped summary) |
-| `GET /api/admin/payments` | Admin | Усі платежі платформи (paginated, search by email/course) |
+**Рішення:** Платіжна система реалізована як мок: кнопка "Pay" одразу записує `Payment` зі статусом `Completed` та `PaymentProvider = "Mock"` і активує enrollment без будь-якого зовнішнього сервісу. `Stripe__SecretKey` прибрано з `.env.example`. Stripe SDK не встановлюється.
 
-**Що НЕ реалізовано (known gaps):**
-- Refunds / failed payment simulation
-- Real payment provider (Stripe/LiqPay) — задокументоване рішення в ADR-018 (DECISIONS_INFRA.md)
+**Чому:**
+- Це pet-проект. Реальний Stripe потребує верифікації бізнесу, додає комісію 2.9% + $0.30, і значну складність: webhooks, declined cards, refunds, PCI compliance.
+- Для портфоліо важлива демонстрація **flow і архітектури** (команда `PurchaseCourse`, доменна подія, зарахування), а не реальне стягнення грошей.
+- Мок зберігає повну доменну модель: `Payment` entity з `Amount`, `Status`, `Provider`, `TransactionId` — поле `Provider = "Mock"` чітко сигналізує що це не production.
+- Підключити реальний провайдер у майбутньому — зміна в одному місці (handler + DI), без перебудови архітектури.
+
+**Альтернативи:**
+- Stripe test mode — все одно потребує облікового запису, webhook endpoint, Stripe SDK. Тестові ключі не заряджають картки, але додають ~200 рядків коду без практичної цінності для пет-проекту.
+- Stripe повністю — надлишок для демо-проекту, юридичні вимоги для production.
+
+**Наслідки:**
+- `Stripe__SecretKey` прибрано з `Learnix.API/.env.example` і `learnix-client/.env.example`.
+- `VITE_STRIPE_PUBLISHABLE_KEY` прибрано з frontend `.env.example`.
+- `Payment.PaymentProvider` зберігає `"Mock"` — в майбутньому можна додати `"Stripe"`, `"LiqPay"` тощо.
+- При переході на реальний провайдер: замінити логіку в `PurchaseCourseCommandHandler`, додати webhook endpoint, оновити `.env.example`.

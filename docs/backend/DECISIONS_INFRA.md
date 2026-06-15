@@ -155,22 +155,7 @@ public interface ICacheable<TValue>
 - Redis connection string: `ConnectionStrings:Redis` в `appsettings.json`
 - Пакети: `Microsoft.Extensions.Caching.StackExchangeRedis` (Infrastructure), `Microsoft.Extensions.Caching.Abstractions` (Application)
 
----
 
-## ADR-005: Entity Framework Core TPH для Lesson types
-
-**Рішення:** Video, Post, Test lessons зберігаються в одній таблиці `Lessons` з дискримінатором `LessonType` (Table Per Hierarchy).
-
-**Чому:**
-- Спільні поля (Title, Order, SectionId) не дублюються
-- Один query для "всі уроки секції" без UNION
-- EF Core має найкращу підтримку саме TPH
-
-**Альтернативи:**
-- TPT (Table Per Type) — чистіша схема, але N+1 joins на кожен запит
-- Окремі таблиці без наслідування — максимальна гнучкість, але дублювання і складні queries
-
----
 
 ## ADR-006: Offset-based пагінація через PaginatedResult<T> + PaginationRequest
 
@@ -230,56 +215,23 @@ EF нативно підтримує private setters).
 
 ---
 
-## ADR-010: Outbox pattern — часткова реалізація для blob-операцій (Phase 3)
+## ADR-010: Outbox pattern (Schema & Background Worker)
 
-> **Оновлено** після реалізації. Оригінальне рішення "відкласти до Phase 6" виявилось неправильним: blob storage потребував надійних гарантій вже при першому ж use case (підтвердження аватара / видалення старих blob'ів).
-
-**Рішення (поточний стан):** Outbox реалізовано **цілеспрямовано для blob-операцій**, не як загальний механізм для всіх domain events. Domain events публікуються in-process через `DomainEventsInterceptor` після `SaveChangesAsync` — ризик втрати залишається для подій що ведуть до emails (прийнятно до Phase 6 з MassTransit). Blob-операції (confirm / delete) надійно зберігаються в `OutboxMessage` в тій самій транзакції.
+**Рішення:** Патерн Outbox реалізовано для надійного виконання фонових операцій (confirm/delete blob, надсилання email, оцінка досягнень). Domain events публікуються in-process через `DomainEventsInterceptor` після `SaveChangesAsync`. Критичні background-операції записуються в `OutboxMessage` в тій самій транзакції бази даних.
 
 **`OutboxMessage` entity:**
-- `Id`, `Type` (`DeleteBlob` / `MarkBlobConfirmed`), `Payload` (JSONB)
+- `Id`, `Type` (наприклад, `DeleteBlob`, `UnlockAchievement`), `Payload` (JSONB)
 - `OccurredAt`, `ProcessedAt?`, `AttemptCount`, `LastAttemptAt?`, `LastError?`, `NextRetryAt?`
 - Записується domain event handler в тій самій EF транзакції що і зміни entity
 
 **Outbox worker (background `IHostedService`):**
 - Читає `WHERE ProcessedAt IS NULL AND (NextRetryAt IS NULL OR NextRetryAt <= NOW())`
-- Викликає `IOutboxMessageDispatcher.DispatchAsync(message)` → `IBlobStorageService.MarkConfirmedAsync` / `DeleteAsync`
+- Викликає `IOutboxMessageDispatcher.DispatchAsync(message)` який маршрутизує до конкретного handler.
 - Exponential backoff через `NextRetryAt` при помилках
-- **Оновлено (ADR-020):** замість чистого polling (PeriodicTimer 10с) processor тепер прокидається одразу через PostgreSQL LISTEN/NOTIFY. Polling залишається як fallback.
-
-**Чому blob-first, не загальний outbox:**
-- Blob-операції є критично важливими вже зараз: якщо `MarkConfirmedAsync` не викличеться — blob видаляється Azure lifecycle policy. Якщо `DeleteAsync` не викличеться — orphaned blob залишається назавжди.
-- Email через `IEmailSender` (console mock) — втрата при крашу прийнятна для dev phase. Реальний email (Phase 6) буде через MassTransit з власними гарантіями.
-- Загальний outbox для всіх domain events — складніша механіка (серіалізація будь-якого event, десеріалізація назад у конкретний тип, replay через MediatR). Не вартує до Phase 6 коли з'явиться MassTransit.
-
-**Що залишається ризиком (до Phase 6):**
-- Якщо процес падає між `SaveChangesAsync` і dispatch domain events через MediatR — email events (`UserRegistered`, `PasswordResetRequested`) втрачаються. Blob-операції НЕ втрачаються (вони в OutboxMessage).
-
-**Плани Phase 6:**
-- Загальний outbox для domain events → integration events через MassTransit
-- Або видалити in-process dispatch, замінити повністю на outbox + worker + MassTransit
+- **Див. ADR-020:** Механізм диспатчу оптимізовано через PostgreSQL LISTEN/NOTIFY.
 
 ---
 
-## ADR-011: Infrastructure отримує FrameworkReference на Microsoft.AspNetCore.App
-
-**Рішення:** `Learnix.Infrastructure.csproj` декларує `<FrameworkReference Include="Microsoft.AspNetCore.App" />`. Це дає доступ до ASP.NET Core shared framework збірок (`Microsoft.AspNetCore.Identity`, `Microsoft.AspNetCore.Authentication.*`, etc.) які потрібні для реалізації auth-related сервісів.
-
-**Чому:**
-- `AddIdentity<,>()` extension method живе у `Microsoft.AspNetCore.Identity` збірці що є частиною shared framework, а не окремого NuGet
-- Class library на `Microsoft.NET.Sdk` (не `.Web`) не має доступу до shared framework за замовчуванням, навіть якщо встановлені пакети `Microsoft.AspNetCore.Identity.EntityFrameworkCore`
-- `FrameworkReference` — стандартний механізм отримання доступу до shared framework з не-Web проектів (документований Microsoft підхід)
-
-**Альтернативи:**
-- Винести Identity-related код у окремий проект `Learnix.Infrastructure.Identity` з `Sdk="Microsoft.NET.Sdk.Web"` — штучне розділення, EF configurations User логічно належать до основної Infrastructure, додає DI complexity без користі
-- Перенести Identity setup у API проект (де `Sdk` вже Web) — порушує "Infrastructure реалізує всі технічні концерни", розмазує auth логіку між шарами
-
-**Наслідки:**
-- `Learnix.Infrastructure` тепер транзитивно має доступ до всього `Microsoft.AspNetCore.App` (MVC, SignalR, Authentication middleware). Це формальне розширення scope, але реально використовуємо тільки Identity та (у майбутньому) JWT bearer authentication
-- Runtime overhead нульовий — shared framework вже присутній на хості завдяки API проекту
-- Той самий компроміс що й DECISIONS_AUTH.md ADR-002 (User : IdentityUser): формально менш чисто, прагматично необхідно
-
----
 
 ## ADR-012: Авто-міграції тільки в Development
 
@@ -298,76 +250,9 @@ EF нативно підтримує private setters).
 - Phase D (Deploy): додати окремий CI step для застосування міграцій у staging/prod, або генерувати idempotent SQL script через `dotnet ef migrations script --idempotent` і застосовувати через міграційний tool (Flyway/власний).
 - Розробник має бути готовий що при першому `dotnet run` після `git pull` міграції запустяться автоматично — побачить це в консолі через `LogInformation`.
 
----
-
-## ADR-013: Azure Blob Storage — two-phase upload + outbox for side-effects
-
-**Рішення:** Завантаження файлів відбувається у два кроки: (1) клієнт запитує pre-signed SAS URL через `POST /api/uploads/request-url`; (2) клієнт завантажує файл напряму до Azure, минаючи API. Entity-handler отримує лише blob path і валідує його через `IBlobStorageService.ValidateAsync()` (перевірка існування + magic bytes + size limit). Після `SaveChangesAsync` blob підтверджується через `OutboxMessage(MarkBlobConfirmed)`. Старий blob видаляється через `OutboxMessage(DeleteBlob)`. Непідтверджені blobs видаляються Azure lifecycle policy.
-
-**Чому pre-signed upload:**
-- Файли не проходять через API сервер — знімає memory/bandwidth pressure для великих відео (до 2 ГБ)
-- API не потребує file streaming middleware чи multipart parsing
-- Azure зберігає blob атомарно — або blob є, або нема. Немає stale partial upload
-
-**Чому magic byte validation, не Content-Type header:**
-- `Content-Type` header на SAS PUT може бути підроблений клієнтом
-- Magic bytes (перші N байт файлу) не підробляються без реального перезапису файлу
-- Реалізовано для jpeg (`FF D8 FF`), png (`89 50 4E 47`), webp (`52 49 46 46...57 45 42 50`), mp4 (`ftyp` box), webm (`1A 45 DF A3`), pdf (`%PDF`)
-
-**Чому outbox для blob side-effects (а не direct call після SaveChanges):**
-- `MarkConfirmedAsync` і `DeleteAsync` — network calls що можуть впасти. In-process виклик після `SaveChangesAsync` не атомарний з entity persist
-- Якщо процес падає між SaveChanges і `MarkConfirmedAsync` — blob видалиться lifecycle policy, entity вже вказує на нього → data corruption
-- `OutboxMessage` в тій самій транзакції що і entity — гарантує що операція буде виконана рано чи пізно (ADR-010)
-
-**Blob path naming:**
-```
-avatars/users/{userId}/{uploadId}.{ext}
-course-covers/courses/{courseId}/{uploadId}.{ext}
-course-videos/courses/{courseId}/lessons/{lessonId}/{uploadId}.mp4
-certificates/{code}.pdf
-```
-
-**UploadTarget validation:**
-| Target | Max size | Allowed types |
-|---|---|---|
-| Avatar | 5 MB | jpeg, png, webp |
-| CourseCover | 10 MB | jpeg, png, webp |
-| LessonVideo | 2 GB | mp4, webm |
-| Certificate | 5 MB | pdf |
-
-**Альтернативи:**
-- Multipart upload через API — простіше для клієнта, але API стає bottleneck для відео. Відкинуто
-- Підтвердження без outbox (пряме `MarkConfirmedAsync` після SaveChanges) — вразливе до crash між операціями. Відкинуто після аналізу ризику
-
-**Наслідки:**
-- `IBlobStorageService` живе в `Application/Common/Abstractions/Storage/` — cross-cutting abstraction
-- `AzureBlobStorageService` в `Infrastructure/Storage/` — реалізація
-- `BlobStorageBootstrapper` (hosted service) — перевіряє/створює Azure containers при старті
-- Blob paths зберігаються в entity (не full SAS URL). SAS читання генерується on-demand через `GenerateReadUrl(blobPath, ttl)`
 
 ---
 
-## ADR-014: On-Demand (синхронна) генерація PDF-сертифікатів
-
-> **Supersedes**: Попереднє рішення "Асинхронна генерація PDF-сертифікатів через BackgroundService".
-
-**Рішення:** PDF сертифікат генерується синхронно на вимогу користувача (On-Demand) через ендпоінт `POST /api/certificates/courses/{courseId}/generate`. Фоновий сервіс `CertificatePdfGenerationService` повністю видалено.
-
-**Чому:**
-- Асинхронний фоновий сервіс (який перевіряв базу кожні 30 сек) створював поганий UX: користувачі бачили статус "Generating..." і не мали контролю над процесом.
-- У разі збою генерації або ручного очищення посилання в БД, користувач не міг легко перегенерувати сертифікат.
-- Генерація QuestPDF в оперативній пам'яті відбувається достатньо швидко (до 50 мс), тому синхронний виклик не створює значного навантаження на HTTP-потік.
-
-**Альтернативи:**
-- **Фоновий Worker (старе рішення)** — відкинуто через поганий UX та складність ручної регенерації.
-- **MassTransit consumer** — відкинуто як overkill, оскільки генерація On-Demand вирішує всі проблеми миттєво і архітектурно простіше в імплементації.
-
-**Наслідки:**
-- Додано єдиний ендпоінт генерації/регенерації `POST /api/certificates/courses/{courseId}/generate`.
-- `CertificatePdfGenerationService` повністю видалено з кодової бази та `DependencyInjection.cs`.
-- Фронтенд (кнопки "Download Certificate") викликають мутацію, генерують PDF і одразу відкривають згенероване посилання (`window.location.href`). Більше немає статусу очікування `isReady: false`.
-
----
 
 ## ADR-015: Background job scheduling — IHostedService vs Quartz.NET vs Hangfire
 
@@ -409,96 +294,8 @@ certificates/{code}.pdf
 
 ---
 
-## ADR-016: Email delivery — MailKit (SMTP) + RazorLight (.cshtml templates) + PreMailer.Net
 
-**Рішення:** Для відправки email використовуємо `MailKit` (SMTP-клієнт) та `RazorLight` для рендерингу `.cshtml` шаблонів. Для стилізації використовується `PreMailer.Net`, який автоматично перетворює CSS-класи з `styles.css` (через загальний `_Layout.cshtml`) на inline-стилі (`style="..."`). Локально — Mailpit у Docker (SMTP :1025, Web UI :8025). На Azure — SendGrid SMTP relay (smtp.sendgrid.net:587, username=`apikey`). `ConsoleEmailSender` видалено.
 
-**Чому:**
-- MailKit — промислово зрілий SMTP-клієнт для .NET, підтримує TLS/StartTLS, async.
-- RazorLight — standalone Razor engine, не потребує повного ASP.NET MVC pipeline; дозволяє рендерити `.cshtml` в Infrastructure layer.
-- PreMailer.Net — більшість email-клієнтів блокують зовнішні CSS-файли. PreMailer вирішує цю проблему, парсячи HTML і вбудовуючи класи як inline-стилі під час рендерингу. Це дозволяє мати чисті шаблони та спільний `_Layout.cshtml`.
-- Один і той самий `SmtpEmailSender` для всіх середовищ — змінюється тільки конфіг (`Smtp` секція). Немає vendor lock-in у коді.
-- Mailpit — легкий Docker-контейнер для локальної розробки (перехоплює всі листи, показує HTML у браузері).
-- SendGrid SMTP relay підтримується на free tier Azure та не потребує зміни коду порівняно з іншими SMTP-провайдерами.
-
-**Альтернативи:**
-- SendGrid SDK (`SendGrid` NuGet) — потребує окремої реалізації `IEmailSender`, vendor lock-in; перевага — не потрібен SMTP-порт 587.
-- Azure Communication Services Email — Azure-native, але вимагає верифікації домену та дорожче в налаштуванні.
-- `System.Net.Mail.SmtpClient` — застарілий, не підтримує async належним чином.
-
-**Наслідки:**
-- Шаблони у `Learnix.Infrastructure/Email/Templates/*.cshtml` та `.css`, копіюються до output directory (`Content`, `CopyToOutputDirectory=PreserveNewest`).
-- HTML-листи гарантовано сумісні з поштовими клієнтами, залишаючись читабельними для розробників.
-- `SmtpSettings` в `Learnix.Infrastructure/Settings/` (internal, тільки Infrastructure знає про SMTP).
-- При деплої на Azure: встановити `Smtp__Password` через Azure Key Vault / App Service Environment Variables.
-- Коли буде впроваджено MassTransit (ADR-002, Phase 6) — `SmtpEmailSender` залишається, змінюється тільки місце виклику (з Outbox → MassTransit consumer).
-
----
-
-## ADR-017: Email localization — IStringLocalizer + .resx + Language on User
-
-**Рішення:** Email-шаблони локалізовані на англійську (default) та українську мови через `IStringLocalizer<EmailStrings>` та `.resx` ресурсні файли. Мова зберігається у полі `Language` на entity `User` (default `"en"`). При реєстрації береться з `Accept-Language` header. `SmtpEmailSender` встановлює `CultureInfo.CurrentUICulture` перед рендерингом; `IStringLocalizer` підхоплює культуру автоматично.
-
-**Чому:**
-- `IStringLocalizer` + `.resx` — стандартний .NET-підхід; без зовнішніх залежностей.
-- Мова на `User` entity — єдине місце правди для всіх email-подій (у т.ч. тих, що відправляються async через Outbox).
-- `Accept-Language` при реєстрації — без зайвої UX-складності (не потрібен окремий вибір мови).
-- Marker class `EmailStrings` у root namespace `Learnix.Infrastructure` + `ResourcesPath = "Email/Resources"` → файли `.resx` лежать у `Email/Resources/` поруч з шаблонами.
-
-**Альтернативи:**
-- Додати `Language` до domain events замість DB-запиту в хендлерах — відкинуто: `Language` є UI/infra concern, не доменний факт.
-- Окремий вибір мови в UI (profile setting) — планується як майбутнє покращення; зараз встановлюється при реєстрації.
-- Inline conditional замість `.resx` — не масштабується, важко підтримувати.
-
-**Наслідки:**
-- `User.Language` (varchar 5, default `en`) — нова колонка через міграцію `AddUserLanguage`.
-- Outbox payloads несуть `Language`; outbox handlers вибирають його в `SELECT`.
-- Application-layer event handlers (`UserRegisteredDomainEventHandler`, `PasswordResetRequestedDomainEventHandler`) роблять один додатковий SELECT для отримання `Language`.
-- `SmtpEmailSender` — singleton; `IStringLocalizerFactory` (singleton) ін'єктується, localizer створюється в constructor.
-- `.resx` файли: `Email/Resources/EmailStrings.resx` (EN) та `EmailStrings.uk.resx` (UK) — embedded resources, auto-included SDK.
-
----
-
-## ADR-018: Мок-оплата замість реального Stripe
-
-**Рішення:** Платіжна система реалізована як мок: кнопка "Pay" одразу записує `Payment` зі статусом `Completed` та `PaymentProvider = "Mock"` і активує enrollment без будь-якого зовнішнього сервісу. `Stripe__SecretKey` прибрано з `.env.example`. Stripe SDK не встановлюється.
-
-**Чому:**
-- Це pet-проект. Реальний Stripe потребує верифікації бізнесу, додає комісію 2.9% + $0.30, і значну складність: webhooks, declined cards, refunds, PCI compliance.
-- Для портфоліо важлива демонстрація **flow і архітектури** (команда `PurchaseCourse`, доменна подія, зарахування), а не реальне стягнення грошей.
-- Мок зберігає повну доменну модель: `Payment` entity з `Amount`, `Status`, `Provider`, `TransactionId` — поле `Provider = "Mock"` чітко сигналізує що це не production.
-- Підключити реальний провайдер у майбутньому — зміна в одному місці (handler + DI), без перебудови архітектури.
-
-**Альтернативи:**
-- Stripe test mode — все одно потребує облікового запису, webhook endpoint, Stripe SDK. Тестові ключі не заряджають картки, але додають ~200 рядків коду без практичної цінності для пет-проекту.
-- Stripe повністю — надлишок для демо-проекту, юридичні вимоги для production.
-
-**Наслідки:**
-- `Stripe__SecretKey` прибрано з `Learnix.API/.env.example` і `learnix-client/.env.example`.
-- `VITE_STRIPE_PUBLISHABLE_KEY` прибрано з frontend `.env.example`.
-- `Payment.PaymentProvider` зберігає `"Mock"` — в майбутньому можна додати `"Stripe"`, `"LiqPay"` тощо.
-- При переході на реальний провайдер: замінити логіку в `PurchaseCourseCommandHandler`, додати webhook endpoint, оновити `.env.example`.
-
----
-
-## ADR-019: Генерація QR-кодів через QRCoder
-
-**Рішення:** Для генерації QR-кодів на сертифікатах використовується бібліотека `QRCoder`.
-
-**Чому:**
-- QuestPDF не має вбудованого інструменту для генерації QR-кодів, він приймає лише готові зображення (масиви байтів або потоки).
-- `QRCoder` — це надійна, популярна та lightweight C#-бібліотека, яка може легко генерувати QR-коди у вигляді масиву байтів (PNG).
-- Це дозволяє легко додавати посилання для швидкої верифікації сертифікатів без необхідності звертатися до сторонніх зовнішніх API (наприклад, Google Chart API), що гарантує стабільну роботу офлайн та кращу приватність.
-
-**Альтернативи:**
-- Сторонні API (наприклад, `api.qrserver.com`) — потребують інтернет-з'єднання під час генерації PDF і можуть сповільнювати процес або бути недоступними. Відхилено.
-- Написання власного генератора — складна математика (алгоритми Ріда-Соломона), що є reinventing the wheel. Відхилено.
-
-**Наслідки:**
-- В `Learnix.Infrastructure` додано залежність `QRCoder`.
-- У `CertificatePdfDocument` реалізовано метод `GenerateQrCode()`, який використовується для вставки графіки в PDF-макет QuestPDF.
-
----
 
 ## ADR-020: Outbox latency — PostgreSQL LISTEN/NOTIFY замість polling-only
 
@@ -672,19 +469,3 @@ FOR UPDATE SKIP LOCKED
 - Дебагінг: При повному маскуванні дебагінг ускладнюється, тому прийнято компромісний підхід із відображенням першої літери та домену.
 - Додаткові зусилля: Розробники повинні бути свідомими щодо даних, які вони логують.
 
----
-
-## Шаблон для нових записів
-
-```
-
-## ADR-XXX: [Назва рішення]
-
-**Рішення:** [Що саме вирішили]
-
-**Чому:** [Обґрунтування]
-
-**Альтернативи:** [Що розглядали і чому відкинули]
-
-**Наслідки:** [Що це змінює в коді / архітектурі]
-```

@@ -1,7 +1,25 @@
 # Learnix — ADR: Achievements
 
-> Format: decision → why → rejected alternatives.
 > Covers Phase 10: achievement system (unlock logic, progress tracking, notifications).
+
+## Endpoints summary
+
+### Achievements
+
+| HTTP Method | Endpoint | Description | Rate Limit | Auth Required |
+|---|---|---|---|---|
+| `GET` | `/api/achievements/me` | Fetch user's achievements and progress counters | Default | Yes |
+| `POST` | `/api/achievements/{id}/seen` | Mark an achievement as seen by the user | Default | Yes |
+
+### Notifications
+
+| HTTP Method | Endpoint | Description | Rate Limit | Auth Required |
+|---|---|---|---|---|
+| `GET` | `/api/notifications` | Fetch user's notifications history | Default | Yes |
+| `GET` | `/api/notifications/unread-count` | Get total unread notifications count | Default | Yes |
+| `POST` | `/api/notifications/{id}/read` | Mark specific notification as read | Default | Yes |
+| `POST` | `/api/notifications/read-all` | Mark all user's notifications as read | Default | Yes |
+| `POST` | `/api/notifications/read-by-type?type=...` | Mark all notifications of a specific type as read | Default | Yes |
 
 ---
 
@@ -100,20 +118,24 @@
 
 ---
 
-## ADR-ACHIEVEMENT-007: `NotifyAchievementUnlocked` via Outbox → SignalR
+## ADR-ACHIEVEMENT-007: `NotifyAchievementUnlocked` via Outbox → SignalR & Persistent Notifications
 
-> **Updated:** Originally written as a Phase-2 placeholder; SignalR push is now implemented.
+> **Updated:** Originally written as a Phase-2 placeholder; both SignalR push and persistent Notifications are now implemented.
 
-**Decision:** When a `UserAchievement` is created, `AchievementUnlockedDomainEvent` is raised. An Infrastructure MediatR handler (`AchievementUnlockedNotificationHandler`) writes a `NotifyAchievementUnlocked` outbox message. The `OutboxProcessorService` dispatches it to `IAchievementNotifier.NotifyAsync`, which pushes `AchievementUnlocked` to the user's SignalR group via `NotificationsHub`.
+**Decision:** When a `UserAchievement` is created, `AchievementUnlockedDomainEvent` is raised. An Infrastructure MediatR handler (`AchievementUnlockedNotificationHandler`) writes a `NotifyAchievementUnlocked` outbox message. The `OutboxProcessorService` processes this message by doing two things:
+1. It calls `IAchievementNotifier.NotifyAsync`, which pushes a real-time `AchievementUnlocked` event to the user's SignalR group via `NotificationsHub`.
+2. It calls `INotificationSender.SendAsync` to save a persistent `Notification` entity (with type `AchievementEarned`) to the database.
 
 **Why:**
-- Going through the outbox (rather than calling `IAchievementNotifier` directly in the domain event handler) provides at-least-once delivery: if the server crashes after the achievement row is saved but before the notification fires, the outbox message is retried on the next poll cycle.
-- `IAchievementNotifier` is injected into `OutboxProcessorService` from the DI scope; `SignalRAchievementNotifier` wraps `IHubContext<NotificationsHub, INotificationsHubClient>`, which is singleton-safe to resolve from any scope.
-- The frontend `useNotificationsHub` hook handles `AchievementUnlocked` by showing a toast and invalidating `queryKeys.achievements.mine()`.
+- Going through the outbox (rather than calling the notifiers directly in the domain event handler) provides at-least-once delivery: if the server crashes after the achievement row is saved but before the notification fires, the outbox message is retried on the next poll cycle.
+- The dual notification approach (SignalR + DB) ensures that active users get immediate UI feedback (a toast via the hub), while offline users will see the missed event in their persistent notifications list when they log in later. 
+- `IAchievementNotifier` and `INotificationSender` are injected into `OutboxProcessorService` from the DI scope, decoupling the domain from real-time and persistent notification implementation details.
+- The frontend `useNotificationsHub` hook handles the SignalR push by showing a toast and invalidating `queryKeys.achievements.mine()`, keeping the UI perfectly in sync.
 
 **Rejected alternatives:**
-- Call `IAchievementNotifier` directly inside the domain event handler (in-process, no outbox) — loses at-least-once delivery. If the process crashes between `SaveChangesAsync` and the notification dispatch, the push is lost forever.
-- Throw `NotImplementedException` from the `case` block — would cause every `NotifyAchievementUnlocked` message to fail and retry indefinitely, filling the outbox table with error logs.
+- Call `IAchievementNotifier` or `INotificationSender` directly inside the domain event handler (in-process, no outbox) — loses at-least-once delivery. If the process crashes between `SaveChangesAsync` and the notification dispatch, the push is lost forever.
+- SignalR only (no persistent notification) — offline users would never know they earned an achievement while away from the platform (e.g., if a background admin action or delayed outbox execution triggered it).
+- Persistent notification only (no SignalR) — active users would not get the instant "wow" factor of a toast popping up right as they complete a course or lesson.
 
 **Latency update (see DECISIONS_INFRA.md ADR-020):** The polling-only outbox had a worst-case 20s delay for achievement chains (evaluate → notify = 2 polling cycles). This was resolved by a combination of PostgreSQL `LISTEN/NOTIFY` push notifications (to wake the processor immediately on new events) and an **in-process self-signaling loop**. When the processor evaluates an achievement and inserts a new `NotifyAchievementUnlocked` message, it immediately loops back to process it without waiting for a new DB notification or polling interval. Achievement notification latency is now effectively instantaneous (< 100ms).
 
