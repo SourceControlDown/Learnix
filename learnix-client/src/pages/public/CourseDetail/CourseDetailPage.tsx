@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Clock, Users, Star, Tag, ArrowLeft, BookOpen, Heart } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCourseDetail } from '@/hooks/useCourseDetail';
@@ -43,6 +43,8 @@ export default function CourseDetailPage() {
     const totalLessons = course?.sections.reduce((sum, s) => sum + s.lessons.length, 0) ?? 0;
 
     const navigate = useNavigate();
+    const location = useLocation();
+    const backUrl = (location.state as { from?: string })?.from || '/courses';
 
     function handleEnroll() {
         if (!courseId) return;
@@ -70,7 +72,7 @@ export default function CourseDetailPage() {
         return (
             <div className="mx-auto max-w-5xl px-6 py-12">
                 <Link
-                    to="/courses"
+                    to={backUrl}
                     className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
                     <ArrowLeft className="h-4 w-4" />
@@ -89,7 +91,7 @@ export default function CourseDetailPage() {
         return (
             <div className="mx-auto max-w-5xl px-6 py-20 text-center">
                 <p className="text-muted-foreground">{t('notFound')}</p>
-                <Link to="/courses" className="mt-4 inline-block text-primary hover:underline">
+                <Link to={backUrl} className="mt-4 inline-block text-primary hover:underline">
                     {t('backToCatalog')}
                 </Link>
             </div>
@@ -113,7 +115,7 @@ export default function CourseDetailPage() {
             </Helmet>
             <div className="mx-auto max-w-5xl px-6 py-12">
                 <Link
-                    to="/courses"
+                    to={backUrl}
                     className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
                     <ArrowLeft className="h-4 w-4" />
