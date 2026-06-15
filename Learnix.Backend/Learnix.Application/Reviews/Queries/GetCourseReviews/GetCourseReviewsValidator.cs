@@ -13,6 +13,6 @@ public sealed class GetCourseReviewsValidator : AbstractValidator<GetCourseRevie
 
         RuleFor(x => x.Take)
             .GreaterThan(0)
-            .LessThanOrEqualTo(PaginationRequest.MaxPageSize);
+            .LessThanOrEqualTo(Learnix.Application.Common.Constants.PaginationConstants.MaxPageSize);
     }
 }

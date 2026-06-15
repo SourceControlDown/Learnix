@@ -9,6 +9,6 @@ public sealed class GetInstructorCoursesValidator : AbstractValidator<GetInstruc
     {
         RuleFor(x => x.Skip).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Take)
-            .InclusiveBetween(1, PaginationRequest.MaxPageSize);
+            .InclusiveBetween(1, Learnix.Application.Common.Constants.PaginationConstants.MaxPageSize);
     }
 }
