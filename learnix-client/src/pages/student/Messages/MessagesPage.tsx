@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { queryKeys } from '@/api/queryKeys';
 import { messagesApi } from '@/api/messages.api';
@@ -38,7 +38,8 @@ export default function MessagesPage() {
             messagesApi.getConversations(pageParam, 20, debouncedSearch || undefined),
         initialPageParam: 0,
         getNextPageParam: (lastPage) =>
-            lastPage.hasNextPage ? lastPage.pageIndex * 20 + 20 : undefined,
+            lastPage.hasNextPage ? lastPage.page * 20 + 20 : undefined,
+        placeholderData: keepPreviousData,
     });
 
     const conversations = data?.pages.flatMap((p) => p.items) ?? [];
@@ -87,7 +88,7 @@ export default function MessagesPage() {
                     <h1 className="font-heading text-lg font-semibold text-foreground">
                         {t('pageTitle')}
                     </h1>
-                    <div className="px-4 pb-2">
+                    <div className="pt-3">
                         <input
                             type="text"
                             placeholder={t('searchPlaceholder', 'Search...')}

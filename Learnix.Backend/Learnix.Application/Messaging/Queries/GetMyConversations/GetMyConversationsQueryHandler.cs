@@ -24,12 +24,9 @@ internal sealed class GetMyConversationsQueryHandler(
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
 
         var userId = currentUser.UserId.Value;
-        var isInstructor = currentUser.IsInRole(Roles.Instructor);
         var pagination = PaginationRequest.FromOffset(request.Skip, request.Take);
 
-        Ardalis.Specification.ISpecification<Learnix.Domain.Entities.CourseConversation> spec = isInstructor
-            ? new ConversationsByInstructorSpecification(userId, pagination.Skip, pagination.Take, request.SearchQuery)
-            : new ConversationsByStudentSpecification(userId, pagination.Skip, pagination.Take, request.SearchQuery);
+        var spec = new ConversationsByUserIdSpecification(userId, pagination.Skip, pagination.Take, request.SearchQuery);
 
         var totalCount = await conversationRepository.CountAsync(spec, cancellationToken);
         if (totalCount == 0)
@@ -39,8 +36,9 @@ internal sealed class GetMyConversationsQueryHandler(
 
         var dtos = conversations.Select(c =>
         {
-            var otherUser = isInstructor ? c.Student! : c.Instructor!;
-            var unreadCount = isInstructor ? c.InstructorUnreadCount : c.StudentUnreadCount;
+            var isUserStudent = c.StudentId == userId;
+            var otherUser = isUserStudent ? c.Instructor! : c.Student!;
+            var unreadCount = isUserStudent ? c.StudentUnreadCount : c.InstructorUnreadCount;
 
             return new ConversationSummaryDto(
                 c.Id,
