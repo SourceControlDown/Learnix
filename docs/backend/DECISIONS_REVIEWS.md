@@ -1,7 +1,16 @@
 # Learnix — ADR: Course Reviews & Ratings
 
-> Format: decision → why → rejected alternatives.
 > Covers Phase 9: B-47 (course reviews), B-48 (denormalized rating).
+
+## Підсумок: що реалізовано
+
+| Endpoint | Що робить |
+|---|---|
+| `GET /api/courses/{courseId}/reviews` | Отримання списку відгуків курсу (публічно, пагінація) |
+| `GET /api/courses/{courseId}/reviews/mine` | Отримання власного відгуку поточного користувача |
+| `POST /api/courses/{courseId}/reviews` | Створення відгуку (перевіряється факт зарахування на курс) |
+| `PUT /api/courses/{courseId}/reviews/{id}` | Редагування відгуку його автором |
+| `DELETE /api/courses/{courseId}/reviews/{id}` | Видалення відгуку (автором або адміністратором) |
 
 ---
 

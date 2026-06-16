@@ -1,14 +1,21 @@
 <Solution>
-  <Folder Name="/Decision Documents/">
-    <File Path="../docs/DECISIONS_ACHIEVEMENTS.md" />
-    <File Path="../docs/DECISIONS_ARCHITECTURE.md" />
-    <File Path="../docs/DECISIONS_AUTH.md" />
-    <File Path="../docs/DECISIONS_CHAT.md" />
-    <File Path="../docs/DECISIONS_DOMAIN.md" />
-    <File Path="../docs/DECISIONS_INFRA.md" />
-    <File Path="../docs/DECISIONS_MESSAGING.md" />
-    <File Path="../docs/DECISIONS_PAYMENT.md" />
-    <File Path="../docs/DECISIONS_REVIEWS.md" />
+  <Folder Name="/Architecture Documents/" />
+  <Folder Name="/Architecture Documents/backend/">
+    <File Path="../docs/backend/ARCHITECTURE.md" />
+    <File Path="../docs/backend/DECISIONS_ACHIEVEMENTS.md" />
+    <File Path="../docs/backend/DECISIONS_ARCHITECTURE.md" />
+    <File Path="../docs/backend/DECISIONS_AUTH.md" />
+    <File Path="../docs/backend/DECISIONS_BLOB.md" />
+    <File Path="../docs/backend/DECISIONS_CERTIFICATES.md" />
+    <File Path="../docs/backend/DECISIONS_CHAT.md" />
+    <File Path="../docs/backend/DECISIONS_DOMAIN.md" />
+    <File Path="../docs/backend/DECISIONS_EMAILS.md" />
+    <File Path="../docs/backend/DECISIONS_INFRA.md" />
+    <File Path="../docs/backend/DECISIONS_LMS.md" />
+    <File Path="../docs/backend/DECISIONS_MESSAGING.md" />
+    <File Path="../docs/backend/DECISIONS_PAYMENT.md" />
+    <File Path="../docs/backend/DECISIONS_REVIEWS.md" />
+    <File Path="../docs/backend/DECISIONS_TEMPLATE.md" />
   </Folder>
   <Folder Name="/Git/">
     <File Path="../.gitignore" />

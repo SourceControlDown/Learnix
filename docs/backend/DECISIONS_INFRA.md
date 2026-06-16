@@ -1,86 +1,44 @@
-# Learnix — ADR: Інфраструктура
+﻿# Learnix — ADR: Infrastructure
 
-> Формат: що вирішили → чому → які альтернативи відкинули.
-> Оновлюється після кожного чату, де приймались архітектурні рішення.
+> Format: what was decided → why → what alternatives were rejected.
+> Updated after each chat where architectural decisions were made.
 
-Суміжні файли: [DECISIONS_ARCHITECTURE.md](DECISIONS_ARCHITECTURE.md) · [DECISIONS_AUTH.md](DECISIONS_AUTH.md) · [DECISIONS_DOMAIN.md](DECISIONS_DOMAIN.md)
+Related files: [DECISIONS_ARCHITECTURE.md](DECISIONS_ARCHITECTURE.md) · [DECISIONS_AUTH.md](DECISIONS_AUTH.md) · [DECISIONS_DOMAIN.md](DECISIONS_DOMAIN.md)
 
-## Конвенція статусів
+## Status Convention
 
-ADR не видаляються. Якщо рішення переглянуто — старий ADR помічається `Superseded by ADR-XXX`, новий — `Supersedes ADR-YYY`. Це зберігає історію мислення і показує як архітектура еволюціонувала.
-
----
-
-## ADR-001: PostgreSQL + MongoDB (polyglot persistence)
-
-**Рішення:** Основні реляційні дані в PostgreSQL, неструктуровані — в MongoDB.
-
-**Чому:**
-- Більшість даних (Users, Courses, Enrollments, Payments) — строго реляційні, потребують транзакцій і FK constraints
-- Chat sessions мають змінну кількість повідомлень, не потребують joins → MongoDB nature fit
-- Reviews: гнучка схема, можливість додавати поля без міграцій
-
-**Що в MongoDB:**
-- `chat_sessions` — історія AI чату
-- `course_reviews` — відгуки з рейтингами
-
-**Альтернативи:**
-- Все в PostgreSQL (JSONB для чатів) — можливо, але ускладнює query patterns для document-like даних
-- Все в MongoDB — втрата referential integrity для критичних даних (платежі, enrollments)
+ADRs are not deleted. If a decision is reviewed — the old ADR is marked `Superseded by ADR-XXX`, the new one — `Supersedes ADR-YYY`. This preserves the history of thought and shows how the architecture evolved.
 
 ---
 
-## ADR-002: MassTransit + Azure Service Bus для async processing
+## ADR-INFRA-001: PostgreSQL + MongoDB (polyglot persistence)
 
-**Рішення:** Асинхронні операції (email, PDF generation, achievements) виконуються через MassTransit consumers, підключені до Azure Service Bus.
+**Decision:** Core relational data in PostgreSQL, unstructured data — in MongoDB.
 
-**Чому:**
-- Відв'язує тривалі операції від HTTP request lifecycle
-- Retry з backoff — якщо email provider тимчасово недоступний
-- Масштабування consumers незалежно від API
+**Why:**
+- Most data (Users, Courses, Enrollments, Payments) — strictly relational, requiring transactions and FK constraints.
+- Chat sessions have a variable number of messages, do not require joins → MongoDB is a natural fit.
+- Reviews: flexible schema, ability to add fields without migrations.
 
-**Що йде через bus:**
-- Emails (verification, enrollment confirmation, instructor approval)
-- Certificate PDF generation
-- Achievement checking
-- Enrollment activation після оплати
+**What is in MongoDB:**
+- `chat_sessions` — AI chat history.
+- `course_reviews` — reviews with ratings.
 
-**Що залишається in-process (MediatR):**
-- Cache invalidation
-- Progress updates
-- Permission checks
-
-**Альтернативи:**
-- Background tasks (Hangfire / `IHostedService`) — простіше, але немає guaranteed delivery
-- RabbitMQ — self-hosted альтернатива, але потребує менеджменту інфраструктури
+**Alternatives:**
+- Everything in PostgreSQL (JSONB for chats) — possible, but complicates query patterns for document-like data.
+- Everything in MongoDB — loss of referential integrity for critical data (payments, enrollments).
 
 ---
 
-## ADR-003: Specification Pattern для queries
+## ADR-INFRA-002: Redis distributed cache — ICacheable<TValue> + MediatR pipeline behavior
 
-**Рішення:** Усі запити до репозиторіїв використовують Specification<T> для інкапсуляції criteria, includes, ordering, paging.
-
-**Чому:**
-- Логіка фільтрації/сортування живе в Application layer, а не в Infrastructure
-- Специфікації легко тестувати ізольовано
-- Уникаємо дублювання query logic між handlers
-
-**Конвенції:**
-- `AsNoTracking = true` за замовчуванням
-- Для Commands, що змінюють сутності: явно `AsNoTracking = false`
-- Розташування: `Application/{Feature}/Specifications/`
+**Decision:** Queries implementing `ICacheable<TValue>` are automatically cached in Redis via `CachingBehavior<TRequest, TValue>`. Commands that mutate cached data explicitly invalidate the corresponding keys after `SaveChangesAsync`.
 
 ---
 
-## ADR-004: Redis distributed cache — ICacheable<TValue> + MediatR pipeline behavior
+### Implementation
 
-**Рішення:** Queries, що реалізують `ICacheable<TValue>`, автоматично кешуються в Redis через `CachingBehavior<TRequest, TValue>`. Commands, що змінюють кешовані дані, явно інвалідують відповідні ключі після `SaveChangesAsync`.
-
----
-
-### Реалізація
-
-**Інтерфейс:**
+**Interface:**
 ```csharp
 public interface ICacheable<TValue>
 {
@@ -89,251 +47,208 @@ public interface ICacheable<TValue>
 }
 ```
 
-**Pipeline behavior** реалізує `IPipelineBehavior<TRequest, Result<TValue>>`, де `TValue` — другий generic-параметр. MediatR закриває тип автоматично: для `GetAllCategoriesQuery : ICacheable<IReadOnlyList<CategoryListItemDto>>` MediatR виводить `TValue = IReadOnlyList<CategoryListItemDto>`. Рефлексії немає — `response.Value` і `Result.Ok(value)` типізовані на рівні компілятора.
+**Pipeline behavior** implements `IPipelineBehavior<TRequest, Result<TValue>>`, where `TValue` is the second generic parameter. MediatR closes the type automatically: for `GetAllCategoriesQuery : ICacheable<IReadOnlyList<CategoryListItemDto>>` MediatR infers `TValue = IReadOnlyList<CategoryListItemDto>`. No reflection is used — `response.Value` and `Result.Ok(value)` are strongly typed at compile time.
 
-**Серіалізація:** кешується тільки `Value` з `Result<T>`, не весь Result-wrapper. `FluentResults.Result<T>` не підтримує JSON roundtrip (private setter на `Value`). `System.Text.Json` серіалізує payload напряму, десеріалізує назад, і behavior обгортає в `Result.Ok(value)`.
+**Serialization:** Only `Value` from `Result<T>` is cached, not the entire Result wrapper. `FluentResults.Result<T>` doesn't support JSON roundtrip (private setter on `Value`). `System.Text.Json` serializes the payload directly, deserializes it back, and the behavior wraps it in `Result.Ok(value)`.
 
-**Інвалідація:** у command handlers після `SaveChangesAsync` викликається `IDistributedCache.RemoveAsync(key)`. `IDistributedCache` — це офіційна Microsoft abstraction (не інфраструктурна деталь), тому живе в Application layer поруч з handlers.
+**Invalidation:** In command handlers, after `SaveChangesAsync`, `IDistributedCache.RemoveAsync(key)` is called. `IDistributedCache` is an official Microsoft abstraction (not an infrastructure detail), so it lives in the Application layer alongside handlers.
 
 ---
 
-### Які queries кешуються і чому
+### Which queries are cached and why
 
-| Query | Ключ | TTL | Чому |
+| Query | Key | TTL | Why |
 |---|---|---|---|
-| `GetAllCategoriesQuery` | `categories:all` | 24 год | Список категорій змінюється лише через адмін-дії. Читається при кожному відкритті каталогу та фільтрів. Найдовший TTL — найнижчий churn. |
-| `GetFeaturedCoursesQuery` | `courses:featured` | 30 хв | Вибірка популярних курсів — expensive JOIN з сортуванням по enrollments/rating. Запит однаковий для всіх користувачів (public, без per-user контексту). |
-| `GetCourseByIdQuery` | `course:{id}` | 10 хв | Сторінка деталей курсу читається масово студентами перед записом. Включає `AverageRating` та `ReviewsCount` — змінюються кожним відгуком. Явна інвалідація при зміні курсу та відгуків. |
-| `GetPublicCoursesQuery` | `courses:public:{всі 8 параметрів}` | 5 хв | Каталог — найнавантаженіший endpoint (пошук + фільтри + сортування + пагінація). Унікальний ключ на кожну комбінацію параметрів — неможливо інвалідувати за патерном через `IDistributedCache` без підключення `IConnectionMultiplexer` напряму. Короткий TTL компенсує відсутність явної інвалідації. |
+| `GetAllCategoriesQuery` | `categories:all` | 24 h | The category list changes only through admin actions. Read every time the catalog and filters are opened. Longest TTL — lowest churn. |
+| `GetFeaturedCoursesQuery` | `courses:featured` | 30 m | Selection of popular courses — expensive JOIN with sorting by enrollments/rating. The query is identical for all users (public, without per-user context). |
+| `GetCourseByIdQuery` | `course:{id}` | 10 m | The course details page is read heavily by students before enrolling. Includes `AverageRating` and `ReviewsCount` — modified by every review. Explicit invalidation upon course and review changes. |
+| `GetPublicCoursesQuery` | `courses:public:{all 8 parameters}` | 5 m | The catalog is the most heavily loaded endpoint (search + filters + sort + pagination). Unique key for each parameter combination — impossible to pattern invalidate via `IDistributedCache` without directly depending on `IConnectionMultiplexer`. A short TTL compensates for the lack of explicit invalidation. |
 
-**Що навмисно НЕ кешується:**
-- Per-user queries (`GetMyProfile`, `GetMyEnrollments`, `GetMyAchievements`) — у кожного користувача свій стан, частих мутацій багато, ключ включав би userId → мала ймовірність cache hit для конкретного запиту.
-- Admin queries — низький трафік, не впливає на продуктивність.
-- Real-time дані (chat, SignalR notifications) — завжди актуальні.
+**What is intentionally NOT cached:**
+- Per-user queries (`GetMyProfile`, `GetMyEnrollments`, `GetMyAchievements`) — each user has their own state, frequent mutations, the key would include userId → low probability of a cache hit for a specific query.
+- Admin queries — low traffic, does not impact performance.
+- Real-time data (chat, SignalR notifications) — always up to date.
 
 ---
 
-### Інвалідація — де і чому
+### Invalidation — where and why
 
-**Явна інвалідація `course:{id}` + `courses:featured`** після кожної мутації курсу:
-- `PublishCourse`, `UnpublishCourse` — статус курсу змінюється, він з'являється або зникає з каталогу
-- `ArchiveCourse`, `UnarchiveCourse` — аналогічно
-- `UpdateCourseDetails` — змінюється title, price, cover, category — все є в закешованому DTO
-- `DeleteCourse`, `AdminDeleteCourse`, `AdminRecoverCourse`, `AdminUnpublishCourse` — курс повністю змінює стан
+**Explicit invalidation of `course:{id}` + `courses:featured`** after every course mutation:
+- `PublishCourse`, `UnpublishCourse` — course status changes, it appears or disappears from the catalog.
+- `ArchiveCourse`, `UnarchiveCourse` — similarly.
+- `UpdateCourseDetails` — title, price, cover, category change — all are present in the cached DTO.
+- `DeleteCourse`, `AdminDeleteCourse`, `AdminRecoverCourse`, `AdminUnpublishCourse` — course entirely changes state.
 
-**Явна інвалідація `course:{id}`** при мутаціях відгуків:
-- `CreateReview`, `UpdateReview`, `DeleteReview` — всі три змінюють `AverageRating` та `ReviewsCount` на `Course` entity. `CourseDetailDto` включає ці поля — без інвалідації кешована сторінка показувала б застарілий рейтинг.
+**Explicit invalidation of `course:{id}`** upon review mutations:
+- `CreateReview`, `UpdateReview`, `DeleteReview` — all three alter `AverageRating` and `ReviewsCount` on the `Course` entity. `CourseDetailDto` includes these fields — without invalidation, the cached page would display outdated ratings.
 
-**Явна інвалідація `categories:all`** при будь-якій зміні категорій:
+**Explicit invalidation of `categories:all`** upon any category change:
 - `CreateCategory`, `UpdateCategory`, `DeleteCategory`, `SetCategoryImage`, `DeleteCategoryImage`
 
-**`GetPublicCoursesQuery` — тільки TTL (5 хв):** оскільки ключ включає всі 8 filter-параметрів (search, skip, take, categoryId, instructorId, sortBy, isFree, minRating), різних комбінацій можуть бути сотні. Видалення за префіксом `courses:public:*` потребує `IConnectionMultiplexer.GetServer().Keys()` — дорога O(N) операція на Redis. Для каталогу 5-хвилинна затримка видимості після публікації курсу прийнятна.
+**`GetPublicCoursesQuery` — TTL only (5 m):** Since the key includes all 8 filter parameters (search, skip, take, categoryId, instructorId, sortBy, isFree, minRating), there could be hundreds of different combinations. Deleting by prefix `courses:public:*` requires `IConnectionMultiplexer.GetServer().Keys()` — an expensive O(N) operation on Redis. For a catalog, a 5-minute visibility delay after course publication is acceptable.
 
 ---
 
-### Чому Redis, а не IMemoryCache
+### Why Redis, and not IMemoryCache
 
-`IDistributedCache` (Redis) — єдиний centralized store, `RemoveAsync(key)` є Redis `DEL` command. При горизонтальному масштабуванні (декілька API instances) інвалідація на одному instance автоматично поширюється на всі: наступний запит на будь-якому instance отримає cache miss і перечитає з БД.
+`IDistributedCache` (Redis) — the only centralized store, `RemoveAsync(key)` is a Redis `DEL` command. When horizontally scaling (multiple API instances), invalidation on one instance automatically propagates to all: the next request on any instance will yield a cache miss and re-read from the DB.
 
-`IMemoryCache` — per-process. Інвалідація на instance A не впливає на instances B і C, які продовжують роздавати stale дані до свого TTL. Неприйнятно для даних що явно інвалідуються (category list, course detail).
+`IMemoryCache` is per-process. Invalidation on instance A does not affect instances B and C, which continue serving stale data until their TTL expires. This is unacceptable for explicitly invalidated data (category list, course detail).
 
-**Чому:**
-- Популярні курси, каталог категорій — read-heavy, рідко змінюються
-- Redis дає O(1) lookup і TTL з коробки
-- Pipeline behavior — кешування прозоре для handler, без boilerplate в кожному query
-- Distributed cache коректно працює при scale-out
+**Why:**
+- Popular courses, category catalog — read-heavy, rarely change.
+- Redis provides O(1) lookup and TTL out of the box.
+- Pipeline behavior — caching is transparent to the handler, without boilerplate in every query.
+- Distributed cache works correctly during scale-out.
 
-**Альтернативи:**
-- `IMemoryCache` — простіше, але stale data при multiple instances. Відхилено для публічних запитів.
-- Lazy invalidation (тільки TTL для всього) — простіше, але `CourseDetailDto` з рейтингом показував би застарілий rating хвилинами після відгуку. Відхилено для `course:{id}`.
-- Response caching middleware (`[ResponseCache]`) — HTTP-level cache, не контролює per-key invalidation. Відхилено.
+**Alternatives:**
+- `IMemoryCache` — simpler, but yields stale data with multiple instances. Rejected for public queries.
+- Lazy invalidation (TTL only for everything) — simpler, but `CourseDetailDto` with rating would show outdated numbers for minutes after a review. Rejected for `course:{id}`.
+- Response caching middleware (`[ResponseCache]`) — HTTP-level cache, doesn't control per-key invalidation. Rejected.
 
-**Наслідки:**
-- `ICacheable<TValue>` в `Application/Common/Caching/`
-- `CachingBehavior<TRequest, TValue>` в `Application/Common/Behaviors/`
-- `CacheKeys` static class в `Application/Common/Constants/`
-- Redis connection string: `ConnectionStrings:Redis` в `appsettings.json`
-- Пакети: `Microsoft.Extensions.Caching.StackExchangeRedis` (Infrastructure), `Microsoft.Extensions.Caching.Abstractions` (Application)
-
-
-
-## ADR-006: Offset-based пагінація через PaginatedResult<T> + PaginationRequest
-
-**Рішення:** Offset-based пагінація (skip/take). Спільні класи
-PaginatedResult<T> і PaginationRequest в Application.Common.Pagination.
-
-**Чому:**
-- Достатньо для LMS без мільйонів записів
-- PaginationRequest з Math.Clamp(PageSize, 1, 100) захищає від зловживань
-- Cursor-based — overkill для цього проєкту
-
-**Деталі:**
-- PageIndex — zero-based
-- MaxPageSize = 100, DefaultPageSize = 20
-- PaginatedResult містить TotalCount, TotalPages, HasNextPage, HasPreviousPage
+**Consequences:**
+- `ICacheable<TValue>` in `Application/Common/Caching/`
+- `CachingBehavior<TRequest, TValue>` in `Application/Common/Behaviors/`
+- `CacheKeys` static class in `Application/Common/Constants/`
+- Redis connection string: `ConnectionStrings:Redis` in `appsettings.json`
+- Packages: `Microsoft.Extensions.Caching.StackExchangeRedis` (Infrastructure), `Microsoft.Extensions.Caching.Abstractions` (Application)
 
 ---
 
-## ADR-007: Audit fields через EF SaveChanges interceptor
+## ADR-INFRA-003: Audit fields via EF SaveChanges interceptor
 
-**Рішення:** CreatedAt / UpdatedAt встановлюються автоматично через
-EF SaveChanges interceptor. Properties мають private set —
-interceptor встановлює через EF ChangeTracker (без рефлексії,
-EF нативно підтримує private setters).
+**Decision:** CreatedAt / UpdatedAt are automatically set via the EF SaveChanges interceptor. Properties have a private set — the interceptor sets them through the EF ChangeTracker (without reflection, EF natively supports private setters).
 
-**Чому:**
-- Жоден handler не забуде встановити дату
-- Логіка в одному місці, не розмазана по всіх commands
-- Private set — ніхто окрім interceptor не змінить значення випадково
+**Why:**
+- No handler will forget to set the date.
+- The logic resides in one place, not scattered across all commands.
+- Private set — nobody except the interceptor can accidentally change the value.
 
 ---
 
-## ADR-008: CacheKeys в Application layer, не Domain
+## ADR-INFRA-004: DbContext natively implements IUnitOfWork
 
-**Рішення:** `CacheKeys` константи живуть в `Learnix.Application.Common.Constants.CacheKeys`, а не в `Learnix.Domain.Constants`.
+**Decision:** `ApplicationDbContext` implements `IUnitOfWork`. There is no separate `UnitOfWork` class. DI: `services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>())` — resolves to the same scoped instance.
 
-**Чому:**
-- Кешування — інфраструктурна турбота. Domain не повинен знати що десь є Redis
-- Domain має залишатись максимально чистим від крос-cutting concerns
+**Why:**
+- A separate `UnitOfWork` class would merely delegate `SaveChangesAsync` to the DbContext — an unnecessary layer of indirection.
+- The Application layer still only sees `IUnitOfWork`, not the DbContext — the abstraction is preserved.
+- Fewer files, fewer DI registrations, fewer chances to mess up scopes.
 
-**Альтернативи:**
-- Лишити в Domain — працює, але змішує рівні абстракцій
-
----
-
-## ADR-009: DbContext сам реалізує IUnitOfWork
-
-**Рішення:** `ApplicationDbContext` реалізує `IUnitOfWork`. Окремого класу `UnitOfWork` немає. DI: `services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>())` — резолв в той самий scope instance.
-
-**Чому:**
-- Окремий `UnitOfWork` клас просто делегував би `SaveChangesAsync` в DbContext — зайвий шар indirection
-- Application шар все одно бачить тільки `IUnitOfWork`, не DbContext — абстракція зберігається
-- Менше файлів, менше DI-реєстрацій, менше шансів облажатись з scopes
-
-**Альтернативи:**
-- Окремий `UnitOfWork` клас — канонічний підхід, але додає шар без функціональної цінності
+**Alternatives:**
+- A separate `UnitOfWork` class — the canonical approach, but adds a layer without functional value.
 
 ---
 
-## ADR-010: Outbox pattern (Schema & Background Worker)
+## ADR-INFRA-005: Outbox pattern (Schema & Background Worker)
 
-**Рішення:** Патерн Outbox реалізовано для надійного виконання фонових операцій (confirm/delete blob, надсилання email, оцінка досягнень). Domain events публікуються in-process через `DomainEventsInterceptor` після `SaveChangesAsync`. Критичні background-операції записуються в `OutboxMessage` в тій самій транзакції бази даних.
+**Decision:** The Outbox pattern is implemented to reliably execute background operations (confirm/delete blob, send email, evaluate achievements). Domain events are published in-process via `DomainEventsInterceptor` after `SaveChangesAsync`. Critical background operations are written to `OutboxMessage` within the same database transaction.
 
 **`OutboxMessage` entity:**
-- `Id`, `Type` (наприклад, `DeleteBlob`, `UnlockAchievement`), `Payload` (JSONB)
+- `Id`, `Type` (e.g., `DeleteBlob`, `UnlockAchievement`), `Payload` (JSONB)
 - `OccurredAt`, `ProcessedAt?`, `AttemptCount`, `LastAttemptAt?`, `LastError?`, `NextRetryAt?`
-- Записується domain event handler в тій самій EF транзакції що і зміни entity
+- Written by the domain event handler in the same EF transaction as the entity changes.
 
 **Outbox worker (background `IHostedService`):**
-- Читає `WHERE ProcessedAt IS NULL AND (NextRetryAt IS NULL OR NextRetryAt <= NOW())`
-- Викликає `IOutboxMessageDispatcher.DispatchAsync(message)` який маршрутизує до конкретного handler.
-- Exponential backoff через `NextRetryAt` при помилках
-- **Див. ADR-020:** Механізм диспатчу оптимізовано через PostgreSQL LISTEN/NOTIFY.
+- Reads `WHERE ProcessedAt IS NULL AND (NextRetryAt IS NULL OR NextRetryAt <= NOW())`
+- Invokes `IOutboxMessageDispatcher.DispatchAsync(message)` which routes to a specific handler.
+- Exponential backoff via `NextRetryAt` on errors.
+- **See ADR-INFRA-008:** Dispatch mechanism optimized via PostgreSQL LISTEN/NOTIFY.
 
 ---
 
+## ADR-INFRA-006: Auto-migrations only in Development
 
-## ADR-012: Авто-міграції тільки в Development
+**Decision:** `Database.MigrateAsync()` is called upon API startup via the `app.ApplyMigrationsAsync()` extension only when `app.Environment.IsDevelopment()`. In staging/prod, migrations are applied in a separate, controlled step (CI/CD or manual `dotnet ef database update`).
 
-**Рішення:** `Database.MigrateAsync()` викликається при старті API через extension `app.ApplyMigrationsAsync()` тільки коли `app.Environment.IsDevelopment()`. У staging/prod міграції застосовуються окремим контрольованим кроком (CI/CD або ручний `dotnet ef database update`).
+**Why:**
+- Dev: the developer runs `docker compose up -d` and `dotnet run` — the DB is ready without additional commands. Speeds up the feedback loop.
+- Prod: auto-migrations create race conditions upon scale-out (multiple instances starting simultaneously), migration error = API fails to start, destructive schema changes pass without human review.
 
-**Чому:**
-- Dev: розробник підняв `docker compose up -d` і `dotnet run` — БД готова без додаткових команд. Прискорення feedback loop.
-- Prod: авто-міграції створюють race condition при scale-out (декілька instance стартують одночасно), помилка міграції = API не піднімається, руйнівні зміни схеми проходять без human review.
+**Alternatives:**
+- Always auto-migrate — dangerous in prod (see above).
+- Never auto-migrate, even in dev — every `git pull` with a new migration requires manual `dotnet ef database update`. Adds friction to daily work.
+- `Database.EnsureCreatedAsync()` — incompatible with migrations, suitable only for test databases created from scratch.
 
-**Альтернативи:**
-- Завжди авто-міграції — небезпечно в prod (див. вище).
-- Ніколи авто-міграції, навіть в dev — кожен `git pull` з новою міграцією потребує ручного `dotnet ef database update`. Тертя у щоденній роботі.
-- `Database.EnsureCreatedAsync()` — несумісно з міграціями, годиться тільки для тестових БД що створюються з нуля.
-
-**Наслідки:**
-- Phase D (Deploy): додати окремий CI step для застосування міграцій у staging/prod, або генерувати idempotent SQL script через `dotnet ef migrations script --idempotent` і застосовувати через міграційний tool (Flyway/власний).
-- Розробник має бути готовий що при першому `dotnet run` після `git pull` міграції запустяться автоматично — побачить це в консолі через `LogInformation`.
-
+**Consequences:**
+- Phase D (Deploy): add a dedicated CI step to apply migrations in staging/prod, or generate an idempotent SQL script via `dotnet ef migrations script --idempotent` and apply it using a migration tool (Flyway/custom).
+- Developers should expect migrations to run automatically upon their first `dotnet run` after a `git pull` — they will see this in the console via `LogInformation`.
 
 ---
 
+## ADR-INFRA-007: Background job scheduling — IHostedService vs Quartz.NET vs Hangfire
 
-## ADR-015: Background job scheduling — IHostedService vs Quartz.NET vs Hangfire
+**Decision:** For background tasks, we use `BackgroundService` + `PeriodicTimer` (built into .NET). We will not introduce Quartz.NET or Hangfire until there is a specific need for their capabilities.
 
-**Рішення:** Для фонових завдань використовуємо `BackgroundService` + `PeriodicTimer` (вбудовано в .NET). Quartz.NET та Hangfire не вводимо поки не виникне конкретна потреба в їхніх можливостях.
+**Why IHostedService is sufficient for now:**
+- All current background tasks are idempotent and safe to run on every replica (reconciliation, cleanup, seeding). Parallel execution on multiple instances does not lead to incorrect results.
+- Zero additional dependencies — `BackgroundService` is part of `Microsoft.Extensions.Hosting`.
+- The pattern is already utilized in the codebase (RefreshTokenCleanup, OutboxProcessor, etc.) — consistency outweighs premature flexibility.
 
-**Чому IHostedService достатньо зараз:**
-- Всі поточні фонові завдання є idempotent і safe to run on every replica (reconciliation, cleanup, seeding). Паралельний запуск на декількох інстансах не призводить до некоректних результатів.
-- Zero additional dependencies — `BackgroundService` є частиною `Microsoft.Extensions.Hosting`.
-- Паттерн вже використовується в кодовій базі (RefreshTokenCleanup, OutboxProcessor тощо) — консистентність важливіша за передчасну гнучкість.
+**What Quartz.NET and Hangfire can do (and IHostedService cannot):**
 
-**Що вміють Quartz.NET і Hangfire (і чого не вміє IHostedService):**
-
-| Можливість | IHostedService | Quartz.NET | Hangfire |
+| Capability | IHostedService | Quartz.NET | Hangfire |
 |---|---|---|---|
 | Distributed lock (singleton execution across replicas) | ❌ | ✅ (DB/Redis) | ✅ (DB) |
-| Cron-вирази для scheduling | ❌ | ✅ | ✅ |
-| Management UI | ❌ | ✅ | ✅ (вбудований) |
+| Cron-expressions for scheduling | ❌ | ✅ | ✅ |
+| Management UI | ❌ | ✅ | ✅ (built-in) |
 | Job persistence (retry after crash) | ❌ | ✅ | ✅ |
-| Fire-and-forget з web request | ❌ | ❌ | ✅ |
-| Dependency | 0 | Quartz + Quartz.Extensions.Hosting | Hangfire.Core + storage |
+| Fire-and-forget from web request | ❌ | ❌ | ✅ |
+| Dependency footprint | 0 | Quartz + extensions | Hangfire.Core + storage |
 
-**Quartz.NET** — enterprise scheduler, побудований на Unix cron-концепціях. Підходить коли потрібні складні розклади (cron expressions) і distributed locking. Конфігурація вербозна.
+**Key concept — Distributed Lock:**
+If the API runs on 3 servers simultaneously (horizontal scaling), `IHostedService` will start the job on ALL 3 servers in parallel. Quartz.NET and Hangfire solve this via a distributed lock in a shared DB or Redis: only ONE instance executes the job, others wait or skip the tick. This is critical for tasks with side-effects (sending email, charging payments) — duplication is unacceptable.
 
-**Hangfire** — простіший у налаштуванні. Має вбудований dashboard для моніторингу та ручного перезапуску джобів. Популярний для fire-and-forget завдань з HTTP-запитів (наприклад, надіслати email після реєстрації).
+**When to switch to Quartz.NET or Hangfire:**
+- A job emerges that MUST run exactly once across all replicas (e.g., sending a monthly digest).
+- A dashboard is required to monitor and manually retrigger jobs.
+- The number of background jobs grows > ~5–6 and managing them via `AddHostedService` becomes cumbersome.
+- Complex cron schedules are required (first Monday of the month, every workday at 9:00, etc.).
 
-**Ключовий concept — Distributed Lock:**
-Якщо API запущений на 3 серверах одночасно (horizontal scaling), `IHostedService` запустить job на ВСІХ 3 серверах паралельно. Quartz.NET та Hangfire вирішують це через distributed lock у спільній БД або Redis: тільки ONE instance виконує job, інші чекають або пропускають тік. Це критично для завдань з side-effects (надсилання email, charge платежу) — дублювання неприпустиме.
-
-**Коли переходити на Quartz.NET або Hangfire:**
-- З'являється job, який MUST run exactly once across all replicas (наприклад, надсилання щомісячного дайджесту)
-- Потрібен dashboard для моніторингу та ручного retrigger джобів
-- Кількість background jobs зростає > ~5–6 і управління ними через `AddHostedService` стає громіздким
-- Потрібні складні cron-розклади (перший понеділок місяця, кожен робочий день о 9:00 тощо)
-
-**Наслідки поточного рішення:**
-- `CategoryCoursesCountReconciliationService`, `RefreshTokenCleanupHostedService` та інші працюють на кожній репліці паралельно — це прийнятно бо всі вони idempotent.
-- При введенні горизонтального масштабування (Phase Deploy) — аудит всіх `IHostedService` на предмет того чи безпечно їх запускати паралельно.
-- Якщо MassTransit (ADR-002) буде впроваджено в Phase 6 — частина фонових завдань (email, achievements) перейде до MassTransit consumers. `IHostedService` залишиться для infrastructure-level задач (cleanup, seeding, reconciliation).
+**Consequences of the current decision:**
+- `CategoryCoursesCountReconciliationService`, `RefreshTokenCleanupHostedService`, and others run on every replica in parallel — this is acceptable because they are all idempotent.
+- Upon introducing horizontal scaling (Phase Deploy) — audit all `IHostedService` instances to ensure they remain safe to run in parallel.
+- Background tasks (emails, achievements) transitioned to the Outbox processor which correctly handles concurrency via database locks.
 
 ---
 
+## ADR-INFRA-008: Outbox latency — PostgreSQL LISTEN/NOTIFY instead of polling-only
 
+> Partially supersedes ADR-INFRA-005 regarding the "Outbox worker (background IHostedService)" — the message dispatch mechanism was changed from pure polling to push-first with a polling fallback.
 
+**Context and problem:**
 
-## ADR-020: Outbox latency — PostgreSQL LISTEN/NOTIFY замість polling-only
+The initial Outbox implementation (ADR-INFRA-005) utilized pure polling: `OutboxProcessorService` with a `PeriodicTimer(10s)` executed a SELECT on the `OutboxMessages` table on every tick. This worked well for blob operations and emails, where a 10s latency was acceptable.
 
-> Частково supersedes ADR-010 в частині «Outbox worker (background IHostedService)» — механізм диспатчу повідомлень змінено з чистого polling на push-first з polling fallback.
+The issue became critical with the introduction of chained events in the achievement system (ADR-ACHIEVEMENT-001, ADR-ACHIEVEMENT-007):
 
-**Контекст і проблема:**
-
-Початкова реалізація Outbox (ADR-010) використовувала чистий polling: `OutboxProcessorService` з `PeriodicTimer(10s)` щоразу робив SELECT по таблиці `OutboxMessages`. Це працювало для blob-операцій та emails, де затримка 10с була прийнятною.
-
-Проблема стала критичною з появою ланцюгових подій у системі досягнень (ADR-ACHIEVEMENT-001, ADR-ACHIEVEMENT-007):
-
-```
+```text
 LessonCompleted → SaveChanges
     → DomainEventsInterceptor → outbox: EvaluateLessonCompleted
-    → ⏳ до 10с (polling)
+    → ⏳ up to 10s (polling)
     → AchievementEvaluator → UserAchievement.Unlock() → SaveChanges
         → DomainEventsInterceptor → outbox: NotifyAchievementUnlocked
-        → ⏳ ще до 10с (polling)
-        → SignalR push → toast у браузері
+        → ⏳ up to 10s more (polling)
+        → SignalR push → toast in browser
 ```
 
-Два цикли polling = **до 20 секунд** від завершення уроку до нотифікації про досягнення. Для UX — неприйнятно.
+Two polling cycles = **up to 20 seconds** from lesson completion to achievement notification. This is unacceptable for UX.
 
 ---
 
-**Рішення:** `OutboxProcessorService` тепер прокидається одразу після INSERT в `OutboxMessages` через нативний PostgreSQL механізм `LISTEN/NOTIFY`. Polling з інтервалом 10с залишається як fallback.
+**Decision:** `OutboxProcessorService` now wakes up immediately following an INSERT into `OutboxMessages` utilizing PostgreSQL's native `LISTEN/NOTIFY` mechanism. The 10s interval polling remains as a fallback.
 
-**Як працює PostgreSQL LISTEN/NOTIFY:**
+**How PostgreSQL LISTEN/NOTIFY works:**
 
-PostgreSQL має вбудований lightweight pub/sub механізм, окремий від реплікації та WAL. Він працює на рівні сесії (connection):
+PostgreSQL features a built-in lightweight pub/sub mechanism, distinct from replication and WAL. It operates at the session (connection) level:
 
-1. **NOTIFY** — будь-яка транзакція може виконати `pg_notify('channel_name', 'optional_payload')`. Повідомлення буферизується і відправляється **тільки після COMMIT** транзакції. Якщо транзакція відкочується — notification не відправляється. Це ключова гарантія: processor отримує сигнал лише про committed дані.
+1. **NOTIFY** — any transaction can execute `pg_notify('channel_name', 'optional_payload')`. The message is buffered and sent **only after COMMIT** of the transaction. If the transaction rolls back — the notification is not sent. This provides a key guarantee: the processor only receives a signal regarding committed data.
 
-2. **LISTEN** — клієнт (NpgsqlConnection) реєструється на каналі. Після цього будь-який `NOTIFY` на цьому каналі з будь-якого з'єднання доставляється як подія до всіх LISTEN-підписників. PostgreSQL гарантує доставку до всіх активних підписників на момент COMMIT.
+2. **LISTEN** — the client (`NpgsqlConnection`) registers on the channel. Thereafter, any `NOTIFY` on this channel from any connection is delivered as an event to all LISTEN-subscribers. PostgreSQL guarantees delivery to all active subscribers at the moment of COMMIT.
 
-3. **Обмеження:** Якщо підписник відключений в момент NOTIFY — повідомлення втрачається. LISTEN/NOTIFY не має persistence (на відміну від message broker). Саме тому polling залишається як fallback: навіть якщо listener був відключений, processor підхопить повідомлення на наступному 10-секундному тіку.
+3. **Limitations:** If a subscriber is disconnected at the moment of NOTIFY — the message is lost. LISTEN/NOTIFY lacks persistence (unlike a message broker). That is precisely why polling remains as a fallback: even if the listener was disconnected, the processor will pick up the message on the next 10-second tick.
 
-**Архітектура реалізації (3 компоненти):**
+**Implementation Architecture (3 components):**
 
 **1. PostgreSQL trigger (database layer):**
 
@@ -350,11 +265,11 @@ CREATE TRIGGER trg_outbox_notify
   FOR EACH STATEMENT EXECUTE FUNCTION notify_outbox_insert();
 ```
 
-`FOR EACH STATEMENT` (не `FOR EACH ROW`) — якщо один `SaveChanges` записує 5 outbox-повідомлень, trigger спрацьовує один раз. Payload порожній — потрібен лише факт «є нові повідомлення», конкретні ID не потрібні, бо processor робить свій SELECT з фільтром.
+`FOR EACH STATEMENT` (not `FOR EACH ROW`) — if a single `SaveChanges` writes 5 outbox messages, the trigger fires once. The payload is empty — only the fact "there are new messages" is required; specific IDs are unnecessary because the processor executes its own filtered SELECT.
 
 **2. `OutboxNotificationListener` (Infrastructure BackgroundService):**
 
-Dedicated long-lived `NpgsqlConnection` (не з пулу!) слухає канал `outbox_new`:
+A dedicated long-lived `NpgsqlConnection` (not pooled!) listens to the `outbox_new` channel:
 
 ```csharp
 await using var connection = new NpgsqlConnection(connectionString);
@@ -366,54 +281,54 @@ while (!ct.IsCancellationRequested)
     await connection.WaitAsync(ct);  // blocks until notification arrives
 ```
 
-Чому dedicated connection: PostgreSQL LISTEN state прив'язаний до конкретної сесії. Connection pooling (Npgsql `NpgsqlDataSource`) повертає з'єднання в пул після використання — LISTEN state втрачається. Тому listener відкриває окреме з'єднання, яке живе весь lifetime додатку.
+Why a dedicated connection: PostgreSQL's LISTEN state is bound to a specific session. Connection pooling (`NpgsqlDataSource`) returns the connection to the pool after use — losing the LISTEN state. Thus, the listener opens a distinct connection that persists throughout the application lifetime.
 
-При розриві з'єднання — автоматичний reconnect з exponential backoff (1с → 2с → 4с → ... → 30с cap). Під час reconnect polling fallback забезпечує доставку.
+Upon connection drop — automatic reconnect with exponential backoff (1s → 2s → 4s → ... → 30s cap) occurs. During reconnects, the polling fallback ensures delivery.
 
 **3. `OutboxSignal` (in-process bridge):**
 
-`SemaphoreSlim` singleton, що зв'язує listener і processor. Listener викликає `signal.Notify()` при отриманні PG notification. Processor чекає `signal.WaitAsync(10s, ct)` — повертається одразу при сигналі або через 10с (fallback).
+A `SemaphoreSlim` singleton that bridges the listener and the processor. The listener invokes `signal.Notify()` upon receiving a PG notification. The processor awaits `signal.WaitAsync(10s, ct)` — returning immediately upon a signal or after 10s (fallback).
 
-Додатково: processor сам сигналить себе (`signal.Notify()`) якщо обробив **хоча б одне повідомлення** (`messages.Count > 0`). Це гарантує миттєву обробку каскадних подій (наприклад, коли під час обробки одного повідомлення генерується інше — `NotifyAchievementUnlocked`), не чекаючи на новий сигнал від бази чи 10с таймаут.
+Additionally: the processor signals itself (`signal.Notify()`) if it processed **at least one message** (`messages.Count > 0`). This guarantees instantaneous processing of cascading events (e.g., when processing one message generates another — `NotifyAchievementUnlocked`), without awaiting a new DB signal or the 10s timeout.
 
-**Результат:**
+**Results:**
 
-| Сценарій | Polling-only | LISTEN/NOTIFY + fallback |
+| Scenario | Polling-only | LISTEN/NOTIFY + fallback |
 |---|---|---|
-| Single-hop (email, blob) | до 10с | < 100ms |
-| Achievement chain (2 hops) | до 20с | < 500ms |
-| Idle load (немає повідомлень) | SELECT кожні 10с | SELECT кожні 10с |
-| Нові залежності | — | 0 (Npgsql вже є) |
+| Single-hop (email, blob) | up to 10s | < 100ms |
+| Achievement chain (2 hops) | up to 20s | < 500ms |
+| Idle load (no messages) | SELECT every 10s | SELECT every 10s |
+| New dependencies | — | 0 (Npgsql is already present) |
 
 ---
 
-**Альтернативи що розглядались:**
+**Alternatives considered:**
 
-1. **Зменшити polling interval до 1с** — найпростіше, але 1 SELECT/с на порожній таблиці = зайве навантаження. При scale-out (N instances) це N SELECT/с. Не масштабується.
+1. **Reduce polling interval to 1s** — simplest, but 1 SELECT/s on an empty table = unnecessary load. During scale-out (N instances) this equals N SELECT/s. Does not scale well.
 
-2. **In-process SemaphoreSlim без PostgreSQL** — сигналити з `DomainEventsInterceptor` напряму (без PG trigger). Працює для single-instance, але при горизонтальному масштабуванні instance A записує outbox message, а instance B (де крутиться processor) не отримає сигнал. PG LISTEN/NOTIFY працює cross-connection і cross-process.
+2. **In-process SemaphoreSlim without PostgreSQL** — signaling from `DomainEventsInterceptor` directly. Works for single-instance, but during horizontal scaling, instance A writes an outbox message, and instance B (running the processor) receives no signal. PG LISTEN/NOTIFY operates cross-connection and cross-process.
 
-3. **Debezium CDC (Change Data Capture)** — Debezium підключається до PostgreSQL WAL і стрімить зміни в Kafka topic. Це production-grade рішення для мікросервісів. Відхилено: потребує Kafka + Debezium connector + Kafka consumers — disproportionate для моноліту. Правильний вибір при переході на мікросервісну архітектуру.
+3. **Debezium CDC (Change Data Capture)** — Production-grade for microservices. Rejected: requires Kafka + Debezium + Kafka consumers — disproportionate for a monolith.
 
-4. **Wolverine framework** — .NET application framework з вбудованим LISTEN/NOTIFY outbox. Відхилено: Wolverine замінює MediatR і має свій pipeline — це не drop-in рішення, а міграція всієї архітектури.
+4. **Wolverine framework** — .NET framework with built-in LISTEN/NOTIFY outbox. Rejected: Wolverine replaces MediatR and employs its own pipeline — migrating the entire architecture.
 
-5. **CAP library** — lightweight event bus з вбудованим outbox. Відхилено: вводить власні абстракції (`ICapPublisher`, `ICapSubscribe`), власну outbox таблицю. Конфлікт з існуючою outbox реалізацією.
+5. **CAP library** — lightweight event bus with a built-in outbox. Rejected: introduces custom abstractions (`ICapPublisher`), conflicting with the existing outbox implementation.
 
-6. **Hybrid: optimistic dispatch + outbox as safety net** (NServiceBus підхід) — після COMMIT спробувати одразу відправити повідомлення in-process, outbox як fallback при crash. Відхилено для поточної архітектури: потребує зміни в Application layer (handler повинен знати про dispatch), що суперечить розділенню шарів.
+6. **Hybrid: optimistic dispatch + outbox as safety net** (NServiceBus approach) — Rejected for the current architecture: requires changes in the Application layer (the handler must be aware of dispatch), violating layer separation.
 
 ---
 
-**Наслідки:**
+**Consequences:**
 
-- Migration `AddOutboxNotifyTrigger` створює PL/pgSQL функцію і trigger.
-- `OutboxNotificationListener` в `Infrastructure/Services/` — окремий `BackgroundService`.
-- `OutboxSignal` в `Infrastructure/Outbox/` — singleton `SemaphoreSlim` wrapper.
-- `OutboxProcessorService` змінено: `PeriodicTimer` → `outboxSignal.WaitAsync(10s)`.
-- Один додатковий PostgreSQL connection (не з пулу) для LISTEN — мінімальний resource footprint.
+- Migration `AddOutboxNotifyTrigger` creates the PL/pgSQL function and trigger.
+- `OutboxNotificationListener` in `Infrastructure/Services/` — as a distinct `BackgroundService`.
+- `OutboxSignal` in `Infrastructure/Outbox/` — singleton `SemaphoreSlim` wrapper.
+- `OutboxProcessorService` modified: `PeriodicTimer` → `outboxSignal.WaitAsync(10s)`.
+- One additional PostgreSQL connection (unpooled) for LISTEN — minimal resource footprint.
 
 **Scale-out safety (`FOR UPDATE SKIP LOCKED`):**
 
-Outbox processor використовує `SELECT ... FOR UPDATE SKIP LOCKED` замість звичайного SELECT:
+The Outbox processor utilizes `SELECT ... FOR UPDATE SKIP LOCKED` instead of a regular SELECT:
 
 ```sql
 SELECT * FROM "OutboxMessages"
@@ -423,49 +338,76 @@ LIMIT {batch_size}
 FOR UPDATE SKIP LOCKED
 ```
 
-- `FOR UPDATE` — лочить вибрані рядки на рівні PostgreSQL транзакції. Інші транзакції не можуть їх SELECT FOR UPDATE до COMMIT.
-- `SKIP LOCKED` — якщо рядок вже залочений іншим інстансом, пропустити його замість очікування (на відміну від `NOWAIT`, який кидає помилку).
-- **Timestamp rounding buffer:** Змінна `{now}` розраховується як `DateTime.UtcNow.AddSeconds(1)`. Це обходить проблему мікросекундного округлення PostgreSQL (`timestamp` має точність 1us, а `.NET DateTime` — 100ns), яке могло призводити до того, що щойно вставлене повідомлення отримувало `NextRetryAt` на мікросекунду в майбутньому і пропускалося запитом.
-- Результат: Instance A бере повідомлення 1–10, Instance B бере 11–20. Ніякого дублювання.
-- Саме цей механізм використовують MassTransit, Wolverine, і NServiceBus для своїх outbox реалізацій.
+- `FOR UPDATE` — locks the selected rows at the PostgreSQL transaction level. Other transactions cannot `SELECT FOR UPDATE` them until COMMIT.
+- `SKIP LOCKED` — if a row is already locked by another instance, skip it instead of waiting.
+- **Timestamp rounding buffer:** `{now}` is calculated as `DateTime.UtcNow.AddSeconds(1)` to circumvent PostgreSQL microsecond rounding issues.
+- Result: Instance A grabs messages 1–10, Instance B grabs 11–20. No duplication.
 
-Весь batch обгорнутий в explicit transaction (`BeginTransactionAsync` → `CommitAsync`), щоб лок тримався під час обробки повідомлень. `pg_notify` від нових outbox-повідомлень (створених під час обробки, наприклад `NotifyAchievementUnlocked`) буферизується PostgreSQL і доставляється тільки після COMMIT зовнішньої транзакції.
-
----
-
-## ADR-021: Embedded Resources для Data Seeding
-
-**Рішення:** Активи (зображення та відео), необхідні для сідингу бази даних (курси, уроки, аватари), зберігаються безпосередньо у збірці `Learnix.Infrastructure` як Embedded Resources, а не у файловій системі чи у вигляді Base64-рядків у коді. Під час завантаження у Blob Storage кожен згенерований об'єкт (курс чи відео-урок) отримує власну унікальну копію файлу (генерується унікальний `blobPath`).
-
-**Чому:**
-- **Усунення залежності від середовища:** Код сідера не залежить від файлової системи хоста чи поточного робочого каталогу (що є проблемою при запуску в Docker контейнерах або під час тестів). Файли гарантовано завжди присутні разом зі збіркою.
-- **Розмір коду:** Попередній підхід використовував великі Base64-рядки прямо у C# коді, що сильно забруднювало код, ускладнювало читання та призводило до великих розмірів `.cs` файлів.
-- **Ізоляція даних:** Під час сідингу кожен курс або урок отримує власний унікальний шлях у Blob Storage, куди стрімиться відповідний ресурс зі збірки. Це запобігає конфліктам (наприклад, випадковому видаленню спільного `placeholder.mp4` через адмін-панель).
-
-**Альтернативи:**
-- **Base64-константи в коді (старе рішення):** Забруднює C#-файли, складно підтримувати великі файли (відео або багато зображень). Відхилено.
-- **Читання з файлової системи (`File.ReadAllBytes`):** Потребує правильного налаштування `Copy to Output Directory`, шляхи можуть ламатися при запуску з різних директорій.
-- **Спільний Blob Storage об'єкт:** Завантаження одного `placeholder.mp4` в Blob Storage і посилання на нього з усіх уроків. Відхилено: у випадку, коли інструктор замінює або видаляє відео в одному уроці, система очищення (Outbox `DeleteBlob`) видалила б файл з Blob Storage, що призвело б до зламаних посилань (404) в інших уроках, які посилаються на той самий спільний файл.
-
-**Наслідки:**
-- Файли додані у папку `Learnix.Infrastructure/Assets/` та налаштовані як `<EmbeddedResource>` у `Learnix.Infrastructure.csproj`.
-- `CourseSeederHostedService` та `StudentSeederHostedService` використовують `Assembly.GetExecutingAssembly().GetManifestResourceStream()` для доступу до файлів під час завантаження в Blob Storage.
-- Кожна завантажена копія отримує `Guid.NewGuid()` у шляху (`blobPath`), що гарантує унікальність і безпечність видалення.
+The entire batch is wrapped in an explicit transaction (`BeginTransactionAsync` → `CommitAsync`) to maintain the lock while processing.
 
 ---
 
-## ADR-022: PII Masking in Application Logs
+## ADR-INFRA-009: Embedded Resources for Data Seeding
 
-**Context:**
-Під час аудиту безпеки виявлено, що сервіс відправки листів (`SmtpEmailSender`) логував повні email-адреси користувачів на рівні `Information` (наприклад, `logger.LogInformation("Email sent to Oleh123@gmail.com")`). У production середовищі ці логи можуть передаватися в централізовані системи (ELK, Datadog), де доступ до них матиме широке коло розробників. Логування персональних даних (Personally Identifiable Information - PII) у відкритому вигляді створює ризики безпеки та порушує compliance (GDPR).
+**Decision:** Assets (images and videos) required for database seeding (courses, lessons, avatars) are stored directly within the `Learnix.Infrastructure` assembly as Embedded Resources, rather than in the file system or as Base64 strings in the code. Upon upload to Blob Storage, each generated entity (course or video lesson) receives its own unique copy of the file (a unique `blobPath` is generated).
 
-**Decision:**
-Впровадити правило маскування PII у всіх логах додатку. 
-Для email-адрес використовувати часткове приховування символів замість повного вирізання або хешування, оскільки часткове приховування (наприклад, `O***@gmail.com`) зберігає достатньо контексту для дебагінгу і пошуку проблем адміністраторами, але не розкриває повну адресу.
-Будь-який сервіс, що логує чутливі дані (email, телефони, IP-адреси), зобов'язаний застосовувати функції маскування перед записом у `ILogger`.
+**Why:**
+- **Environment independence:** Seeder code does not depend on the host file system or current working directory (which is problematic in Docker or during tests).
+- **Code size:** The previous approach utilized large Base64 strings directly in C# code, polluting it and complicating reading.
+- **Data isolation:** During seeding, every course or lesson receives its own unique path in Blob Storage. This prevents conflicts (e.g., accidental deletion of a shared `placeholder.mp4` via the admin panel).
+
+**Alternatives:**
+- **Base64 constants in code (old decision):** Pollutes C# files, difficult to maintain large files. Rejected.
+- **Reading from the file system (`File.ReadAllBytes`):** Requires proper `Copy to Output Directory` setup, paths may break.
+- **Shared Blob Storage object:** Uploading one `placeholder.mp4` and linking it from all lessons. Rejected: deleting a video in one lesson would trigger Outbox `DeleteBlob`, destroying the shared file and causing 404s in others.
 
 **Consequences:**
-- Безпека: Знижується ризик витоку PII через системи агрегації логів.
-- Дебагінг: При повному маскуванні дебагінг ускладнюється, тому прийнято компромісний підхід із відображенням першої літери та домену.
-- Додаткові зусилля: Розробники повинні бути свідомими щодо даних, які вони логують.
+- Files added to the `Learnix.Infrastructure/Assets/` folder and configured as `<EmbeddedResource>` in `Learnix.Infrastructure.csproj`.
+- `CourseSeederHostedService` and `StudentSeederHostedService` utilize `Assembly.GetExecutingAssembly().GetManifestResourceStream()`.
+- Each uploaded copy receives a `Guid.NewGuid()` in its path (`blobPath`), ensuring uniqueness and safe deletion.
 
+---
+
+## ADR-INFRA-010: PII Masking in Application Logs
+
+**Context:**
+During a security audit, it was discovered that the email sending service (`SmtpEmailSender`) logged complete user email addresses at the `Information` level (e.g., `logger.LogInformation("Email sent to Oleh123@gmail.com")`). In a production environment, these logs might be transmitted to centralized systems (ELK, Datadog), accessible to a broad array of developers. Logging Personally Identifiable Information (PII) in plaintext creates security risks and violates compliance (GDPR).
+
+**Decision:**
+Implement a PII masking rule across all application logs.
+For email addresses, employ partial character obfuscation instead of complete redaction or hashing, as partial obfuscation (e.g., `O***@gmail.com`) retains sufficient context for debugging without exposing the full address.
+Any service logging sensitive data (email, phones, IP addresses) must apply masking functions prior to writing to `ILogger`.
+
+**Consequences:**
+- Security: Reduces the risk of PII leaks via log aggregation systems.
+- Debugging: While full masking complicates debugging, the compromise approach (displaying the first letter and domain) aids troubleshooting.
+- Additional effort: Developers must remain vigilant regarding the data they log.
+
+
+## ADR-INFRA-011: Repository Pattern via Ardalis.Specification
+
+**Decision:** Specific repository interfaces per aggregate root extending IRepositoryBase<T> from Ardalis.Specification. No custom repository base classes.
+
+**Structure:**
+- **Interface (Application layer):** public interface ICourseRepository : IRepositoryBase<Course>
+- **Implementation (Infrastructure layer):** internal sealed class CourseRepository : RepositoryBase<Course>, ICourseRepository
+
+**Why:**
+- RepositoryBase<T> from Ardalis already provides FirstOrDefaultAsync, ListAsync, CountAsync, AddAsync, UpdateAsync, DeleteAsync accepting specifications.
+- Prevents boilerplate repository implementations.
+- Keeps Application layer decoupled from Entity Framework while still allowing complex queries via Specifications.
+
+---
+
+## ADR-INFRA-012: Application Settings via IOptions<T>
+
+**Decision:** Configuration sections from ppsettings.json are strongly typed to POCOs and consumed via IOptions<T>.
+
+**Conventions:**
+- POCOs reside in Application/Common/Settings/ (e.g., JwtSettings.cs). The Application layer knows configuration types, but not IConfiguration directly.
+- Registration occurs only in Infrastructure/DependencyInjection.cs via services.Configure<T>(...).
+- Connection strings remain separate (ConnectionStrings:Postgres, ConnectionStrings:AzureBlobStorage).
+
+**Why:**
+- Strongly typed settings prevent magic string errors.
+- Dependency rule: Application layer doesn't depend on Microsoft.Extensions.Configuration abstractions, only on its own models.

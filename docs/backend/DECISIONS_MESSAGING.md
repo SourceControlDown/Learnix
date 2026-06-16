@@ -2,6 +2,17 @@
 
 > Covers F-26 (chat UI), F-28 (notification bell), and the backend endpoints/hub.
 
+## Підсумок: що реалізовано
+
+| Endpoint | Що робить |
+|---|---|
+| `GET /api/messages/conversations` | Отримання списку діалогів (пагінація, пошук) |
+| `GET /api/messages/conversations/{id}/messages` | Отримання повідомлень діалогу (пагінація) |
+| `POST /api/messages/conversations/start-or-get` | Отримання або створення діалогу для курсу |
+| `POST /api/messages/conversations/{id}/messages` | Відправка повідомлення в діалог |
+| `PUT /api/messages/conversations/{id}/read` | Позначення діалогу як прочитаного |
+| `GET /api/messages/unread-count` | Отримання загальної кількості непрочитаних повідомлень |
+
 ---
 
 ## ADR-MSG-001: PostgreSQL over MongoDB for Course Conversations

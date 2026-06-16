@@ -2,6 +2,14 @@
 
 > Covers Phase 8: B-44 (MongoDB), B-45 (AI providers + SSE), B-46 (session persistence), B-46.5 (cleanup).
 
+## Підсумок: що реалізовано
+
+| Endpoint | Що робить |
+|---|---|
+| `GET /api/ai-chat/session` | Отримання активної сесії чату для поточного користувача |
+| `POST /api/ai-chat/messages` | Відправка повідомлення та отримання стріму (SSE) з відповіддю AI |
+| `DELETE /api/ai-chat/session` | Очищення поточної сесії чату |
+
 ---
 
 ## ADR-CHAT-001: `IAiChatProvider` Abstraction
