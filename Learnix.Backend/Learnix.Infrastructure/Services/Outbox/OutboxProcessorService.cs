@@ -1,4 +1,3 @@
-using Learnix.Infrastructure.Persistence.EntityFramework;
 using Learnix.Application.Achievements.Abstractions;
 using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Application.Common.Abstractions.Storage;
@@ -9,7 +8,7 @@ using Learnix.Infrastructure.Outbox.Payloads;
 using Learnix.Infrastructure.Outbox.Payloads.Achievements;
 using Learnix.Infrastructure.Outbox.Payloads.Notifications;
 using Learnix.Infrastructure.Outbox.Payloads.Users;
-using Learnix.Infrastructure.Persistence;
+using Learnix.Infrastructure.Persistence.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

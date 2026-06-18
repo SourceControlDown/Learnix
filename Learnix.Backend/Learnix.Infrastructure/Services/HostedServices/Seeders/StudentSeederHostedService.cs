@@ -1,7 +1,6 @@
 using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Entities;
-using Learnix.Infrastructure.Persistence;
 using Learnix.Infrastructure.Persistence.EntityFramework;
 using Learnix.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;

@@ -3,7 +3,6 @@ using Learnix.Application.Common.Pagination;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Courses.Queries.GetPublicCourses;
 using Learnix.Domain.Enums;
-using Learnix.Infrastructure.Persistence;
 using Learnix.Infrastructure.Persistence.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 

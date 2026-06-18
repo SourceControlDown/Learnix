@@ -1,6 +1,5 @@
-using Learnix.Infrastructure.Persistence.EntityFramework;
 using Learnix.Application.Common.Constants;
-using Learnix.Infrastructure.Persistence;
+using Learnix.Infrastructure.Persistence.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
