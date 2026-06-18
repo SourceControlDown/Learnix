@@ -1,3 +1,4 @@
+using Learnix.Infrastructure.Persistence.EntityFramework;
 using Learnix.Application.Common.Events;
 using Learnix.Domain.Entities;
 using Learnix.Domain.Events.Course;
@@ -44,7 +45,7 @@ internal sealed class CourseAdminUnpublishedHandler(OutboxDbContextHolder holder
 file static class CourseAdminActionEmailHelper
 {
     internal static async Task<OutboxMessage?> BuildAsync(
-        Persistence.ApplicationDbContext db,
+        ApplicationDbContext db,
         Guid eventId,
         string messageType,
         Guid instructorId,

@@ -4,6 +4,7 @@ using Learnix.Application;
 using Learnix.Infrastructure;
 using Learnix.Infrastructure.Hubs;
 using Learnix.Infrastructure.Persistence;
+using Learnix.Infrastructure.Persistence.EntityFramework;
 using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 

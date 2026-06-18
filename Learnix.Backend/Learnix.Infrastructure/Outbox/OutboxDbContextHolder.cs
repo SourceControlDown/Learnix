@@ -1,4 +1,5 @@
 using Learnix.Infrastructure.Persistence;
+using Learnix.Infrastructure.Persistence.EntityFramework;
 
 namespace Learnix.Infrastructure.Outbox;
 

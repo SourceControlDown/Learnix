@@ -31,15 +31,20 @@ using Learnix.Infrastructure.AiChat.Gemini;
 using Learnix.Infrastructure.Email;
 using Learnix.Infrastructure.Identity;
 using Learnix.Infrastructure.Outbox;
-using Learnix.Infrastructure.Persistence;
-using Learnix.Infrastructure.Persistence.Interceptors;
+using Learnix.Infrastructure.Persistence.EntityFramework;
+using Learnix.Infrastructure.Persistence.EntityFramework.Interceptors;
 using Learnix.Infrastructure.Persistence.Mongo;
 using Learnix.Infrastructure.Persistence.Mongo.Conventions;
 using Learnix.Infrastructure.Persistence.Mongo.Repositories;
-using Learnix.Infrastructure.Persistence.Repositories;
-using Learnix.Infrastructure.Services;
-using Learnix.Infrastructure.Services.Achievements;
+using Learnix.Infrastructure.Persistence.EntityFramework.Repositories;
+using Learnix.Infrastructure.Services.HostedServices.Seeders;
+using Learnix.Infrastructure.Services.HostedServices.Cleanup;
+using Learnix.Infrastructure.Services.HostedServices.Maintenance;
+using Learnix.Infrastructure.Services.Catalog;
+using Learnix.Infrastructure.Services.Outbox;
+using Learnix.Infrastructure.Services.Email;
 using Learnix.Infrastructure.Services.Certificates;
+using Learnix.Infrastructure.Services.Achievements;
 using Learnix.Infrastructure.Services.Messaging;
 using Learnix.Infrastructure.Services.Notifications;
 using Learnix.Infrastructure.Settings;
@@ -112,6 +117,9 @@ public static class DependencyInjection
 
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+
+                // Use the built-in 6-digit TOTP provider for email confirmation
+                options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
