@@ -97,7 +97,7 @@ Learnix.Infrastructure/
     HostedServices/
        Cleanup/        ChatSessionCleanupService, RefreshTokenCleanupHostedService
        Maintenance/    CategoryCoursesCountReconciliationService
-       Seeders/        CourseSeederHostedService, StudentSeederHostedService, CategorySeederHostedService
+       Seeders/        AdminSeederHostedService, RoleSeederHostedService, CourseSeederHostedService, StudentSeederHostedService, CategorySeederHostedService
     Outbox/             OutboxProcessorService, OutboxNotificationListener
  Storage/              AzureBlobStorageService
  DependencyInjection.cs

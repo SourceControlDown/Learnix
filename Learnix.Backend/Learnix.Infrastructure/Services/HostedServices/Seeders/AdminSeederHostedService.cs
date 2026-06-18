@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Learnix.Infrastructure.Identity;
+namespace Learnix.Infrastructure.Services.HostedServices.Seeders;
 
 internal sealed class AdminSeederHostedService(
     IServiceProvider serviceProvider,
