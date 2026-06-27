@@ -28,9 +28,9 @@ internal sealed class SetCategoryImageCommandHandler(
         if (!currentUser.IsInRole(Roles.Admin))
             return Result.Fail(new ForbiddenError(CommonMessages.OnlyAdminCanManageCategories));
 
-        var validation = await blobStorage.ValidateAsync(request.BlobPath, UploadTarget.CategoryImage, ct);
-        if (validation.IsFailed)
-            return Result.Fail(validation.Errors);
+        var commitResult = await blobStorage.CommitUploadAsync(request.BlobPath, UploadTarget.CategoryImage, ct);
+        if (commitResult.IsFailed)
+            return Result.Fail(commitResult.Errors);
 
         var category = await categoryRepository.FirstOrDefaultAsync(
             new CategoryByIdSpecification(request.CategoryId, forUpdate: true), ct);
@@ -38,7 +38,7 @@ internal sealed class SetCategoryImageCommandHandler(
         if (category is null)
             return Result.Fail(new NotFoundError(CommonMessages.CourseCategoryNotFound(request.CategoryId)));
 
-        category.SetImage(request.BlobPath);
+        category.SetImage(commitResult.Value.BlobPath);
         await unitOfWork.SaveChangesAsync(ct);
 
         await cache.RemoveAsync(CacheKeys.CategoriesAll, ct);

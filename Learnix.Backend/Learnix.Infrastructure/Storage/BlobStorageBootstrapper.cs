@@ -16,6 +16,7 @@ internal sealed class BlobStorageBootstrapper(
     {
         var containers = new[]
         {
+            options.Value.TempContainer,
             options.Value.AvatarContainer,
             options.Value.CourseCoverContainer,
             options.Value.LessonVideoContainer,

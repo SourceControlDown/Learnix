@@ -1,6 +1,7 @@
 using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
+using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Commands;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
@@ -16,6 +17,7 @@ public sealed class UpdateCourseDetailsCommandHandler(
     ICurrentUserService currentUser,
     ICourseRepository courseRepository,
     ICategoryRepository categoryRepository,
+    IBlobStorageService blobStorage,
     IUnitOfWork unitOfWork,
     IDistributedCache cache)
     : CourseCommandHandler<UpdateCourseDetailsCommand, Result>(courseRepository, currentUser)
@@ -50,7 +52,16 @@ public sealed class UpdateCourseDetailsCommandHandler(
             request.Price,
             normalizedTags);
 
-        course.SetCoverImage(request.CoverImageUrl);
+        if (request.CoverImageUrl is not null && request.CoverImageUrl != course.CoverBlobPath)
+        {
+            var commitResult = await blobStorage.CommitUploadAsync(
+                request.CoverImageUrl, UploadTarget.CourseCover, ct);
+
+            if (commitResult.IsFailed)
+                return Result.Fail(commitResult.Errors);
+
+            course.SetCoverImage(commitResult.Value.BlobPath);
+        }
 
         await unitOfWork.SaveChangesAsync(ct);
 

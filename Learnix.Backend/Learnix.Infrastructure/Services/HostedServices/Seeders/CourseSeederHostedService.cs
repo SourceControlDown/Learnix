@@ -220,7 +220,6 @@ public sealed class CourseSeederHostedService(
             if (stream != null)
             {
                 await blobStorage.UploadAsync(coverPath, stream, "image/png", ct);
-                await blobStorage.MarkConfirmedAsync(coverPath, ct);
                 course.SetCoverImage(coverPath);
             }
         }
@@ -264,7 +263,6 @@ public sealed class CourseSeederHostedService(
                             if (stream != null)
                             {
                                 await blobStorage.UploadAsync(videoPath, stream, "video/mp4", ct);
-                                await blobStorage.MarkConfirmedAsync(videoPath, ct);
                             }
                         }
                         catch (Exception ex)

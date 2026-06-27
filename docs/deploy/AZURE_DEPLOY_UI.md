@@ -57,6 +57,31 @@ as a single unit.
 
 ---
 
+## Step 1.1 — Set Up Cost Budget (Recommended)
+
+To protect yourself from unexpected charges, it's highly recommended to set up a budget and billing alerts for your new resource group.
+
+1. Once the resource group is created, go to the **`learnix-rg`** resource group page in the Azure Portal.
+2. In the left-hand menu, scroll down to the **Cost Management** section and click **Budgets**.
+3. Click **+ Add** to open the "Create a budget" screen.
+4. Fill in the **Budget Details**:
+   - **Name:** Enter a unique name (e.g., `learnix-budget`).
+   - **Reset period:** `Monthly`.
+   - **Creation / Expiration date:** Leave the default values.
+5. Under **Budget Amount**, enter your desired monthly threshold (e.g., `5` or `10`).
+6. Click **Next** to proceed to the **Set alerts** tab.
+7. Under **Alert conditions**, configure when you want to be notified:
+   - **Type:** Select `Actual cost` (or `Forecasted cost` to be warned before you hit the limit).
+   - **% of budget:** Enter a percentage like `50`, `90`, or `100`.
+   - **Action group:** Leave as `None`.
+8. Under **Alert recipients (email)**, enter your email address to receive notifications.
+9. Leave **Language preference** as `Default` and click **Create**.
+
+> [!NOTE]
+> Hitting the budget limit will *not* automatically turn off your services. It will simply send you an email alert so you can log in and manually delete or scale down resources if necessary.
+
+---
+
 ## Step 2 — Azure Container Registry (ACR)
 
 > [!WARNING]
@@ -220,22 +245,100 @@ postgresql://postgres.yourprojectref:[YOUR-PASSWORD]@aws-0-eu-central-1.pooler.s
 
 ---
 
-## Step 4 — Azure Cosmos DB (MongoDB API)
+## Step 4 — Azure Cosmos DB for MongoDB (vCore)
+
+Azure Cosmos DB for MongoDB (vCore) acts as a fully managed MongoDB cluster.
+Learnix uses it for flexible-schema data: AI chat sessions.
+
+Azure DocumentDB stores Learnix's flexible-schema data: AI chat sessions and course reviews.
+Your existing MongoDB.Driver code connects to it without any changes.
 
 1. Search for **Azure Cosmos DB** and click **Create**.
-2. Select **Azure Cosmos DB for MongoDB** and click **Create**.
-3. Select **Request Unit (RU)** architecture (or vCore if you prefer).
-4. **Resource group:** `learnix-rg`.
-5. **Account name:** `learnix-cosmos`.
-6. **Location:** `West Europe`.
-7. **Capacity mode:** Serverless (cheaper for Dev) or Provisioned.
-8. Click **Review + create**, then **Create** (takes ~5-10 mins).
-9. Once created, click **Data Explorer** and click **New Database**. Name it `learnix`.
-10. Click **Connection strings** on the left menu. Copy the **PRIMARY CONNECTION STRING**.
+
+2. On the **Recommended APIs** tab, click **Create** under
+   **Azure DocumentDB (with MongoDB compatibility)**.
+
+3. On the **Choose Architecture** screen, click **Create** under **Azure DocumentDB**
+   (the recommended option on the left).
+   — Do NOT select "Request unit (RU)" — it has limited analytics support
+   and a more complex billing model. Azure DocumentDB is MongoDB-compatible
+   and uses straightforward vCore + storage pricing.
+
+4. **Subscription:** choose your active subscription.
+
+5. **Resource group:** `learnix-rg`.
+
+6. **Cluster name:** `learnix-cosmos`
+   — must be globally unique across Azure as it forms part of your cluster's DNS name. Try adding a suffix if it's already taken (e.g., `learnix-cosmos-dev`).
+
+7. **Free tier:** check the box to enable the Free tier (Limit: one Free Tier cluster per Azure subscription).
+
+8. **Location:** select an available European region such as `(Europe) Norway East` or the nearest to your primary resources.
+
+9. **Cluster tier:** will automatically be set to `Shards: 1, no high availability (HA)` with 32 GiB storage.
+
+10. **MongoDB version:** leave as default (e.g., `8.0`).
+
+11. **Administrator account:** The username and password are auto-generated. **Important:** Copy these credentials and save them securely, as you won't be able to view them after creation. You will need them for your connection string.
+
+12. Click **Next: Networking**.
+    - **Connectivity method:** Select `Public access (allowed IP addresses)`.
+    - **Public access:** Ensure `Allow public access to this resource through the internet using a public IP address` is checked. This is required because our simpler deployment architecture relies on public endpoints rather than complex, expensive private Virtual Networks (VNets).
+    - **Firewall rules:** Check `Allow public access from Azure services and resources within Azure to this cluster` so your backend Container App can communicate with the database. You can also click `+ Add current client IP address` if you need to access it from your local PC.
+
+13. The remaining tabs (**Global distribution**, **Encryption**, **Tags**) can be left with their default settings (e.g., `Service-managed key` for Encryption, and empty Tags).
+
+14. Click **Review + create**, then **Create** (takes ~5–10 minutes).
+
+15. Once created, go to the resource → **Connection strings**.
+    Copy the **Primary connection string** — it follows standard MongoDB URI format:
+    ```
+    mongodb+srv://<admin-username>:<password>@...
+    ```
+    *(Remember to replace `<admin-username>` and `<password>` placeholders with the auto-generated credentials you copied earlier)*.
+    This goes into your app's `Mongo__ConnectionString` environment variable.
+
+---
+
+## Step 4 (Alternative) — MongoDB Atlas (Free)
+
+If you have already used your Cosmos DB Free Tier quota, or simply prefer an alternative, you can use a MongoDB Atlas M0 Free Cluster. It provides 512 MB of storage, which is perfectly sufficient for the Learnix application (chat sessions and reviews).
+
+1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) and sign up for a free account.
+2. Create a new Organization and Project if prompted.
+3. Click **Create** to deploy a new database cluster.
+4. **Cluster Type:** Select **M0 Free**.
+5. **Provider & Region:** 
+   - Choose **Azure** as the cloud provider (or AWS/GCP if Azure isn't available for M0 in your area).
+   - Select a region close to your other Azure resources, such as `Netherlands (europe-west4)` or `Frankfurt`.
+6. **Cluster Name:** `learnix-cluster` (or leave as default `Cluster0`).
+7. Click **Create Deployment**.
+8. **Security Quickstart:**
+   - **How would you like to authenticate your connection?** Select `Username and Password`.
+   - Create a database user (e.g., `learnixadmin`) and a strong password (or use the auto-generated one). **Save this password securely**. Click **Create Database User**.
+   - **Where would you like to connect from?** Select `My Local Environment`.
+   - Under IP Access List, click **Allow Access from Anywhere** (which adds `0.0.0.0/0`). This is necessary because Azure Container Apps use dynamic outbound IP addresses, and you'll need access from your local machine as well. Click **Add IP Address**.
+   - Click **Finish and Close**.
+9. Once your cluster is ready, click **Connect** на сторінці огляду кластера.
+10. Select **Drivers**.
+11. Under **Driver**, select `C# / .NET` and ensure the latest version is selected.
+12. Copy the **Connection String**. It will look something like this:
+    ```
+    mongodb+srv://learnixadmin:<password>@learnix-cluster.xxxxx.mongodb.net/?retryWrites=true&w=majority&appName=learnix-cluster
+    ```
+    *(Remember to replace `<password>` with the actual password you created in step 8).*
+    This string goes into your app's `Mongo__ConnectionString` environment variable.
+
 
 ---
 
 ## Step 5 — Azure Cache for Redis
+
+> [!WARNING]
+> **NOT FREE:** Azure Cache for Redis does not have a free tier. The `Basic C0` tier costs approximately ~$16/month. For a 100% free portfolio deployment, skip this step and use **Upstash Redis** (see Step 5 Alternative below).
+
+<details>
+<summary>Click here if you still want to deploy Azure Cache for Redis</summary>
 
 1. Search for **Azure Cache for Redis** and click **Create**.
 2. **Resource group:** `learnix-rg`.
@@ -244,6 +347,30 @@ postgresql://postgres.yourprojectref:[YOUR-PASSWORD]@aws-0-eu-central-1.pooler.s
 5. **Pricing tier:** `Basic C0`.
 6. Click **Review + create**, then **Create**.
 7. Once created, go to **Access keys** on the left menu to find your Primary connection string.
+
+</details>
+
+---
+
+## Step 5 (Alternative) — Upstash Redis (Free)
+
+Upstash provides a fully managed, serverless Redis database with a generous free tier (10,000 requests per day), perfect for pet projects and portfolios.
+
+1. Go to [Upstash](https://upstash.com/) and create a free account (no credit card required).
+2. In the console, click **Create Database** under the Redis section.
+3. **Name:** `learnix-redis`.
+4. **Type:** `Regional`.
+5. **Region:** Select a region close to your Azure resources (e.g., `eu-central-1` / Frankfurt).
+6. **Enable TLS (SSL):** Check this box for secure communication.
+7. Click **Create**.
+8. Once created, scroll down to the **Connect to your database** section on the database details page.
+9. Look for your **Endpoint** and **Password**.
+10. Construct your connection string. It will look like this:
+    ```
+    <endpoint>:<port>,password=<password>,ssl=True,abortConnect=False
+    ```
+    *(Example: `enjoyable-dog-12345.upstash.io:32541,password=YourSuperSecretPassword,ssl=True,abortConnect=False`)*.
+    This string goes into your app's `ConnectionStrings__Redis` environment variable.
 
 ---
 
@@ -257,11 +384,28 @@ postgresql://postgres.yourprojectref:[YOUR-PASSWORD]@aws-0-eu-central-1.pooler.s
 6. Click **Review + create**, then **Create**.
 7. Once created, click **Containers** under Data storage.
 8. Create the following containers:
+   - `temp-uploads` (Set public access level to **Private**)
    - `avatars` (Set public access level to **Blob**)
    - `course-covers` (Set public access level to **Blob**)
    - `course-videos` (Set public access level to **Blob**)
    - `certificates` (Set public access level to **Private**)
 9. Go to **Access keys** on the left menu and copy your **Connection string**.
+
+### Step 6.1 — Set Up Lifecycle Policy for Temporary Uploads
+
+To ensure unconfirmed uploads (e.g., interrupted file transfers) do not consume storage indefinitely, configure an automatic cleanup policy:
+
+1. In your Storage Account menu, scroll down to **Data management** and select **Lifecycle management**.
+2. Click **Add a rule**.
+3. **Rule name:** `CleanupTempUploads`.
+4. **Rule scope:** Select **Limit blobs with filters**.
+5. **Blob type:** Select **Block blobs**.
+6. **Blob subtype:** Select **Base blobs**.
+7. Click **Next** to go to the **Base blobs** tab.
+8. Set the condition: **If base blobs were Last modified more than 1 days ago**, then **Delete the blob**.
+9. Click **Next** to go to the **Filter set** tab.
+10. Under **Blob prefix**, type: `temp-uploads/`
+11. Click **Add** to save the rule. This will automatically delete any orphaned blobs older than 24 hours in the temporary container.
 
 ---
 

@@ -1,4 +1,4 @@
-﻿using Learnix.Application.Common.Abstractions.Storage;
+using Learnix.Application.Common.Abstractions.Storage;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -23,10 +23,7 @@ internal sealed class OutboxMessageDispatcher(
                 await blobStorage.DeleteAsync(deletePayload.BlobPath, ct);
                 break;
 
-            case OutboxMessageTypes.MarkBlobConfirmed:
-                var confirmPayload = JsonSerializer.Deserialize<MarkBlobConfirmedPayload>(message.Payload)!;
-                await blobStorage.MarkConfirmedAsync(confirmPayload.BlobPath, ct);
-                break;
+
 
             default:
                 logger.LogError("Unknown outbox message type: {Type}", message.Type);

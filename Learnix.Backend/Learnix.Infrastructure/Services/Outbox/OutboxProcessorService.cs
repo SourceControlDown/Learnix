@@ -146,12 +146,7 @@ internal sealed class OutboxProcessorService(
                 await blobStorage.DeleteAsync(payload.BlobPath, ct);
                 break;
             }
-            case OutboxMessageTypes.MarkBlobConfirmed:
-            {
-                var payload = JsonSerializer.Deserialize<MarkBlobConfirmedPayload>(message.Payload)!;
-                await blobStorage.MarkConfirmedAsync(payload.BlobPath, ct);
-                break;
-            }
+
             case OutboxMessageTypes.UserBannedEmail:
             {
                 var payload = JsonSerializer.Deserialize<SendUserBannedEmailPayload>(message.Payload)!;

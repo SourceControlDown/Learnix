@@ -123,7 +123,6 @@ public sealed class StudentSeederHostedService(
             if (stream != null)
             {
                 await blobStorage.UploadAsync(avatarPath, stream, "image/png", cancellationToken);
-                await blobStorage.MarkConfirmedAsync(avatarPath, cancellationToken);
             }
         }
         catch (Exception ex)

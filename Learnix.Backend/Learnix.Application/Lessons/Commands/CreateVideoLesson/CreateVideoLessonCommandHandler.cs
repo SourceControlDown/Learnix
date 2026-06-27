@@ -20,11 +20,11 @@ internal sealed class CreateVideoLessonCommandHandler(
     protected override async Task<Result<Guid>> HandleAsync(
         CreateVideoLessonCommand request, Course course, CancellationToken ct)
     {
-        var validateResult = await blobStorage.ValidateAsync(
+        var commitResult = await blobStorage.CommitUploadAsync(
             request.VideoBlobPath, UploadTarget.LessonVideo, ct);
 
-        if (validateResult.IsFailed)
-            return Result.Fail(validateResult.Errors);
+        if (commitResult.IsFailed)
+            return Result.Fail(commitResult.Errors);
 
         var displayOrder = await lessonRepository.GetMaxDisplayOrderAsync(request.SectionId, ct) + 1;
 
@@ -32,7 +32,7 @@ internal sealed class CreateVideoLessonCommandHandler(
             request.SectionId,
             request.Title,
             displayOrder,
-            request.VideoBlobPath,
+            commitResult.Value.BlobPath,
             request.Description,
             request.DurationSeconds);
 

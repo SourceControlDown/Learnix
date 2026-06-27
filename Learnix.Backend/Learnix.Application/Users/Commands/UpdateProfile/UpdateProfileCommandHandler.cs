@@ -34,13 +34,13 @@ internal sealed class UpdateProfileCommandHandler(
 
         if (request.AvatarBlobPath is not null && request.AvatarBlobPath != user.AvatarBlobPath)
         {
-            var validateResult = await blobStorage.ValidateAsync(
+            var commitResult = await blobStorage.CommitUploadAsync(
                 request.AvatarBlobPath, UploadTarget.Avatar, cancellationToken);
 
-            if (validateResult.IsFailed)
-                return Result.Fail(validateResult.Errors);
+            if (commitResult.IsFailed)
+                return Result.Fail(commitResult.Errors);
 
-            user.SetAvatar(request.AvatarBlobPath);
+            user.SetAvatar(commitResult.Value.BlobPath);
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
