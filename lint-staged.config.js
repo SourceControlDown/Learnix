@@ -4,7 +4,7 @@ module.exports = {
     const files = filenames.join(' ');
     return [
       `cd learnix-client && npx prettier --write --ignore-unknown ${files}`,
-      "npm run type-check --prefix learnix-client"
+      `cd learnix-client && npx tsc --noEmit`
     ];
   },
   
