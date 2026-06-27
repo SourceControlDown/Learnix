@@ -1,5 +1,5 @@
-export const ADMIN = {
-    // ── Layout ─────────────────────────────────────────────────────────────────
+﻿export const ADMIN = {
+    // Layout 
 
     NAV_DASHBOARD: 'Dashboard',
     NAV_USERS: 'User management',
@@ -9,7 +9,7 @@ export const ADMIN = {
     NAV_BACK_TO_SITE: 'Back to site',
     NAV_SIGN_OUT: 'Sign out',
 
-    // ── Dashboard ──────────────────────────────────────────────────────────────
+    // Dashboard 
 
     DASHBOARD_TITLE: 'Admin dashboard',
     DASHBOARD_SUBTITLE: 'Platform overview',
@@ -28,7 +28,7 @@ export const ADMIN = {
     QUICK_PAYMENTS_TITLE: 'Payment history',
     QUICK_PAYMENTS_DESC: 'View mock payment transactions',
 
-    // ── User management ────────────────────────────────────────────────────────
+    // User management 
 
     USERS_TITLE: 'User management',
     USERS_SUBTITLE: 'Search, ban, and manage platform users',
@@ -64,7 +64,7 @@ export const ADMIN = {
     TOAST_ROLE_ASSIGNED: (role: string) => `Role "${role}" assigned`,
     TOAST_ROLE_REMOVED: (role: string) => `Role "${role}" removed`,
 
-    // ── Change role dialog ─────────────────────────────────────────────────────
+    // Change role dialog 
 
     ROLE_DIALOG_TITLE: 'Manage roles',
     ROLE_DIALOG_CURRENT: 'Current roles',
@@ -73,7 +73,7 @@ export const ADMIN = {
     ROLE_DIALOG_CLOSE: 'Close',
     ROLE_DIALOG_NO_ROLES: 'No roles assigned',
 
-    // ── Course moderation ──────────────────────────────────────────────────────
+    // Course moderation 
 
     COURSES_TITLE: 'Course moderation',
     COURSES_SUBTITLE: 'Review, unpublish, and delete platform courses',
@@ -107,7 +107,7 @@ export const ADMIN = {
     TOAST_COURSE_DELETED: 'Course deleted',
     TOAST_COURSE_RECOVERED: 'Course recovered',
 
-    // ── Instructor applications ────────────────────────────────────────────────
+    // Instructor applications 
 
     APPLICATIONS_TITLE: 'Instructor applications',
     APPLICATIONS_SUBTITLE:
@@ -126,7 +126,7 @@ export const ADMIN = {
     TOAST_APPROVED: 'Application approved',
     TOAST_REJECTED: 'Application rejected',
 
-    // ── Reject dialog ──────────────────────────────────────────────────────────
+    // Reject dialog 
 
     REJECT_DIALOG_TITLE: 'Reject application',
     REJECT_DIALOG_SUBTITLE: (name: string) => `Reject ${name}'s instructor application?`,
@@ -136,7 +136,7 @@ export const ADMIN = {
     REJECT_BTN_CANCEL: 'Cancel',
     REJECT_BTN_CONFIRM: 'Reject application',
 
-    // ── Payment history ────────────────────────────────────────────────────────
+    // Payment history 
 
     PAYMENTS_TITLE: 'Payment history',
     PAYMENTS_SUBTITLE: 'All payment transactions on the platform',
@@ -159,7 +159,7 @@ export const ADMIN = {
 
     EMPTY_PAYMENTS: 'No payments found.',
 
-    // ── Pagination ─────────────────────────────────────────────────────────────
+    // Pagination 
 
     PREV: '← Previous',
     NEXT: 'Next →',

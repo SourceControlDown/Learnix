@@ -1,19 +1,19 @@
-// ============================================================
+﻿// ============================================================
 // Learnix — Design Tokens
 // Single source of truth for colors, typography, spacing, shadows.
 // CSS custom properties handle theming (light/dark).
 // SCSS variables handle static values (breakpoints, font stacks).
 //
 // Usage in component SCSS modules:
-//   @use '@/styles/tokens' as *;
-//   .card { background: var(--bg-secondary); border-radius: $radius-lg; }
+// @use '@/styles/tokens' as *;
+// .card { background: var(--bg-secondary); border-radius: $radius-lg; }
 // ============================================================
 
-// ────────────────────────────────────────────────────────────
+// 
 // 1. COLOR PRIMITIVES
-//    Raw palette — never use directly in components.
-//    Referenced only inside :root / [data-theme] blocks below.
-// ────────────────────────────────────────────────────────────
+// Raw palette — never use directly in components.
+// Referenced only inside :root / [data-theme] blocks below.
+// 
 
 // --- Blue (Primary) ---
 $blue-50:  #EFF6FF;
@@ -76,9 +76,9 @@ $violet-500: #8B5CF6;
 $violet-600: #7C3AED;
 
 
-// ────────────────────────────────────────────────────────────
+// 
 // 2. SEMANTIC TOKENS — Light Theme (default)
-// ────────────────────────────────────────────────────────────
+// 
 
 :root {
   // --- Backgrounds ---
@@ -168,9 +168,9 @@ $violet-600: #7C3AED;
 }
 
 
-// ────────────────────────────────────────────────────────────
+// 
 // 3. SEMANTIC TOKENS — Dark Theme
-// ────────────────────────────────────────────────────────────
+// 
 
 [data-theme='dark'] {
   --bg-primary:    #{$slate-950};
@@ -248,9 +248,9 @@ $violet-600: #7C3AED;
 }
 
 
-// ────────────────────────────────────────────────────────────
+// 
 // 4. TYPOGRAPHY (static — no theming needed)
-// ────────────────────────────────────────────────────────────
+// 
 
 $font-sans:    'DM Sans', system-ui, -apple-system, sans-serif;
 $font-heading: 'Plus Jakarta Sans', $font-sans;
@@ -275,9 +275,9 @@ $weight-semibold: 600;
 $weight-bold:     700;
 
 
-// ────────────────────────────────────────────────────────────
+// 
 // 5. SPACING SCALE
-// ────────────────────────────────────────────────────────────
+// 
 
 $space-0:  0;
 $space-1:  0.25rem;   // 4px
@@ -294,9 +294,9 @@ $space-20: 5rem;      // 80px
 $space-24: 6rem;      // 96px
 
 
-// ────────────────────────────────────────────────────────────
+// 
 // 6. BORDER RADIUS
-// ────────────────────────────────────────────────────────────
+// 
 
 $radius-sm:   0.25rem;  // 4px
 $radius-md:   0.375rem; // 6px
@@ -306,9 +306,9 @@ $radius-2xl:  1rem;     // 16px
 $radius-full: 9999px;
 
 
-// ────────────────────────────────────────────────────────────
+// 
 // 7. BREAKPOINTS
-// ────────────────────────────────────────────────────────────
+// 
 
 $bp-sm:  640px;
 $bp-md:  768px;
@@ -319,9 +319,9 @@ $bp-2xl: 1440px;
 $content-max-width: 1200px;
 
 
-// ────────────────────────────────────────────────────────────
+// 
 // 8. Z-INDEX SCALE
-// ────────────────────────────────────────────────────────────
+// 
 
 $z-dropdown:  100;
 $z-sticky:    200;
@@ -330,9 +330,9 @@ $z-modal:     400;
 $z-toast:     500;
 
 
-// ────────────────────────────────────────────────────────────
+// 
 // 9. TRANSITIONS
-// ────────────────────────────────────────────────────────────
+// 
 
 $transition-fast:   150ms ease;
 $transition-base:   200ms ease;
@@ -340,9 +340,9 @@ $transition-slow:   300ms ease;
 $transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
 
-// ────────────────────────────────────────────────────────────
+// 
 // 10. MIXINS
-// ────────────────────────────────────────────────────────────
+// 
 
 @mixin respond-to($bp) {
   @media (min-width: $bp) { @content; }

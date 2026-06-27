@@ -1,4 +1,4 @@
-using Learnix.Application.Common.Abstractions.Storage;
+﻿using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Entities;
 using Learnix.Infrastructure.Persistence.EntityFramework;
@@ -114,7 +114,7 @@ public sealed class StudentSeeder(
             return;
         }
 
-        // ── Avatar (best-effort) ──────────────────────────────────────────
+        // Avatar (best-effort) 
         var avatarPath = $"{blobOptions.Value.AvatarContainer}/{Guid.NewGuid()}-student-avatar.png";
         try
         {
@@ -133,7 +133,7 @@ public sealed class StudentSeeder(
             avatarPath = string.Empty;
         }
 
-        // ── Profile ───────────────────────────────────────────────────────
+        // Profile 
         student.UpdateProfile(
             "Dev", "Student",
             "A fully-seeded development student account with all achievements unlocked.");
@@ -143,7 +143,7 @@ public sealed class StudentSeeder(
 
         student.ClearDomainEvents();
 
-        // ── Progress counters ─────────────────────────────────────────────
+        // Progress counters 
         var progress = UserAchievementProgress.Create(student.Id);
         progress.SetLessonsCompleted(500);
         progress.SetCoursesCompleted(5);
@@ -151,7 +151,7 @@ public sealed class StudentSeeder(
         progress.SetProfileCompleted(!string.IsNullOrEmpty(avatarPath));
         db.Set<UserAchievementProgress>().Add(progress);
 
-        // ── Completed categories (first 3 system categories, alphabetically) ──
+        // Completed categories (first 3 system categories, alphabetically) 
         var categoryIds = await db.Categories
             .Where(c => c.IsSystem)
             .OrderBy(c => c.Name)
@@ -163,7 +163,7 @@ public sealed class StudentSeeder(
             db.Set<UserCompletedCategory>().Add(
                 UserCompletedCategory.Create(student.Id, categoryId));
 
-        // ── Achievements ──────────────────────────────────────────────────
+        // Achievements 
         // Use Unlock() for correct entity construction, then immediately clear
         // domain events so no outbox messages are written during seeding.
         foreach (var code in AchievementCodes.All)
@@ -223,5 +223,3 @@ public sealed class StudentSeeder(
         return student;
     }
 }
-
-

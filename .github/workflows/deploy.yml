@@ -1,35 +1,35 @@
-name: Deploy to Azure
+﻿name: Deploy to Azure
 
 # Triggered on push to main branch.
 # Builds Docker image → pushes to ACR → deploys to Container Apps.
 # Frontend is deployed to Azure Static Web Apps via the built-in action.
 # 
 # Required GitHub Secrets (Settings → Secrets and variables → Actions):
-#   AZURE_CREDENTIALS           — JSON output of: az ad sp create-for-rbac --sdk-auth
-#   ACR_LOGIN_SERVER            — e.g. learnixacr.azurecr.io
-#   ACR_USERNAME                — ACR admin username
-#   ACR_PASSWORD                — ACR admin password
-#   CONTAINER_APP_NAME          — e.g. learnix-api
-#   CONTAINER_APP_RG            — e.g. learnix-rg
-#   AZURE_STATIC_WEB_APPS_API_TOKEN — from Azure Portal > Static Web App > Manage deployment token
+# AZURE_CREDENTIALS           — JSON output of: az ad sp create-for-rbac --sdk-auth
+# ACR_LOGIN_SERVER            — e.g. learnixacr.azurecr.io
+# ACR_USERNAME                — ACR admin username
+# ACR_PASSWORD                — ACR admin password
+# CONTAINER_APP_NAME          — e.g. learnix-api
+# CONTAINER_APP_RG            — e.g. learnix-rg
+# AZURE_STATIC_WEB_APPS_API_TOKEN — from Azure Portal > Static Web App > Manage deployment token
 # 
-#   --- Production secrets injected into Container App ---
-#   PROD_POSTGRES_CONN          — Azure PostgreSQL connection string
-#   PROD_REDIS_CONN             — Azure Redis connection string
-#   PROD_MONGO_CONN             — Azure Cosmos DB MongoDB connection string
-#   PROD_BLOB_CONN              — Azure Blob Storage connection string
-#   PROD_JWT_SECRET             — 64+ char random secret
-#   PROD_SMTP_PASSWORD          — SendGrid API key
-#   PROD_GOOGLE_CLIENT_ID       — Google OAuth client ID
-#   PROD_GOOGLE_CLIENT_SECRET   — Google OAuth client secret
-#   PROD_ANTHROPIC_KEY          — Anthropic API key (or Gemini)
-#   PROD_GEMINI_KEY             — Gemini API key
-#   PROD_SEED_ADMIN_EMAIL       — Admin email for seeding
-#   PROD_SEED_ADMIN_PASSWORD    — Admin password for seeding
-#   PROD_ALLOWED_ORIGINS        — Frontend URL, e.g. https://learnix.azurestaticapps.net
-#   PROD_CLIENT_BASE_URL        — Same as PROD_ALLOWED_ORIGINS
-#   VITE_API_URL                — Production API URL for frontend build
-#   VITE_GOOGLE_CLIENT_ID       — Same as PROD_GOOGLE_CLIENT_ID
+# --- Production secrets injected into Container App ---
+# PROD_POSTGRES_CONN          — Azure PostgreSQL connection string
+# PROD_REDIS_CONN             — Azure Redis connection string
+# PROD_MONGO_CONN             — Azure Cosmos DB MongoDB connection string
+# PROD_BLOB_CONN              — Azure Blob Storage connection string
+# PROD_JWT_SECRET             — 64+ char random secret
+# PROD_SMTP_PASSWORD          — SendGrid API key
+# PROD_GOOGLE_CLIENT_ID       — Google OAuth client ID
+# PROD_GOOGLE_CLIENT_SECRET   — Google OAuth client secret
+# PROD_ANTHROPIC_KEY          — Anthropic API key (or Gemini)
+# PROD_GEMINI_KEY             — Gemini API key
+# PROD_SEED_ADMIN_EMAIL       — Admin email for seeding
+# PROD_SEED_ADMIN_PASSWORD    — Admin password for seeding
+# PROD_ALLOWED_ORIGINS        — Frontend URL, e.g. https://learnix.azurestaticapps.net
+# PROD_CLIENT_BASE_URL        — Same as PROD_ALLOWED_ORIGINS
+# VITE_API_URL                — Production API URL for frontend build
+# VITE_GOOGLE_CLIENT_ID       — Same as PROD_GOOGLE_CLIENT_ID
 
 on:
   push:
@@ -41,9 +41,7 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # ──────────────────────────────────────────────────
   # 1. Build & push API Docker image to ACR
-  # ──────────────────────────────────────────────────
   build-api:
     name: Build API → ACR
     runs-on: ubuntu-latest
@@ -78,9 +76,7 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
 
-  # ──────────────────────────────────────────────────
   # 2. Run DB migrations (before deploying new API)
-  # ──────────────────────────────────────────────────
   migrate-db:
     name: EF Database Update
     runs-on: ubuntu-latest
@@ -101,9 +97,7 @@ jobs:
         ASPNETCORE_ENVIRONMENT: Production
       run: dotnet run --project Learnix.DbMigrator -- --seed-demo
 
-  # ──────────────────────────────────────────────────
   # 3. Deploy API to Azure Container Apps
-  # ──────────────────────────────────────────────────
   deploy-api:
     name: Deploy API → Container Apps
     runs-on: ubuntu-latest
@@ -141,9 +135,7 @@ jobs:
           Cors__AllowedOrigins__0=${{ secrets.PROD_ALLOWED_ORIGINS }}
           App__ClientBaseUrl=${{ secrets.PROD_CLIENT_BASE_URL }}
 
-  # ──────────────────────────────────────────────────
   # 4. Build & deploy frontend to Static Web Apps
-  # ──────────────────────────────────────────────────
   deploy-frontend:
     name: Deploy Frontend → Static Web Apps
     runs-on: ubuntu-latest

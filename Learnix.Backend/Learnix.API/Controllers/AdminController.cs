@@ -1,4 +1,4 @@
-using Learnix.API.Extensions;
+﻿using Learnix.API.Extensions;
 using Learnix.Application.Admin.Queries.GetAdminStats;
 using Learnix.Application.Courses.Commands.AdminDeleteCourse;
 using Learnix.Application.Courses.Commands.AdminPublishCourse;
@@ -25,7 +25,7 @@ namespace Learnix.API.Controllers;
 [Authorize(Roles = Roles.Admin)]
 public sealed class AdminController(ISender sender) : ControllerBase
 {
-    // ── Stats ────────────────────────────────────────────────────────────────
+    // Stats 
 
     [HttpGet("stats")]
     public async Task<IActionResult> GetStats(CancellationToken ct)
@@ -34,7 +34,7 @@ public sealed class AdminController(ISender sender) : ControllerBase
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
-    // ── Users ────────────────────────────────────────────────────────────────
+    // Users 
 
     [HttpGet("users")]
     public async Task<IActionResult> GetUsers(
@@ -89,7 +89,7 @@ public sealed class AdminController(ISender sender) : ControllerBase
         return result.ToActionResult();
     }
 
-    // ── Courses ──────────────────────────────────────────────────────────────
+    // Courses 
 
     [HttpGet("courses")]
     public async Task<IActionResult> GetCourses(
@@ -132,7 +132,7 @@ public sealed class AdminController(ISender sender) : ControllerBase
         return result.ToActionResult();
     }
 
-    // ── Payments ─────────────────────────────────────────────────────────────
+    // Payments 
 
     [HttpGet("payments")]
     public async Task<IActionResult> GetPayments(

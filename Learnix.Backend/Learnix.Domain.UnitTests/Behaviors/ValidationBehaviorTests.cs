@@ -1,4 +1,4 @@
-using FluentResults;
+﻿using FluentResults;
 using FluentValidation;
 using Learnix.Application.Common.Behaviors;
 using Learnix.Application.Common.Errors;
@@ -6,7 +6,7 @@ using MediatR;
 
 namespace Learnix.Domain.UnitTests.Behaviors;
 
-// ── Shared test doubles ──────────────────────────────────────────────────────
+// Shared test doubles 
 
 file record NonGenericCommand : IRequest<Result>;
 file record GenericCommand : IRequest<Result<string>>;
@@ -39,7 +39,7 @@ file sealed class GenericFailValidator : AbstractValidator<GenericCommand>
     }
 }
 
-// ── ResultFailFactory tests ──────────────────────────────────────────────────
+// ResultFailFactory tests 
 
 /// <summary>
 /// Tests that <see cref="ResultFailFactory"/> caches per TResponse type
@@ -116,7 +116,7 @@ public class ResultFailFactoryTests
     }
 }
 
-// ── ValidationBehavior tests ─────────────────────────────────────────────────
+// ValidationBehavior tests 
 
 /// <summary>
 /// Tests that <see cref="ValidationBehavior{TRequest,TResponse}"/> correctly
@@ -128,7 +128,7 @@ public class ValidationBehaviorTests
     private static Task<Result> OkNext() => Task.FromResult(Result.Ok());
     private static Task<Result<string>> OkGenericNext() => Task.FromResult(Result.Ok("value"));
 
-    // ── No validators ────────────────────────────────────────────────────────
+    // No validators 
 
     [Fact]
     public async Task Should_Call_Next_When_No_Validators()
@@ -146,7 +146,7 @@ public class ValidationBehaviorTests
         result.IsSuccess.Should().BeTrue();
     }
 
-    // ── Passing validators ───────────────────────────────────────────────────
+    // Passing validators 
 
     [Fact]
     public async Task Should_Call_Next_When_Validator_Passes_For_Result()
@@ -181,7 +181,7 @@ public class ValidationBehaviorTests
         result.Value.Should().Be("value");
     }
 
-    // ── Failing validators ───────────────────────────────────────────────────
+    // Failing validators 
 
     [Fact]
     public async Task Should_Return_Failed_Result_Without_Calling_Next_When_Validator_Fails()
@@ -229,7 +229,7 @@ public class ValidationBehaviorTests
         ve.ValidationResult.Errors.Should().ContainSingle(f => f.ErrorMessage == "field-error");
     }
 
-    // ── Multiple validators ──────────────────────────────────────────────────
+    // Multiple validators 
 
     [Fact]
     public async Task Should_Aggregate_Failures_From_Multiple_Validators()

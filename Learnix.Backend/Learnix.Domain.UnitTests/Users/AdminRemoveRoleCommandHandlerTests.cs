@@ -1,5 +1,4 @@
-using FluentResults;
-using Learnix.Application.Common.Abstractions.Identity;
+﻿using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Users.Abstractions;
@@ -31,7 +30,7 @@ public class AdminRemoveRoleCommandHandlerTests
         _currentUser.IsInRole(Roles.Admin).Returns(true);
     }
 
-    // ── Auth / authorisation ─────────────────────────────────────────────────
+    // Auth / authorisation 
 
     [Fact]
     public async Task Should_Fail_When_Not_Authenticated()
@@ -55,7 +54,7 @@ public class AdminRemoveRoleCommandHandlerTests
         result.Errors.Should().ContainSingle(e => e is ForbiddenError);
     }
 
-    // ── Target user lookup ───────────────────────────────────────────────────
+    // Target user lookup 
 
     [Fact]
     public async Task Should_Fail_When_Target_User_Not_Found()
@@ -70,7 +69,7 @@ public class AdminRemoveRoleCommandHandlerTests
         result.Errors.Should().ContainSingle(e => e is NotFoundError);
     }
 
-    // ── Role preconditions ───────────────────────────────────────────────────
+    // Role preconditions 
 
     [Fact]
     public async Task Should_Fail_When_User_Does_Not_Have_Role()
@@ -113,7 +112,7 @@ public class AdminRemoveRoleCommandHandlerTests
         result.Errors.Should().ContainSingle(e => e is ConflictError);
     }
 
-    // ── Happy paths ──────────────────────────────────────────────────────────
+    // Happy paths 
 
     [Fact]
     public async Task Should_Succeed_When_Removing_Instructor_Role()
@@ -146,7 +145,7 @@ public class AdminRemoveRoleCommandHandlerTests
                           .RemoveRoleAsync(TargetId, Roles.Admin, Arg.Any<CancellationToken>());
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // Helpers 
 
     private void SetupUserFound()
     {
