@@ -9,11 +9,21 @@ namespace Learnix.Infrastructure.Storage;
 internal sealed class BlobStorageBootstrapper(
     BlobServiceClient blobServiceClient,
     IOptions<BlobStorageOptions> options,
-    ILogger<BlobStorageBootstrapper> logger
+    ILogger<BlobStorageBootstrapper> logger,
+    IHostEnvironment environment
 ) : IHostedService
 {
     public async Task StartAsync(CancellationToken ct)
     {
+        // In Production, infrastructure (like Blob Containers and CORS rules) must be provisioned 
+        // ahead of time via IaC (Terraform). The application should only have permissions to 
+        // read/write blobs (Principle of Least Privilege), not to manage containers.
+        if (!environment.IsDevelopment())
+        {
+            logger.LogInformation("BlobStorageBootstrapper is disabled in Production. Relying on Terraform-provisioned infrastructure.");
+            return;
+        }
+
         var containers = new[]
         {
             options.Value.TempContainer,
