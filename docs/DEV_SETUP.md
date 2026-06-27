@@ -456,3 +456,40 @@ mongodb://learnix:learnix@localhost:27017/learnix?authSource=admin
 ```
 
 Paste it into the connection dialog in MongoDB Compass and click **Connect**.
+
+---
+
+## Pre-commit Auto-formatting
+
+The project uses [Husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/okonet/lint-staged) to automatically format code before every `git commit`. This ensures consistent formatting without relying on developers to remember manual formatting steps.
+
+### What happens on each commit
+
+| Files changed | Tool | Effect |
+|---|---|---|
+| `Learnix.Backend/**/*.cs` | `dotnet format` | Fixes whitespace, indentation, and code style per `.editorconfig` |
+| `learnix-client/src/**/*.{ts,tsx,js,jsx,css,scss,md}` | Prettier | Formats frontend source files |
+
+### First-time setup
+
+After cloning the repository, two separate `npm install` calls are required — they are independent `package.json` files and do not share dependencies:
+
+```bash
+# 1. Install Git hooks (Husky + lint-staged) — run from the repository root
+npm install
+
+# 2. Install frontend dependencies — required to run, build, and lint the frontend
+cd learnix-client && npm install
+```
+
+> [!NOTE]
+> Both installs are one-time per machine. After that, formatting runs silently on every `git commit`.
+
+### Skipping the hook (emergency only)
+
+If you need to commit without formatting (not recommended):
+
+```bash
+git commit --no-verify -m "your message"
+```
+
