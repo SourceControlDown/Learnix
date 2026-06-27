@@ -378,8 +378,9 @@ Frontend runs at **[http://localhost:5173](http://localhost:5173)**.
 |---|---|---|
 | Admin | `admin@learnix.dev` | `Admin123!` |
 | Instructor | `instructor@learnix.dev` | `Instructor123!` |
+| Student | `student@learnix.dev` | `Student123!` |
 
-Register a new account through the UI to get a Student role.
+You can also register a new account through the UI to get a fresh Student role.
 
 ---
 
@@ -469,8 +470,8 @@ The project uses [Husky](https://typicode.github.io/husky/) and [lint-staged](ht
 
 | Files changed | Tool | Effect |
 |---|---|---|
-| `Learnix.Backend/**/*.cs` | `dotnet format` | Fixes whitespace, indentation, and code style per `.editorconfig` |
-| `learnix-client/src/**/*.{ts,tsx,js,jsx,css,scss,md}` | Prettier | Formats frontend source files |
+| `Learnix.Backend/**/*.cs` | `dotnet format` + `dotnet build` | Fixes formatting per `.editorconfig` and ensures backend code compiles |
+| `learnix-client/src/**/*.{ts,tsx,js,jsx,css,scss,md}` | Prettier + `npm run type-check` | Formats frontend files and checks TypeScript types for errors |
 
 > **Why only changed files?**
 > The hook exclusively formats files you have explicitly `git add`ed. This is intentional. Formatting the entire solution on every commit would take 10-30 seconds instead of milliseconds. More importantly, it prevents your commit from accidentally including formatting changes in hundreds of files you never touched, which would ruin Git history and cause massive merge conflicts. If you want to format the entire solution at once, run `dotnet format Learnix.Backend/Learnix.Backend.slnx` manually.
