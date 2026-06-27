@@ -4,14 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Learnix.Infrastructure.Services.HostedServices.Seeders;
+namespace Learnix.DbMigrator.Seeders;
 
-internal sealed class RoleSeederHostedService(
+internal sealed class RoleSeeder(
     IServiceProvider serviceProvider,
-    ILogger<RoleSeederHostedService> logger)
-    : IHostedService
+    ILogger<RoleSeeder> logger) : IDataSeeder
 {
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
@@ -29,5 +28,6 @@ internal sealed class RoleSeederHostedService(
         }
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    
 }
+

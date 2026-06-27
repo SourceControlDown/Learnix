@@ -37,7 +37,7 @@ using Learnix.Infrastructure.Persistence.Mongo;
 using Learnix.Infrastructure.Persistence.Mongo.Conventions;
 using Learnix.Infrastructure.Persistence.Mongo.Repositories;
 using Learnix.Infrastructure.Persistence.EntityFramework.Repositories;
-using Learnix.Infrastructure.Services.HostedServices.Seeders;
+
 using Learnix.Infrastructure.Services.HostedServices.Cleanup;
 using Learnix.Infrastructure.Services.HostedServices.Maintenance;
 using Learnix.Infrastructure.Services.Catalog;
@@ -294,11 +294,7 @@ public static class DependencyInjection
         services.AddSingleton<ICertificatePdfGenerator, CertificatePdfGenerator>();
 
         services.AddHostedService<BlobStorageBootstrapper>();
-        services.AddHostedService<RoleSeederHostedService>();
-        services.AddHostedService<AdminSeederHostedService>();
-        services.AddHostedService<CategorySeederHostedService>();
-        services.AddHostedService<CourseSeederHostedService>();
-        services.AddHostedService<StudentSeederHostedService>();
+        // Seeders have been moved to Learnix.DbMigrator project
         services.AddHostedService<RefreshTokenCleanupHostedService>();
         services.AddSingleton<OutboxSignal>();
         services.AddHostedService<OutboxNotificationListener>();

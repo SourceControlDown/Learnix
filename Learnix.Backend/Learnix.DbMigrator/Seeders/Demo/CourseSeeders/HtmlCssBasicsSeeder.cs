@@ -1,6 +1,6 @@
-using static Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.SeedHelpers;
+using static Learnix.DbMigrator.Seeders.Demo.CourseSeeders.SeedHelpers;
 
-namespace Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders;
+namespace Learnix.DbMigrator.Seeders.Demo.CourseSeeders;
 
 internal static class HtmlCssBasicsSeeder
 {
@@ -31,3 +31,5 @@ internal static class HtmlCssBasicsSeeder
         ],
         "generic_thumbnail.png");
 }
+
+

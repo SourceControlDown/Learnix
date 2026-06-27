@@ -6,15 +6,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Learnix.Infrastructure.Services.HostedServices.Seeders;
+namespace Learnix.DbMigrator.Seeders;
 
-internal sealed class AdminSeederHostedService(
+internal sealed class AdminSeeder(
     IServiceProvider serviceProvider,
     IConfiguration configuration,
-    ILogger<AdminSeederHostedService> logger)
-    : IHostedService
+    ILogger<AdminSeeder> logger) : IDataSeeder
 {
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         var email = configuration["SeedAdmin:Email"];
         var password = configuration["SeedAdmin:Password"];
@@ -84,5 +83,7 @@ internal sealed class AdminSeederHostedService(
                 string.Join("; ", studentResult.Errors.Select(e => e.Description)));
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    
 }
+
+

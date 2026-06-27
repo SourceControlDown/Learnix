@@ -1,6 +1,6 @@
-using static Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.SeedHelpers;
+using static Learnix.DbMigrator.Seeders.Demo.CourseSeeders.SeedHelpers;
 
-namespace Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders;
+namespace Learnix.DbMigrator.Seeders.Demo.CourseSeeders;
 
 internal static class CSharpFundamentalsSeeder
 {
@@ -123,3 +123,5 @@ internal static class CSharpFundamentalsSeeder
         ],
         "csharp_thumbnail.png");
 }
+
+

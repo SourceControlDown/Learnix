@@ -94,21 +94,12 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Install EF Core tools
-      run: dotnet tool install --global dotnet-ef
-
-    - name: Run migrations
+    - name: Run migrations and seeding
       working-directory: ./Learnix.Backend
       env:
         ConnectionStrings__Postgres: ${{ secrets.PROD_POSTGRES_CONN }}
         ASPNETCORE_ENVIRONMENT: Production
-      run: |
-        dotnet ef database update \
-          --project Learnix.Infrastructure \
-          --startup-project Learnix.API \
-          --no-build
-      # Note: --no-build means you must have previously built the project.
-      # Remove --no-build if you want the migration runner to build first.
+      run: dotnet run --project Learnix.DbMigrator -- --seed-demo
 
   # ──────────────────────────────────────────────────
   # 3. Deploy API to Azure Container Apps

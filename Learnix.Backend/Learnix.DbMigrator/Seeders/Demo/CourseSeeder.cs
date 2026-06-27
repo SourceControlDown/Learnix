@@ -2,7 +2,7 @@ using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Entities;
 using Learnix.Infrastructure.Persistence.EntityFramework;
-using Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders;
+using Learnix.DbMigrator.Seeders.Demo.CourseSeeders;
 using Learnix.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Learnix.Infrastructure.Services.HostedServices.Seeders;
+namespace Learnix.DbMigrator.Seeders;
 
 /// <summary>
 /// Opt-in dev seeder: creates a seed instructor and published courses across system categories.
@@ -21,32 +21,32 @@ namespace Learnix.Infrastructure.Services.HostedServices.Seeders;
 /// Each course contains PostLessons, VideoLessons, and TestLessons (all 3 types, ≥5 each).
 /// Tests deliberately vary PassingThreshold and AttemptLimit for app-testing purposes.
 /// </summary>
-public sealed class CourseSeederHostedService(
+public sealed class CourseSeeder(
     IServiceProvider serviceProvider,
     IConfiguration configuration,
     IOptions<BlobStorageOptions> blobOptions,
-    ILogger<CourseSeederHostedService> logger) : IHostedService
+    ILogger<CourseSeeder> logger) : IDataSeeder
 {
-    private static readonly Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.SeedCourseDefinition[] SeedCourses =
+    private static readonly Learnix.DbMigrator.Seeders.Demo.CourseSeeders.SeedCourseDefinition[] SeedCourses =
     [
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.CSharpFundamentalsSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.DesignPatternsSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.React19Seeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.PythonDataAnalysisSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.UiUxDesignSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.SqlDatabaseDesignSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.NodeJsRestApiSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.DigitalMarketingSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.AdvancedAlgorithmsSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.CloudArchitectureSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.HtmlCssBasicsSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.GitVersionControlSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.DockerForBeginnersSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.IntroToLinuxSeeder.GetDefinition(),
-        Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.AgileMethodologiesSeeder.GetDefinition()
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.CSharpFundamentalsSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.DesignPatternsSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.React19Seeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.PythonDataAnalysisSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.UiUxDesignSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.SqlDatabaseDesignSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.NodeJsRestApiSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.DigitalMarketingSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.AdvancedAlgorithmsSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.CloudArchitectureSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.HtmlCssBasicsSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.GitVersionControlSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.DockerForBeginnersSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.IntroToLinuxSeeder.GetDefinition(),
+        Learnix.DbMigrator.Seeders.Demo.CourseSeeders.AgileMethodologiesSeeder.GetDefinition()
     ];
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         var enabled = configuration["SeedData:Enabled"];
 
@@ -160,7 +160,7 @@ public sealed class CourseSeederHostedService(
         }
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    
 
 
     private async Task<User?> EnsureInstructorAsync(
@@ -303,3 +303,6 @@ public sealed class CourseSeederHostedService(
         await context.SaveChangesAsync(ct);
     }
 }
+
+
+

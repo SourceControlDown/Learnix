@@ -11,7 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Learnix.Infrastructure.Services.HostedServices.Seeders;
+namespace Learnix.DbMigrator.Seeders;
 
 /// <summary>
 /// Opt-in dev seeder: creates a seed student account with all achievements unlocked.
@@ -21,14 +21,14 @@ namespace Learnix.Infrastructure.Services.HostedServices.Seeders;
 /// Domain events on created entities are cleared before SaveChanges so no
 /// outbox noise is generated during seeding.
 /// </summary>
-public sealed class StudentSeederHostedService(
+public sealed class StudentSeeder(
     IServiceProvider serviceProvider,
     IConfiguration configuration,
     IOptions<BlobStorageOptions> blobOptions,
-    ILogger<StudentSeederHostedService> logger) : IHostedService
+    ILogger<StudentSeeder> logger) : IDataSeeder
 {
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         if (!string.Equals(
                 configuration["SeedData:Enabled"], "true",
@@ -181,7 +181,7 @@ public sealed class StudentSeederHostedService(
             email, AchievementCodes.All.Length);
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    
 
     private async Task<User?> EnsureStudentAsync(
         UserManager<User> userManager,
@@ -223,3 +223,5 @@ public sealed class StudentSeederHostedService(
         return student;
     }
 }
+
+

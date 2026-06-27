@@ -1,6 +1,6 @@
-using static Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders.SeedHelpers;
+using static Learnix.DbMigrator.Seeders.Demo.CourseSeeders.SeedHelpers;
 
-namespace Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders;
+namespace Learnix.DbMigrator.Seeders.Demo.CourseSeeders;
 
 internal static class UiUxDesignSeeder
 {
@@ -124,3 +124,5 @@ internal static class UiUxDesignSeeder
         ],
         "UI-UX_thumbnail.png");
 }
+
+

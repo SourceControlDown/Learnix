@@ -6,11 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Learnix.Infrastructure.Services.HostedServices.Seeders;
+namespace Learnix.DbMigrator.Seeders;
 
-public sealed class CategorySeederHostedService(
+public sealed class CategorySeeder(
     IServiceProvider serviceProvider,
-    ILogger<CategorySeederHostedService> logger) : IHostedService
+    ILogger<CategorySeeder> logger) : IDataSeeder
 {
     private static readonly (string Name, string Slug)[] SeedCategories =
     [
@@ -24,7 +24,7 @@ public sealed class CategorySeederHostedService(
         ("Language Learning", "language-learning"),
     ];
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -50,5 +50,6 @@ public sealed class CategorySeederHostedService(
         logger.LogInformation("Category seed: inserted {Count} system categories.", toInsert.Count);
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    
 }
+

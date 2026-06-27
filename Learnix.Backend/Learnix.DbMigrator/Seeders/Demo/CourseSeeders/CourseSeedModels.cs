@@ -2,7 +2,7 @@ using Learnix.Domain.Constants;
 using Learnix.Domain.Enums;
 using Learnix.Domain.ValueObjects;
 
-namespace Learnix.Infrastructure.Services.HostedServices.Seeders.CourseSeeders;
+namespace Learnix.DbMigrator.Seeders.Demo.CourseSeeders;
 
 internal abstract record SeedLesson(string Title);
 
@@ -50,3 +50,5 @@ internal static class SeedHelpers
         => new(text, QuestionType.TextInput, null,
             new TextAnswerBlueprint(answer, ignoreCase, fuzzy));
 }
+
+
