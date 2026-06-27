@@ -1,4 +1,4 @@
-﻿# Learnix Backend Project Structure
+# Learnix Backend Project Structure
 
 ## Project Structure Reference
 
@@ -10,7 +10,7 @@ Learnix.Domain/
 +-- Constants/          < Roles, UserConstants, CourseConstants, LessonConstants, etc.
 +-- Entities/           < User, Course, Section, Lesson (Video/Post/Test), Category,
 │                         Enrollment, Certificate, CourseReview, LessonProgress,
-│                         TestAttempt, RefreshToken, OutboxMessage
+│                         TestAttempt, RefreshToken
 +-- Events/
 │   +-- (root)          < UserRegisteredDomainEvent, PasswordResetRequestedDomainEvent
 │   +-- User/           < UserAvatarSetDomainEvent, UserAvatarRemovedDomainEvent
@@ -55,20 +55,33 @@ Learnix.Application/
 │   L-- Commands/       < CreateSection, UpdateSectionTitle, DeleteSection, ReorderSections
 +-- Lessons/
 │   +-- Abstractions/   < ILessonRepository
-│   L-- Commands/       < CreateVideoLesson, CreatePostLesson, UpdateVideoLesson, UpdatePostLesson,
-│                         DeleteLesson, ReorderLessons
-+-- Tests/
-│   +-- Commands/       < CreateTestLesson, UpdateTestLesson, UpdateTestSettings
-│   L-- Queries/        < GetTestLesson, GetTestAttempt
+│   +-- Commands/       < CreateVideoLesson, CreatePostLesson, CreateTestLesson,
+│                         UpdateVideoLesson, UpdatePostLesson, UpdateTestLesson,
+│                         DeleteLesson, ReorderLessons, ToggleLessonVisibility
+│   L-- Queries/        < GetTestLesson
++-- TestAttempts/
+│   +-- Commands/       < StartTestAttempt, SubmitTestAttempt
+│   L-- Queries/        < GetTestAttempt
 +-- Uploads/
 │   L-- Commands/       < RequestUploadUrl
-+-- Enrolment/
++-- Enrollments/
 │   L-- Commands/       < (enrollment flows)
 +-- Users/
 │   +-- Abstractions/   < IUserRepository
 │   +-- Commands/       < UpdateProfile
 │   +-- Queries/        < GetMyProfile, GetUserProfile
 │   L-- Specifications/ < UserByIdSpecification
++-- Achievements/       < User achievements & progress
++-- Admin/              < Admin-specific actions
++-- AiChat/             < Chatbot & completions
++-- Certificates/       < Certificate generation
++-- Config/             < Settings models
++-- LessonProgress/     < Lesson completion tracking
++-- Messaging/          < Direct messaging & conversations
++-- Notifications/      < In-app user notifications
++-- Payments/           < Payment flows & webhooks
++-- Reviews/            < Course reviews
++-- Wishlist/           < User wishlist operations
 L-- Categories/
     +-- Commands/       < CreateCategory, UpdateCategory, DeleteCategory
     L-- Queries/        < GetCategories
@@ -83,7 +96,7 @@ Learnix.Infrastructure/
 │   │   L-- ApplicationDbContext.cs
 │   L-- Mongo/                < Mongo db components
 +-- Outbox/
-│   +-- OutboxMessage.cs      < (also in Domain/Entities - cross-reference)
+│   +-- OutboxMessage.cs
 │   +-- IOutboxMessageDispatcher.cs
 │   +-- OutboxMessageDispatcher.cs
 │   L-- OutboxMessageTypes.cs
@@ -97,6 +110,9 @@ Learnix.Infrastructure/
 │   │   +-- Cleanup/          < ChatSessionCleanupService, RefreshTokenCleanupHostedService
 │   │   L-- Maintenance/      < CategoryCoursesCountReconciliationService
 │   L-- Outbox/               < OutboxProcessorService, OutboxNotificationListener
++-- AiChat/                   < Semantic Kernel integrations
++-- Assets/                   < Static assets (fonts, etc.)
++-- Hubs/                     < SignalR hubs (Chat, Notifications)
 +-- Storage/                  < AzureBlobStorageService
 L-- DependencyInjection.cs
 Learnix.DbMigrator/

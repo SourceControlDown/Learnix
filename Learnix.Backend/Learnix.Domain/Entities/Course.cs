@@ -182,6 +182,10 @@ public class Course : SoftDeletableEntity
     // Section structure (Course as aggregate root, see ADR-044)
     // =========================================================
     public bool SectionExists(Guid sectionId) => Sections.Any(s => s.Id == sectionId);
+    
+    public bool HasLesson(Guid lessonId) => Sections.Any(s => s.Lessons.Any(l => l.Id == lessonId));
+
+    public Lesson? TryGetLesson(Guid lessonId) => Sections.SelectMany(s => s.Lessons).FirstOrDefault(l => l.Id == lessonId);
 
     public Section AddSection(string title)
     {
@@ -225,6 +229,32 @@ public class Course : SoftDeletableEntity
 
         var section = FindSection(sectionId);
         section.ReorderLessons(pairs);
+    }
+
+    public void RemoveLesson(Lesson lesson)
+    {
+        EnsureStructureMutable();
+
+        var section = _sections.FirstOrDefault(s => s.Id == lesson.SectionId)
+            ?? throw new DomainException($"Lesson {lesson.Id} does not belong to course {Id}.");
+
+        lesson.PrepareForDeletion();
+
+        section.RemoveLesson(lesson.Id);
+
+        EnsurePublishableInvariants();
+    }
+
+    public void ToggleLessonVisibility(Lesson lesson, bool isHidden)
+    {
+        EnsureStructureMutable();
+
+        var section = _sections.FirstOrDefault(s => s.Id == lesson.SectionId)
+            ?? throw new DomainException($"Lesson {lesson.Id} does not belong to course {Id}.");
+        
+        lesson.SetVisibility(isHidden);
+
+        EnsurePublishableInvariants();
     }
 
     // Internal helpers

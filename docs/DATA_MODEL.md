@@ -363,12 +363,22 @@ AI assistant conversation history per user.
 {
   "_id": "ObjectId",
   "userId": "Guid (string)",
+  "isActive": "bool",
   "createdAt": "DateTime",
   "updatedAt": "DateTime",
+  "closedAt": "DateTime?",
   "messages": [
     {
-      "role": "user | assistant",
+      "role": "user | assistant | tool_result",
       "content": "string",
+      "toolCalls": [
+        {
+          "callId": "string",
+          "toolName": "string",
+          "argumentsJson": "string",
+          "resultJson": "string?"
+        }
+      ],
       "sentAt": "DateTime"
     }
   ]

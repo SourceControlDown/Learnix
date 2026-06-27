@@ -38,21 +38,12 @@ public class DomainEventsInterceptor(IServiceProvider serviceProvider) : SaveCha
         holder.DbContext = dbContext as ApplicationDbContext;
 
         var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<DomainEventsInterceptor>>();
 
         foreach (var @event in events)
         {
             var notificationType = typeof(DomainEventNotification<>).MakeGenericType(@event.GetType());
             var notification = Activator.CreateInstance(notificationType, @event)!;
-
-            try
-            {
-                await publisher.Publish(notification, ct);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Domain event handler failed for {EventType}", @event.GetType().Name);
-            }
+            await publisher.Publish(notification, ct);
         }
 
         return await base.SavingChangesAsync(eventData, result, ct);

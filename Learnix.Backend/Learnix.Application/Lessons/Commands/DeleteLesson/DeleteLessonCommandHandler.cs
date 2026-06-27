@@ -16,21 +16,17 @@ internal sealed class DeleteLessonCommandHandler(
     ILessonRepository lessonRepository,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
-    : CourseCommandHandler<DeleteLessonCommand, Result>(courseRepository, currentUser)
+    : CourseCommandHandler<DeleteLessonCommand, Result>(courseRepository, currentUser, includeLessons: true)
 {
     protected override async Task<Result> HandleAsync(
         DeleteLessonCommand request, Course course, CancellationToken ct)
     {
-        var lesson = await lessonRepository.FirstOrDefaultAsync(
-            new LessonByIdSpecification(request.LessonId, forUpdate: true), ct);
+        var lesson = course.TryGetLesson(request.LessonId);
 
         if (lesson is null)
             return Result.Fail(new NotFoundError(CommonMessages.LessonNotFound(request.LessonId)));
 
-        if (!course.SectionExists(lesson.SectionId))
-            return Result.Fail(new NotFoundError(CommonMessages.LessonNotFound(request.LessonId)));
-
-        lesson.PrepareForDeletion();
+        course.RemoveLesson(lesson);
 
         await lessonRepository.DeleteAsync(lesson, ct);
 
