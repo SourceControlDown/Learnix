@@ -38,7 +38,7 @@ export interface CategoryDto {
     coursesCount: number;
 }
 
-// Instructor management types 
+// Instructor management types
 
 export type CourseStatus = 'Draft' | 'Published' | 'Archived';
 
@@ -121,7 +121,7 @@ export interface CourseForEditQuestionOptionDto {
     order: number;
 }
 
-// Lightweight course representation 
+// Lightweight course representation
 
 /**
  * Lightweight course representation for catalog/featured listings.

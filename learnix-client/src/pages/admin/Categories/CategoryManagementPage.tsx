@@ -22,7 +22,13 @@ import { getCategoryVisuals } from '@/mocks/landing.mock';
 import { cn } from '@/utils/cn';
 import type { AdminCategoryListItemDto } from '@/api/categories.api';
 
-type FormState = { name: string; slug: string; blobPath?: string; previewUrl?: string; removeImage?: boolean };
+type FormState = {
+    name: string;
+    slug: string;
+    blobPath?: string;
+    previewUrl?: string;
+    removeImage?: boolean;
+};
 
 function nameToSlug(name: string): string {
     return name
@@ -70,7 +76,13 @@ function ThumbnailCell({
         return displayUrl ? (
             <img src={displayUrl} alt="" className="h-10 w-10 rounded object-cover" />
         ) : (
-            <div className={cn('flex h-10 w-10 items-center justify-center rounded text-xl', visual.iconBgClass, visual.iconTextClass)}>
+            <div
+                className={cn(
+                    'flex h-10 w-10 items-center justify-center rounded text-xl',
+                    visual.iconBgClass,
+                    visual.iconTextClass,
+                )}
+            >
                 {visual.emoji}
             </div>
         );
@@ -106,8 +118,12 @@ function ThumbnailCell({
                     </div>
                 </>
             ) : (
-                <div 
-                    className={cn('flex h-10 w-10 cursor-pointer items-center justify-center rounded text-xl', visual.iconBgClass, visual.iconTextClass)}
+                <div
+                    className={cn(
+                        'flex h-10 w-10 cursor-pointer items-center justify-center rounded text-xl',
+                        visual.iconBgClass,
+                        visual.iconTextClass,
+                    )}
                     onClick={() => fileRef.current?.click()}
                 >
                     {visual.emoji}
@@ -164,7 +180,7 @@ export default function CategoryManagementPage() {
         },
         onError: () => {
             setCreateForm((f) => ({ ...f, blobPath: undefined, previewUrl: undefined }));
-        }
+        },
     });
 
     const updateMutation = useMutation({
@@ -183,7 +199,7 @@ export default function CategoryManagementPage() {
         },
         onError: () => {
             setEditForm((f) => ({ ...f, blobPath: undefined, previewUrl: undefined }));
-        }
+        },
     });
 
     const deleteMutation = useMutation({
@@ -358,7 +374,11 @@ export default function CategoryManagementPage() {
                                     {/* Image */}
                                     <td className="px-5 py-3">
                                         <ThumbnailCell
-                                            imageUrl={editingId === cat.id && editForm.removeImage ? null : cat.imageUrl}
+                                            imageUrl={
+                                                editingId === cat.id && editForm.removeImage
+                                                    ? null
+                                                    : cat.imageUrl
+                                            }
                                             previewUrl={
                                                 editingId === cat.id
                                                     ? editForm.previewUrl
@@ -367,7 +387,12 @@ export default function CategoryManagementPage() {
                                             isEditing={editingId === cat.id}
                                             slug={editingId === cat.id ? editForm.slug : cat.slug}
                                             onUpload={(blobPath, previewUrl) =>
-                                                setEditForm((f) => ({ ...f, blobPath, previewUrl, removeImage: false }))
+                                                setEditForm((f) => ({
+                                                    ...f,
+                                                    blobPath,
+                                                    previewUrl,
+                                                    removeImage: false,
+                                                }))
                                             }
                                             onRemoveImage={() =>
                                                 setEditForm((f) => ({

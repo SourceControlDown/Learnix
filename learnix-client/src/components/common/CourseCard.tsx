@@ -71,7 +71,6 @@ export function CourseCard({ course, className }: CourseCardProps) {
                         NEW
                     </span>
                 )}
-
             </div>
 
             <div className="flex flex-1 flex-col p-5">

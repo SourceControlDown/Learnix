@@ -31,7 +31,11 @@ export default function VerifyEmailPage() {
     }, [resendCooldown]);
 
     const { mutate: verify, isPending: isVerifying } = useMutation({
-        mutationFn: (tokenOverride?: string | void) => authApi.verifyEmail({ email, token: typeof tokenOverride === 'string' ? tokenOverride : code.join('') }),
+        mutationFn: (tokenOverride?: string | void) =>
+            authApi.verifyEmail({
+                email,
+                token: typeof tokenOverride === 'string' ? tokenOverride : code.join(''),
+            }),
         onSuccess: (data) => {
             toast.success(t('verify.success'));
             setAccessToken(data.accessToken);
@@ -50,7 +54,9 @@ export default function VerifyEmailPage() {
         mutationFn: () => authApi.resendConfirmation({ email }),
         onSuccess: () => {
             setResendCooldown(60);
-            toast.success(t('verify.resendSuccess', 'Confirmation email resent. Check your inbox.'));
+            toast.success(
+                t('verify.resendSuccess', 'Confirmation email resent. Check your inbox.'),
+            );
         },
         onError: () => {
             toast.error(t('verify.resendError', 'Failed to resend. Please try again later.'));
@@ -97,7 +103,10 @@ export default function VerifyEmailPage() {
 
     const handlePaste = (e: React.ClipboardEvent) => {
         e.preventDefault();
-        const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+        const pastedData = e.clipboardData
+            .getData('text')
+            .replace(/[^0-9]/g, '')
+            .slice(0, 6);
         if (!pastedData) return;
 
         const newCode = [...code];
@@ -152,11 +161,11 @@ export default function VerifyEmailPage() {
                 <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                     <Mail className="h-8 w-8 text-primary" />
                 </div>
-                
+
                 <h1 className="font-heading text-2xl font-bold text-foreground">
                     {t('verify.title', 'Check your email')}
                 </h1>
-                
+
                 <p className="mt-2 text-sm text-muted-foreground">
                     {t('verify.subtitle', 'We sent a 6-digit verification code to')} <br />
                     <span className="font-medium text-foreground">{email}</span>
@@ -166,7 +175,9 @@ export default function VerifyEmailPage() {
                     {code.map((digit, idx) => (
                         <input
                             key={idx}
-                            ref={(el) => { inputRefs.current[idx] = el; }}
+                            ref={(el) => {
+                                inputRefs.current[idx] = el;
+                            }}
                             type="text"
                             inputMode="numeric"
                             autoComplete="one-time-code"
@@ -177,9 +188,11 @@ export default function VerifyEmailPage() {
                             onPaste={idx === 0 ? handlePaste : undefined}
                             disabled={isVerifying}
                             className={cn(
-                                "h-14 w-12 rounded-xl border bg-background text-center text-xl font-bold outline-none transition-all",
-                                "focus:border-primary focus:ring-4 focus:ring-primary/10",
-                                digit ? "border-primary text-foreground" : "border-border text-muted-foreground"
+                                'h-14 w-12 rounded-xl border bg-background text-center text-xl font-bold outline-none transition-all',
+                                'focus:border-primary focus:ring-4 focus:ring-primary/10',
+                                digit
+                                    ? 'border-primary text-foreground'
+                                    : 'border-border text-muted-foreground',
                             )}
                         />
                     ))}
@@ -187,7 +200,7 @@ export default function VerifyEmailPage() {
 
                 <button
                     onClick={() => verify()}
-                    disabled={code.some(d => !d) || isVerifying}
+                    disabled={code.some((d) => !d) || isVerifying}
                     className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {isVerifying ? (
@@ -210,15 +223,21 @@ export default function VerifyEmailPage() {
                         className="font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
                     >
                         {resendCooldown > 0
-                            ? t('verify.resendIn', 'Resend in {{s}}s').replace('{{s}}', resendCooldown.toString())
+                            ? t('verify.resendIn', 'Resend in {{s}}s').replace(
+                                  '{{s}}',
+                                  resendCooldown.toString(),
+                              )
                             : isResending
-                                ? '...'
-                                : t('verify.resend', 'Resend')}
+                              ? '...'
+                              : t('verify.resend', 'Resend')}
                     </button>
                 </div>
-                
-                <div className="mt-6 pt-6 border-t border-border">
-                    <Link to="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+
+                <div className="mt-6 border-t border-border pt-6">
+                    <Link
+                        to="/login"
+                        className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
                         {t('verify.backToLogin', 'Back to log in')}
                     </Link>
                 </div>

@@ -3,7 +3,7 @@ module.exports = {
   "learnix-client/src/**/*.{ts,tsx,js,jsx,css,scss,md}": (filenames) => {
     const files = filenames.join(' ');
     return [
-      `prettier --write --ignore-unknown ${files}`,
+      `cd learnix-client && npx prettier --write --ignore-unknown ${files}`,
       "npm run type-check --prefix learnix-client"
     ];
   },

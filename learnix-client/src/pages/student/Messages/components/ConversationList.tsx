@@ -10,7 +10,12 @@ interface ConversationListProps {
     isFetchingNextPage?: boolean;
 }
 
-export function ConversationList({ conversations, selectedId, onSelect, isFetchingNextPage }: ConversationListProps) {
+export function ConversationList({
+    conversations,
+    selectedId,
+    onSelect,
+    isFetchingNextPage,
+}: ConversationListProps) {
     const { t } = useTranslation('messages');
 
     if (conversations.length === 0) {
@@ -65,7 +70,9 @@ export function ConversationList({ conversations, selectedId, onSelect, isFetchi
             ))}
             {isFetchingNextPage && (
                 <li className="flex justify-center p-4">
-                    <span className="text-xs text-muted-foreground">{t('loadingMore', 'Loading more...')}</span>
+                    <span className="text-xs text-muted-foreground">
+                        {t('loadingMore', 'Loading more...')}
+                    </span>
                 </li>
             )}
         </ul>

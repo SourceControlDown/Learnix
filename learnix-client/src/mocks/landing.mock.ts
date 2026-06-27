@@ -21,9 +21,17 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisuals> = {
     design: { emoji: '🎨', iconBgClass: 'bg-warning/20', iconTextClass: 'text-warning' },
     business: { emoji: '💼', iconBgClass: 'bg-success/20', iconTextClass: 'text-success' },
     marketing: { emoji: '📈', iconBgClass: 'bg-warning/20', iconTextClass: 'text-warning' },
-    'personal-development': { emoji: '🌟', iconBgClass: 'bg-accent/10', iconTextClass: 'text-accent' },
-    'language-learning': { emoji: '🗣️', iconBgClass: 'bg-success/20', iconTextClass: 'text-success' },
-    
+    'personal-development': {
+        emoji: '🌟',
+        iconBgClass: 'bg-accent/10',
+        iconTextClass: 'text-accent',
+    },
+    'language-learning': {
+        emoji: '🗣️',
+        iconBgClass: 'bg-success/20',
+        iconTextClass: 'text-success',
+    },
+
     // Other predefined categories
     'web-dev': { emoji: '💻', iconBgClass: 'bg-primary/10', iconTextClass: 'text-primary' },
     backend: { emoji: '⚙️', iconBgClass: 'bg-accent/10', iconTextClass: 'text-accent' },

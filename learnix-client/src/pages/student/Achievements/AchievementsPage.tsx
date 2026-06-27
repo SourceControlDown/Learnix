@@ -25,10 +25,13 @@ export default function AchievementsPage() {
 
     useEffect(() => {
         // Mark all achievement notifications as read when visiting this page
-        notificationsApi.markReadByType('AchievementEarned').then(() => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
-            queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
-        }).catch(() => {});
+        notificationsApi
+            .markReadByType('AchievementEarned')
+            .then(() => {
+                queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
+                queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
+            })
+            .catch(() => {});
     }, [queryClient]);
 
     if (isLoading) {

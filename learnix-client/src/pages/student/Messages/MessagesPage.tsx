@@ -26,13 +26,7 @@ export default function MessagesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const debouncedSearch = useDebounce(searchQuery, 500);
 
-    const {
-        data,
-        isLoading,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage
-    } = useInfiniteQuery({
+    const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
         queryKey: [...queryKeys.messages.conversations(), debouncedSearch],
         queryFn: ({ pageParam = 0 }) =>
             messagesApi.getConversations(pageParam, 20, debouncedSearch || undefined),
@@ -98,7 +92,7 @@ export default function MessagesPage() {
                         />
                     </div>
                 </div>
-                <div 
+                <div
                     className="min-h-0 flex-1 overflow-y-auto"
                     onScroll={(e) => {
                         const target = e.target as HTMLDivElement;
