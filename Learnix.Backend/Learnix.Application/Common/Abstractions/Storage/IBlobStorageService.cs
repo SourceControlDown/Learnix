@@ -5,9 +5,9 @@ namespace Learnix.Application.Common.Abstractions.Storage;
 public interface IBlobStorageService
 {
     /// <summary>
-    /// Generates a SAS URL for client to upload directly to blob storage.
-    /// The blob is created without 'confirmed' tag and will be removed by 
-    /// lifecycle policy unless MarkConfirmedAsync is called within TTL.
+    /// Generates a SAS URL for client to upload directly to a temporary blob container.
+    /// The blob will be removed by an Azure lifecycle policy after 24 hours 
+    /// unless CommitUploadAsync is called to move it to its permanent location.
     /// </summary>
     Task<UploadUrlResponse> GenerateUploadUrlAsync(
         UploadTarget target,

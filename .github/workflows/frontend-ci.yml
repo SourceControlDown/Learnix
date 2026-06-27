@@ -34,6 +34,8 @@ jobs:
 
     - name: Build (validates no TS errors)
       env:
+        # Placeholders are used here just to satisfy Vite/Zod validation so the build completes.
+        # This build is discarded; real secrets are used in the deploy.yml pipeline.
         VITE_API_URL: https://placeholder.azurecontainerapps.io/api
         VITE_GOOGLE_CLIENT_ID: placeholder
       run: npm run build
