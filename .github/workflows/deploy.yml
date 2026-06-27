@@ -1,4 +1,4 @@
-﻿name: Deploy to Azure
+name: Deploy to Azure
 
 # Triggered on push to main branch.
 # Builds Docker image → pushes to ACR → deploys to Container Apps.
@@ -134,6 +134,17 @@ jobs:
           SeedAdmin__Password=${{ secrets.PROD_SEED_ADMIN_PASSWORD }}
           Cors__AllowedOrigins__0=${{ secrets.PROD_ALLOWED_ORIGINS }}
           App__ClientBaseUrl=${{ secrets.PROD_CLIENT_BASE_URL }}
+          # =========================================================================
+          # WARNING: DO NOT ENABLE `Proxy__TrustedProxies__0` FOR AZURE CONTAINER APPS!
+          # Azure Container Apps provides a managed, network-isolated Envoy Ingress.
+          # The load balancer IP is dynamic. Hardcoding an IP here will cause ASP.NET
+          # to drop X-Forwarded-For headers when the Azure infrastructure IP changes.
+          # Our code gracefully handles this by falling back to "trust-all" when this 
+          # variable is missing, which is the SAFE and CORRECT approach for ACA due 
+          # to network isolation and ForwardLimit=1. 
+          # ONLY enable this if migrating away from PaaS to a traditional VM/VPS setup.
+          # =========================================================================
+          # Proxy__TrustedProxies__0=${{ secrets.PROD_TRUSTED_PROXIES }}
 
   # 4. Build & deploy frontend to Static Web Apps
   deploy-frontend:

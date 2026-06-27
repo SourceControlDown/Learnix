@@ -3,7 +3,6 @@ using Learnix.API.Middleware;
 using Learnix.Application;
 using Learnix.Infrastructure;
 using Learnix.Infrastructure.Hubs;
-using Learnix.Infrastructure.Persistence;
 using Learnix.Infrastructure.Persistence.EntityFramework;
 using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
@@ -36,11 +35,14 @@ builder.Services.AddProblemDetails();
 builder.Services.AddLearnixRateLimiting();
 
 // Forwarder
-// Trusted proxy IPs are read from "Proxy:TrustedProxies" in configuration.
-// - Production  : list your reverse-proxy IP(s) there so only those headers are accepted.
-// - Development : the section is left empty and we fall back to trust-all (Docker, Vite, etc.).
-// Never use trust-all in staging/production — it lets any client spoof X-Forwarded-For
-// and bypass IP-based rate limiting.
+// Azure Container Apps sits behind Azure's internal load balancer whose IP is not static
+// and cannot be pinned in configuration. ACA already enforces network-level isolation
+// (the container is not publicly reachable except through the managed ingress), so trusting
+// all forwarded headers is safe and is the approach recommended by Microsoft for ACA.
+//
+// If Proxy:TrustedProxies is set (e.g. when self-hosting behind a known reverse proxy),
+// only those IPs are trusted. Otherwise we clear the allow-list and accept all hops —
+// which is correct for ACA but would be unsafe behind an arbitrary public proxy.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -51,22 +53,21 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
     if (trustedProxies.Length > 0)
     {
-        // Production path: only accept forwarded headers from the listed proxy IPs.
+        // Explicit proxy IPs provided — only trust those (e.g. self-hosted nginx/Caddy).
         foreach (var ip in trustedProxies)
         {
             if (System.Net.IPAddress.TryParse(ip, out var parsed))
                 options.KnownProxies.Add(parsed);
         }
     }
-    else if (builder.Environment.IsDevelopment())
+    else
     {
-        // Development path: trust every hop so local tooling (Docker bridge, Vite proxy)
-        // can forward headers without explicit registration.
+        // No explicit IPs configured: trust all hops.
+        // Safe for Azure Container Apps (network-isolated by ACA ingress).
+        // Also covers local development (Docker bridge, Vite proxy, etc.).
         options.KnownNetworks.Clear();
         options.KnownProxies.Clear();
     }
-    // If neither applies (staging/prod with no proxies configured) the ASP.NET Core
-    // defaults remain active: only loopback (127.0.0.1 / ::1) is trusted.
 });
 
 // Swagger
