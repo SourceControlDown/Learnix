@@ -1,4 +1,5 @@
 using Learnix.API.Extensions;
+using Learnix.API.RateLimiting;
 using Learnix.Application.TestAttempts.Commands.StartTestAttempt;
 using Learnix.Application.TestAttempts.Commands.SubmitTestAttempt;
 using Learnix.Application.TestAttempts.Queries.GetMyTestAttempts;
@@ -7,7 +8,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Learnix.API.RateLimiting;
 
 namespace Learnix.API.Controllers;
 

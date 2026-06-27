@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Learnix.Application.Achievements.Abstractions;
 using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Application.Common.Abstractions.Storage;
@@ -13,7 +14,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace Learnix.Infrastructure.Services.Outbox;
 

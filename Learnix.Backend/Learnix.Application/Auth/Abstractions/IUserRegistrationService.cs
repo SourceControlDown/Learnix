@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using Learnix.Application.Auth.Models;
 
 namespace Learnix.Application.Auth.Abstractions;

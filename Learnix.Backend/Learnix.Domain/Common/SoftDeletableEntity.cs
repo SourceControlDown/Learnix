@@ -1,4 +1,4 @@
-﻿namespace Learnix.Domain.Common;
+namespace Learnix.Domain.Common;
 
 public abstract class SoftDeletableEntity : BaseEntity, ISoftDeletable
 {

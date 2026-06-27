@@ -1,11 +1,11 @@
 using FluentResults;
-using Learnix.Application.Courses.Constants;
-using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Storage;
+using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Common.Pagination;
 using Learnix.Application.Courses.Abstractions;
+using Learnix.Application.Courses.Constants;
 using Learnix.Application.Courses.Queries.GetInstructorCourses;
 using Learnix.Application.Courses.Specifications;
 using Learnix.Domain.Constants;

@@ -1,11 +1,11 @@
-﻿using FluentResults;
+using System.Text;
+using FluentResults;
 using Learnix.Application.Auth.Abstractions;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Errors;
 using Learnix.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
-using System.Text;
 
 namespace Learnix.Infrastructure.Identity;
 

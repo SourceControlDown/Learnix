@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Learnix.API.Extensions;
 using Learnix.Application.Reviews.Commands.CreateReview;
 using Learnix.Application.Reviews.Commands.DeleteReview;
@@ -7,7 +8,6 @@ using Learnix.Application.Reviews.Queries.GetMyReview;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json.Serialization;
 
 namespace Learnix.API.Controllers;
 

@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+using System.Reflection;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Domain.Common;
 using Learnix.Domain.Entities;
@@ -5,8 +7,6 @@ using Learnix.Infrastructure.Outbox;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using System.Reflection;
 
 namespace Learnix.Infrastructure.Persistence.EntityFramework;
 

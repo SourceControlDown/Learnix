@@ -33,7 +33,7 @@ public sealed class VideoLessonConfiguration : IEntityTypeConfiguration<VideoLes
 {
     public void Configure(EntityTypeBuilder<VideoLesson> builder)
     {
-        // NOTE: TPH tradeoff — VideoUrl is required by domain but nullable at DB level
+        // NOTE: TPH tradeoff â€” VideoUrl is required by domain but nullable at DB level
         // because PostLesson / TestLesson rows won't have it.
         // Domain constructors + UpdateVideo enforce invariant; no DB CHECK constraint by choice.
         builder.Property(v => v.VideoBlobPath)

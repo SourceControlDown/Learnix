@@ -8,7 +8,7 @@ namespace Learnix.Infrastructure.Persistence.EntityFramework;
 public static class MigrationExtensions
 {
     /// <summary>
-    /// Applies pending EF Core migrations. Intended for development only —
+    /// Applies pending EF Core migrations. Intended for development only â€”
     /// in production, migrations should be applied as a controlled deployment step.
     /// </summary>
     public static async Task ApplyMigrationsAsync(this IHost host)

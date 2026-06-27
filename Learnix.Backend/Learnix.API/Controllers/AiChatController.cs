@@ -1,3 +1,4 @@
+using System.Text;
 using Learnix.API.Extensions;
 using Learnix.API.RateLimiting;
 using Learnix.Application.AiChat.Commands.ClearChatSession;
@@ -8,7 +9,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using System.Text;
 
 namespace Learnix.API.Controllers;
 

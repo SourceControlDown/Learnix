@@ -1,4 +1,4 @@
-﻿namespace Learnix.Application.Common.Settings;
+namespace Learnix.Application.Common.Settings;
 
 public sealed class GoogleSettings
 {

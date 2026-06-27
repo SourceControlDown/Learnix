@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using Google.Apis.Auth;
 using Learnix.Application.Auth.Abstractions;
 using Learnix.Application.Auth.Models;

@@ -1,4 +1,4 @@
-﻿using Learnix.Domain.Common.Exceptions;
+using Learnix.Domain.Common.Exceptions;
 using Learnix.Domain.Enums;
 
 namespace Learnix.Domain.ValueObjects;

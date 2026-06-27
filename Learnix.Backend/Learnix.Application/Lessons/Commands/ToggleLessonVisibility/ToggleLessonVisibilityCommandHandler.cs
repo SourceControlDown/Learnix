@@ -13,7 +13,6 @@ namespace Learnix.Application.Lessons.Commands.ToggleLessonVisibility;
 
 internal sealed class ToggleLessonVisibilityCommandHandler(
     ICourseRepository courseRepository,
-    ILessonRepository lessonRepository,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
     : CourseCommandHandler<ToggleLessonVisibilityCommand, Result>(courseRepository, currentUser, includeLessons: true)

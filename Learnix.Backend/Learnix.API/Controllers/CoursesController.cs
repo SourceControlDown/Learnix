@@ -1,9 +1,10 @@
+using System.Text.Json.Serialization;
 using Learnix.API.Extensions;
 using Learnix.Application.Courses.Commands.ArchiveCourse;
-using Learnix.Application.Courses.Commands.UnarchiveCourse;
 using Learnix.Application.Courses.Commands.CreateCourse;
 using Learnix.Application.Courses.Commands.DeleteCourse;
 using Learnix.Application.Courses.Commands.PublishCourse;
+using Learnix.Application.Courses.Commands.UnarchiveCourse;
 using Learnix.Application.Courses.Commands.UnpublishCourse;
 using Learnix.Application.Courses.Commands.UpdateCourseDetails;
 using Learnix.Application.Courses.Queries.GetAdminCourses;
@@ -16,7 +17,6 @@ using Learnix.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json.Serialization;
 
 namespace Learnix.API.Controllers;
 

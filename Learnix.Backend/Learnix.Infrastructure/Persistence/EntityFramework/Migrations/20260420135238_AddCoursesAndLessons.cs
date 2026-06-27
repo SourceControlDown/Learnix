@@ -1,6 +1,6 @@
-using Learnix.Infrastructure.Persistence.EntityFramework;
 using System;
 using System.Collections.Generic;
+using Learnix.Infrastructure.Persistence.EntityFramework;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable

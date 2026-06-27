@@ -1,7 +1,7 @@
 using FluentResults;
-using Learnix.Application.Common.Constants;
 using Learnix.Application.AiChat.Abstractions;
 using Learnix.Application.Common.Abstractions.Identity;
+using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using MediatR;
 

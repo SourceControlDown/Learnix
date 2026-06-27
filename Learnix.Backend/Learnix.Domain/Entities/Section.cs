@@ -1,4 +1,4 @@
-﻿using Learnix.Domain.Common;
+using Learnix.Domain.Common;
 using Learnix.Domain.Common.Exceptions;
 
 namespace Learnix.Domain.Entities;

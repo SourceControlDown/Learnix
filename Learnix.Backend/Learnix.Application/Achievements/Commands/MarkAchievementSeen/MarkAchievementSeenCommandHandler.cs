@@ -1,6 +1,6 @@
 using FluentResults;
-using Learnix.Application.Achievements.Constants;
 using Learnix.Application.Achievements.Abstractions;
+using Learnix.Application.Achievements.Constants;
 using Learnix.Application.Achievements.Specifications;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;

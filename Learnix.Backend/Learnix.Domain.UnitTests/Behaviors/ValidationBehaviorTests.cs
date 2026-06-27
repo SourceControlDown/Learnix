@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using FluentValidation;
 using Learnix.Application.Common.Behaviors;
 using Learnix.Application.Common.Errors;

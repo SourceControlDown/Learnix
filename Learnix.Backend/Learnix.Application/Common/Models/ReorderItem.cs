@@ -1,4 +1,4 @@
-﻿namespace Learnix.Application.Common.Models;
+namespace Learnix.Application.Common.Models;
 
 /// <summary>
 /// Single item in a bulk reorder payload. Used by ReorderSectionsCommand and ReorderLessonsCommand.

@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 
 namespace Learnix.Application.Common.Errors;
 

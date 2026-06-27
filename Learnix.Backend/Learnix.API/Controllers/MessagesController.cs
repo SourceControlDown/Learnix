@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using Learnix.API.Extensions;
+using Learnix.API.RateLimiting;
 using Learnix.Application.Messaging.Commands.MarkConversationRead;
 using Learnix.Application.Messaging.Commands.SendMessage;
 using Learnix.Application.Messaging.Queries.GetConversationMessages;
@@ -9,8 +11,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Learnix.API.RateLimiting;
-using System.Text.Json.Serialization;
 
 namespace Learnix.API.Controllers;
 

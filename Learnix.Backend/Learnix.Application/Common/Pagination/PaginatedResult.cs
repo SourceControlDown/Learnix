@@ -1,4 +1,4 @@
-﻿namespace Learnix.Application.Common.Pagination;
+namespace Learnix.Application.Common.Pagination;
 
 public record PaginatedResult<TEntity>(
     int Page,

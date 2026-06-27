@@ -1,4 +1,4 @@
-﻿using Ardalis.Specification;
+using Ardalis.Specification;
 using Learnix.Domain.Entities;
 using Learnix.Domain.Enums;
 

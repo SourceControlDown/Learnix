@@ -1,8 +1,8 @@
+using System.Linq;
 using Ardalis.Specification.EntityFrameworkCore;
 using Learnix.Application.Lessons.Abstractions;
 using Learnix.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 namespace Learnix.Infrastructure.Persistence.EntityFramework.Repositories;
 

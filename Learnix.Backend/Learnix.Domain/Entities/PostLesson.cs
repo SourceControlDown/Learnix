@@ -1,4 +1,4 @@
-﻿using Learnix.Domain.Enums;
+using Learnix.Domain.Enums;
 
 namespace Learnix.Domain.Entities;
 

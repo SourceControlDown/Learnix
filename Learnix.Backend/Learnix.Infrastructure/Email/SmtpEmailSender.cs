@@ -1,14 +1,13 @@
+using System.Globalization;
 using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Infrastructure.Email;
 using Learnix.Infrastructure.Email.Models;
-
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
-using System.Globalization;
 
 namespace Learnix.Infrastructure.Email;
 

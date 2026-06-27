@@ -1,4 +1,4 @@
-﻿namespace Learnix.Application.Auth.Models;
+namespace Learnix.Application.Auth.Models;
 
 public sealed record GoogleUserInfo(
     string GoogleId,

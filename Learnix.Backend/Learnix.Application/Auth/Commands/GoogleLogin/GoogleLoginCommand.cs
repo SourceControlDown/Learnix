@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using Learnix.Application.Auth.Commands.Login;
 using MediatR;
 

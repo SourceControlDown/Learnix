@@ -1,4 +1,4 @@
-﻿using Learnix.Application.Common.Models;
+using Learnix.Application.Common.Models;
 
 namespace Learnix.Application.Auth.Abstractions;
 

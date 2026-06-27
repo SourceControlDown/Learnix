@@ -1,7 +1,7 @@
-using Learnix.Infrastructure.Persistence.EntityFramework;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Domain.Entities;
 using Learnix.Infrastructure.Persistence;
+using Learnix.Infrastructure.Persistence.EntityFramework;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 

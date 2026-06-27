@@ -1,4 +1,4 @@
-﻿using Learnix.API.Extensions;
+using Learnix.API.Extensions;
 using Learnix.Application.Common.Models;
 using Learnix.Application.Sections.Commands.CreateSection;
 using Learnix.Application.Sections.Commands.DeleteSection;

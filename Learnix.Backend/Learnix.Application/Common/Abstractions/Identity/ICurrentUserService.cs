@@ -1,4 +1,4 @@
-﻿namespace Learnix.Application.Common.Abstractions.Identity;
+namespace Learnix.Application.Common.Abstractions.Identity;
 
 /// <summary>
 /// Provides info about the current authenticated user from the request context.

@@ -1,7 +1,7 @@
 using FluentResults;
 using Learnix.Application.Admin.Constants;
-using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Abstractions.Identity;
+using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Courses.Specifications;

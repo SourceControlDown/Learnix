@@ -1,6 +1,6 @@
 using FluentResults;
-using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Abstractions.Identity;
+using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Notifications.Abstractions;
 using MediatR;

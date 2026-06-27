@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using MediatR;
 
 namespace Learnix.Application.Auth.Commands.Logout;

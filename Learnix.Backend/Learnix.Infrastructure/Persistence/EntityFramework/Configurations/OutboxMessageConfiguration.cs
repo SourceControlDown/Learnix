@@ -39,7 +39,7 @@ internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outb
 
         builder.Property(m => m.NextRetryAt);
 
-        // Composite index — picks up unprocessed messages ready for retry, ordered for FIFO.
+        // Composite index â€” picks up unprocessed messages ready for retry, ordered for FIFO.
         // Matches the WHERE clause of the outbox processor's polling query.
         builder.HasIndex(m => new { m.ProcessedAt, m.NextRetryAt, m.OccurredAt })
             .HasDatabaseName("IX_OutboxMessages_Processing");

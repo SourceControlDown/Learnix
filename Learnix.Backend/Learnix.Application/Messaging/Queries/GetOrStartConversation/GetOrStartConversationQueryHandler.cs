@@ -1,5 +1,4 @@
 using FluentResults;
-using Learnix.Application.Messaging.Constants;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Constants;
@@ -9,6 +8,7 @@ using Learnix.Application.Courses.Specifications;
 using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.Enrollments.Specifications;
 using Learnix.Application.Messaging.Abstractions;
+using Learnix.Application.Messaging.Constants;
 using Learnix.Application.Messaging.Specifications;
 using Learnix.Application.Users.Abstractions;
 using Learnix.Application.Users.Specifications;

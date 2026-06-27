@@ -1,6 +1,6 @@
+using System.Text.Json;
 using Learnix.Application.Common.Abstractions.Storage;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace Learnix.Infrastructure.Outbox;
 

@@ -1,3 +1,4 @@
+using System.Text;
 using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Application.Common.Events;
 using Learnix.Application.Common.Settings;
@@ -7,7 +8,6 @@ using Learnix.Domain.Events;
 using MediatR;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
-using System.Text;
 
 namespace Learnix.Application.Auth.EventHandlers;
 

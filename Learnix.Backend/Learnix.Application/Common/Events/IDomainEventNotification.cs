@@ -1,4 +1,4 @@
-﻿using Learnix.Domain.Common;
+using Learnix.Domain.Common;
 using MediatR;
 
 namespace Learnix.Application.Common.Events;

@@ -1,4 +1,4 @@
-﻿namespace Learnix.Application.Common.Constants;
+namespace Learnix.Application.Common.Constants;
 
 public static class CacheKeys
 {

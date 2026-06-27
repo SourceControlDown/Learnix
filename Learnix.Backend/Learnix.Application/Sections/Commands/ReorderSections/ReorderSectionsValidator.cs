@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace Learnix.Application.Sections.Commands.ReorderSections;
 

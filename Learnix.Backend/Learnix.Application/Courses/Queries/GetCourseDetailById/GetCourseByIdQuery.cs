@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using Learnix.Application.Common.Caching;
 using Learnix.Application.Common.Constants;
 using MediatR;

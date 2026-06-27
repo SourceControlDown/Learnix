@@ -1,4 +1,4 @@
-﻿using Learnix.Domain.Common;
+using Learnix.Domain.Common;
 using Learnix.Domain.Events;
 using Learnix.Domain.Events.User;
 using Microsoft.AspNetCore.Identity;

@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using Learnix.Application.AiChat.Specifications;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Courses.Specifications;

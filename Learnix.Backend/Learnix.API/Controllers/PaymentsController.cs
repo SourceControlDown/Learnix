@@ -1,11 +1,11 @@
 using Learnix.API.Extensions;
+using Learnix.API.RateLimiting;
 using Learnix.Application.Payments.Commands.InitiateMockPayment;
 using Learnix.Application.Payments.Queries.GetMyPayments;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Learnix.API.RateLimiting;
 
 namespace Learnix.API.Controllers;
 

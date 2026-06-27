@@ -1,10 +1,10 @@
 using FluentResults;
-using Learnix.Application.Courses.Constants;
-using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
+using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
+using Learnix.Application.Courses.Constants;
 using Learnix.Application.Courses.Specifications;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Entities;
