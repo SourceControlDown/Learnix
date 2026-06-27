@@ -1,4 +1,4 @@
-﻿# Learnix � Backend Project Structure
+# Learnix � Backend Project Structure
 
 ## Project Structure Reference
 
@@ -97,10 +97,15 @@ Learnix.Infrastructure/
         HostedServices/
        Cleanup/        ChatSessionCleanupService, RefreshTokenCleanupHostedService
        Maintenance/    CategoryCoursesCountReconciliationService
-       Seeders/        AdminSeederHostedService, RoleSeederHostedService, CourseSeederHostedService, StudentSeederHostedService, CategorySeederHostedService
     Outbox/             OutboxProcessorService, OutboxNotificationListener
  Storage/              AzureBlobStorageService
  DependencyInjection.cs
+
+Learnix.DbMigrator/
++-- Seeders/
+   +-- System/         < AdminSeeder, RoleSeeder, CategorySeeder
+   L-- Demo/           < CourseSeeder, StudentSeeder, CourseSeeders (definitions)
+L-- Program.cs          < EF Migration Runner + Seeder execution logic
 
 Learnix.API/
 +-- Controllers/        < AuthController, CoursesController, SectionsController, LessonsController,
