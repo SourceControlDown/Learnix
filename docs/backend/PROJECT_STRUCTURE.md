@@ -2,7 +2,11 @@
 
 ## Project Structure Reference
 
-```
+```text
+[Repository Root]
++-- .editorconfig       < Global code formatting and style rules (C#, TS, JS, MD)
++-- .husky/             < Git hooks (pre-commit format/build validation)
+
 Learnix.Domain/
 +-- Common/             < BaseEntity, SoftDeletableEntity, interfaces (IAuditable, IHasDomainEvents,
 │                         ISoftDeletable, IOrderable, IDomainEvent), DomainEvent base record,
