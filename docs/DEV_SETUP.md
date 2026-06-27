@@ -252,6 +252,8 @@ This connects to the **Azurite** emulator running in Docker. The account key is 
 
 `appsettings.Development.json` already overrides `AzureBlobStorage` to `UseDevelopmentStorage=true` which achieves the same result. The `.env` value is a fallback explicit connection string.
 
+> **Note on Infrastructure Provisioning:** For local development, Blob containers are created automatically by the `Learnix.DbMigrator` project on startup. You do not need to run Terraform locally against Azurite. Terraform is used exclusively for deploying the Production/Staging environments in Azure cloud.
+
 ---
 
 #### Email (SMTP) — no action needed in development
@@ -469,6 +471,9 @@ The project uses [Husky](https://typicode.github.io/husky/) and [lint-staged](ht
 |---|---|---|
 | `Learnix.Backend/**/*.cs` | `dotnet format` | Fixes whitespace, indentation, and code style per `.editorconfig` |
 | `learnix-client/src/**/*.{ts,tsx,js,jsx,css,scss,md}` | Prettier | Formats frontend source files |
+
+> **Why only changed files?**
+> The hook exclusively formats files you have explicitly `git add`ed. This is intentional. Formatting the entire solution on every commit would take 10-30 seconds instead of milliseconds. More importantly, it prevents your commit from accidentally including formatting changes in hundreds of files you never touched, which would ruin Git history and cause massive merge conflicts. If you want to format the entire solution at once, run `dotnet format Learnix.Backend/Learnix.Backend.slnx` manually.
 
 ### First-time setup
 

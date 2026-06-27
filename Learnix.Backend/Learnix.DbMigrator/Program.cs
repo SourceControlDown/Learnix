@@ -37,6 +37,7 @@ builder.ConfigureServices((context, services) =>
     services.AddScoped<CategorySeeder>();
     services.AddScoped<CourseSeeder>();
     services.AddScoped<StudentSeeder>();
+    services.AddScoped<StorageSeeder>();
 });
 
 var host = builder.Build();
@@ -51,6 +52,10 @@ try
     var dbContext = services.GetRequiredService<ApplicationDbContext>();
     await dbContext.Database.MigrateAsync();
     logger.LogInformation("Migrations applied successfully.");
+
+    logger.LogInformation("Initializing local Blob Storage...");
+    var storageSeeder = services.GetRequiredService<StorageSeeder>();
+    await storageSeeder.SeedAsync();
 
     logger.LogInformation("Running System Seeders...");
     var roleSeeder = services.GetRequiredService<RoleSeeder>();

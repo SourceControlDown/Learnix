@@ -1,7 +1,3 @@
-resource "azurerm_resource_group" "rg" {
-  name     = "${var.prefix}-rg"
-  location = var.location
-}
 
 # Storage Account names must be globally unique and lowercase (no hyphens)
 # Generate a random suffix to ensure uniqueness

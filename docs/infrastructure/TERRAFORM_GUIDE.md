@@ -2,6 +2,11 @@
 
 This document describes how to deploy Azure Blob Storage (with automatic cleanup) and Azure Cosmos DB (Mongo) locally from your computer using Terraform.
 
+> [!IMPORTANT] 
+> **Local Development vs Production**
+> Do not use Terraform to configure your local development environment (Azurite emulator). Azurite does not support Advanced Azure features like Lifecycle Policies, which will cause Terraform to fail.
+> For local development, Blob containers are automatically provisioned via the `Learnix.DbMigrator` project on startup (Zero-Click Setup).
+> Terraform should ONLY be used to deploy the real cloud infrastructure for Staging or Production environments.
 ## 1. Prerequisites
 
 1. Install [Terraform](https://developer.hashicorp.com/terraform/downloads) (e.g., via `winget install Hashicorp.Terraform`).

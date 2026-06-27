@@ -1,26 +1,30 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Learnix.Infrastructure.Storage;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Learnix.Infrastructure.Storage;
+namespace Learnix.DbMigrator.Seeders;
 
-internal sealed class BlobStorageBootstrapper(
+internal sealed class StorageSeeder(
     BlobServiceClient blobServiceClient,
     IOptions<BlobStorageOptions> options,
-    ILogger<BlobStorageBootstrapper> logger,
+    ILogger<StorageSeeder> logger,
     IHostEnvironment environment
-) : IHostedService
+)
 {
-    public async Task StartAsync(CancellationToken ct)
+    public async Task SeedAsync(CancellationToken ct = default)
     {
-        // In Production, infrastructure (like Blob Containers and CORS rules) must be provisioned 
-        // ahead of time via IaC (Terraform). The application should only have permissions to 
-        // read/write blobs (Principle of Least Privilege), not to manage containers.
+        // IMPORTANT: This seeder is used ONLY for local development (Azurite).
+        // It provides a "Zero-Click Setup" for developers when running locally.
+        // All Production containers, access tiers (Public/Private), and Lifecycle Policies
+        // are managed exclusively via Terraform (infrastructure/storage.tf).
+        // Azurite does not support Advanced Azure features like Lifecycle Policies,
+        // which is why they are not configured here.
         if (!environment.IsDevelopment())
         {
-            logger.LogInformation("BlobStorageBootstrapper is disabled in Production. Relying on Terraform-provisioned infrastructure.");
+            logger.LogInformation("StorageSeeder is bypassed in Production. Relying on Terraform-provisioned infrastructure.");
             return;
         }
 
@@ -54,7 +58,7 @@ internal sealed class BlobStorageBootstrapper(
                 logger.LogInformation("Created blob container: {Container} with access {Access}", name, accessType);
         }
 
-        // Configure local host. TODO: do something with it
+        // Configure local host CORS
         var blobProperties = await blobServiceClient.GetPropertiesAsync(ct);
 
         blobProperties.Value.Cors = new List<BlobCorsRule>
@@ -70,7 +74,7 @@ internal sealed class BlobStorageBootstrapper(
         };
 
         await blobServiceClient.SetPropertiesAsync(blobProperties.Value, ct);
+        
+        logger.LogInformation("Blob Storage initialization completed successfully.");
     }
-
-    public Task StopAsync(CancellationToken ct) => Task.CompletedTask;
 }

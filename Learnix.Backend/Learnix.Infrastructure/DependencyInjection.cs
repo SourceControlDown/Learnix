@@ -293,8 +293,7 @@ public static class DependencyInjection
         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
         services.AddSingleton<ICertificatePdfGenerator, CertificatePdfGenerator>();
 
-        services.AddHostedService<BlobStorageBootstrapper>();
-        // Seeders have been moved to Learnix.DbMigrator project
+        // Seeders and Infrastructure bootstrap (like BlobStorageBootstrapper) have been moved to Learnix.DbMigrator project
         services.AddHostedService<RefreshTokenCleanupHostedService>();
         services.AddSingleton<OutboxSignal>();
         services.AddHostedService<OutboxNotificationListener>();
