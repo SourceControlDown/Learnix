@@ -1,1 +1,8 @@
 npx lint-staged
+
+# Build validation runs here — NOT inside lint-staged.
+# lint-staged executes commands in parallel across file chunks, which causes a race condition
+# when multiple MSBuild processes write to the same .dll simultaneously.
+# Running builds here guarantees sequential, single execution after formatting is done.
+
+dotnet build Learnix.Backend/Learnix.Backend.slnx
