@@ -100,6 +100,18 @@ export enum LessonType {
 - **Forbidden:** Developers must not use `react-markdown` or `ReactMarkdown` directly in components. You must use our custom `MarkdownRenderer` wrapper.
 - **Why?** Our wrapper explicitly overrides the anchor `<a>` tag to block non-HTTP protocols (specifically `javascript:`), protecting against XSS attacks.
 
+## Code Quality & Tooling
+
+### 1. Formatting (Prettier)
+- **Zero Configuration:** Prettier is the sole source of truth for formatting. We explicitly use `eslint-config-prettier` to disable any ESLint rules that might conflict with Prettier.
+- **Automated Import Sorting:** Imports are automatically sorted on save using `@trivago/prettier-plugin-sort-imports`. They are grouped compactly without separation lines in the following order: React, third-party libraries, absolute aliases (`@/`), and relative paths.
+- **Tailwind Class Sorting:** `prettier-plugin-tailwindcss` is used to enforce a consistent order for utility classes.
+
+### 2. Linting (ESLint Flat Config)
+- **Strict Typing:** `any` is strictly forbidden (`@typescript-eslint/no-explicit-any`). 
+- **React Strictness:** We use `eslint-plugin-react` and `eslint-plugin-react-hooks`. Never ignore `react-hooks/exhaustive-deps`. For state side-effects, prefer derived state during render over `useEffect` cascades.
+- **Tailwind Validation:** `eslint-plugin-tailwindcss` is utilized to catch invalid classes. Note that `tailwindcss/enforces-shorthand` is active and will auto-fix verbose dimensions (e.g., converting `h-4 w-4` into `size-4`).
+
 ## File Naming Conventions
 
 | Item | Convention | Example |

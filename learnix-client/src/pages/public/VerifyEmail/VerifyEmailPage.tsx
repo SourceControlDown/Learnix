@@ -5,7 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { ArrowRight, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { authApi } from '@/api/auth.api';
-import { APP_ROUTES } from '@/config/routes';
+import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/utils/cn';
 import { getRoleHome } from '@/utils/getRoleHome';

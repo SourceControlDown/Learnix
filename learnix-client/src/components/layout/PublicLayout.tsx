@@ -1,7 +1,7 @@
 ﻿import { Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
 import { AiChatWidget } from '@/components/common/AiChatWidget/AiChatWidget';
 import { EmailConfirmationBanner } from '@/components/common/auth/EmailConfirmationBanner';
-import { useNotificationsHub } from '@/hooks/useNotificationsHub';
+import { useNotificationsHub } from '@/hooks/realtime/useNotificationsHub';
 import { Footer } from './Footer';
 import { Header } from './Header';
 

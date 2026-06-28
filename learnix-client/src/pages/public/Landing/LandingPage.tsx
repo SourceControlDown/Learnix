@@ -1,8 +1,8 @@
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { useCategories } from '@/hooks/useCategories';
-import { useCourseCount } from '@/hooks/useCourseCount';
-import { useFeaturedCourses } from '@/hooks/useFeaturedCourses';
+import { useCategories } from '@/hooks/course/useCategories';
+import { useCourseCount } from '@/hooks/course/useCourseCount';
+import { useFeaturedCourses } from '@/hooks/course/useFeaturedCourses';
 import { AIAssistantSection } from './components/AIAssistantSection';
 import { CategoriesSection } from './components/CategoriesSection';
 import { FaqSection } from './components/FaqSection';

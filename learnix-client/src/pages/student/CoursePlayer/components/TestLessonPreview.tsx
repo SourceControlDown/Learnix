@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, ClipboardList, Clock, XCircle } from 'lucide-react';
-import { useMarkLessonComplete } from '@/hooks/useMarkLessonComplete';
-import { useTestLesson } from '@/hooks/useTestLesson';
+import { useMarkLessonComplete } from '@/hooks/lesson/useMarkLessonComplete';
+import { useTestLesson } from '@/hooks/lesson/useTestLesson';
 import type { LessonProgressItemDto } from '@/types/progress.types';
 import { cn } from '@/utils/cn';
 

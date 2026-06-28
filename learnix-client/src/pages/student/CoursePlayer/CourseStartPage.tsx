@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageFallback } from '@/components/common/system/PageFallback';
-import { useCourseProgress } from '@/hooks/useCourseProgress';
+import { useCourseProgress } from '@/hooks/lesson/useCourseProgress';
 
 export default function CourseStartPage() {
     const { courseId } = useParams<{ courseId: string }>();

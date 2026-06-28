@@ -6,7 +6,7 @@ import { BookOpen, LogOut, Moon, Sun, User } from 'lucide-react';
 import { authApi } from '@/api/auth.api';
 import { LanguageSwitcher } from '@/components/common/ui/LanguageSwitcher';
 import { Logo } from '@/components/common/ui/Logo';
-import { APP_ROUTES } from '@/config/routes';
+import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
 import { useThemeStore } from '@/store/theme.store';
 import { cn } from '@/utils/cn';

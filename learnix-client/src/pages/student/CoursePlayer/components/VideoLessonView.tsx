@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PlayCircle, X } from 'lucide-react';
-import { useLessonContent } from '@/hooks/useLessonContent';
+import { useLessonContent } from '@/hooks/lesson/useLessonContent';
 import { usePlayerStore } from '@/store/player.store';
 import type { LessonProgressItemDto } from '@/types/progress.types';
 import { cn } from '@/utils/cn';

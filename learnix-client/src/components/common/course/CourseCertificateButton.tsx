@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Award, RefreshCw } from 'lucide-react';
-import { useGenerateCertificate } from '@/hooks/useGenerateCertificate';
-import { useMyCertificates } from '@/hooks/useMyCertificates';
+import { useGenerateCertificate } from '@/hooks/user/useGenerateCertificate';
+import { useMyCertificates } from '@/hooks/user/useMyCertificates';
 import { cn } from '@/utils/cn';
 
 interface CourseCertificateButtonProps {

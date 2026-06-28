@@ -22,8 +22,8 @@ import {
     useDeleteLesson,
     useReorderLessons as useReorderLessonsMutation,
     useToggleLessonVisibility,
-} from '@/hooks/useLessonMutations';
-import { useDeleteSection, useUpdateSectionTitle } from '@/hooks/useSectionMutations';
+} from '@/hooks/instructor/useLessonMutations';
+import { useDeleteSection, useUpdateSectionTitle } from '@/hooks/instructor/useSectionMutations';
 import type { CourseForEditLessonDto, CourseForEditSectionDto } from '@/types/course.types';
 import { LessonEditorModal } from './LessonEditorModal';
 import { LessonRow } from './LessonRow';

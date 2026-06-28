@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { DollarSign, ShoppingCart } from 'lucide-react';
-import { useInstructorEarningsQuery } from '@/hooks/useInstructorEarningsQuery';
+import { useInstructorEarningsQuery } from '@/hooks/instructor/useInstructorEarningsQuery';
 
 export default function InstructorEarningsPage() {
     const { t } = useTranslation('instructor');

@@ -1,9 +1,9 @@
 import React, { useRef } from 'react';
 import { Loader2, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import { useRequestUploadUrl } from '@/hooks/useRequestUploadUrl';
-import { getCategoryVisuals } from '@/mocks/landing.mock';
+import { useRequestUploadUrl } from '@/hooks/shared/useRequestUploadUrl';
 import { cn } from '@/utils/cn';
+import { getCategoryVisuals } from '@/utils/mocks/landing.mock';
 
 type ThumbnailCellProps = {
     imageUrl: string | null;

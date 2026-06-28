@@ -10,8 +10,8 @@ import {
     usePublishCourse,
     useUnarchiveCourse,
     useUnpublishCourse,
-} from '@/hooks/useCourseMutations';
-import { useMyCoursesQuery } from '@/hooks/useMyCoursesQuery';
+} from '@/hooks/instructor/useCourseMutations';
+import { useMyCoursesQuery } from '@/hooks/instructor/useMyCoursesQuery';
 import type { ManageCourseCardDto } from '@/types/course.types';
 import { InstructorCourseRow } from './components/InstructorCourseRow';
 

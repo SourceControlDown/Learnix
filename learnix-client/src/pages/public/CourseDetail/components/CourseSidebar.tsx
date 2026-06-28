@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { BookOpen, Heart } from 'lucide-react';
-import { APP_ROUTES } from '@/config/routes';
+import { APP_ROUTES } from '@/routes/paths';
 import type { UserSummary } from '@/store/auth.store';
 import type { CourseDetailDto } from '@/types/course.types';
 import { cn } from '@/utils/cn';

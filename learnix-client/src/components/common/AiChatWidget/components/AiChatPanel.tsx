@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Maximize2, Minimize2, RotateCcw, X } from 'lucide-react';
-import { useAiChat } from '@/hooks/useAiChat';
+import { useAiChat } from '@/hooks/realtime/useAiChat';
 import { cn } from '@/utils/cn';
 import { AiChatInput } from './AiChatInput';
 import { AiChatMessages } from './AiChatMessages';

@@ -2,8 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { Archive, ArchiveRestore, EyeOff, Globe, Pencil, Trash2 } from 'lucide-react';
-import { APP_ROUTES } from '@/config/routes';
 import { CourseStatus } from '@/enums/course.enums';
+import { APP_ROUTES } from '@/routes/paths';
 import type { ManageCourseCardDto } from '@/types/course.types';
 import { cn } from '@/utils/cn';
 

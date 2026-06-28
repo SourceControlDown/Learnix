@@ -6,8 +6,8 @@ import { notificationsApi } from '@/api/notifications.api';
 import { queryKeys } from '@/api/queryKeys';
 import { AchievementBadge } from '@/components/common/course/AchievementBadge';
 import { ALL_ACHIEVEMENT_CODES } from '@/const/achievements.constants';
-import { useMarkAchievementSeen } from '@/hooks/useMarkAchievementSeen';
-import { useMyAchievements } from '@/hooks/useMyAchievements';
+import { useMarkAchievementSeen } from '@/hooks/user/useMarkAchievementSeen';
+import { useMyAchievements } from '@/hooks/user/useMyAchievements';
 
 export default function AchievementsPage() {
     const { t } = useTranslation('achievements');

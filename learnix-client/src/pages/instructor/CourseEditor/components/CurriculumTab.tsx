@@ -8,7 +8,7 @@ import {
     useSensors,
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useCreateSection, useReorderSections } from '@/hooks/useSectionMutations';
+import { useCreateSection, useReorderSections } from '@/hooks/instructor/useSectionMutations';
 import type { CourseForEditSectionDto } from '@/types/course.types';
 import { SectionItem } from './SectionItem';
 

@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle, Clock, XCircle } from 'lucide-react';
-import { useMyApplication } from '@/hooks/useMyApplication';
-import { useSubmitApplication } from '@/hooks/useSubmitApplication';
+import { useMyApplication } from '@/hooks/instructor/useMyApplication';
+import { useSubmitApplication } from '@/hooks/instructor/useSubmitApplication';
 import {
     type InstructorApplicationFormData,
     instructorApplicationSchema,

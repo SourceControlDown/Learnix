@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Download, GraduationCap, Link as LinkIcon, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { useGenerateCertificate } from '@/hooks/useGenerateCertificate';
-import { useMyCertificates } from '@/hooks/useMyCertificates';
+import { useGenerateCertificate } from '@/hooks/user/useGenerateCertificate';
+import { useMyCertificates } from '@/hooks/user/useMyCertificates';
 import type { MyCertificateDto } from '@/types/certificate.types';
 import { cn } from '@/utils/cn';
 

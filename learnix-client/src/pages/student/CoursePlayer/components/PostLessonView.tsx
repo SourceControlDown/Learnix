@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { MarkdownRenderer } from '@/components/common/ui/MarkdownRenderer';
-import { useLessonContent } from '@/hooks/useLessonContent';
+import { useLessonContent } from '@/hooks/lesson/useLessonContent';
 import type { LessonProgressItemDto } from '@/types/progress.types';
 
 interface PostLessonViewProps {

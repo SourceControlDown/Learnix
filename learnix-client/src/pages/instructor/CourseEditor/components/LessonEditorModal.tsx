@@ -10,7 +10,7 @@ import {
     useUpdatePostLesson,
     useUpdateTestLesson,
     useUpdateVideoLesson,
-} from '@/hooks/useLessonMutations';
+} from '@/hooks/instructor/useLessonMutations';
 import type {
     PostLessonFormData,
     TestLessonFormData,

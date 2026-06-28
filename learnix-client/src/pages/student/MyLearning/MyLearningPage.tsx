@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
-import { useMyEnrollments } from '@/hooks/useMyEnrollments';
+import { useMyEnrollments } from '@/hooks/student/useMyEnrollments';
 import { EnrolledCourseCard } from './components/EnrolledCourseCard';
 
 export default function MyLearningPage() {

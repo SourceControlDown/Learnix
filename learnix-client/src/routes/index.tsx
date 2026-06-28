@@ -8,7 +8,7 @@ import { CourseLayout } from '@/components/layout/CourseLayout';
 import { InstructorLayout } from '@/components/layout/InstructorLayout';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { StudentDashboardLayout } from '@/components/layout/StudentDashboardLayout';
-import { APP_ROUTES } from '@/config/routes';
+import { APP_ROUTES } from '@/routes/paths';
 
 const LandingPage = lazy(() => import('@/pages/public/Landing/LandingPage'));
 const CourseCatalogPage = lazy(() => import('@/pages/public/CourseCatalog/CourseCatalogPage'));

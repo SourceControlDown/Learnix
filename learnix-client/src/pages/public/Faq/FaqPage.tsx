@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { FlaskConical, Search } from 'lucide-react';
 import { GitHubIcon } from '@/components/common/icons/SocialIcons';
-import { usePublicConfig } from '@/hooks/usePublicConfig';
+import { usePublicConfig } from '@/hooks/shared/usePublicConfig';
 import { FaqCategory } from './FaqCategory';
 import { FaqSidebar } from './FaqSidebar';
 

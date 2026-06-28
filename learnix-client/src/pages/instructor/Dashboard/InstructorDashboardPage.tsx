@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, PlusCircle, Users } from 'lucide-react';
 import { PAGINATION } from '@/const/ui.constants';
 import { CourseStatus } from '@/enums/course.enums';
-import { useMyCoursesQuery } from '@/hooks/useMyCoursesQuery';
+import { useMyCoursesQuery } from '@/hooks/instructor/useMyCoursesQuery';
 import { cn } from '@/utils/cn';
 
 const STATUS_STYLES: Record<CourseStatus, string> = {

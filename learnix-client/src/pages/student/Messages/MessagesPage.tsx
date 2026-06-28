@@ -6,7 +6,7 @@ import { messagesApi } from '@/api/messages.api';
 import { queryKeys } from '@/api/queryKeys';
 import { ConversationView } from '@/components/common/messaging/ConversationView';
 import { LoadingSpinner } from '@/components/common/ui/LoadingSpinner';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useDebounce } from '@/hooks/shared/useDebounce';
 import type { ConversationDetail } from '@/types/message.types';
 import { cn } from '@/utils/cn';
 import { ConversationList } from './components/ConversationList';

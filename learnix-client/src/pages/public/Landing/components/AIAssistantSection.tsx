@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { usePublicConfig } from '@/hooks/usePublicConfig';
+import { usePublicConfig } from '@/hooks/shared/usePublicConfig';
 
 export function AIAssistantSection() {
     const { t } = useTranslation('landing');

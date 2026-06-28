@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { useCategories } from '@/hooks/useCategories';
-import { useCourseCount } from '@/hooks/useCourseCount';
+import { useCategories } from '@/hooks/course/useCategories';
+import { useCourseCount } from '@/hooks/course/useCourseCount';
 
 export function StatsSection() {
     const { t } = useTranslation('landing');

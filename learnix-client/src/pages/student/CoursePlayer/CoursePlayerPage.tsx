@@ -6,9 +6,9 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Menu, MessageSquare } from 'lu
 import { messagesApi } from '@/api/messages.api';
 import { CourseCertificateButton } from '@/components/common/course/CourseCertificateButton';
 import { Logo } from '@/components/common/ui/Logo';
-import { useCourseDetail } from '@/hooks/useCourseDetail';
-import { useCourseProgress } from '@/hooks/useCourseProgress';
-import { useMarkLessonComplete } from '@/hooks/useMarkLessonComplete';
+import { useCourseDetail } from '@/hooks/course/useCourseDetail';
+import { useCourseProgress } from '@/hooks/lesson/useCourseProgress';
+import { useMarkLessonComplete } from '@/hooks/lesson/useMarkLessonComplete';
 import { cn } from '@/utils/cn';
 import { CourseCertificateDropdown } from './components/CourseCertificateDropdown';
 import { CourseSidebar } from './components/CourseSidebar';

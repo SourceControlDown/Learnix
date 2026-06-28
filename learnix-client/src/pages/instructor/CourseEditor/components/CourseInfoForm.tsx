@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import { FormInput } from '@/components/common/form/FormInput';
 import { COURSE_LIMITS } from '@/const/course.constants';
-import { useCategories } from '@/hooks/useCategories';
+import { useCategories } from '@/hooks/course/useCategories';
 import { type CourseInfoFormData, courseInfoSchema } from '@/schemas/course.schema';
 import type { CourseForEditDto } from '@/types/course.types';
 import { CoverImageUploader } from './CoverImageUploader';

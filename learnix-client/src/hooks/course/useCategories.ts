@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { categoriesApi } from '@/api/categories.api';
 import { queryKeys } from '@/api/queryKeys';
-import { type LandingCategory, getCategoryVisuals } from '@/mocks/landing.mock';
+import { type LandingCategory, getCategoryVisuals } from '@/utils/mocks/landing.mock';
 
 export function useCategories() {
     return useQuery<LandingCategory[]>({

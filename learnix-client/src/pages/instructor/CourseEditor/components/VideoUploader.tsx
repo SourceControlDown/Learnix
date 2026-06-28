@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, Video } from 'lucide-react';
-import { useRequestUploadUrl } from '@/hooks/useRequestUploadUrl';
+import { useRequestUploadUrl } from '@/hooks/shared/useRequestUploadUrl';
 import { cn } from '@/utils/cn';
 
 interface Props {

@@ -7,9 +7,9 @@ import { AlertTriangle, ArrowLeft, CreditCard, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner';
 import { paymentsApi } from '@/api/payments.api';
 import { queryKeys } from '@/api/queryKeys';
-import { APP_ROUTES } from '@/config/routes';
 import { PAYMENT_LIMITS } from '@/const/payment.constants';
-import { useCourseDetail } from '@/hooks/useCourseDetail';
+import { useCourseDetail } from '@/hooks/course/useCourseDetail';
+import { APP_ROUTES } from '@/routes/paths';
 import { type PaymentFormValues, paymentSchema } from '@/schemas/payment.schema';
 
 export default function PaymentPage() {
