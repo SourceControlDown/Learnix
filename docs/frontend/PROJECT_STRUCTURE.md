@@ -49,16 +49,3 @@ src/
    - **1-3 helper components:** Keep them as flat files next to the page component.
    - **4+ helper components:** Group them in a `components/` subfolder inside the page directory.
 5. **Migration Rule:** When a page-level component is needed on a second page, move it to `components/common/`.
-6. **Constants (`const/`):** Extract all magic numbers (e.g., max lengths, default page sizes) into `*.constants.ts` files instead of hardcoding them in Zod schemas or UI elements.
-
-## File Naming Conventions
-
-| Item | Convention | Example |
-|---|---|---|
-| React Component | PascalCase | `CourseCard.tsx` |
-| React Hook | camelCase, `use` prefix | `useAuth.ts` |
-| Zustand Store | camelCase, `.store.ts` suffix | `auth.store.ts` |
-| API Module | camelCase, `.api.ts` suffix | `courses.api.ts` |
-| Zod Schema | camelCase, `.schema.ts` suffix | `course.schema.ts` |
-| Types / DTOs | camelCase, `.types.ts` suffix | `course.types.ts` |
-| Utility Function | camelCase | `formatDate.ts` |

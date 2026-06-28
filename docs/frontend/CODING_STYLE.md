@@ -1,0 +1,113 @@
+# Learnix — Frontend Coding Style & Standards
+
+This document defines the coding style and conventions for the React frontend. Adhering to these standards ensures consistency, maintainability, and optimal performance across the application.
+
+## React Components
+
+### 1. Event Handlers & Functions
+- **Use `function` declarations** for local component event handlers (`function handleClick() {}`) rather than arrow functions (`const handleClick = () => {}`). 
+- **Why?** `function` declarations are hoisted, allowing you to define them at the bottom of your component file. This keeps the most important part of the component (the `return` statement and hooks) at the top, improving readability.
+
+### 2. `useCallback` and Memoization
+- **Do NOT use `useCallback` blindly** for every function. 
+- **Why?** `useCallback` carries overhead (memory allocation for the closure and dependency array tracking). If the function is passed to a standard DOM element (like `<button>`) or a non-memoized component, the child will re-render anyway, making `useCallback` purely a performance penalty.
+- **When to use:** Only use `useCallback` when passing a function as a prop to a deeply nested, heavily optimized child component wrapped in `React.memo`, or when the function is explicitly required as a dependency in a `useEffect` to prevent infinite loops.
+
+### 3. Component Definition & Props
+- **Always use a standard function signature** with a named `interface` for props.
+- **Do NOT use `React.FC` or `React.FunctionComponent`.** The React team broadly discourages `React.FC` because it breaks generic components, adds unnecessary boilerplate, and historically had issues with implicit `children`.
+- Never define props inline.
+
+```tsx
+// ✅ GOOD
+interface CourseCardProps {
+    course: CourseDto;
+    onEnroll?: (courseId: string) => void;
+    isCompact?: boolean;
+}
+
+export function CourseCard({ course, onEnroll, isCompact = false }: CourseCardProps) { 
+    return <div />;
+}
+
+// ❌ BAD
+export function CourseCard({ course }: { course: CourseDto }) { 
+    return <div />;
+}
+```
+
+### 4. Exports
+- Always use **named exports** for components, hooks, and utilities. Do not use `export default`, except for pages loaded via React Router's `lazy()`.
+- Use the `@/` alias for all imports. Never use relative paths like `../../utils`.
+
+## Types & Enums
+
+### 1. Types & Interfaces
+- Use `interface` instead of `type` for defining object structures (like API responses or props).
+- Place API response contracts in `src/types/` with a `Dto` suffix (e.g., `export interface UserDto { ... }`).
+- **Why?** Interfaces are extendable and provide better error messages in TypeScript compared to intersection types.
+
+### 2. Enums
+- Do not use TypeScript's native `enum` keyword. Instead, use **POJO (Plain Old Javascript Objects) with `as const`** and derive a union type from it.
+- **Why?** Native `enum` compiles to an actual JavaScript object that can cause issues with tree-shaking, transpilers, and reverse-mapping. The POJO approach is 100% type-safe and zero-cost.
+
+```ts
+// ✅ GOOD: src/enums/lesson.enums.ts
+export const LessonType = {
+    Video: 'Video',
+    Post: 'Post',
+    Test: 'Test',
+} as const;
+export type LessonType = (typeof LessonType)[keyof typeof LessonType];
+
+// ❌ BAD
+export enum LessonType {
+    Video = 'Video',
+    Post = 'Post',
+    Test = 'Test',
+}
+```
+
+## State & Data Fetching
+
+### 1. API Layer
+- **Components never import axios directly.** All HTTP calls must be abstracted into typed API modules in `src/api/`.
+- Use TanStack Query (`useQuery`, `useMutation`) for all server state. 
+
+### 2. Forms
+- **Zod schemas** (`src/schemas/`) are the source of truth for form state (`react-hook-form`).
+- **DTOs** (`src/types/`) are the source of truth for backend contracts. Do not use Zod schemas to type backend responses.
+
+### 3. Constants & Magic Numbers
+- **No magic numbers or hardcoded validation strings.** 
+- Do not hardcode numbers (like `min(1).max(255)`) or error strings inside schemas, components, or UI elements. Extract them into constants files (e.g., `src/const/auth.constants.ts` or `src/const/limits.constants.ts`).
+- **Why?** Centralizing limits ensures that if a database column size changes, you only need to update the constant in one place instead of hunting down every validation schema and UI counter.
+
+## Styling & UI
+
+### 1. Tailwind CSS
+- **100% Tailwind.** No SCSS or CSS Modules.
+- Use **semantic tokens** (e.g., `bg-primary`, `text-muted-foreground`) instead of hardcoded colors (e.g., `bg-blue-600`).
+- Always use the `cn()` utility (`@/utils/cn`) for concatenating conditional classes.
+- **Mobile-First:** Use base classes for mobile screens, then apply `md:` or `lg:` for larger screens.
+- **Auto-Sorting:** `prettier-plugin-tailwindcss` is used to automatically sort classes.
+- **Extraction:** If a `className` becomes too long (e.g., >5 repeating classes across multiple elements), extract the UI into a reusable component.
+
+### 2. Localization
+- **Zero hardcoded strings in JSX.** All user-facing text must be defined in `src/const/localization/<page>.ts` and rendered via `react-i18next`.
+
+### 3. Safe Markdown Rendering
+- **Forbidden:** Developers must not use `react-markdown` or `ReactMarkdown` directly in components. You must use our custom `MarkdownRenderer` wrapper.
+- **Why?** Our wrapper explicitly overrides the anchor `<a>` tag to block non-HTTP protocols (specifically `javascript:`), protecting against XSS attacks.
+
+## File Naming Conventions
+
+| Item | Convention | Example |
+|---|---|---|
+| React Component | PascalCase | `CourseCard.tsx` |
+| React Hook | camelCase, `use` prefix | `useAuth.ts` |
+| Zustand Store | camelCase, `.store.ts` suffix | `auth.store.ts` |
+| API Module | camelCase, `.api.ts` suffix | `courses.api.ts` |
+| Zod Schema | camelCase, `.schema.ts` suffix | `course.schema.ts` |
+| Types / DTOs | camelCase, `.types.ts` suffix | `course.types.ts` |
+| Utility Function | camelCase | `formatDate.ts` |

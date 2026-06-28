@@ -13,11 +13,7 @@
 - **Theming:** Dark mode is controlled via a `.dark` class on the root `<html>` element. The state is managed globally using Zustand and persisted to `localStorage` via the `persist` middleware. The `onRehydrateStorage` hook guarantees the class is applied immediately on load.
 - Conditional class merging is handled by `clsx` and `tailwind-merge` via our `cn()` utility function.
 
-**Tailwind Conventions:**
-- **Semantic Colors:** Always use `bg-primary`, `text-foreground`, `border-border`. Never hard-code colors (e.g., `bg-blue-600`).
-- **Mobile-First:** Use base classes for mobile screens, then apply `md:` or `lg:` for larger screens.
-- **Auto-Sorting:** `prettier-plugin-tailwindcss` is used to automatically sort classes.
-- **Extraction:** If a `className` becomes too long (e.g., >5 repeating classes across multiple elements), extract the UI into a reusable component.
+
 
 **Why:**
 - Keeps developers in a single mental context (Tailwind everywhere), significantly speeding up delivery.
@@ -70,6 +66,5 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
 - DOMPurify before passing to the component: Doesn't fit because `react-markdown` doesn't use `dangerouslySetInnerHTML`. Sanitization would happen at the raw string level rather than the parsed DOM level, which is error-prone.
 
 **Consequences:**
-- **Forbidden:** Developers must not use `react-markdown` or `ReactMarkdown` directly in components. You must use `MarkdownRenderer`.
 - When adding a new component with markdown content, import `MarkdownRenderer` and pass `className` for custom typography (prose) classes.
 - Links starting with `javascript:`, `data:`, or relative URLs will render as plain text without being clickable.
