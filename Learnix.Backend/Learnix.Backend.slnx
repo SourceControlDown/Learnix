@@ -50,6 +50,7 @@
   <Folder Name="/Documentation/root/">
     <File Path="../docs/API_KEYS_GUIDE.md" />
     <File Path="../docs/AZURE_DEPLOY.md" />
+    <File Path="../docs/CONTRIBUTING.md" />
     <File Path="../docs/DATA_MODEL.md" />
     <File Path="../docs/DEV_SETUP.md" />
     <File Path="../docs/FEATURES.md" />
