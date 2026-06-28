@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Pencil, Globe, EyeOff, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/utils/cn';
 import { useMyCoursesQuery } from '@/hooks/useMyCoursesQuery';
 import {
     useDeleteCourse,
@@ -12,17 +10,12 @@ import {
     useUnarchiveCourse,
 } from '@/hooks/useCourseMutations';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { Pagination } from '@/components/common/Pagination';
 import { PAGINATION } from '@/const/ui.constants';
-import { CourseStatus } from '@/enums/course.enums';
 import type { ManageCourseCardDto } from '@/types/course.types';
+import { InstructorCourseRow } from './components/InstructorCourseRow';
 
 const PAGE_SIZE = PAGINATION.DEFAULT;
-
-const STATUS_STYLES: Record<CourseStatus, string> = {
-    Published: 'bg-success/20 text-success',
-    Draft: 'bg-muted text-muted-foreground',
-    Archived: 'bg-warning/20 text-warning',
-};
 
 type PendingAction =
     | { type: 'archive'; course: ManageCourseCardDto }
@@ -30,7 +23,6 @@ type PendingAction =
 
 export default function InstructorMyCoursesPage() {
     const { t } = useTranslation('instructor');
-    const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [skip, setSkip] = useState(0);
@@ -61,12 +53,6 @@ export default function InstructorMyCoursesPage() {
     const currentPage = Math.floor(skip / PAGE_SIZE) + 1;
 
     const isAnyPending = archiveMutation.isPending || deleteMutation.isPending;
-
-    const STATUS_LABELS: Record<CourseStatus, string> = {
-        Published: t('statusPublished'),
-        Draft: t('statusDraft'),
-        Archived: t('statusArchived'),
-    };
 
     function handleConfirm() {
         if (!pending) return;
@@ -160,134 +146,29 @@ export default function InstructorMyCoursesPage() {
                         </thead>
                         <tbody className="divide-y divide-border">
                             {courses.map((course) => (
-                                <tr key={course.id} className="hover:bg-secondary/30">
-                                    <td className="px-5 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-14 shrink-0 overflow-hidden rounded bg-gradient-to-br from-primary/30 to-accent/30">
-                                                {course.coverImageUrl && (
-                                                    <img
-                                                        src={course.coverImageUrl}
-                                                        alt=""
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                )}
-                                            </div>
-                                            <span className="font-medium text-foreground">
-                                                {course.title}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-3">
-                                        <span
-                                            className={cn(
-                                                'rounded px-2 py-0.5 text-xs font-medium',
-                                                STATUS_STYLES[course.status],
-                                            )}
-                                        >
-                                            {STATUS_LABELS[course.status]}
-                                        </span>
-                                    </td>
-                                    <td className="px-5 py-3 text-muted-foreground">
-                                        {course.enrollmentsCount}
-                                    </td>
-                                    <td className="px-5 py-3">
-                                        <div className="flex items-center justify-end gap-1">
-                                            <button
-                                                onClick={() =>
-                                                    navigate(
-                                                        `/instructor/courses/${course.id}/edit`,
-                                                    )
-                                                }
-                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
-                                                title={t('btnEdit')}
-                                            >
-                                                <Pencil size={14} />
-                                            </button>
-                                            {course.status === 'Draft' && (
-                                                <button
-                                                    onClick={() =>
-                                                        publishMutation.mutate(course.id)
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
-                                                    title={t('btnPublish')}
-                                                >
-                                                    <Globe size={14} />
-                                                </button>
-                                            )}
-                                            {course.status === 'Published' && (
-                                                <button
-                                                    onClick={() =>
-                                                        unpublishMutation.mutate(course.id)
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-warning"
-                                                    title={t('btnUnpublish')}
-                                                >
-                                                    <EyeOff size={14} />
-                                                </button>
-                                            )}
-                                            {course.status !== 'Archived' && (
-                                                <button
-                                                    onClick={() =>
-                                                        setPending({ type: 'archive', course })
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-warning"
-                                                    title={t('btnArchive')}
-                                                >
-                                                    <Archive size={14} />
-                                                </button>
-                                            )}
-                                            {course.status === 'Archived' && (
-                                                <button
-                                                    onClick={() =>
-                                                        unarchiveMutation.mutate(course.id)
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
-                                                    title={t('btnUnarchive')}
-                                                >
-                                                    <ArchiveRestore size={14} />
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() =>
-                                                    setPending({ type: 'delete', course })
-                                                }
-                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
-                                                title={t('btnDelete')}
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <InstructorCourseRow
+                                    key={course.id}
+                                    course={course}
+                                    onArchive={(c) => setPending({ type: 'archive', course: c })}
+                                    onDelete={(c) => setPending({ type: 'delete', course: c })}
+                                    publishMutation={publishMutation}
+                                    unpublishMutation={unpublishMutation}
+                                    unarchiveMutation={unarchiveMutation}
+                                />
                             ))}
                         </tbody>
                     </table>
                 )}
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between border-t border-border px-5 py-3">
-                        <span className="text-sm text-muted-foreground">
-                            {t('paginationPage', { current: currentPage, total: totalPages })}
-                        </span>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setSkip(Math.max(0, skip - PAGE_SIZE))}
-                                disabled={skip === 0}
-                                className="rounded px-3 py-1 text-sm text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                {t('paginationPrev')}
-                            </button>
-                            <button
-                                onClick={() => setSkip(skip + PAGE_SIZE)}
-                                disabled={currentPage >= totalPages}
-                                className="rounded px-3 py-1 text-sm text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                {t('paginationNext')}
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <Pagination
+                    page={currentPage}
+                    totalPages={totalPages}
+                    onChange={(p) => setSkip((p - 1) * PAGE_SIZE)}
+                    prevLabel={t('paginationPrev')}
+                    nextLabel={t('paginationNext')}
+                    className="border-t border-border px-5 py-3"
+                />
             </div>
 
             {/* Confirm dialog */}

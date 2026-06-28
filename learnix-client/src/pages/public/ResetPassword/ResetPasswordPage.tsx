@@ -10,6 +10,7 @@ import { authApi } from '@/api/auth.api';
 import { resetPasswordSchema, type ResetPasswordFormData } from '@/schemas/auth.schema';
 import { isValidationError, setApiFieldErrors, getErrorMessage } from '@/utils/errors';
 import { cn } from '@/utils/cn';
+import { APP_ROUTES } from '@/config/routes';
 import { Logo } from '@/components/common/Logo';
 
 const RESET_FIELD_MAP: Partial<Record<string, keyof ResetPasswordFormData>> = {
@@ -57,7 +58,7 @@ export default function ResetPasswordPage() {
                 newPassword: data.password,
             });
             toast.success(t('resetPassword.successMessage'));
-            navigate('/login', { replace: true });
+            navigate(APP_ROUTES.public.login, { replace: true });
         } catch (err) {
             if (isValidationError(err)) {
                 setApiFieldErrors(err, setError, RESET_FIELD_MAP);
@@ -79,7 +80,7 @@ export default function ResetPasswordPage() {
                     </h1>
                     <div className="mt-6">
                         <Link
-                            to="/login"
+                            to={APP_ROUTES.public.login}
                             className="text-sm font-medium text-primary hover:underline"
                         >
                             {t('resetPassword.backToLogin')}
@@ -95,7 +96,7 @@ export default function ResetPasswordPage() {
             <div className="rounded-2xl border border-border bg-card p-8 shadow-[0_4px_20px_rgba(59,130,246,0.05)]">
                 <div className="mb-8 text-center">
                     <Link
-                        to="/"
+                        to={APP_ROUTES.public.home}
                         className="mb-6 inline-flex items-center gap-2 font-heading font-bold"
                     >
                         <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary font-heading text-lg font-bold text-primary-foreground">
@@ -214,7 +215,10 @@ export default function ResetPasswordPage() {
                 </form>
 
                 <div className="mt-6 text-center">
-                    <Link to="/login" className="text-sm font-medium text-primary hover:underline">
+                    <Link
+                        to={APP_ROUTES.public.login}
+                        className="text-sm font-medium text-primary hover:underline"
+                    >
                         {t('resetPassword.backToLogin')}
                     </Link>
                 </div>

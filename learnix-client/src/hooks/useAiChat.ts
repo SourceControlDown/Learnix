@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -27,19 +27,17 @@ export function useAiChat(isOpen: boolean) {
         staleTime: Infinity,
     });
 
-    useEffect(() => {
-        if (session && !sessionLoaded) {
-            const localMsgs: LocalChatMessage[] = session.messages
-                .filter((m) => m.role === 'user' || m.role === 'assistant')
-                .map((m) => ({
-                    id: nextId(),
-                    role: m.role as 'user' | 'assistant',
-                    content: m.content,
-                }));
-            setMessages(localMsgs);
-            setSessionLoaded(true);
-        }
-    }, [session, sessionLoaded]);
+    if (session && !sessionLoaded) {
+        setSessionLoaded(true);
+        const localMsgs: LocalChatMessage[] = session.messages
+            .filter((m) => m.role === 'user' || m.role === 'assistant')
+            .map((m) => ({
+                id: nextId(),
+                role: m.role as 'user' | 'assistant',
+                content: m.content,
+            }));
+        setMessages(localMsgs);
+    }
 
     const { mutate: clearSession, isPending: isClearing } = useMutation({
         mutationFn: aiChatApi.clearSession,
@@ -103,7 +101,7 @@ export function useAiChat(isOpen: boolean) {
                         break;
                     }
                 }
-            } catch (err) {
+            } catch {
                 if (!controller.signal.aborted) {
                     toast.error(t('error'));
                 }

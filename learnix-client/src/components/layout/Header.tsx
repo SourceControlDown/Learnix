@@ -12,6 +12,7 @@ import { MessagesButton } from './MessagesButton';
 import { WishlistButton } from './WishlistButton';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { Logo } from '@/components/common/Logo';
+import { APP_ROUTES } from '@/config/routes';
 
 type UserMenuProps = {
     fullName: string;
@@ -48,7 +49,7 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
         authApi.logout().catch(() => {});
         logout();
         queryClient.clear();
-        navigate('/login');
+        navigate(APP_ROUTES.public.login);
     }
 
     return (
@@ -94,7 +95,7 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
                     </div>
                     <div className="border-t border-border" />
                     <Link
-                        to="/profile"
+                        to={APP_ROUTES.student.profile}
                         onClick={() => setOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
                     >
@@ -102,7 +103,7 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
                         {t('menuProfile')}
                     </Link>
                     <Link
-                        to="/my-learning"
+                        to={APP_ROUTES.student.myLearning}
                         onClick={() => setOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
                     >
@@ -130,11 +131,13 @@ export function Header() {
     const { theme, toggleTheme } = useThemeStore();
 
     const navItems = [
-        { to: '/courses', label: t('navCourses') },
+        { to: APP_ROUTES.public.courses, label: t('navCourses') },
         ...(user?.roles.includes('Instructor')
-            ? [{ to: '/instructor', label: t('navInstructorPanel') }]
+            ? [{ to: APP_ROUTES.instructor.dashboard, label: t('navInstructorPanel') }]
             : []),
-        ...(user?.roles.includes('Admin') ? [{ to: '/admin', label: t('navAdminPanel') }] : []),
+        ...(user?.roles.includes('Admin')
+            ? [{ to: APP_ROUTES.admin.dashboard, label: t('navAdminPanel') }]
+            : []),
     ];
 
     return (
@@ -142,7 +145,7 @@ export function Header() {
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
                 <div className="flex items-center gap-10">
                     <Link
-                        to="/"
+                        to={APP_ROUTES.public.home}
                         className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
                     >
                         <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
@@ -197,13 +200,13 @@ export function Header() {
                     ) : (
                         <>
                             <Link
-                                to="/login"
+                                to={APP_ROUTES.public.login}
                                 className="hidden text-sm text-foreground hover:text-primary md:block"
                             >
                                 {t('login')}
                             </Link>
                             <Link
-                                to="/register"
+                                to={APP_ROUTES.public.register}
                                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                             >
                                 {t('getStarted')}

@@ -14,6 +14,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { authApi } from '@/api/auth.api';
 import { isValidationError } from '@/utils/errors';
 import { AUTH_LIMITS } from '@/const/auth.constants';
+import { APP_ROUTES } from '@/config/routes';
 
 import { AvatarUpload } from './components/AvatarUpload';
 import { ProfileFormSection } from './components/ProfileFormSection';
@@ -44,7 +45,9 @@ export default function ProfilePage() {
         onSuccess: () => {
             setResendCooldown(AUTH_LIMITS.RESEND_COOLDOWN_SECONDS);
             toast.success('Confirmation email sent. Check your inbox.');
-            navigate('/verify-email', { state: { email: user!.email, from: location.pathname } });
+            navigate(APP_ROUTES.public.verifyEmail, {
+                state: { email: user!.email, from: location.pathname },
+            });
         },
         meta: { suppressGlobalError: true },
         onError: () => toast.error('Failed to resend. Please try again later.'),

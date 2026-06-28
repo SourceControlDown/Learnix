@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -22,6 +22,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useThemeStore } from '@/store/theme.store';
 import { authApi } from '@/api/auth.api';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { APP_ROUTES } from '@/config/routes';
 
 export function AdminLayout() {
     const { t } = useTranslation('admin');
@@ -31,34 +32,36 @@ export function AdminLayout() {
     const { theme, toggleTheme } = useThemeStore();
     const location = useLocation();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [prevPathname, setPrevPathname] = useState(location.pathname);
 
-    useEffect(() => {
+    if (location.pathname !== prevPathname) {
+        setPrevPathname(location.pathname);
         setMobileOpen(false);
-    }, [location.pathname]);
+    }
 
     const navItems = [
         {
-            to: '/admin',
+            to: APP_ROUTES.admin.dashboard,
             label: t('navDashboard'),
             icon: <LayoutDashboard size={16} />,
             end: true,
         },
-        { to: '/admin/users', label: t('navUsers'), icon: <Users size={16} /> },
-        { to: '/admin/courses', label: t('navCourses'), icon: <BookOpen size={16} /> },
+        { to: APP_ROUTES.admin.users, label: t('navUsers'), icon: <Users size={16} /> },
+        { to: APP_ROUTES.admin.courses, label: t('navCourses'), icon: <BookOpen size={16} /> },
         {
-            to: '/admin/applications',
+            to: APP_ROUTES.admin.applications,
             label: t('navApplications'),
             icon: <FileCheck size={16} />,
         },
-        { to: '/admin/payments', label: t('navPayments'), icon: <CreditCard size={16} /> },
-        { to: '/admin/categories', label: t('navCategories'), icon: <Tag size={16} /> },
+        { to: APP_ROUTES.admin.payments, label: t('navPayments'), icon: <CreditCard size={16} /> },
+        { to: APP_ROUTES.admin.categories, label: t('navCategories'), icon: <Tag size={16} /> },
     ];
 
     function handleSignOut() {
         authApi.logout().catch(() => {});
         logout();
         queryClient.clear();
-        navigate('/login');
+        navigate(APP_ROUTES.public.login);
     }
 
     return (
@@ -70,7 +73,7 @@ export function AdminLayout() {
                 {/* Mobile header */}
                 <div className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 md:hidden">
                     <Link
-                        to="/"
+                        to={APP_ROUTES.public.home}
                         className="flex items-center gap-2 font-heading font-bold text-foreground"
                     >
                         <div className="grid h-8 w-8 place-items-center rounded-lg bg-destructive text-sm font-bold text-destructive-foreground">
@@ -95,7 +98,7 @@ export function AdminLayout() {
                 >
                     <div className="hidden items-center gap-2 px-4 py-5 md:flex">
                         <Link
-                            to="/"
+                            to={APP_ROUTES.public.home}
                             className="flex items-center gap-2 font-heading font-bold text-foreground"
                         >
                             <div className="grid h-8 w-8 place-items-center rounded-lg bg-destructive text-sm font-bold text-destructive-foreground">
@@ -137,7 +140,7 @@ export function AdminLayout() {
                         </p>
                         <nav className="space-y-1 text-sm">
                             <Link
-                                to="/"
+                                to={APP_ROUTES.public.home}
                                 className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-foreground transition-colors hover:bg-secondary"
                             >
                                 <ArrowLeft size={16} />

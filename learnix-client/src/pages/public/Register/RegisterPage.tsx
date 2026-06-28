@@ -11,6 +11,7 @@ import { registerSchema, type RegisterFormData } from '@/schemas/auth.schema';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { isValidationError, setApiFieldErrors } from '@/utils/errors';
 import { cn } from '@/utils/cn';
+import { APP_ROUTES } from '@/config/routes';
 import { Logo } from '@/components/common/Logo';
 import { FormInput } from '@/components/common/form/FormInput';
 import { PasswordInput } from '@/components/common/form/PasswordInput';
@@ -82,7 +83,7 @@ export default function RegisterPage() {
         try {
             const { confirmPassword: _, ...payload } = data;
             await mutateAsync(payload);
-            navigate('/verify-email', { state: { email: data.email } });
+            navigate(APP_ROUTES.public.verifyEmail, { state: { email: data.email } });
         } catch (err) {
             if (isValidationError(err)) {
                 setApiFieldErrors(err, setError, REGISTER_FIELD_MAP);
@@ -103,7 +104,7 @@ export default function RegisterPage() {
             <div className="rounded-2xl border border-border bg-card p-8 shadow-[0_4px_20px_rgba(59,130,246,0.05)]">
                 <div className="mb-8 text-center">
                     <Link
-                        to="/"
+                        to={APP_ROUTES.public.home}
                         className="mb-6 inline-flex items-center gap-2 font-heading font-bold"
                     >
                         <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary font-heading text-lg font-bold text-primary-foreground">
@@ -232,7 +233,10 @@ export default function RegisterPage() {
 
                 <p className="mt-6 text-center text-sm text-muted-foreground">
                     {t('register.hasAccount')}{' '}
-                    <Link to="/login" className="font-medium text-primary hover:underline">
+                    <Link
+                        to={APP_ROUTES.public.login}
+                        className="font-medium text-primary hover:underline"
+                    >
                         {t('register.login')}
                     </Link>
                 </p>

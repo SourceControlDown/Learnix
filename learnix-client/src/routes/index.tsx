@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { InstructorLayout } from '@/components/layout/InstructorLayout';
@@ -8,7 +8,19 @@ import { CourseLayout } from '@/components/layout/CourseLayout';
 import { StudentDashboardLayout } from '@/components/layout/StudentDashboardLayout';
 import { PageFallback } from '@/components/common/PageFallback';
 import { RequireRole } from '@/components/common/RequireRole';
-import { publicRoutes } from './publicRoutes';
+import { APP_ROUTES } from '@/config/routes';
+
+const LandingPage = lazy(() => import('@/pages/public/Landing/LandingPage'));
+const CourseCatalogPage = lazy(() => import('@/pages/public/CourseCatalog/CourseCatalogPage'));
+const CourseDetailPage = lazy(() => import('@/pages/public/CourseDetail/CourseDetailPage'));
+const InstructorProfilePage = lazy(
+    () => import('@/pages/public/InstructorProfile/InstructorProfilePage'),
+);
+const NotFoundPage = lazy(() => import('@/pages/public/NotFound/NotFoundPage'));
+const FaqPage = lazy(() => import('@/pages/public/Faq/FaqPage'));
+const CertificateVerifyPage = lazy(
+    () => import('@/pages/public/VerifyCertificate/CertificateVerifyPage'),
+);
 
 const VerifyEmailPage = lazy(() => import('@/pages/public/VerifyEmail/VerifyEmailPage'));
 const CoursePlayerPage = lazy(() => import('@/pages/student/CoursePlayer/CoursePlayerPage'));
@@ -64,30 +76,42 @@ const guardInstructor = (el: React.ReactElement) => (
     <RequireRole roles={['Instructor']}>{el}</RequireRole>
 );
 
-export const router = createBrowserRouter([
+const router = createBrowserRouter([
     {
         element: <AuthLayout />,
         children: [
-            { path: '/login', element: wrap(<LoginPage />) },
-            { path: '/register', element: wrap(<RegisterPage />) },
-            { path: '/forgot-password', element: wrap(<ForgotPasswordPage />) },
-            { path: '/reset-password', element: wrap(<ResetPasswordPage />) },
+            { path: APP_ROUTES.public.login, element: wrap(<LoginPage />) },
+            { path: APP_ROUTES.public.register, element: wrap(<RegisterPage />) },
+            { path: APP_ROUTES.public.forgotPassword, element: wrap(<ForgotPasswordPage />) },
+            { path: APP_ROUTES.public.resetPassword, element: wrap(<ResetPasswordPage />) },
         ],
     },
     {
         element: <PublicLayout />,
         children: [
-            ...publicRoutes,
+            { index: true, element: wrap(<LandingPage />) },
+            { path: APP_ROUTES.public.courses, element: wrap(<CourseCatalogPage />) },
+            { path: APP_ROUTES.public.courseDetailPattern, element: wrap(<CourseDetailPage />) },
             {
-                path: '/verify-email',
+                path: APP_ROUTES.public.instructorProfilePattern,
+                element: wrap(<InstructorProfilePage />),
+            },
+            { path: APP_ROUTES.public.faq, element: wrap(<FaqPage />) },
+            {
+                path: APP_ROUTES.public.verifyCertificatePattern,
+                element: wrap(<CertificateVerifyPage />),
+            },
+            { path: '*', element: wrap(<NotFoundPage />) },
+            {
+                path: APP_ROUTES.public.verifyEmail,
                 element: wrap(<VerifyEmailPage />),
             },
             {
-                path: '/become-instructor',
+                path: APP_ROUTES.public.becomeInstructor,
                 element: wrap(<BecomeInstructorPage />),
             },
             {
-                path: '/profile',
+                path: APP_ROUTES.student.profile,
                 element: guardStudent(wrap(<ProfilePage />)),
             },
             {
@@ -112,32 +136,32 @@ export const router = createBrowserRouter([
                 ],
             },
             {
-                path: '/payment/:courseId',
+                path: APP_ROUTES.student.paymentPattern,
                 element: guardStudent(wrap(<PaymentPage />)),
             },
             {
-                path: '/messages',
+                path: APP_ROUTES.student.messages,
                 element: guardStudent(wrap(<MessagesPage />)),
             },
             {
-                path: '/notifications',
+                path: APP_ROUTES.student.notifications,
                 element: guardStudent(wrap(<NotificationsPage />)),
             },
         ],
     },
     {
-        path: '/instructor',
+        path: APP_ROUTES.instructor.dashboard,
         element: guardInstructor(wrap(<InstructorLayout />)),
         children: [
             { index: true, element: wrap(<InstructorDashboardPage />) },
             { path: 'courses', element: wrap(<InstructorMyCoursesPage />) },
             { path: 'courses/new', element: wrap(<CourseEditorPage />) },
-            { path: 'courses/:id/edit', element: wrap(<CourseEditorPage />) },
+            { path: APP_ROUTES.instructor.editCoursePattern, element: wrap(<CourseEditorPage />) },
             { path: 'earnings', element: wrap(<InstructorEarningsPage />) },
         ],
     },
     {
-        path: '/admin',
+        path: APP_ROUTES.admin.dashboard,
         element: <RequireRole roles={['Admin']}>{wrap(<AdminLayout />)}</RequireRole>,
         children: [
             { index: true, element: wrap(<AdminDashboardPage />) },
@@ -149,12 +173,16 @@ export const router = createBrowserRouter([
         ],
     },
     {
-        path: '/courses/:courseId/learn',
+        path: APP_ROUTES.student.learnCoursePattern,
         element: guardStudent(<CourseLayout />),
         children: [
             { index: true, element: wrap(<CourseStartPage />) },
-            { path: ':lessonId', element: wrap(<CoursePlayerPage />) },
-            { path: ':lessonId/test', element: wrap(<TestLessonPage />) },
+            { path: APP_ROUTES.student.learnLessonPattern, element: wrap(<CoursePlayerPage />) },
+            { path: APP_ROUTES.student.testLessonPattern, element: wrap(<TestLessonPage />) },
         ],
     },
 ]);
+
+export function AppRouter() {
+    return <RouterProvider router={router} />;
+}

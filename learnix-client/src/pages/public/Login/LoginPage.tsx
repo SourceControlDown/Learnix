@@ -15,6 +15,7 @@ import { isValidationError, setApiFieldErrors, getErrorMessage } from '@/utils/e
 import { parseAccessToken } from '@/utils/parseAccessToken';
 import { getRoleHome } from '@/utils/getRoleHome';
 import { cn } from '@/utils/cn';
+import { APP_ROUTES } from '@/config/routes';
 import { Logo } from '@/components/common/Logo';
 
 const LOGIN_FIELD_MAP: Partial<Record<string, keyof LoginFormData>> = {
@@ -59,7 +60,9 @@ export default function LoginPage() {
             const user = parseAccessToken(response.accessToken);
             if (user) setUser({ ...user, avatarUrl: response.avatarUrl });
             toast.success(t('login.successRedirect'));
-            navigate(from ?? (user ? getRoleHome(user.roles) : '/courses'), { replace: true });
+            navigate(from ?? (user ? getRoleHome(user.roles) : APP_ROUTES.public.courses), {
+                replace: true,
+            });
         } catch (err) {
             resetField('password');
             if (isValidationError(err)) {
@@ -78,7 +81,7 @@ export default function LoginPage() {
             <div className="rounded-2xl border border-border bg-card p-8 shadow-[0_4px_20px_rgba(59,130,246,0.05)]">
                 <div className="mb-8 text-center">
                     <Link
-                        to="/"
+                        to={APP_ROUTES.public.home}
                         className="mb-6 inline-flex items-center gap-2 font-heading font-bold"
                     >
                         <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary font-heading text-lg font-bold text-primary-foreground">
@@ -138,7 +141,7 @@ export default function LoginPage() {
                                 {t('login.password.label')}
                             </label>
                             <Link
-                                to="/forgot-password"
+                                to={APP_ROUTES.public.forgotPassword}
                                 className="text-xs text-primary hover:underline"
                             >
                                 {t('login.forgotPassword')}
@@ -212,7 +215,10 @@ export default function LoginPage() {
 
                 <p className="mt-6 text-center text-sm text-muted-foreground">
                     {t('login.noAccount')}{' '}
-                    <Link to="/register" className="font-medium text-primary hover:underline">
+                    <Link
+                        to={APP_ROUTES.public.register}
+                        className="font-medium text-primary hover:underline"
+                    >
                         {t('login.register')}
                     </Link>
                 </p>

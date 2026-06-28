@@ -194,6 +194,7 @@ export default function CoursePlayerPage() {
                             <>
                                 {currentLesson.lessonType === 'Video' && (
                                     <VideoLessonView
+                                        key={currentLesson.lessonId}
                                         lesson={currentLesson}
                                         courseId={courseId!}
                                         nextLessonTitle={nextLesson?.title}

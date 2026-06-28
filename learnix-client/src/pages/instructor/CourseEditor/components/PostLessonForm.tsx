@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import MDEditor from '@uiw/react-md-editor';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,6 @@ export function PostLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
         register,
         handleSubmit,
         control,
-        watch,
         formState: { errors, isDirty },
     } = useForm<PostLessonFormData>({
         resolver: zodResolver(postLessonSchema),
@@ -35,8 +34,8 @@ export function PostLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
         onDirtyChange?.(isDirty);
     }, [isDirty, onDirtyChange]);
 
-    const title = watch('title') || '';
-    const content = watch('content') || '';
+    const title = useWatch({ control, name: 'title' }) || '';
+    const content = useWatch({ control, name: 'content' }) || '';
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

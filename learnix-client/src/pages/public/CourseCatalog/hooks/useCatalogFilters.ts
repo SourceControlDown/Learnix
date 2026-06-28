@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 export type SortBy = 'popular' | 'newest' | 'rating';
@@ -31,6 +31,18 @@ export function useCatalogFilters() {
     const debouncedSearch = useDebounce(searchInput, 350);
     const isFirstMount = useRef(true);
 
+    const setParam = useCallback(
+        (key: string, value: string | null) => {
+            setSearchParams((prev) => {
+                const next = new URLSearchParams(prev);
+                if (value === null || value === '') next.delete(key);
+                else next.set(key, value);
+                return next;
+            });
+        },
+        [setSearchParams],
+    );
+
     useEffect(() => {
         if (isFirstMount.current) {
             isFirstMount.current = false;
@@ -38,16 +50,7 @@ export function useCatalogFilters() {
         }
         setParam('search', debouncedSearch || null);
         setParam('page', null); // reset pagination on search change
-    }, [debouncedSearch]);
-
-    function setParam(key: string, value: string | null) {
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            if (value === null || value === '') next.delete(key);
-            else next.set(key, value);
-            return next;
-        });
-    }
+    }, [debouncedSearch, setParam]);
 
     function setPage(p: number) {
         setParam('page', p === 1 ? null : String(p));

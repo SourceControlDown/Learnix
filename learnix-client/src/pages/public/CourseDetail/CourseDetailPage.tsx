@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Clock, Users, Star, Tag, ArrowLeft, BookOpen, Heart } from 'lucide-react';
+import { Clock, Users, Star, Tag, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCourseDetail } from '@/hooks/useCourseDetail';
 import { useCourseReviews } from '@/hooks/useCourseReviews';
@@ -14,7 +14,8 @@ import { QueryError } from '@/components/common/QueryError';
 import { CurriculumAccordion } from './components/CurriculumAccordion';
 import { ReviewsList } from './components/ReviewsList';
 import { ReviewForm } from './components/ReviewForm';
-import { cn } from '@/utils/cn';
+import { CourseSidebar } from './components/CourseSidebar';
+import { APP_ROUTES } from '@/config/routes';
 
 export default function CourseDetailPage() {
     const { courseId } = useParams<{ courseId: string }>();
@@ -44,14 +45,14 @@ export default function CourseDetailPage() {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const backUrl = (location.state as { from?: string })?.from || '/courses';
+    const backUrl = (location.state as { from?: string })?.from || APP_ROUTES.public.courses;
 
     function handleEnroll() {
         if (!courseId) return;
         if (isFree) {
             enroll.mutate(courseId);
         } else {
-            navigate(`/payment/${courseId}`);
+            navigate(APP_ROUTES.student.payment(courseId));
         }
     }
 
@@ -195,116 +196,22 @@ export default function CourseDetailPage() {
                     </div>
 
                     {/* Sidebar card */}
-                    <aside className="order-1 shrink-0 lg:order-2">
-                        <div className="sticky top-24 rounded-xl border border-border bg-card p-6 shadow-sm">
-                            {/* Cover image */}
-                            {course.coverImageUrl ? (
-                                <img
-                                    src={course.coverImageUrl}
-                                    alt={course.title}
-                                    className="mb-5 aspect-video w-full rounded-lg object-cover"
-                                />
-                            ) : (
-                                <div className="mb-5 flex aspect-video w-full items-center justify-center rounded-lg bg-muted">
-                                    <BookOpen className="h-12 w-12 text-muted-foreground/40" />
-                                </div>
-                            )}
-
-                            {/* Price */}
-                            <p
-                                className={cn(
-                                    'font-heading text-3xl font-bold',
-                                    isFree ? 'text-success' : 'text-foreground',
-                                )}
-                            >
-                                {isFree ? t('price.free') : `$${course.price}`}
-                            </p>
-
-                            {/* Enroll button */}
-                            {isOwnCourse ? (
-                                <div className="mt-4 flex w-full items-center justify-center rounded-lg border border-border bg-muted px-4 py-3 text-sm font-medium text-muted-foreground">
-                                    {t('enroll.ownCourse')}
-                                </div>
-                            ) : isEnrolled ? (
-                                <Link
-                                    to={`/courses/${courseId}/learn/${course.sections[0]?.lessons[0]?.id ?? ''}`}
-                                    className="mt-4 flex w-full items-center justify-center rounded-lg bg-success px-4 py-3 font-medium text-white transition-opacity hover:opacity-90"
-                                >
-                                    {t('enroll.enrolled')}
-                                </Link>
-                            ) : user ? (
-                                <button
-                                    type="button"
-                                    onClick={handleEnroll}
-                                    disabled={enroll.isPending}
-                                    className="mt-4 w-full rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-                                >
-                                    {enroll.isPending
-                                        ? t('enroll.enrolling')
-                                        : isFree
-                                          ? t('enroll.free')
-                                          : t('enroll.paid', { price: course.price })}
-                                </button>
-                            ) : (
-                                <Link
-                                    to="/login"
-                                    className="mt-4 flex w-full items-center justify-center rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                                >
-                                    {t('enroll.loginRequired')}
-                                </Link>
-                            )}
-
-                            {user && !isEnrolled && !isOwnCourse && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        inWishlist
-                                            ? removeFromWishlist.mutate(courseId!)
-                                            : addToWishlist.mutate(courseId!)
-                                    }
-                                    disabled={
-                                        addToWishlist.isPending || removeFromWishlist.isPending
-                                    }
-                                    className={cn(
-                                        'mt-3 flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50',
-                                        inWishlist
-                                            ? 'border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20'
-                                            : 'border-border bg-card text-foreground hover:bg-muted',
-                                    )}
-                                >
-                                    <Heart
-                                        className={cn(
-                                            'h-4 w-4',
-                                            inWishlist && 'fill-destructive text-destructive',
-                                        )}
-                                    />
-                                    {addToWishlist.isPending
-                                        ? t('wishlist.saving')
-                                        : removeFromWishlist.isPending
-                                          ? t('wishlist.removing')
-                                          : inWishlist
-                                            ? t('wishlist.saved')
-                                            : t('wishlist.save')}
-                                </button>
-                            )}
-
-                            <div className="mt-5 border-t border-border pt-4 text-sm text-muted-foreground">
-                                <p>
-                                    <span className="font-medium text-foreground">
-                                        {t('instructor.label')}
-                                    </span>
-                                    {course.instructorFullName && (
-                                        <Link
-                                            to={`/instructors/${course.instructorId}`}
-                                            className="ml-1 text-primary hover:underline"
-                                        >
-                                            {course.instructorFullName}
-                                        </Link>
-                                    )}
-                                </p>
-                            </div>
-                        </div>
-                    </aside>
+                    <CourseSidebar
+                        course={course}
+                        isFree={isFree}
+                        isOwnCourse={isOwnCourse}
+                        isEnrolled={isEnrolled ?? false}
+                        user={user}
+                        inWishlist={inWishlist}
+                        enrollIsPending={enroll.isPending}
+                        onEnroll={handleEnroll}
+                        onToggleWishlist={() =>
+                            inWishlist
+                                ? removeFromWishlist.mutate(courseId!)
+                                : addToWishlist.mutate(courseId!)
+                        }
+                        wishlistIsPending={addToWishlist.isPending || removeFromWishlist.isPending}
+                    />
                 </div>
             </div>
         </>

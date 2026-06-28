@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ import { ConversationView } from '@/components/common/ConversationView';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { cn } from '@/utils/cn';
 import { useDebounce } from '@/hooks/useDebounce';
-import type { ConversationDetail, ConversationSummary } from '@/types/message.types';
+import type { ConversationDetail } from '@/types/message.types';
 
 export default function MessagesPage() {
     const { t } = useTranslation('messages');
@@ -18,10 +18,7 @@ export default function MessagesPage() {
         (location.state as { initialConversation?: ConversationDetail } | null)
             ?.initialConversation ?? null;
 
-    const [selected, setSelected] = useState<ConversationSummary | null>(() => {
-        if (!initialConversation) return null;
-        return { ...initialConversation, lastMessagePreview: null, lastMessageAt: null };
-    });
+    const [selectedId, setSelectedId] = useState<string | null>(initialConversation?.id ?? null);
 
     const [searchQuery, setSearchQuery] = useState('');
     const debouncedSearch = useDebounce(searchQuery, 500);
@@ -36,30 +33,18 @@ export default function MessagesPage() {
         placeholderData: keepPreviousData,
     });
 
-    const conversations = data?.pages.flatMap((p) => p.items) ?? [];
+    const conversations = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data?.pages]);
 
-    const initialSyncDone = useRef(false);
-
-    useEffect(() => {
-        if (conversations.length === 0) return;
-
-        if (initialConversation && !initialSyncDone.current) {
-            // First load only: select the conversation we came from
-            const match = conversations.find((c) => c.id === initialConversation.id);
-            if (match) {
-                setSelected(match);
-                initialSyncDone.current = true;
-            }
-            return;
+    const selected = useMemo(() => {
+        if (!selectedId) return null;
+        const match = conversations.find((c) => c.id === selectedId);
+        if (match) return match;
+        // Fallback to initial conversation if it matches selectedId but isn't loaded yet
+        if (selectedId === initialConversation?.id) {
+            return { ...initialConversation, lastMessagePreview: null, lastMessageAt: null };
         }
-
-        // On subsequent refetches: refresh the currently selected conversation's data
-        setSelected((prev) => {
-            if (!prev) return prev;
-            const fresh = conversations.find((c) => c.id === prev.id);
-            return fresh ?? prev;
-        });
-    }, [conversations]); // eslint-disable-line react-hooks/exhaustive-deps
+        return null;
+    }, [conversations, selectedId, initialConversation]);
 
     if (isLoading && !selected) {
         return (
@@ -105,8 +90,8 @@ export default function MessagesPage() {
                 >
                     <ConversationList
                         conversations={conversations}
-                        selectedId={selected?.id ?? null}
-                        onSelect={setSelected}
+                        selectedId={selectedId}
+                        onSelect={(conv) => setSelectedId(conv.id)}
                         isFetchingNextPage={isFetchingNextPage}
                     />
                 </div>
@@ -120,7 +105,7 @@ export default function MessagesPage() {
                 )}
             >
                 {selected ? (
-                    <ConversationView conversation={selected} onBack={() => setSelected(null)} />
+                    <ConversationView conversation={selected} onBack={() => setSelectedId(null)} />
                 ) : (
                     <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                         {t('selectConversation')}

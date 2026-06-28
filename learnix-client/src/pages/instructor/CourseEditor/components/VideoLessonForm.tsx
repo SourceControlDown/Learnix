@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { videoLessonSchema, type VideoLessonFormData } from '@/schemas/lesson.schema';
@@ -20,7 +20,7 @@ export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel, onDirty
         register,
         handleSubmit,
         setValue,
-        watch,
+        control,
         formState: { errors, isDirty },
     } = useForm<VideoLessonFormData>({
         resolver: zodResolver(videoLessonSchema),
@@ -36,9 +36,9 @@ export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel, onDirty
         onDirtyChange?.(isDirty);
     }, [isDirty, onDirtyChange]);
 
-    const videoUrl = watch('videoUrl');
-    const title = watch('title') || '';
-    const description = watch('description') || '';
+    const videoUrl = useWatch({ control, name: 'videoUrl' });
+    const title = useWatch({ control, name: 'title' }) || '';
+    const description = useWatch({ control, name: 'description' }) || '';
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

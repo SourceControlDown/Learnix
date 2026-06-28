@@ -11,6 +11,7 @@ import { paymentsApi } from '@/api/payments.api';
 import { paymentSchema, type PaymentFormValues } from '@/schemas/payment.schema';
 import { PAYMENT_LIMITS } from '@/const/payment.constants';
 import { queryKeys } from '@/api/queryKeys';
+import { APP_ROUTES } from '@/config/routes';
 
 export default function PaymentPage() {
     const { courseId } = useParams<{ courseId: string }>();
@@ -41,9 +42,11 @@ export default function PaymentPage() {
                 course.sections.length > 0 &&
                 course.sections[0].lessons.length > 0
             ) {
-                navigate(`/courses/${courseId}/learn/${course.sections[0].lessons[0].id}`);
+                navigate(
+                    APP_ROUTES.student.learnLesson(courseId!, course.sections[0].lessons[0].id),
+                );
             } else {
-                navigate(`/dashboard`);
+                navigate(APP_ROUTES.student.myLearning);
             }
         },
     });
@@ -88,7 +91,10 @@ export default function PaymentPage() {
         return (
             <div className="mx-auto max-w-4xl px-6 py-20 text-center">
                 <p className="text-muted-foreground">{t('courseNotFound')}</p>
-                <Link to="/courses" className="mt-4 inline-block text-primary hover:underline">
+                <Link
+                    to={APP_ROUTES.public.courses}
+                    className="mt-4 inline-block text-primary hover:underline"
+                >
                     {t('backToCatalog')}
                 </Link>
             </div>
@@ -98,7 +104,7 @@ export default function PaymentPage() {
     return (
         <div className="mx-auto max-w-4xl px-6 py-12">
             <Link
-                to={`/courses/${courseId}`}
+                to={APP_ROUTES.public.courseDetail(courseId!)}
                 className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
                 <ArrowLeft className="h-4 w-4" />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AiChatWidget } from '@/components/common/AiChatWidget/AiChatWidget';
@@ -26,6 +26,7 @@ import { messagesApi } from '@/api/messages.api';
 import { queryKeys } from '@/api/queryKeys';
 import { Logo } from '@/components/common/Logo';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { APP_ROUTES } from '@/config/routes';
 
 export function InstructorLayout() {
     const { t } = useTranslation('instructor');
@@ -36,10 +37,12 @@ export function InstructorLayout() {
     const { theme, toggleTheme } = useThemeStore();
     const location = useLocation();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [prevPathname, setPrevPathname] = useState(location.pathname);
 
-    useEffect(() => {
+    if (location.pathname !== prevPathname) {
+        setPrevPathname(location.pathname);
         setMobileOpen(false);
-    }, [location.pathname]);
+    }
 
     const { data: unreadData } = useQuery({
         queryKey: queryKeys.messages.unreadCount(),
@@ -50,35 +53,39 @@ export function InstructorLayout() {
 
     const navItems = [
         {
-            to: '/instructor',
+            to: APP_ROUTES.instructor.dashboard,
             label: t('navDashboard'),
             icon: <LayoutDashboard size={16} />,
             end: true,
         },
         {
-            to: '/instructor/courses',
+            to: APP_ROUTES.instructor.courses,
             label: t('navMyCourses'),
             icon: <BookOpen size={16} />,
             end: true,
         },
         {
-            to: '/instructor/courses/new',
+            to: APP_ROUTES.instructor.newCourse,
             label: t('navNewCourse'),
             icon: <PlusCircle size={16} />,
         },
         {
-            to: '/messages',
+            to: APP_ROUTES.student.messages,
             label: t('navMessages'),
             icon: <MessageSquare size={16} />,
         },
-        { to: '/instructor/earnings', label: t('navEarnings'), icon: <TrendingUp size={16} /> },
+        {
+            to: APP_ROUTES.instructor.earnings,
+            label: t('navEarnings'),
+            icon: <TrendingUp size={16} />,
+        },
     ];
 
     function handleSignOut() {
         authApi.logout().catch(() => {});
         logout();
         queryClient.clear();
-        navigate('/login');
+        navigate(APP_ROUTES.public.login);
     }
 
     return (
@@ -90,7 +97,7 @@ export function InstructorLayout() {
                 {/* Mobile header */}
                 <div className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 md:hidden">
                     <Link
-                        to="/"
+                        to={APP_ROUTES.public.home}
                         className="flex items-center gap-2 font-heading font-bold text-foreground"
                     >
                         <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
@@ -115,7 +122,7 @@ export function InstructorLayout() {
                 >
                     <div className="hidden items-center gap-2 px-4 py-5 md:flex">
                         <Link
-                            to="/"
+                            to={APP_ROUTES.public.home}
                             className="flex items-center gap-2.5 font-heading font-bold text-foreground transition-opacity hover:opacity-90"
                         >
                             <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
@@ -146,7 +153,7 @@ export function InstructorLayout() {
                                 >
                                     {item.icon}
                                     {item.label}
-                                    {item.to === '/messages' && unreadCount > 0 && (
+                                    {item.to === APP_ROUTES.student.messages && unreadCount > 0 && (
                                         <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
                                             {unreadCount > 99 ? '99+' : unreadCount}
                                         </span>
@@ -162,7 +169,7 @@ export function InstructorLayout() {
                         </p>
                         <nav className="space-y-1 text-sm">
                             <Link
-                                to="/"
+                                to={APP_ROUTES.public.home}
                                 className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-foreground transition-colors hover:bg-secondary"
                             >
                                 <ArrowLeft size={16} />

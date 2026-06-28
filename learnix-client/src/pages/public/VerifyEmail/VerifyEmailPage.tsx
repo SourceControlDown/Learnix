@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { parseAccessToken } from '@/utils/parseAccessToken';
 import { getRoleHome } from '@/utils/getRoleHome';
 import { cn } from '@/utils/cn';
+import { APP_ROUTES } from '@/config/routes';
 
 export default function VerifyEmailPage() {
     const { t } = useTranslation('auth');
@@ -41,7 +42,9 @@ export default function VerifyEmailPage() {
             setAccessToken(data.accessToken);
             const user = parseAccessToken(data.accessToken);
             if (user) setUser({ ...user, avatarUrl: data.avatarUrl });
-            navigate(from ?? (user ? getRoleHome(user.roles) : '/courses'), { replace: true });
+            navigate(from ?? (user ? getRoleHome(user.roles) : APP_ROUTES.public.courses), {
+                replace: true,
+            });
         },
         onError: () => {
             toast.error(t('verify.error'));
@@ -235,7 +238,7 @@ export default function VerifyEmailPage() {
 
                 <div className="mt-6 border-t border-border pt-6">
                     <Link
-                        to="/login"
+                        to={APP_ROUTES.public.login}
                         className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                     >
                         {t('verify.backToLogin', 'Back to log in')}

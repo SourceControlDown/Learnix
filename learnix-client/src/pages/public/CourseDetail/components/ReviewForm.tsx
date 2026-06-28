@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { reviewSchema, type ReviewFormValues } from '@/schemas/review.schema';
@@ -61,9 +61,10 @@ export function ReviewForm({ courseId, existing }: ReviewFormProps) {
     const isPending = createReview.isPending || updateReview.isPending;
     const title = existing ? t('reviews.editReview') : t('reviews.writeReview');
 
-    const commentValue = form.watch('comment') || '';
+    const commentValue = useWatch({ control: form.control, name: 'comment' }) || '';
+    const ratingValue = useWatch({ control: form.control, name: 'rating' });
     const isUnchanged = existing
-        ? form.watch('rating') === existing.rating && commentValue === (existing.comment || '')
+        ? ratingValue === existing.rating && commentValue === (existing.comment || '')
         : false;
 
     return (

@@ -33,13 +33,6 @@ export function VideoLessonView({
     const [isCancelled, setIsCancelled] = useState(false);
 
     useEffect(() => {
-        hasAutoCompleted.current = false;
-        setShowOverlay(false);
-        setCountdown(5);
-        setIsCancelled(false);
-    }, [lesson.lessonId]);
-
-    useEffect(() => {
         let timer: ReturnType<typeof setTimeout>;
         if (showOverlay && autoplay && !isCancelled && countdown > 0) {
             timer = setTimeout(() => {
