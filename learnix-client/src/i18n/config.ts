@@ -1,6 +1,8 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import { z } from 'zod';
+import { makeZodI18nMap } from 'zod-i18n-map';
 
 import enCommon from './locales/en/common.json';
 import enHeader from './locales/en/header.json';
@@ -24,6 +26,7 @@ import enProfile from './locales/en/profile.json';
 import enTestLesson from './locales/en/testLesson.json';
 import enWishlist from './locales/en/wishlist.json';
 import enNotifications from './locales/en/notifications.json';
+import enZod from './locales/en/zod.json';
 
 import ukCommon from './locales/uk/common.json';
 import ukHeader from './locales/uk/header.json';
@@ -47,6 +50,7 @@ import ukProfile from './locales/uk/profile.json';
 import ukTestLesson from './locales/uk/testLesson.json';
 import ukWishlist from './locales/uk/wishlist.json';
 import ukNotifications from './locales/uk/notifications.json';
+import ukZod from './locales/uk/zod.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'uk'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -78,6 +82,7 @@ i18n.use(LanguageDetector)
                 testLesson: enTestLesson,
                 wishlist: enWishlist,
                 notifications: enNotifications,
+                zod: enZod,
             },
             uk: {
                 common: ukCommon,
@@ -102,6 +107,7 @@ i18n.use(LanguageDetector)
                 testLesson: ukTestLesson,
                 wishlist: ukWishlist,
                 notifications: ukNotifications,
+                zod: ukZod,
             },
         },
         fallbackLng: 'en',
@@ -116,5 +122,8 @@ i18n.use(LanguageDetector)
         },
         pluralSeparator: '_',
     });
+
+// Set zod error map globally so all schemas use i18n translations
+z.setErrorMap(makeZodI18nMap({ ns: ['zod'] }));
 
 export default i18n;

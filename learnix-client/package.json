@@ -39,7 +39,8 @@
     "react-router-dom": "^7.14.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
-    "zod": "^4.4.3",
+    "zod": "^3.25.76",
+    "zod-i18n-map": "^2.27.0",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
