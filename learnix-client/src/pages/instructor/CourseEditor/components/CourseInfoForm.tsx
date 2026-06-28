@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { courseInfoSchema, type CourseInfoFormData } from '@/schemas/course.schema';
 import { COURSE_LIMITS } from '@/const/course.constants';
+import { FormInput } from '@/components/common/form/FormInput';
 import { CoverImageUploader } from './CoverImageUploader';
 import { useCategories } from '@/hooks/useCategories';
 import type { CourseForEditDto } from '@/types/course.types';
@@ -61,19 +62,13 @@ export function CourseInfoForm({ course, isPending, onSubmit }: Props) {
     return (
         <form id="course-info-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Title */}
-            <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">
-                    {t('fieldTitle')}
-                </label>
-                <input
-                    {...register('title')}
-                    placeholder={t('fieldTitlePlaceholder')}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                {errors.title && (
-                    <p className="mt-1 text-xs text-destructive">{errors.title.message}</p>
-                )}
-            </div>
+            <FormInput
+                id="title"
+                label={t('fieldTitle')}
+                placeholder={t('fieldTitlePlaceholder')}
+                error={errors.title?.message}
+                {...register('title')}
+            />
 
             {/* Description */}
             <div>
@@ -112,22 +107,16 @@ export function CourseInfoForm({ course, isPending, onSubmit }: Props) {
                         <p className="mt-1 text-xs text-destructive">{errors.categoryId.message}</p>
                     )}
                 </div>
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-foreground">
-                        {t('fieldPrice')}
-                    </label>
-                    <input
-                        {...register('price', { valueAsNumber: true })}
-                        type="number"
-                        min={COURSE_LIMITS.PRICE_MIN}
-                        step={0.01}
-                        placeholder={t('fieldPricePlaceholder')}
-                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                    {errors.price && (
-                        <p className="mt-1 text-xs text-destructive">{errors.price.message}</p>
-                    )}
-                </div>
+                <FormInput
+                    id="price"
+                    type="number"
+                    min={COURSE_LIMITS.PRICE_MIN}
+                    step={0.01}
+                    label={t('fieldPrice')}
+                    placeholder={t('fieldPricePlaceholder')}
+                    error={errors.price?.message}
+                    {...register('price', { valueAsNumber: true })}
+                />
             </div>
 
             {/* Tags */}

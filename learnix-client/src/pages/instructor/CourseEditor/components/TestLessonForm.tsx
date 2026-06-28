@@ -224,6 +224,13 @@ function QuestionEditor({
 
     const qType = watch(`questions.${qIdx}.type`);
 
+    type QuestionErrorExt = {
+        text?: { message?: string };
+        options?: { root?: { message?: string }; message?: string };
+        textAnswer?: { correctAnswer?: { message?: string } };
+    };
+    const qError = (errors.questions || [])[qIdx] as unknown as QuestionErrorExt;
+
     return (
         <div className="space-y-3 rounded-lg border border-border p-4">
             <div className="space-y-2">
@@ -259,10 +266,8 @@ function QuestionEditor({
                         <Trash2 size={16} />
                     </button>
                 </div>
-                {errors.questions?.[qIdx]?.text && (
-                    <p className="pl-1 text-xs text-destructive">
-                        {errors.questions[qIdx].text?.message}
-                    </p>
+                {qError?.text && (
+                    <p className="pl-1 text-xs text-destructive">{qError.text.message}</p>
                 )}
             </div>
 
@@ -278,9 +283,9 @@ function QuestionEditor({
                                 placeholder={t('fieldCorrectAnswerPlaceholder')}
                                 className="w-full rounded border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                             />
-                            {errors.questions?.[qIdx]?.textAnswer?.correctAnswer && (
+                            {qError?.textAnswer?.correctAnswer && (
                                 <p className="mt-1 text-xs text-destructive">
-                                    {errors.questions[qIdx].textAnswer?.correctAnswer?.message}
+                                    {qError.textAnswer.correctAnswer.message}
                                 </p>
                             )}
                         </div>
@@ -359,10 +364,9 @@ function QuestionEditor({
                                 {t('btnAddOption')}
                             </button>
                         )}
-                        {errors.questions?.[qIdx]?.options && (
+                        {qError?.options && (
                             <p className="text-xs text-destructive">
-                                {errors.questions[qIdx].options?.root?.message ??
-                                    errors.questions[qIdx].options?.message}
+                                {qError.options.root?.message ?? qError.options.message}
                             </p>
                         )}
                     </>

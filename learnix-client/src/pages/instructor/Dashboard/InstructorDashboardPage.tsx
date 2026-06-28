@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
 import { useMyCoursesQuery } from '@/hooks/useMyCoursesQuery';
 import { PAGINATION } from '@/const/ui.constants';
-import type { CourseStatus } from '@/types/course.types';
+import { CourseStatus } from '@/enums/course.enums';
 
 const STATUS_STYLES: Record<CourseStatus, string> = {
     Published: 'bg-success/20 text-success',

@@ -13,7 +13,8 @@ import {
 } from '@/hooks/useCourseMutations';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { PAGINATION } from '@/const/ui.constants';
-import type { ManageCourseCardDto, CourseStatus } from '@/types/course.types';
+import { CourseStatus } from '@/enums/course.enums';
+import type { ManageCourseCardDto } from '@/types/course.types';
 
 const PAGE_SIZE = PAGINATION.DEFAULT;
 

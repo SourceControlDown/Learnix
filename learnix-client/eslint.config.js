@@ -24,6 +24,7 @@ export default defineConfig([
       'unused-imports': unusedImports,
     },
     rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [

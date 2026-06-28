@@ -1,7 +1,7 @@
 import { api } from './axios.instance';
 import type { LessonContentDto } from '@/types/lesson.types';
 import type { ReorderItem } from './sections.api';
-import type { QuestionType } from '@/types/lesson.types';
+import { QuestionType } from '@/enums/lesson.enums';
 
 export interface CreateVideoLessonRequest {
     title: string;
@@ -29,7 +29,7 @@ export interface TextAnswerRequest {
 export interface QuestionRequest {
     text: string;
     type: QuestionType;
-    options: QuestionOptionRequest[];
+    options?: QuestionOptionRequest[];
     textAnswer?: TextAnswerRequest;
 }
 

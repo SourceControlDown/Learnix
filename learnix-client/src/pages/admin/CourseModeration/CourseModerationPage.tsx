@@ -8,7 +8,8 @@ import { queryKeys } from '@/api/queryKeys';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { PAGINATION } from '@/const/ui.constants';
 import { cn } from '@/utils/cn';
-import type { ManageCourseCardDto, CourseStatus } from '@/types/course.types';
+import type { ManageCourseCardDto } from '@/types/course.types';
+import { CourseStatus } from '@/enums/course.enums';
 
 const PAGE_SIZE = PAGINATION.DEFAULT;
 

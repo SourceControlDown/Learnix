@@ -3,7 +3,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
-import type { CourseForEditLessonDto, LessonType } from '@/types/course.types';
+import { LessonType } from '@/enums/lesson.enums';
+import type { CourseForEditLessonDto } from '@/types/course.types';
 
 const TYPE_STYLES: Record<LessonType, string> = {
     Video: 'bg-primary/10 text-primary',

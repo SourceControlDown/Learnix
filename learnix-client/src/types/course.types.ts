@@ -1,8 +1,5 @@
-import type { QuestionType, LessonType } from './lesson.types';
-export type { LessonType };
-
-export const COURSE_STATUSES = ['Draft', 'Published', 'Archived'] as const;
-export type CourseStatus = (typeof COURSE_STATUSES)[number];
+import { CourseStatus, CourseBadge } from '@/enums/course.enums';
+import { LessonType, QuestionType } from '@/enums/lesson.enums';
 
 export interface LessonSummaryDto {
     id: string;
@@ -140,5 +137,5 @@ export interface CourseSummaryDto {
         id: string;
         fullName: string;
     };
-    badge?: 'bestseller' | 'new' | null;
+    badge?: CourseBadge | null;
 }

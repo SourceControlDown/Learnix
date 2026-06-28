@@ -25,11 +25,8 @@ import {
     useReorderLessons as useReorderLessonsMutation,
     useToggleLessonVisibility,
 } from '@/hooks/useLessonMutations';
-import type {
-    CourseForEditSectionDto,
-    CourseForEditLessonDto,
-    LessonType,
-} from '@/types/course.types';
+import { LessonType } from '@/enums/lesson.enums';
+import type { CourseForEditSectionDto, CourseForEditLessonDto } from '@/types/course.types';
 
 interface Props {
     courseId: string;

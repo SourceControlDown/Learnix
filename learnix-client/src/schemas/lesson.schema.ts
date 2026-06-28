@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { LESSON_LIMITS } from '@/const/lesson.constants';
-import { QUESTION_TYPES } from '@/types/lesson.types';
+import { QuestionType } from '@/enums/lesson.enums';
 
 export const videoLessonSchema = z.object({
     title: z
@@ -40,42 +40,48 @@ const textAnswerSchema = z.object({
     allowFuzzy: z.boolean(),
 });
 
-const questionSchema = z
-    .object({
-        text: z.string().trim().min(1, 'Question text is required'),
-        type: z.enum(QUESTION_TYPES),
-        options: z.array(questionOptionSchema),
-        textAnswer: textAnswerSchema.optional(),
-    })
-    .superRefine((data, ctx) => {
-        if (data.type === 'TextInput') {
-            if (
-                !data.textAnswer ||
-                !data.textAnswer.correctAnswer ||
-                data.textAnswer.correctAnswer.trim() === ''
-            ) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: 'Correct answer is required',
-                    path: ['textAnswer', 'correctAnswer'],
-                });
-            }
-        } else {
-            if (!data.options || data.options.length < LESSON_LIMITS.QUESTION_OPTIONS_MIN) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: `At least ${LESSON_LIMITS.QUESTION_OPTIONS_MIN} options required`,
-                    path: ['options'],
-                });
-            } else if (data.options.length > LESSON_LIMITS.QUESTION_OPTIONS_MAX) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: `Maximum ${LESSON_LIMITS.QUESTION_OPTIONS_MAX} options`,
-                    path: ['options'],
-                });
-            }
-        }
-    });
+const baseQuestionSchema = z.object({
+    text: z.string().trim().min(1, 'Question text is required'),
+});
+
+const singleChoiceQuestionSchema = baseQuestionSchema.extend({
+    type: z.literal(QuestionType.SingleChoice),
+    options: z
+        .array(questionOptionSchema)
+        .min(
+            LESSON_LIMITS.QUESTION_OPTIONS_MIN,
+            `At least ${LESSON_LIMITS.QUESTION_OPTIONS_MIN} options required`,
+        )
+        .max(
+            LESSON_LIMITS.QUESTION_OPTIONS_MAX,
+            `Maximum ${LESSON_LIMITS.QUESTION_OPTIONS_MAX} options`,
+        ),
+});
+
+const multipleChoiceQuestionSchema = baseQuestionSchema.extend({
+    type: z.literal(QuestionType.MultipleChoice),
+    options: z
+        .array(questionOptionSchema)
+        .min(
+            LESSON_LIMITS.QUESTION_OPTIONS_MIN,
+            `At least ${LESSON_LIMITS.QUESTION_OPTIONS_MIN} options required`,
+        )
+        .max(
+            LESSON_LIMITS.QUESTION_OPTIONS_MAX,
+            `Maximum ${LESSON_LIMITS.QUESTION_OPTIONS_MAX} options`,
+        ),
+});
+
+const textInputQuestionSchema = baseQuestionSchema.extend({
+    type: z.literal(QuestionType.TextInput),
+    textAnswer: textAnswerSchema,
+});
+
+const questionSchema = z.discriminatedUnion('type', [
+    singleChoiceQuestionSchema,
+    multipleChoiceQuestionSchema,
+    textInputQuestionSchema,
+]);
 
 export const testLessonSchema = z.object({
     title: z

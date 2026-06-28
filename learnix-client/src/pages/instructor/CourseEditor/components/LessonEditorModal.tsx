@@ -13,7 +13,8 @@ import {
     useUpdatePostLesson,
     useUpdateTestLesson,
 } from '@/hooks/useLessonMutations';
-import type { CourseForEditLessonDto, LessonType } from '@/types/course.types';
+import type { CourseForEditLessonDto } from '@/types/course.types';
+import { LessonType } from '@/enums/lesson.enums';
 import type {
     VideoLessonFormData,
     PostLessonFormData,

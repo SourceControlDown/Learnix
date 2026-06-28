@@ -1,10 +1,9 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { GoogleLogin } from '@react-oauth/google';
-import { Eye, EyeOff, CheckCircle2, Circle } from 'lucide-react';
+import { CheckCircle2, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '@/api/auth.api';
@@ -13,6 +12,8 @@ import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { isValidationError, setApiFieldErrors } from '@/utils/errors';
 import { cn } from '@/utils/cn';
 import { Logo } from '@/components/common/Logo';
+import { FormInput } from '@/components/common/form/FormInput';
+import { PasswordInput } from '@/components/common/form/PasswordInput';
 
 const REGISTER_FIELD_MAP: Partial<Record<string, keyof RegisterFormData>> = {
     Email: 'email',
@@ -50,8 +51,6 @@ function PasswordRule({ met, label }: PasswordRuleProps) {
 
 export default function RegisterPage() {
     const { t } = useTranslation('auth');
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
     const navigate = useNavigate();
 
     const {
@@ -126,126 +125,48 @@ export default function RegisterPage() {
                     )}
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label
-                                htmlFor="firstName"
-                                className="mb-1.5 block text-sm font-medium text-foreground"
-                            >
-                                {t('register.firstName.label')}
-                            </label>
-                            <input
-                                id="firstName"
-                                type="text"
-                                autoComplete="given-name"
-                                placeholder={t('register.firstName.placeholder')}
-                                {...register('firstName')}
-                                className={cn(
-                                    'w-full rounded-lg border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground',
-                                    'focus:border-primary focus:ring-2 focus:ring-primary/10',
-                                    errors.firstName
-                                        ? 'border-destructive focus:border-destructive focus:ring-destructive/10'
-                                        : 'border-border',
-                                )}
-                            />
-                            {errors.firstName && (
-                                <p className="mt-1.5 text-xs text-destructive">
-                                    {errors.firstName.message}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label
-                                htmlFor="lastName"
-                                className="mb-1.5 block text-sm font-medium text-foreground"
-                            >
-                                {t('register.lastName.label')}
-                            </label>
-                            <input
-                                id="lastName"
-                                type="text"
-                                autoComplete="family-name"
-                                placeholder={t('register.lastName.placeholder')}
-                                {...register('lastName')}
-                                className={cn(
-                                    'w-full rounded-lg border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground',
-                                    'focus:border-primary focus:ring-2 focus:ring-primary/10',
-                                    errors.lastName
-                                        ? 'border-destructive focus:border-destructive focus:ring-destructive/10'
-                                        : 'border-border',
-                                )}
-                            />
-                            {errors.lastName && (
-                                <p className="mt-1.5 text-xs text-destructive">
-                                    {errors.lastName.message}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div>
-                        <label
-                            htmlFor="email"
-                            className="mb-1.5 block text-sm font-medium text-foreground"
-                        >
-                            {t('register.email.label')}
-                        </label>
-                        <input
-                            id="email"
-                            type="email"
-                            autoComplete="email"
-                            placeholder={t('register.email.placeholder')}
-                            {...register('email')}
-                            className={cn(
-                                'w-full rounded-lg border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground',
-                                'focus:border-primary focus:ring-2 focus:ring-primary/10',
-                                errors.email
-                                    ? 'border-destructive focus:border-destructive focus:ring-destructive/10'
-                                    : 'border-border',
-                            )}
+                        <FormInput
+                            id="firstName"
+                            autoComplete="given-name"
+                            label={t('register.firstName.label')}
+                            placeholder={t('register.firstName.placeholder')}
+                            error={errors.firstName?.message}
+                            className="border-border px-3.5 py-2.5 focus:border-primary focus:ring-primary/10"
+                            {...register('firstName')}
                         />
-                        {errors.email && (
-                            <p className="mt-1.5 text-xs text-destructive">
-                                {errors.email.message}
-                            </p>
-                        )}
+
+                        <FormInput
+                            id="lastName"
+                            autoComplete="family-name"
+                            label={t('register.lastName.label')}
+                            placeholder={t('register.lastName.placeholder')}
+                            error={errors.lastName?.message}
+                            className="border-border px-3.5 py-2.5 focus:border-primary focus:ring-primary/10"
+                            {...register('lastName')}
+                        />
                     </div>
 
+                    <FormInput
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        label={t('register.email.label')}
+                        placeholder={t('register.email.placeholder')}
+                        error={errors.email?.message}
+                        className="border-border px-3.5 py-2.5 focus:border-primary focus:ring-primary/10"
+                        {...register('email')}
+                    />
+
                     <div>
-                        <label
-                            htmlFor="password"
-                            className="mb-1.5 block text-sm font-medium text-foreground"
-                        >
-                            {t('register.password.label')}
-                        </label>
-                        <div className="relative">
-                            <input
-                                id="password"
-                                type={showPassword ? 'text' : 'password'}
-                                autoComplete="new-password"
-                                placeholder={t('register.password.placeholder')}
-                                {...register('password')}
-                                className={cn(
-                                    'w-full rounded-lg border bg-background py-2.5 pl-3.5 pr-10 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground',
-                                    'focus:border-primary focus:ring-2 focus:ring-primary/10',
-                                    errors.password
-                                        ? 'border-destructive focus:border-destructive focus:ring-destructive/10'
-                                        : 'border-border',
-                                )}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword((v) => !v)}
-                                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                                tabIndex={-1}
-                            >
-                                {showPassword ? (
-                                    <EyeOff className="h-4 w-4" />
-                                ) : (
-                                    <Eye className="h-4 w-4" />
-                                )}
-                            </button>
-                        </div>
+                        <PasswordInput
+                            id="password"
+                            autoComplete="new-password"
+                            label={t('register.password.label')}
+                            placeholder={t('register.password.placeholder')}
+                            error={errors.password?.message}
+                            className="border-border py-2.5 pl-3.5 focus:border-primary focus:ring-primary/10"
+                            {...register('password')}
+                        />
                         {passwordValue && (
                             <ul className="mt-2 space-y-1 pl-0.5">
                                 <PasswordRule
@@ -266,54 +187,17 @@ export default function RegisterPage() {
                                 />
                             </ul>
                         )}
-                        {errors.password && (
-                            <p className="mt-1.5 text-xs text-destructive">
-                                {errors.password.message}
-                            </p>
-                        )}
                     </div>
 
-                    <div>
-                        <label
-                            htmlFor="confirmPassword"
-                            className="mb-1.5 block text-sm font-medium text-foreground"
-                        >
-                            {t('register.confirmPassword.label')}
-                        </label>
-                        <div className="relative">
-                            <input
-                                id="confirmPassword"
-                                type={showConfirm ? 'text' : 'password'}
-                                autoComplete="new-password"
-                                placeholder={t('register.confirmPassword.placeholder')}
-                                {...register('confirmPassword')}
-                                className={cn(
-                                    'w-full rounded-lg border bg-background py-2.5 pl-3.5 pr-10 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground',
-                                    'focus:border-primary focus:ring-2 focus:ring-primary/10',
-                                    errors.confirmPassword
-                                        ? 'border-destructive focus:border-destructive focus:ring-destructive/10'
-                                        : 'border-border',
-                                )}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowConfirm((v) => !v)}
-                                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                                tabIndex={-1}
-                            >
-                                {showConfirm ? (
-                                    <EyeOff className="h-4 w-4" />
-                                ) : (
-                                    <Eye className="h-4 w-4" />
-                                )}
-                            </button>
-                        </div>
-                        {errors.confirmPassword && (
-                            <p className="mt-1.5 text-xs text-destructive">
-                                {errors.confirmPassword.message}
-                            </p>
-                        )}
-                    </div>
+                    <PasswordInput
+                        id="confirmPassword"
+                        autoComplete="new-password"
+                        label={t('register.confirmPassword.label')}
+                        placeholder={t('register.confirmPassword.placeholder')}
+                        error={errors.confirmPassword?.message}
+                        className="border-border py-2.5 pl-3.5 focus:border-primary focus:ring-primary/10"
+                        {...register('confirmPassword')}
+                    />
 
                     <button
                         type="submit"
