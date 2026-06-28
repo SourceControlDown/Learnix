@@ -4,4 +4,5 @@ export const AUTH_LIMITS = {
     EMAIL_MAX: 256,
     PASSWORD_MIN: 8,
     PASSWORD_MAX: 128,
+    RESEND_COOLDOWN_SECONDS: 60,
 } as const;
