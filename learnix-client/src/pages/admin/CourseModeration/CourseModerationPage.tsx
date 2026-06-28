@@ -1,25 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { EyeOff, Eye, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/api/admin.api';
 import { queryKeys } from '@/api/queryKeys';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { Pagination } from '@/components/common/Pagination';
 import { PAGINATION } from '@/const/ui.constants';
-import { cn } from '@/utils/cn';
 import type { ManageCourseCardDto } from '@/types/course.types';
-import { CourseStatus } from '@/enums/course.enums';
+import { CourseModerationTableRow } from './components/CourseModerationTableRow';
 
 const PAGE_SIZE = PAGINATION.DEFAULT;
 
-const STATUS_STYLES: Record<CourseStatus, string> = {
-    Published: 'bg-success/20 text-success',
-    Draft: 'bg-muted text-muted-foreground',
-    Archived: 'bg-warning/20 text-warning',
-};
-
-type PendingAction =
+export type PendingAction =
     | { type: 'publish'; course: ManageCourseCardDto }
     | { type: 'unpublish'; course: ManageCourseCardDto }
     | { type: 'delete'; course: ManageCourseCardDto }
@@ -41,12 +34,6 @@ export default function CourseModerationPage() {
         }, 400);
         return () => clearTimeout(timer);
     }, [search]);
-
-    const STATUS_LABELS: Record<CourseStatus, string> = {
-        Published: t('courseStatusPublished'),
-        Draft: t('courseStatusDraft'),
-        Archived: t('courseStatusArchived'),
-    };
 
     const filters = {
         search: debouncedSearch || undefined,
@@ -222,139 +209,25 @@ export default function CourseModerationPage() {
                         </thead>
                         <tbody className="divide-y divide-border">
                             {courses.map((c) => (
-                                <tr
+                                <CourseModerationTableRow
                                     key={c.id}
-                                    className={cn(
-                                        'hover:bg-secondary/30',
-                                        c.isDeleted && 'opacity-50',
-                                    )}
-                                >
-                                    {/* Course */}
-                                    <td className="px-5 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-14 shrink-0 overflow-hidden rounded bg-gradient-to-br from-primary/30 to-accent/30">
-                                                {c.coverImageUrl && (
-                                                    <img
-                                                        src={c.coverImageUrl}
-                                                        alt=""
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                )}
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-foreground">
-                                                    {c.title}
-                                                </p>
-                                                {c.isDeleted && (
-                                                    <span className="text-xs text-destructive">
-                                                        {t('courseStatusDeleted')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    {/* Status */}
-                                    <td className="px-5 py-3">
-                                        <span
-                                            className={cn(
-                                                'rounded px-2 py-0.5 text-xs font-medium',
-                                                STATUS_STYLES[c.status] ??
-                                                    'bg-muted text-muted-foreground',
-                                            )}
-                                        >
-                                            {STATUS_LABELS[c.status] ?? c.status}
-                                        </span>
-                                    </td>
-
-                                    {/* Enrollments */}
-                                    <td className="px-5 py-3 text-muted-foreground">
-                                        {c.enrollmentsCount}
-                                    </td>
-
-                                    {/* Price */}
-                                    <td className="px-5 py-3 text-muted-foreground">
-                                        {c.isFree ? t('courseFree') : `$${c.price.toFixed(2)}`}
-                                    </td>
-
-                                    {/* Actions */}
-                                    <td className="px-5 py-3">
-                                        <div className="flex items-center justify-end gap-1">
-                                            {!c.isDeleted && c.status === 'Draft' && (
-                                                <button
-                                                    onClick={() =>
-                                                        setPending({ type: 'publish', course: c })
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
-                                                    title={t('btnPublish')}
-                                                >
-                                                    <Eye size={14} />
-                                                </button>
-                                            )}
-                                            {!c.isDeleted && c.status === 'Published' && (
-                                                <button
-                                                    onClick={() =>
-                                                        setPending({ type: 'unpublish', course: c })
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-warning"
-                                                    title={t('btnUnpublish')}
-                                                >
-                                                    <EyeOff size={14} />
-                                                </button>
-                                            )}
-                                            {c.isDeleted ? (
-                                                <button
-                                                    onClick={() =>
-                                                        setPending({ type: 'recover', course: c })
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
-                                                    title={t('btnRecoverCourse')}
-                                                >
-                                                    <RefreshCw size={14} />
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() =>
-                                                        setPending({ type: 'delete', course: c })
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
-                                                    title={t('btnDeleteCourse')}
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
+                                    course={c}
+                                    onSetPending={setPending}
+                                />
                             ))}
                         </tbody>
                     </table>
                 )}
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between border-t border-border px-5 py-3">
-                        <span className="text-sm text-muted-foreground">
-                            {t('pageOf', { page: currentPage, total: totalPages })}
-                        </span>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setSkip(Math.max(0, skip - PAGE_SIZE))}
-                                disabled={skip === 0}
-                                className="rounded px-3 py-1 text-sm text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                {t('prev')}
-                            </button>
-                            <button
-                                onClick={() => setSkip(skip + PAGE_SIZE)}
-                                disabled={currentPage >= totalPages}
-                                className="rounded px-3 py-1 text-sm text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                {t('next')}
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <Pagination
+                    page={currentPage}
+                    totalPages={totalPages}
+                    onChange={(p) => setSkip((p - 1) * PAGE_SIZE)}
+                    prevLabel={t('prev')}
+                    nextLabel={t('next')}
+                    className="border-t border-border px-5 py-3"
+                />
             </div>
 
             {/* Confirm dialog */}

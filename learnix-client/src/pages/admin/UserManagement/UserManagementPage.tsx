@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Key, Ban, Trash2, RefreshCw, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/api/admin.api';
@@ -8,27 +7,18 @@ import { queryKeys } from '@/api/queryKeys';
 import { useAuthStore } from '@/store/auth.store';
 import { ChangeRoleDialog } from './ChangeRoleDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { Pagination } from '@/components/common/Pagination';
 import { PAGINATION } from '@/const/ui.constants';
-import { cn } from '@/utils/cn';
 import type { AdminUserDto } from '@/types/admin.types';
+import { UserTableRow } from './components/UserTableRow';
 
 const PAGE_SIZE = PAGINATION.DEFAULT;
 
-const ROLE_STYLES: Record<string, string> = {
-    Student: 'bg-primary/10 text-primary',
-    Instructor: 'bg-accent/10 text-accent',
-    Admin: 'bg-destructive/10 text-destructive',
-};
-
-type PendingAction =
+export type PendingAction =
     | { type: 'ban'; user: AdminUserDto }
     | { type: 'unban'; user: AdminUserDto }
     | { type: 'delete'; user: AdminUserDto }
     | { type: 'recover'; user: AdminUserDto };
-
-function userInitials(u: AdminUserDto) {
-    return `${u.firstName[0] ?? ''}${u.lastName[0] ?? ''}`.toUpperCase();
-}
 
 export default function UserManagementPage() {
     const { t } = useTranslation('admin');
@@ -210,179 +200,27 @@ export default function UserManagementPage() {
                         </thead>
                         <tbody className="divide-y divide-border">
                             {users.map((u) => (
-                                <tr
+                                <UserTableRow
                                     key={u.id}
-                                    className={cn(
-                                        'hover:bg-secondary/30',
-                                        u.isDeleted && 'opacity-50',
-                                    )}
-                                >
-                                    {/* User */}
-                                    <td className="px-5 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/20 text-xs font-semibold text-primary">
-                                                {u.avatarUrl ? (
-                                                    <img
-                                                        src={u.avatarUrl}
-                                                        alt=""
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                ) : (
-                                                    userInitials(u)
-                                                )}
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-foreground">
-                                                    {u.firstName} {u.lastName}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {u.email}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    {/* Roles */}
-                                    <td className="px-5 py-3">
-                                        <div className="flex flex-wrap gap-1">
-                                            {u.roles.map((r) => (
-                                                <span
-                                                    key={r}
-                                                    className={cn(
-                                                        'rounded px-2 py-0.5 text-xs font-medium',
-                                                        ROLE_STYLES[r] ??
-                                                            'bg-muted text-muted-foreground',
-                                                    )}
-                                                >
-                                                    {r}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </td>
-
-                                    {/* Status */}
-                                    <td className="px-5 py-3">
-                                        {u.isDeleted ? (
-                                            <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                                                {t('statusDeleted')}
-                                            </span>
-                                        ) : u.isBanned ? (
-                                            <span className="rounded bg-warning/20 px-2 py-0.5 text-xs font-medium text-warning">
-                                                {t('statusBanned')}
-                                            </span>
-                                        ) : (
-                                            <span className="rounded bg-success/20 px-2 py-0.5 text-xs font-medium text-success">
-                                                {t('statusActive')}
-                                            </span>
-                                        )}
-                                    </td>
-
-                                    {/* Joined */}
-                                    <td className="px-5 py-3 text-muted-foreground">
-                                        {new Date(u.createdAt).toLocaleDateString()}
-                                    </td>
-
-                                    {/* Actions */}
-                                    <td className="px-5 py-3">
-                                        <div className="flex items-center justify-end gap-1">
-                                            <button
-                                                onClick={() => setRoleDialogUserId(u.id)}
-                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
-                                                title={t('btnChangeRole')}
-                                            >
-                                                <Key size={14} />
-                                            </button>
-                                            {u.id !== currentUser?.id && (
-                                                <>
-                                                    {!u.isDeleted &&
-                                                        (u.isBanned ? (
-                                                            <button
-                                                                onClick={() =>
-                                                                    setPending({
-                                                                        type: 'unban',
-                                                                        user: u,
-                                                                    })
-                                                                }
-                                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
-                                                                title={t('btnUnban')}
-                                                            >
-                                                                <ShieldCheck size={14} />
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() =>
-                                                                    setPending({
-                                                                        type: 'ban',
-                                                                        user: u,
-                                                                    })
-                                                                }
-                                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-warning"
-                                                                title={t('btnBan')}
-                                                            >
-                                                                <Ban size={14} />
-                                                            </button>
-                                                        ))}
-                                                    {u.isDeleted ? (
-                                                        <button
-                                                            onClick={() =>
-                                                                setPending({
-                                                                    type: 'recover',
-                                                                    user: u,
-                                                                })
-                                                            }
-                                                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
-                                                            title={t('btnRecover')}
-                                                        >
-                                                            <RefreshCw size={14} />
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() =>
-                                                                setPending({
-                                                                    type: 'delete',
-                                                                    user: u,
-                                                                })
-                                                            }
-                                                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
-                                                            title={t('btnDelete')}
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
+                                    user={u}
+                                    currentUserId={currentUser?.id}
+                                    onSetRole={setRoleDialogUserId}
+                                    onSetPending={setPending}
+                                />
                             ))}
                         </tbody>
                     </table>
                 )}
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between border-t border-border px-5 py-3">
-                        <span className="text-sm text-muted-foreground">
-                            {t('pageOf', { page: currentPage, total: totalPages })}
-                        </span>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setSkip(Math.max(0, skip - PAGE_SIZE))}
-                                disabled={skip === 0}
-                                className="rounded px-3 py-1 text-sm text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                {t('prev')}
-                            </button>
-                            <button
-                                onClick={() => setSkip(skip + PAGE_SIZE)}
-                                disabled={currentPage >= totalPages}
-                                className="rounded px-3 py-1 text-sm text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                {t('next')}
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <Pagination
+                    page={currentPage}
+                    totalPages={totalPages}
+                    onChange={(p) => setSkip((p - 1) * PAGE_SIZE)}
+                    prevLabel={t('prev')}
+                    nextLabel={t('next')}
+                    className="border-t border-border px-5 py-3"
+                />
             </div>
 
             {/* Role dialog */}
