@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { APP_ROUTES } from '@/routes/paths';
 
 const enrollmentBars = [30, 50, 40, 65, 55, 75, 60, 85, 70, 90, 80, 95, 88, 100];
 
@@ -47,7 +48,7 @@ export function InstructorsCTASection() {
 
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                             <Link
-                                to="/become-instructor"
+                                to={APP_ROUTES.public.becomeInstructor}
                                 className="rounded-lg bg-foreground px-6 py-3 text-center font-medium text-background hover:opacity-90"
                             >
                                 {t('instructorsCta.cta.primary')}

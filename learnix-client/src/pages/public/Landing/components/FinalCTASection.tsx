@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { APP_ROUTES } from '@/routes/paths';
 
 export function FinalCTASection() {
     const { t } = useTranslation('landing');
@@ -22,13 +23,13 @@ export function FinalCTASection() {
                         </p>
                         <div className="mt-8 flex flex-col flex-wrap justify-center gap-3 sm:flex-row">
                             <Link
-                                to="/register"
+                                to={APP_ROUTES.public.register}
                                 className="rounded-lg bg-primary px-8 py-3.5 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                             >
                                 {t('finalCta.cta.primary')}
                             </Link>
                             <Link
-                                to="/courses"
+                                to={APP_ROUTES.public.courses}
                                 className="rounded-lg border border-background/30 px-8 py-3.5 font-medium text-background transition-colors hover:bg-background/10"
                             >
                                 {t('finalCta.cta.secondary')}

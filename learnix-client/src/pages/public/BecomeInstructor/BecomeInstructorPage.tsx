@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle, Clock, XCircle } from 'lucide-react';
 import { useMyApplication } from '@/hooks/instructor/useMyApplication';
 import { useSubmitApplication } from '@/hooks/instructor/useSubmitApplication';
+import { APP_ROUTES } from '@/routes/paths';
 import {
     type InstructorApplicationFormData,
     instructorApplicationSchema,
@@ -67,7 +68,7 @@ export default function BecomeInstructorPage() {
                     </h2>
                     <p className="mb-6 text-muted-foreground">{t('alreadyInstructorBody')}</p>
                     <Link
-                        to="/instructor"
+                        to={APP_ROUTES.instructor.dashboard}
                         className="inline-block rounded-lg bg-primary px-6 py-2.5 font-medium text-primary-foreground hover:bg-primary/90"
                     >
                         {t('btnGoToDashboard')}
@@ -106,7 +107,7 @@ export default function BecomeInstructorPage() {
                         </h2>
                         <p className="mb-6 text-muted-foreground">{t('applicationApprovedBody')}</p>
                         <Link
-                            to="/instructor"
+                            to={APP_ROUTES.instructor.dashboard}
                             className="inline-block rounded-lg bg-primary px-6 py-2.5 font-medium text-primary-foreground hover:bg-primary/90"
                         >
                             {t('btnGoToDashboard')}

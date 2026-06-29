@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { APP_ROUTES } from '@/routes/paths';
 
 export function FaqSection() {
     const { t } = useTranslation('landing');
@@ -47,7 +48,10 @@ export function FaqSection() {
                 </div>
 
                 <div className="mt-8 text-center">
-                    <Link to="/faq" className="font-medium text-primary hover:underline">
+                    <Link
+                        to={APP_ROUTES.public.faq}
+                        className="font-medium text-primary hover:underline"
+                    >
                         {t('faq.viewAll')}
                     </Link>
                 </div>

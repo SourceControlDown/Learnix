@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Award, ChevronRight, GraduationCap } from 'lucide-react';
+import { APP_ROUTES } from '@/routes/paths';
 
 interface QuickNavSectionProps {
     isStudent: boolean;
@@ -12,7 +13,7 @@ export function QuickNavSection({ isStudent }: QuickNavSectionProps) {
     return (
         <div className="space-y-4">
             <Link
-                to="/certificates"
+                to={APP_ROUTES.student.certificates}
                 className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary sm:p-5"
             >
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -29,7 +30,7 @@ export function QuickNavSection({ isStudent }: QuickNavSectionProps) {
 
             {isStudent && (
                 <Link
-                    to="/become-instructor"
+                    to={APP_ROUTES.public.becomeInstructor}
                     className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary sm:p-5"
                 >
                     <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">

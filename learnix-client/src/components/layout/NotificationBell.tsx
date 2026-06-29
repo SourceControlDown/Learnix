@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Bell } from 'lucide-react';
 import { notificationsApi } from '@/api/notifications.api';
 import { queryKeys } from '@/api/queryKeys';
+import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/utils/cn';
 
@@ -22,7 +23,7 @@ export function NotificationBell() {
 
     return (
         <Link
-            to="/notifications"
+            to={APP_ROUTES.student.notifications}
             className={cn(
                 'relative inline-flex items-center justify-center rounded-md p-2',
                 'text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',

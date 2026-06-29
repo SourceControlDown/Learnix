@@ -12,6 +12,7 @@ import {
     useUnpublishCourse,
 } from '@/hooks/instructor/useCourseMutations';
 import { useMyCoursesQuery } from '@/hooks/instructor/useMyCoursesQuery';
+import { APP_ROUTES } from '@/routes/paths';
 import type { ManageCourseCardDto } from '@/types/course.types';
 import { InstructorCourseRow } from './components/InstructorCourseRow';
 
@@ -88,7 +89,7 @@ export default function InstructorMyCoursesPage() {
                     <p className="mt-1 text-muted-foreground">{t('myCoursesSubtitle')}</p>
                 </div>
                 <Link
-                    to="/instructor/courses/new"
+                    to={APP_ROUTES.instructor.newCourse}
                     className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                     {t('btnNewCourse')}
@@ -119,7 +120,7 @@ export default function InstructorMyCoursesPage() {
                         </p>
                         {!debouncedSearch && (
                             <Link
-                                to="/instructor/courses/new"
+                                to={APP_ROUTES.instructor.newCourse}
                                 className="mt-3 inline-block text-sm text-primary hover:underline"
                             >
                                 {t('dashboardEmptyCta')}

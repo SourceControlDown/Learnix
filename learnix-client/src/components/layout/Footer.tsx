@@ -6,6 +6,7 @@ import {
     YouTubeIcon,
 } from '@/components/common/icons/SocialIcons';
 import { Logo } from '@/components/common/ui/Logo';
+import { APP_ROUTES } from '@/routes/paths';
 
 interface FooterLink {
     label: string;
@@ -68,7 +69,7 @@ export function Footer() {
                 <div className="flex flex-col gap-10 border-b border-border pb-12 md:flex-row md:justify-between">
                     <div className="max-w-xs md:w-2/5">
                         <Link
-                            to="/"
+                            to={APP_ROUTES.public.home}
                             className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
                         >
                             <div className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
@@ -136,7 +137,11 @@ export function Footer() {
                     </div>
                     <div className="flex flex-wrap gap-x-6 gap-y-2">
                         {legalLinks.map((label) => (
-                            <Link key={label} to="/faq" className="hover:text-primary">
+                            <Link
+                                key={label}
+                                to={APP_ROUTES.public.faq}
+                                className="hover:text-primary"
+                            >
                                 {label}
                             </Link>
                         ))}

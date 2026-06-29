@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { APP_ROUTES } from '@/routes/paths';
 import type { CourseSummaryDto } from '@/types/course.types';
 import { cn } from '@/utils/cn';
 
@@ -39,7 +40,7 @@ export function CourseCard({ course, className }: CourseCardProps) {
 
     return (
         <Link
-            to={`/courses/${course.id}`}
+            to={APP_ROUTES.public.courseDetail(course.id)}
             state={{ from: `${location.pathname}${location.search}` }}
             className={cn(
                 'group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all',

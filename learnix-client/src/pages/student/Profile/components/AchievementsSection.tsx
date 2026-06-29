@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { AchievementBadge } from '@/components/common/course/AchievementBadge';
 import { ALL_ACHIEVEMENT_CODES } from '@/const/achievements.constants';
+import { APP_ROUTES } from '@/routes/paths';
 import type { UnlockedAchievementDto } from '@/types/achievement.types';
 
 interface AchievementsSectionProps {
@@ -56,7 +57,7 @@ export function AchievementsSection({
 
             <div className="mt-4 text-right">
                 <Link
-                    to="/achievements"
+                    to={APP_ROUTES.student.achievements}
                     className="text-sm font-medium text-primary hover:underline"
                 >
                     {t('achievements.viewAll')}

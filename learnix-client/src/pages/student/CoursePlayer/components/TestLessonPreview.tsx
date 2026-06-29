@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CheckCircle2, ClipboardList, Clock, XCircle } from 'lucide-react';
 import { useMarkLessonComplete } from '@/hooks/lesson/useMarkLessonComplete';
 import { useTestLesson } from '@/hooks/lesson/useTestLesson';
+import { APP_ROUTES } from '@/routes/paths';
 import type { LessonProgressItemDto } from '@/types/progress.types';
 import { cn } from '@/utils/cn';
 
@@ -140,7 +141,7 @@ export function TestLessonPreview({ lesson, courseId }: TestLessonPreviewProps) 
                             </div>
                         ) : (
                             <Link
-                                to={`/courses/${courseId}/learn/${lesson.lessonId}/test`}
+                                to={APP_ROUTES.student.testLesson(courseId, lesson.lessonId)}
                                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                             >
                                 <ClipboardList className="size-4" />

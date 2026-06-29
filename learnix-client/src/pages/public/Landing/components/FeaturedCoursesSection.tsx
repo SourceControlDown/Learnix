@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
 import { CourseCard } from '@/components/common/course/CourseCard';
 import { QueryError } from '@/components/common/system/QueryError';
+import { APP_ROUTES } from '@/routes/paths';
 import type { CourseSummaryDto } from '@/types/course.types';
 
 interface FeaturedCoursesSectionProps {
@@ -76,7 +77,10 @@ export function FeaturedCoursesSection({
                             {t('featuredCourses.subtitle')}
                         </p>
                     </div>
-                    <Link to="/courses" className="text-sm text-primary hover:underline">
+                    <Link
+                        to={APP_ROUTES.public.courses}
+                        className="text-sm text-primary hover:underline"
+                    >
                         {t('featuredCourses.viewAll')}
                     </Link>
                 </div>
@@ -85,7 +89,7 @@ export function FeaturedCoursesSection({
 
                 <div className="mt-10 text-center">
                     <Link
-                        to="/courses"
+                        to={APP_ROUTES.public.courses}
                         className="inline-flex items-center gap-2 font-medium text-primary hover:underline"
                     >
                         {totalCount !== undefined

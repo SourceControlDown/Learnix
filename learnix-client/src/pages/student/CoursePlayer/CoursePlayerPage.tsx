@@ -9,6 +9,7 @@ import { Logo } from '@/components/common/ui/Logo';
 import { useCourseDetail } from '@/hooks/course/useCourseDetail';
 import { useCourseProgress } from '@/hooks/lesson/useCourseProgress';
 import { useMarkLessonComplete } from '@/hooks/lesson/useMarkLessonComplete';
+import { APP_ROUTES } from '@/routes/paths';
 import { cn } from '@/utils/cn';
 import { CourseCertificateDropdown } from './components/CourseCertificateDropdown';
 import { CourseSidebar } from './components/CourseSidebar';
@@ -100,7 +101,7 @@ export default function CoursePlayerPage() {
                         <Menu className="size-5" />
                     </button>
                     <Link
-                        to="/"
+                        to={APP_ROUTES.public.home}
                         className="flex shrink-0 items-center gap-2 font-heading font-bold"
                     >
                         <Logo className="size-7 text-primary" />
@@ -110,7 +111,7 @@ export default function CoursePlayerPage() {
                         <>
                             <span className="text-border">|</span>
                             <Link
-                                to={`/courses/${courseId}`}
+                                to={APP_ROUTES.public.courseDetail(courseId!)}
                                 className="truncate text-sm font-medium text-foreground transition-colors hover:text-primary"
                             >
                                 {course.title}
@@ -221,7 +222,10 @@ export default function CoursePlayerPage() {
                         <div className="order-1 w-auto sm:w-32">
                             {prevLesson && (
                                 <Link
-                                    to={`/courses/${courseId}/learn/${prevLesson.lessonId}`}
+                                    to={APP_ROUTES.student.learnLesson(
+                                        courseId!,
+                                        prevLesson.lessonId,
+                                    )}
                                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                 >
                                     <ChevronLeft className="size-4" />
@@ -272,7 +276,10 @@ export default function CoursePlayerPage() {
                         <div className="order-2 flex w-auto justify-end sm:order-3 sm:w-32">
                             {nextLesson ? (
                                 <Link
-                                    to={`/courses/${courseId}/learn/${nextLesson.lessonId}`}
+                                    to={APP_ROUTES.student.learnLesson(
+                                        courseId!,
+                                        nextLesson.lessonId,
+                                    )}
                                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                 >
                                     <span className="hidden sm:inline">

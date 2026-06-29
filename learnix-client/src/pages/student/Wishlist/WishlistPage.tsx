@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
 import { queryKeys } from '@/api/queryKeys';
 import { wishlistApi } from '@/api/wishlist.api';
+import { APP_ROUTES } from '@/routes/paths';
 import { WishlistCard } from './components/WishlistCard';
 
 export default function WishlistPage() {
@@ -29,7 +30,7 @@ export default function WishlistPage() {
                     <h2 className="mt-6 font-heading text-2xl font-bold">{t('emptyTitle')}</h2>
                     <p className="mt-2 text-muted-foreground">{t('emptyDescription')}</p>
                     <Link
-                        to="/courses"
+                        to={APP_ROUTES.public.courses}
                         className="mt-8 inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 font-medium text-primary-foreground hover:bg-primary/90"
                     >
                         {t('browseCourses')}

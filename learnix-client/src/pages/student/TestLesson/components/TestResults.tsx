@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, XCircle } from 'lucide-react';
+import { APP_ROUTES } from '@/routes/paths';
 import type { GetTestLessonDto, SubmitAttemptResponse } from '@/types/lesson.types';
 import { cn } from '@/utils/cn';
 import { QuestionCard } from './QuestionCard';
@@ -98,7 +99,7 @@ export function TestResults({
             {/* Actions */}
             <div className="flex flex-wrap gap-3">
                 <Link
-                    to={`/courses/${courseId}/learn/${lessonId}`}
+                    to={APP_ROUTES.student.learnLesson(courseId, lessonId)}
                     className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-secondary"
                 >
                     {t('results.returnToLesson')}

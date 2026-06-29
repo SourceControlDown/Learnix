@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ClipboardList } from 'lucide-react';
+import { APP_ROUTES } from '@/routes/paths';
 
 interface TestHeaderProps {
     courseId: string;
@@ -14,7 +15,7 @@ export function TestHeader({ courseId, lessonId }: TestHeaderProps) {
         <header className="sticky top-0 z-10 border-b border-border bg-card">
             <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-6">
                 <Link
-                    to={`/courses/${courseId}/learn/${lessonId}`}
+                    to={APP_ROUTES.student.learnLesson(courseId, lessonId)}
                     className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                     <ChevronLeft className="size-4" />

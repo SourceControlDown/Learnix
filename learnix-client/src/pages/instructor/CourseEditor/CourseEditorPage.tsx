@@ -11,6 +11,7 @@ import {
     useUnpublishCourse,
     useUpdateCourse,
 } from '@/hooks/instructor/useCourseMutations';
+import { APP_ROUTES } from '@/routes/paths';
 import type { CourseInfoFormData } from '@/schemas/course.schema';
 import type { CourseForEditDto } from '@/types/course.types';
 import { cn } from '@/utils/cn';
@@ -108,7 +109,7 @@ export default function CourseEditorPage() {
                 <div className="flex h-14 items-center justify-between px-6">
                     <div className="flex min-w-0 items-center gap-3">
                         <Link
-                            to="/instructor"
+                            to={APP_ROUTES.instructor.dashboard}
                             className="shrink-0 text-sm text-muted-foreground transition-colors hover:text-foreground"
                         >
                             {t('editorBack')}

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
 import { QueryError } from '@/components/common/system/QueryError';
+import { APP_ROUTES } from '@/routes/paths';
 import { cn } from '@/utils/cn';
 import type { LandingCategory } from '@/utils/mocks/landing.mock';
 
@@ -98,7 +99,7 @@ export function CategoriesSection({
                         </h2>
                     </div>
                     <Link
-                        to="/courses"
+                        to={APP_ROUTES.public.courses}
                         className="hidden text-sm text-primary hover:underline md:inline"
                     >
                         {t('categories.viewAll')}

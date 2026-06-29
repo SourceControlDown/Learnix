@@ -6,6 +6,7 @@ import { HeartOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { queryKeys } from '@/api/queryKeys';
 import { wishlistApi } from '@/api/wishlist.api';
+import { APP_ROUTES } from '@/routes/paths';
 import type { WishlistCourseDto } from '@/types/wishlist.types';
 import { cn } from '@/utils/cn';
 
@@ -54,7 +55,7 @@ export function WishlistCard({ course, className }: WishlistCardProps) {
 
     return (
         <Link
-            to={`/courses/${course.courseId}`}
+            to={APP_ROUTES.public.courseDetail(course.courseId)}
             className={cn(
                 'group relative block overflow-hidden rounded-xl border border-border bg-card transition-all',
                 'hover:-translate-y-1 hover:shadow-xl',

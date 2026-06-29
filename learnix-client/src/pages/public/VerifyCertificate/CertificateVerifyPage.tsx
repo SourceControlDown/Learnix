@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import { BookOpen, Calendar, Clock, Download, ShieldCheck, User, XCircle } from 'lucide-react';
 import { useVerifyCertificate } from '@/hooks/user/useVerifyCertificate';
+import { APP_ROUTES } from '@/routes/paths';
 
 export default function CertificateVerifyPage() {
     const { code } = useParams<{ code: string }>();
@@ -39,7 +40,7 @@ export default function CertificateVerifyPage() {
                     </p>
                     <div className="mt-8">
                         <Link
-                            to="/"
+                            to={APP_ROUTES.public.home}
                             className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                         >
                             {t('verify.backHome', { defaultValue: 'Return to Homepage' })}
@@ -160,7 +161,7 @@ export default function CertificateVerifyPage() {
                             </span>
                         )}
                         <Link
-                            to="/"
+                            to={APP_ROUTES.public.home}
                             className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-transparent px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
                         >
                             {t('verify.backHome', { defaultValue: 'Return to Homepage' })}

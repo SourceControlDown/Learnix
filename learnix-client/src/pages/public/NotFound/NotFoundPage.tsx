@@ -1,4 +1,5 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { APP_ROUTES } from '@/routes/paths';
 
 export default function NotFoundPage() {
     return (
@@ -9,7 +10,7 @@ export default function NotFoundPage() {
                 The page you're looking for doesn't exist or was moved.
             </p>
             <Link
-                to="/"
+                to={APP_ROUTES.public.home}
                 className="mt-8 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
                 Back home

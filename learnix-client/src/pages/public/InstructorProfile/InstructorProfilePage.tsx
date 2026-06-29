@@ -4,6 +4,7 @@ import { ArrowLeft, User } from 'lucide-react';
 import { CourseCard } from '@/components/common/course/CourseCard';
 import { useInstructorCourses } from '@/hooks/instructor/useInstructorCourses';
 import { useUserProfile } from '@/hooks/user/useUserProfile';
+import { APP_ROUTES } from '@/routes/paths';
 
 export default function InstructorProfilePage() {
     const { t } = useTranslation('instructorProfile');
@@ -40,7 +41,10 @@ export default function InstructorProfilePage() {
         return (
             <div className="mx-auto max-w-5xl px-6 py-20 text-center">
                 <p className="text-muted-foreground">{t('notFound')}</p>
-                <Link to="/courses" className="mt-4 inline-block text-primary hover:underline">
+                <Link
+                    to={APP_ROUTES.public.courses}
+                    className="mt-4 inline-block text-primary hover:underline"
+                >
                     {t('backToCatalog')}
                 </Link>
             </div>
@@ -52,7 +56,7 @@ export default function InstructorProfilePage() {
     return (
         <div className="mx-auto max-w-5xl px-6 py-12">
             <Link
-                to="/courses"
+                to={APP_ROUTES.public.courses}
                 className="mb-8 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
                 <ArrowLeft className="size-4" />

@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
+import { APP_ROUTES } from '@/routes/paths';
 import { type UserSummary, useAuthStore } from '@/store/auth.store';
 
 interface Props {
@@ -13,12 +14,12 @@ export function RequireRole({ roles, children }: Props) {
     if (isInitializing) return null;
 
     if (!user) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        return <Navigate to={APP_ROUTES.public.login} state={{ from: location }} replace />;
     }
 
     const hasRole = user.roles.some((r) => roles.includes(r));
     if (!hasRole) {
-        return <Navigate to="/" replace />;
+        return <Navigate to={APP_ROUTES.public.home} replace />;
     }
 
     return <>{children}</>;
