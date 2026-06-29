@@ -23,6 +23,10 @@ export default function MessagesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const debouncedSearch = useDebounce(searchQuery, 500);
 
+    /**
+     * Related ADRs:
+     * - ADR-FRONT-API-008: Pagination Strategies (Infinite Scrolling)
+     */
     const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
         queryKey: [...queryKeys.messages.conversations(), debouncedSearch],
         queryFn: ({ pageParam = 0 }) =>
@@ -38,7 +42,9 @@ export default function MessagesPage() {
     const selected = useMemo(() => {
         if (!selectedId) return null;
         const match = conversations.find((c) => c.id === selectedId);
+
         if (match) return match;
+
         // Fallback to initial conversation if it matches selectedId but isn't loaded yet
         if (selectedId === initialConversation?.id) {
             return { ...initialConversation, lastMessagePreview: null, lastMessageAt: null };

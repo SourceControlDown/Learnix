@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { COURSE_LIMITS } from '@/const/course.constants';
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-FORMS-002: Zod Schemas as Source of Truth
+ */
 export const courseInfoSchema = z.object({
     title: z.string().trim().min(COURSE_LIMITS.TITLE_MIN).max(COURSE_LIMITS.TITLE_MAX),
     description: z

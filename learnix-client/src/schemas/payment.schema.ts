@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { PAYMENT_LIMITS } from '@/const/payment.constants';
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-FORMS-002: Zod Schemas as Source of Truth
+ */
 export const paymentSchema = z.object({
     cardNumber: z
         .string()

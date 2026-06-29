@@ -18,6 +18,10 @@ import '@/styles/index.css';
 import { getErrorMessage, isValidationError } from '@/utils/errors';
 import App from './App';
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-API-003: React Query Structure & Defaults
+ */
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -28,6 +32,10 @@ const queryClient = new QueryClient({
         },
         mutations: {
             onError: (error, _variables, _context, mutation) => {
+                /**
+                 * Related ADRs:
+                 * - ADR-FRONT-FORMS-004: Form Errors vs Global Errors
+                 */
                 if (mutation.meta?.suppressGlobalError) return;
                 if (!isValidationError(error)) {
                     toast.error(getErrorMessage(error));

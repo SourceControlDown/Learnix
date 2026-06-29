@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { INSTRUCTOR_APP_LIMITS } from '@/const/instructor.constants';
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-FORMS-002: Zod Schemas as Source of Truth
+ */
 export const instructorApplicationSchema = z.object({
     motivationText: z
         .string()

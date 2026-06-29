@@ -2,6 +2,10 @@ import { z } from 'zod';
 import { LESSON_LIMITS } from '@/const/lesson.constants';
 import { QuestionType } from '@/enums/lesson.enums';
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-FORMS-002: Zod Schemas as Source of Truth
+ */
 export const videoLessonSchema = z.object({
     title: z.string().trim().min(1).max(LESSON_LIMITS.TITLE_MAX),
     videoUrl: z.string().trim().min(1),

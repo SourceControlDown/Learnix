@@ -35,8 +35,9 @@ This document contains Architecture Decision Records (ADRs) related to frontend 
 - Formatting is guaranteed to be consistent across all IDEs and platforms.
 - `eslintConfigPrettier` must always remain the final item in the `eslint.config.js` array to ensure it overrides all preceding plugins.
 
-**Active Prettier config (`.prettierrc`):**
-- `singleQuote: true`, `semi: true`, `trailingComma: "all"`, `printWidth: 100`, `tabWidth: 4`
+**Active Prettier config (`prettier.config.js`):**
+- Standard rules: `singleQuote: true`, `semi: true`, `trailingComma: "all"`, `printWidth: 100`, `tabWidth: 4`
+- Plugins enabled: `prettier-plugin-tailwindcss` and `@trivago/prettier-plugin-sort-imports`.
 
 ---
 

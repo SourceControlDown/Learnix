@@ -13,6 +13,10 @@ interface AchievementUnlockedPayload {
     unlockedAt: string;
 }
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-API-004: Realtime Communication via SignalR
+ */
 export function useAchievementsHub() {
     const accessToken = useAuthStore((s) => s.accessToken);
     const queryClient = useQueryClient();

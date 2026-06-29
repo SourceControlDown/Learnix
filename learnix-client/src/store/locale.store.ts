@@ -7,6 +7,10 @@ interface LocaleState {
     setLanguage: (lang: SupportedLanguage) => void;
 }
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-API-002: State Management Boundary (Client State via Zustand)
+ */
 export const useLocaleStore = create<LocaleState>()(
     persist(
         (set) => ({

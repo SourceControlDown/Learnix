@@ -38,6 +38,10 @@ export default function UserManagementPage() {
         return () => clearTimeout(timer);
     }, [search]);
 
+    /**
+     * Related ADRs:
+     * - ADR-FRONT-API-008: Pagination Strategies (Offset-based)
+     */
     const filters = {
         search: debouncedSearch || undefined,
         skip,

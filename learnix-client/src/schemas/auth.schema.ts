@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { AUTH_LIMITS } from '@/const/auth.constants';
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-FORMS-002: Zod Schemas as Source of Truth
+ */
 export const loginSchema = z.object({
     email: z.string().trim().min(1).email().max(AUTH_LIMITS.EMAIL_MAX),
     password: z.string().min(1).max(AUTH_LIMITS.PASSWORD_MAX),

@@ -1,7 +1,12 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
 import { env } from '@/utils/env';
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-API-001: API Layer — Axios Instance with Queued Token Refresh
+ */
 export const api = axios.create({
     baseURL: env.API_URL,
     withCredentials: true,
@@ -62,7 +67,7 @@ api.interceptors.response.use(
         } catch (refreshError) {
             processQueue(refreshError, null);
             useAuthStore.getState().logout();
-            window.location.href = '/login';
+            window.location.href = APP_ROUTES.public.login;
             return Promise.reject(refreshError);
         } finally {
             isRefreshing = false;

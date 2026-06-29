@@ -6,6 +6,10 @@ import { useAuthStore } from '@/store/auth.store';
 import type { NewMessageNotification, UnreadCountNotification } from '@/types/message.types';
 import { env } from '@/utils/env';
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-API-004: Realtime Communication via SignalR
+ */
 export function useChatHub() {
     const accessToken = useAuthStore((s) => s.accessToken);
     const queryClient = useQueryClient();

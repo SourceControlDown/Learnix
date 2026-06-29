@@ -46,6 +46,10 @@ export default function LoginPage() {
         resolver: zodResolver(loginSchema),
     });
 
+    /**
+     * Related ADRs:
+     * - ADR-FRONT-FORMS-004: Form Errors vs Global Errors
+     */
     const { mutateAsync } = useMutation({
         mutationFn: authApi.login,
         meta: { suppressGlobalError: true },

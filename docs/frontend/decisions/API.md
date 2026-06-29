@@ -147,3 +147,31 @@ export const env = {
 **Why:**
 - Centralizing env access in `env.ts` prevents scattering `import.meta.env` calls throughout the codebase, making it easier to mock in tests or change prefixes later.
 - Runtime validation with `throw new Error()` catches misconfigured deployments immediately at app startup instead of silently failing on the first API call.
+
+---
+
+## ADR-FRONT-API-007: Data Fetching Abstraction (Custom Hooks)
+
+**Decision:**
+Components must not call `useQuery` or `useMutation` directly with `queryKeys` and `api` methods. Instead, all React Query data fetching logic must be encapsulated in domain-specific custom hooks within the `src/hooks/` directory (e.g., `useCourseDetail.ts`, `useCourseMutations.ts`).
+
+**Why:**
+- **Separation of concerns:** Components handle presentation and user interaction; custom hooks handle data fetching, cache invalidation, and optimistic updates.
+- **Reusability:** A custom hook can be reused across multiple components without duplicating query keys, dependencies, or error handling logic.
+- **Maintainability:** When the backend changes, we update the `api` module and the custom hook, leaving the UI components completely untouched.
+
+**Consequences:**
+- When integrating a new API endpoint, a corresponding custom hook must be created (or added to an existing hook file like `useMyCourseMutations`).
+
+---
+
+## ADR-FRONT-API-008: Pagination Strategies
+
+**Decision:**
+We utilize two distinct pagination strategies depending on the UX requirements:
+- **Standard Pagination (Offset-based):** For tables, grids, and catalogs (e.g., Admin Dashboards, Course Catalog), we use offset-based pagination (`skip` and `take` parameters) mapping to the backend's `PagedResult<T>` structure.
+- **Infinite Scrolling:** For highly dynamic, linear data streams (specifically Chat Messages in `MessagesPage`), we use React Query's `useInfiniteQuery` to seamlessly load older items as the user scrolls.
+
+**Why:**
+- Offset pagination provides deterministic navigation and total counts, which is crucial for dashboards and catalogs where users want to jump to specific pages.
+- Infinite scrolling provides a seamless, frictionless UX for chat histories.

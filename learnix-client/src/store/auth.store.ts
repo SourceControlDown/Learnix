@@ -22,6 +22,7 @@ interface AuthState {
 /**
  * Related ADRs:
  * - ADR-FRONT-AUTH-001: Access Token Storage & Silent Refresh
+ * - ADR-FRONT-API-002: State Management Boundary (Client State via Zustand)
  */
 export const useAuthStore = create<AuthState>((set) => ({
     accessToken: null,

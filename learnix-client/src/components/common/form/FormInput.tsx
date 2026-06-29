@@ -7,6 +7,10 @@ interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     containerClassName?: string;
 }
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-FORMS-001: React Hook Form & Lightweight Wrappers
+ */
 export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
     ({ label, error, className, containerClassName, id, ...props }, ref) => {
         return (

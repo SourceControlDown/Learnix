@@ -1,3 +1,7 @@
+/**
+ * Related ADRs:
+ * - ADR-FRONT-API-003: React Query Structure & Defaults
+ */
 export const queryKeys = {
     courses: {
         all: ['courses'] as const,
