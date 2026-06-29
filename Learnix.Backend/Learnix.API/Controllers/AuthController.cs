@@ -18,6 +18,14 @@ namespace Learnix.API.Controllers;
 
 [ApiController]
 [Route("api/auth")]
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-001: JWT (short-lived) + Refresh Token
+/// - ADR-BACK-AUTH-007: Refresh token rotation with replay-attack protection
+/// - ADR-BACK-AUTH-010: Google OAuth via Google Identity Services (ID token)
+/// - ADR-BACK-AUTH-012: Rate limiting — in-memory FixedWindow per IP
+/// - ADR-BACK-AUTH-014: Email confirmation soft restriction (Authorize policy)
+/// </remarks>
 public sealed class AuthController(ISender sender, IHostEnvironment environment) : ControllerBase
 {
     private const string RefreshCookieName = "learnix_refresh";

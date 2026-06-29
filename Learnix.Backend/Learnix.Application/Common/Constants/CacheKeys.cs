@@ -1,5 +1,9 @@
 namespace Learnix.Application.Common.Constants;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-ARCH-013: CacheKeys in Application layer, not Domain
+/// </remarks>
 public static class CacheKeys
 {
     public static string PopularCourses => "popular-courses";

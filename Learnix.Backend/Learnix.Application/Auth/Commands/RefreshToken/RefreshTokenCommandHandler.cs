@@ -12,6 +12,11 @@ using RefreshTokenEntity = Learnix.Domain.Entities.RefreshToken;
 
 namespace Learnix.Application.Auth.Commands.RefreshToken;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-007: Refresh token rotation with replay-attack protection
+/// - ADR-BACK-AUTH-009: Separation of AuthenticationError and ForbiddenError
+/// </remarks>
 internal sealed class RefreshTokenCommandHandler(
     IUserAuthenticationService authService,
     ITokenService tokenService,

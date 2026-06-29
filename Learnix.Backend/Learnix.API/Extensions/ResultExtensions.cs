@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Learnix.API.Extensions;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-ARCH-005: ProblemDetails for errors, clean DTO for success
+/// </remarks>
 public static class ResultExtensions
 {
     public static IActionResult ToActionResult(this Result result)

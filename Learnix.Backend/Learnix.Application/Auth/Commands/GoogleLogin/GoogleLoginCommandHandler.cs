@@ -8,6 +8,12 @@ using RefreshTokenEntity = Learnix.Domain.Entities.RefreshToken;
 
 namespace Learnix.Application.Auth.Commands.GoogleLogin;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-010: Google OAuth via Google Identity Services
+/// - ADR-BACK-AUTH-011: GoogleId as denormalized field on User
+/// - ADR-BACK-AUTH-014: Email confirmation soft restriction
+/// </remarks>
 internal sealed class GoogleLoginCommandHandler(
     IGoogleTokenValidator googleTokenValidator,
     IUserRegistrationService userRegistrationService,

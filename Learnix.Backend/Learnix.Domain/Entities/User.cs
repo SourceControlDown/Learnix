@@ -5,6 +5,12 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Learnix.Domain.Entities;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-002: ASP.NET Identity — inherit from IdentityUser, custom DbContext
+/// - ADR-BACK-AUTH-003: Pure Identity roles instead of UserRole enum
+/// - ADR-BACK-AUTH-011: GoogleId as denormalized field on User
+/// </remarks>
 public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents, ISoftDeletable
 {
     private readonly List<IDomainEvent> _domainEvents = [];

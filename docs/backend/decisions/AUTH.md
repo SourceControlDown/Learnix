@@ -16,7 +16,7 @@
 
 ---
 
-## ADR-AUTH-001: JWT (short-lived) + Refresh Token (long-lived, HttpOnly cookie)
+## ADR-BACK-AUTH-001: JWT (short-lived) + Refresh Token (long-lived, HttpOnly cookie)
 
 **Decision:** Authentication via token pair:
 - **Access token (JWT):** 15 minutes, passed in `Authorization: Bearer` header
@@ -41,7 +41,7 @@
 
 ---
 
-## ADR-AUTH-002: ASP.NET Identity — inherit from IdentityUser, custom DbContext
+## ADR-BACK-AUTH-002: ASP.NET Identity — inherit from IdentityUser, custom DbContext
 
 **Decision:** The User entity inherits from `IdentityUser<Guid>`.
 We use our own `ApplicationDbContext`, not `IdentityDbContext`.
@@ -61,7 +61,7 @@ A separate `InstructorProfile` table is out of scope for v1.
 
 ---
 
-## ADR-AUTH-003: Pure Identity roles instead of UserRole enum
+## ADR-BACK-AUTH-003: Pure Identity roles instead of UserRole enum
 
 **Decision:** The `UserRole` enum was removed from Domain. Roles (Student / Instructor / Admin) live only in Identity (`AspNetRoles` + `AspNetUserRoles`). `Domain.Constants.Roles` is a static class with string constants for type-safe referencing.
 
@@ -77,9 +77,9 @@ A separate `InstructorProfile` table is out of scope for v1.
 
 ---
 
-## ADR-AUTH-004: IIdentityService as an abstraction over UserManager
+## ADR-BACK-AUTH-004: IIdentityService as an abstraction over UserManager
 
-> **Status:** Superseded by ADR-AUTH-006 (decomposition into three interfaces). The original principle "Application doesn't know about UserManager" remains valid, but is implemented via three separate interfaces instead of a single `IIdentityService`. This ADR remains for historical context.
+> **Status:** Superseded by ADR-BACK-AUTH-006 (decomposition into three interfaces). The original principle "Application doesn't know about UserManager" remains valid, but is implemented via three separate interfaces instead of a single `IIdentityService`. This ADR remains for historical context.
 
 **Decision:** The `IIdentityService` interface lives in Application, while `IdentityService` implementation is in Infrastructure. Application handlers do not know about `UserManager<User>` — they only call `IIdentityService`.
 
@@ -98,7 +98,7 @@ A separate `InstructorProfile` table is out of scope for v1.
 
 ---
 
-## ADR-AUTH-005: JWT secret — placeholder in base + dev-secret in Development + env var in production
+## ADR-BACK-AUTH-005: JWT secret — placeholder in base + dev-secret in Development + env var in production
 
 **Decision:** `appsettings.json` contains `Jwt.Secret = ""` (placeholder, startup validation fails if empty). `appsettings.Development.json` overrides it with a static random string (>32 bytes). In production, the value is passed via the environment variable `JWT__Secret` (double underscore = nested config key in .NET configuration).
 
@@ -121,9 +121,9 @@ A separate `InstructorProfile` table is out of scope for v1.
 
 ---
 
-## ADR-AUTH-006: Decomposition of Identity service into three roles based on SRP
+## ADR-BACK-AUTH-006: Decomposition of Identity service into three roles based on SRP
 
-> **Supersedes:** ADR-AUTH-004 (one IIdentityService → three interfaces)
+> **Supersedes:** ADR-BACK-AUTH-004 (one IIdentityService → three interfaces)
 
 **Decision:** Instead of a single `IIdentityService` — three interfaces:
 - `IUserRegistrationService` — registration + email confirmation (CRUD life-cycle of user).
@@ -148,7 +148,7 @@ All three live in `Auth/Abstractions/` (DECISIONS_ARCHITECTURE.md ADR-009). Impl
 
 ---
 
-## ADR-AUTH-007: Refresh token rotation with replay-attack protection
+## ADR-BACK-AUTH-007: Refresh token rotation with replay-attack protection
 
 **Decision:** On every successful `/api/auth/refresh` — the old refresh token is revoked (not deleted), a new one is created and returned. If a request arrives with an **already revoked** token — this indicates a compromise: all active tokens for the user are forcibly revoked, the user is logged out from all devices, and the incident is logged as a warning with the UserId.
 
@@ -175,7 +175,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 
 ---
 
-## ADR-AUTH-008: JWT claims — standard OIDC + custom for roles
+## ADR-BACK-AUTH-008: JWT claims — standard OIDC + custom for roles
 
 **Decision:** Access token contains:
 - `sub` — User Id (Guid)
@@ -206,7 +206,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 
 ---
 
-## ADR-AUTH-009: Separation of `AuthenticationError` (401) and `ForbiddenError` (403)
+## ADR-BACK-AUTH-009: Separation of `AuthenticationError` (401) and `ForbiddenError` (403)
 
 **Decision:** Created a separate typed error `AuthenticationError : Error` for 401 Unauthorized.
 `ForbiddenError` now semantically maps to 403 Forbidden — "authenticated, but lacks permissions".
@@ -230,7 +230,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 
 ---
 
-## ADR-AUTH-010: Google OAuth via Google Identity Services (ID token) instead of OAuth code flow
+## ADR-BACK-AUTH-010: Google OAuth via Google Identity Services (ID token) instead of OAuth code flow
 
 **Decision:** Frontend obtains a Google ID token via Google Identity Services (GIS) SDK directly in the browser. Backend receives the token via `POST /api/auth/google`, validates it via `Google.Apis.Auth` (`GoogleJsonWebSignature.ValidateAsync`), and issues its own JWT+refresh tokens. Authorization Code flow with redirect_uri on the backend and Client Secret is **not used**.
 
@@ -251,7 +251,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 
 ---
 
-## ADR-AUTH-011: `GoogleId` as denormalized field on User instead of `AspNetUserLogins`
+## ADR-BACK-AUTH-011: `GoogleId` as denormalized field on User instead of `AspNetUserLogins`
 
 **Decision:** External provider linkage is stored as `User.GoogleId` (nullable `string?`), not via the Identity table `AspNetUserLogins` / `UserManager.AddLoginAsync`.
 
@@ -272,7 +272,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 
 ---
 
-## ADR-AUTH-012: Rate limiting — in-memory FixedWindow per IP, single strict policy
+## ADR-BACK-AUTH-012: Rate limiting — in-memory FixedWindow per IP, single strict policy
 
 **Decision:** Sensitive auth endpoints (register, login, google login, forgot-password, reset-password, resend-confirmation, confirm-email) are limited by the built-in `Microsoft.AspNetCore.RateLimiting` — **5 requests per 15 minutes per IP**, FixedWindowLimiter, `QueueLimit = 0`. Refresh and logout are not limited. Exceeding limit → 429 `ProblemDetails` + `Retry-After` header.
 
@@ -280,7 +280,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 - `Microsoft.AspNetCore.RateLimiting` is built into .NET 8, zero extra NuGets, supported by Microsoft. AspNetCoreRateLimit is legacy from .NET Core 2 days.
 - FixedWindow — most transparent for users ("5 attempts per 15 min, then reset"). SlidingWindow and TokenBucket offer no benefits for sensitive auth where we need a **strict cap**, not a smooth rate.
 - `QueueLimit = 0` — a user exceeding the limit immediately gets 429, without hanging in a queue.
-- Refresh without limits — a legitimate client with 3 tabs might trigger 3 simultaneous refreshes on wake-from-sleep; a strict limit would cause false positives with no security benefit (replay detection already works in `RefreshTokenCommandHandler` via ADR-AUTH-007).
+- Refresh without limits — a legitimate client with 3 tabs might trigger 3 simultaneous refreshes on wake-from-sleep; a strict limit would cause false positives with no security benefit (replay detection already works in `RefreshTokenCommandHandler` via ADR-BACK-AUTH-007).
 - Per-IP partitioning (not per IP+email) — simpler, sufficient for a portfolio. Per-user partitioning requires identifying the user — but rate limiting applies **before** auth, when the user doesn't exist yet.
 
 **Alternatives:**
@@ -294,7 +294,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 
 ---
 
-## ADR-AUTH-013: Authorization checks live in handlers, not controllers
+## ADR-BACK-AUTH-013: Authorization checks live in handlers, not controllers
 
 **Decision:** Checks for "can the current user perform this operation on this resource" (owner check, role check) are performed inside command/query handlers via `ICurrentUserService`. The Controller does not take this responsibility — it only handles HTTP concerns (read body, return ToActionResult).
 
@@ -315,7 +315,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 
 ---
 
-## ADR-AUTH-014: Email confirmation soft restriction via ASP.NET Core authorization policy
+## ADR-BACK-AUTH-014: Email confirmation soft restriction via ASP.NET Core authorization policy
 
 **Decision:** After registration, the user is automatically logged in, but the email remains unconfirmed. A persistent banner in the UI reminds them to confirm their email. Write-actions with real platform impact are protected by a named policy `EmailConfirmed`, which checks the `email_verified` claim in the JWT. Unconfirmed users can freely browse the catalog and their profile; specific endpoints return 403 when the policy is not met.
 
@@ -334,7 +334,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 **Free (not blocked):** catalog browsing, course page, reading reviews, profile (read + edit), AI chat. Progress / tests / certificates cascade from Enrollment — a separate gate isn't needed.
 
 **Why:**
-- **Controller-level concern, not domain concern.** "Is the user's identity confirmed?" is an authentication/authorization question, not business logic. The natural place is an `[Authorize]` attribute (same level as role checks), not inside handlers — aligns with ADR-AUTH-013, which reserves handler-level auth checks for resource-based (owner) decisions.
+- **Controller-level concern, not domain concern.** "Is the user's identity confirmed?" is an authentication/authorization question, not business logic. The natural place is an `[Authorize]` attribute (same level as role checks), not inside handlers — aligns with ADR-BACK-AUTH-013, which reserves handler-level auth checks for resource-based (owner) decisions.
 - **One mechanism, not seven.** A single named policy decorates 7 endpoints. The alternative (checking `ICurrentUserService.IsEmailConfirmed` in every handler) scatters auth logic across the Application layer and complicates auditing.
 - **Soft restriction (no hard block).** Hard-blocking login/access until email confirmation causes high abandonment rates. Allowing exploration before confirmation is an industry standard (Slack, GitHub, Vercel).
 - **JWT claim = zero extra DB queries.** The claim `email_verified: "true"/"false"` is set during login/registration and lives in the token — no extra queries per request. Frontend reads the same claim to display the banner.
@@ -355,7 +355,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 
 ---
 
-## ADR-AUTH-015: Infrastructure gets FrameworkReference to Microsoft.AspNetCore.App
+## ADR-BACK-AUTH-015: Infrastructure gets FrameworkReference to Microsoft.AspNetCore.App
 
 **Decision:** `Learnix.Infrastructure.csproj` declares `<FrameworkReference Include="Microsoft.AspNetCore.App" />`. This grants access to ASP.NET Core shared framework assemblies (`Microsoft.AspNetCore.Identity`, `Microsoft.AspNetCore.Authentication.*`, etc.) needed to implement auth-related services.
 
@@ -371,7 +371,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 **Consequences:**
 - `Learnix.Infrastructure` transitively has access to all of `Microsoft.AspNetCore.App` (MVC, SignalR, Authentication middleware). This is formally a scope expansion, but practically we only use Identity and (in the future) JWT bearer authentication.
 - Zero runtime overhead — the shared framework is already present on the host via the API project.
-- Same compromise as ADR-AUTH-002 (User : IdentityUser): formally less clean, pragmatically necessary.
+- Same compromise as ADR-BACK-AUTH-002 (User : IdentityUser): formally less clean, pragmatically necessary.
 
 ---
 
@@ -398,7 +398,7 @@ Simulation of a request journey from the client to business logic execution:
 
 ---
 
-## ADR-AUTH-016: 6-Digit OTP for Email Confirmation instead of Magic Link
+## ADR-BACK-AUTH-016: 6-Digit OTP for Email Confirmation instead of Magic Link
 
 **Decision:** The email confirmation flow was refactored to use a 6-digit Time-based One-Time Password (TOTP) valid for 3 minutes, sent via email, rather than a traditional "magic link". Upon successful validation of the code, the API immediately returns an `AuthResponse` (Access and Refresh tokens), allowing seamless automatic login.
 

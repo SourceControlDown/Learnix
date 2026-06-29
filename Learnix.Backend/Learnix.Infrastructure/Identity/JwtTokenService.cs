@@ -11,6 +11,12 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Learnix.Infrastructure.Identity;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-001: JWT (short-lived) + Refresh Token
+/// - ADR-BACK-AUTH-008: JWT claims — standard OIDC + custom for roles
+/// - ADR-BACK-AUTH-014: Email confirmation soft restriction (email_verified claim)
+/// </remarks>
 internal sealed class JwtTokenService(IOptions<JwtSettings> jwtSettings) : ITokenService
 {
     private readonly JwtSettings _settings = jwtSettings.Value;

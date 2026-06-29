@@ -59,6 +59,12 @@ using MongoDB.Driver;
 
 namespace Learnix.Infrastructure;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-005: JWT secret — placeholder in base + dev-secret in Development + env var in production
+/// - ADR-BACK-AUTH-015: Infrastructure gets FrameworkReference to Microsoft.AspNetCore.App
+/// - ADR-BACK-AUTH-016: 6-Digit OTP for Email Confirmation instead of Magic Link
+/// </remarks>
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(

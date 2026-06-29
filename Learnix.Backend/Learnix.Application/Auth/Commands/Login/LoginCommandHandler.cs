@@ -7,6 +7,12 @@ using RefreshTokenEntity = Learnix.Domain.Entities.RefreshToken;
 
 namespace Learnix.Application.Auth.Commands.Login;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-001: JWT (short-lived) + Refresh Token
+/// - ADR-BACK-AUTH-006: Decomposition of Identity service
+/// - ADR-BACK-AUTH-014: Email confirmation soft restriction
+/// </remarks>
 internal sealed class LoginCommandHandler(
     IUserAuthenticationService authService,
     ITokenService tokenService,

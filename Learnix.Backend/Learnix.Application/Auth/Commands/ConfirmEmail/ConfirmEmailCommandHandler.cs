@@ -13,6 +13,10 @@ using RefreshTokenEntity = Learnix.Domain.Entities.RefreshToken;
 
 namespace Learnix.Application.Auth.Commands.ConfirmEmail;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-016: 6-Digit OTP for Email Confirmation instead of Magic Link
+/// </remarks>
 internal sealed class ConfirmEmailCommandHandler(
     UserManager<User> userManager,
     ITokenService tokenService,

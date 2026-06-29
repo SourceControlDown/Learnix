@@ -4,12 +4,12 @@ This document outlines the conventions and templates for writing Architecture De
 
 ## ADR Numbering Convention
 
-**Decision:** Each decision document uses its own `ADR-<SCOPE>-NNN` prefix where `SCOPE` is the file's topic (e.g., `REVIEW`, `CHAT`, `AUTH`, `BLOB`). Numbers restart at `001` per file. All decision documents are written in **English** (or Ukrainian, depending on the established historical baseline for a specific file, though English is preferred for broad technical context).
+**Decision:** Each decision document uses its own `ADR-BACK-<SCOPE>-NNN` prefix where `SCOPE` is the file's topic (e.g., `REVIEW`, `CHAT`, `AUTH`, `BLOB`). Numbers restart at `001` per file. All decision documents are written in **English** (or Ukrainian, depending on the established historical baseline for a specific file, though English is preferred for broad technical context).
 
 Examples:
-- `DECISIONS_REVIEWS.md` → `ADR-REVIEW-001`, `ADR-REVIEW-002`, …
-- `DECISIONS_CHAT.md` → `ADR-CHAT-001`, `ADR-CHAT-002`, …
-- `DECISIONS_BLOB.md` → `ADR-BLOB-001`, `ADR-BLOB-002`, …
+- `DECISIONS_REVIEWS.md` → `ADR-BACK-REVIEW-001`, `ADR-BACK-REVIEW-002`, …
+- `DECISIONS_CHAT.md` → `ADR-BACK-CHAT-001`, `ADR-BACK-CHAT-002`, …
+- `DECISIONS_BLOB.md` → `ADR-BACK-BLOB-001`, `ADR-BACK-BLOB-002`, …
 
 **Why:**
 - A single global sequence (ADR-001, ADR-002…) works only as long as there is one file. Once decisions are split into topic files, the sequence becomes meaningless and finding the next free number requires reading all files.
@@ -25,7 +25,7 @@ When documenting APIs, the **Endpoints summary** must be placed at the **beginni
 ## Template for New Records (ADR Template)
 
 ```markdown
-## ADR-XXX: [Decision Title]
+## ADR-BACK-XXX: [Decision Title]
 
 **Decision:** [What exactly was decided]
 

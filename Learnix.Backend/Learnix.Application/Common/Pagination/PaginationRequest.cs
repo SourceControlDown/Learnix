@@ -2,6 +2,10 @@ using Learnix.Application.Common.Constants;
 
 namespace Learnix.Application.Common.Pagination;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-ARCH-012: Offset-based pagination via PaginatedResult&lt;T&gt; + PaginationRequest
+/// </remarks>
 public record PaginationRequest
 {
     public int PageIndex { get; init; }

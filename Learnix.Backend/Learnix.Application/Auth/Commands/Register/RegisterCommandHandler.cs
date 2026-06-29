@@ -4,6 +4,11 @@ using MediatR;
 
 namespace Learnix.Application.Auth.Commands.Register;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-006: Decomposition of Identity service
+/// - ADR-BACK-AUTH-014: Email confirmation soft restriction
+/// </remarks>
 internal sealed class RegisterCommandHandler(IUserRegistrationService registrationService)
     : IRequestHandler<RegisterCommand, Result<RegisterResponse>>
 {

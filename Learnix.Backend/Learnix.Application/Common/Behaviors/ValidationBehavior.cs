@@ -54,6 +54,10 @@ internal static class ResultFailFactory
     }
 }
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-ARCH-003: FluentValidation + FluentResults in pipeline (no exceptions)
+/// </remarks>
 public class ValidationBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>

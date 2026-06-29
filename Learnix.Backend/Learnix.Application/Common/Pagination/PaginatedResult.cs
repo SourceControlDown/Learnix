@@ -1,5 +1,9 @@
 namespace Learnix.Application.Common.Pagination;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-ARCH-012: Offset-based pagination via PaginatedResult&lt;T&gt; + PaginationRequest
+/// </remarks>
 public record PaginatedResult<TEntity>(
     int Page,
     int PageSize,

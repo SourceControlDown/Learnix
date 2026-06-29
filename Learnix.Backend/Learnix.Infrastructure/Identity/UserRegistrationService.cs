@@ -10,6 +10,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Learnix.Infrastructure.Identity;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-006: Decomposition of Identity service into three roles based on SRP
+/// </remarks>
 internal sealed class UserRegistrationService(
     UserManager<User> userManager,
     IUnitOfWork unitOfWork)
