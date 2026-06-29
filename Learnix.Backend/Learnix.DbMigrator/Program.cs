@@ -8,18 +8,39 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+// Resolve Learnix.API path robustly
+var currentDir = new DirectoryInfo(AppContext.BaseDirectory);
+while (currentDir != null && !Directory.Exists(Path.Combine(currentDir.FullName, "Learnix.API")))
+{
+    currentDir = currentDir.Parent;
+}
+
+if (currentDir == null)
+{
+    throw new DirectoryNotFoundException("Could not find the 'Learnix.API' directory.");
+}
+
+var apiPath = Path.Combine(currentDir.FullName, "Learnix.API");
+
 // Load .env from Learnix.API if it exists (for local development)
-var apiEnvFile = Path.Combine(Directory.GetCurrentDirectory(), "..", "Learnix.API", ".env");
+var apiEnvFile = Path.Combine(apiPath, ".env");
 if (File.Exists(apiEnvFile))
     DotNetEnv.Env.NoClobber().Load(apiEnvFile);
 
 var builder = Host.CreateDefaultBuilder(args);
 
+// Enable reading ASPNETCORE_ENVIRONMENT to match web project behavior
+builder.ConfigureHostConfiguration(config =>
+{
+    config.AddEnvironmentVariables(prefix: "ASPNETCORE_");
+});
+
 builder.ConfigureAppConfiguration((context, config) =>
 {
-    var apiPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Learnix.API");
     config.AddJsonFile(Path.Combine(apiPath, "appsettings.json"), optional: true);
     config.AddJsonFile(Path.Combine(apiPath, $"appsettings.{context.HostingEnvironment.EnvironmentName}.json"), optional: true);
+    config.AddEnvironmentVariables();
+    config.AddCommandLine(args);
 });
 
 builder.ConfigureServices((context, services) =>
@@ -28,6 +49,8 @@ builder.ConfigureServices((context, services) =>
 
     // Core registrations (needed for DbContext, Identity, etc.)
     services.AddApplication();
+
+    // Infrastructure
     services.AddInfrastructure(configuration);
 
     // Register Seeders

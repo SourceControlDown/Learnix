@@ -117,8 +117,9 @@ public sealed class StudentSeeder(
         var avatarPath = $"{blobOptions.Value.AvatarContainer}/{Guid.NewGuid()}-student-avatar.png";
         try
         {
-            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            using var stream = assembly.GetManifestResourceStream("Learnix.Infrastructure.Assets.generic_thumbnail.png");
+            var assembly = typeof(StudentSeeder).Assembly;
+            using var stream = assembly.GetManifestResourceStream("Learnix.DbMigrator.Assets.generic_thumbnail.png");
+            
             if (stream != null)
             {
                 await blobStorage.UploadAsync(avatarPath, stream, "image/png", cancellationToken);

@@ -18,4 +18,9 @@
     <NoWarn>$(NoWarn);NU1605</NoWarn>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\**\*.png" />
+    <EmbeddedResource Include="Assets\**\*.mp4" />
+  </ItemGroup>
+
 </Project>

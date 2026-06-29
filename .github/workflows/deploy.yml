@@ -95,7 +95,7 @@ jobs:
       env:
         ConnectionStrings__Postgres: ${{ secrets.PROD_POSTGRES_CONN }}
         ASPNETCORE_ENVIRONMENT: Production
-      run: dotnet run --project Learnix.DbMigrator -- --seed-demo
+      run: dotnet run --project Learnix.DbMigrator --no-launch-profile -- --seed-demo
 
   # 3. Deploy API to Azure Container Apps
   deploy-api:

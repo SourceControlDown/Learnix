@@ -214,8 +214,8 @@ public sealed class CourseSeeder(
         var coverPath = $"{blobOptions.Value.CourseCoverContainer}/{Guid.NewGuid()}-cover.png";
         try
         {
-            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            using var stream = assembly.GetManifestResourceStream($"Learnix.Infrastructure.Assets.{definition.ImageName}");
+            var assembly = typeof(CourseSeeder).Assembly;
+            using var stream = assembly.GetManifestResourceStream($"Learnix.DbMigrator.Assets.{definition.ImageName}");
             if (stream != null)
             {
                 await blobStorage.UploadAsync(coverPath, stream, "image/png", ct);
@@ -257,8 +257,8 @@ public sealed class CourseSeeder(
                         var videoPath = $"{blobOptions.Value.LessonVideoContainer}/{Guid.NewGuid()}-placeholder.mp4";
                         try
                         {
-                            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                            using var stream = assembly.GetManifestResourceStream("Learnix.Infrastructure.Assets.placeholder.mp4");
+                            var assembly = typeof(CourseSeeder).Assembly;
+                            using var stream = assembly.GetManifestResourceStream("Learnix.DbMigrator.Assets.placeholder.mp4");
                             if (stream != null)
                             {
                                 await blobStorage.UploadAsync(videoPath, stream, "video/mp4", ct);

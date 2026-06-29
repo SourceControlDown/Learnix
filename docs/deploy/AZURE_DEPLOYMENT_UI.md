@@ -18,7 +18,7 @@ Before deploying the API, apply EF migrations from your local machine using the 
 $env:ConnectionStrings__Postgres = "postgresql://postgres.yourprojectref:YourStrongPassword123!@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require&Trust Server Certificate=true"
 $env:ASPNETCORE_ENVIRONMENT = "Production"
 
-dotnet run --project Learnix.DbMigrator -- --seed-demo
+dotnet run --project Learnix.DbMigrator --no-launch-profile -- --seed-demo
 ```
 
 ---

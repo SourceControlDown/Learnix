@@ -113,7 +113,7 @@ cd Learnix.Backend
 
 # 1. Apply database migrations, initialize storage, and seed system data
 # Optional: Add --seed-demo to automatically generate fake courses and students
-dotnet run --project Learnix.DbMigrator -- --seed-demo
+dotnet run --project Learnix.DbMigrator --launch-profile Development -- --seed-demo
 
 # 2. Start the API (HTTP on port 5000, HTTPS on 5001)
 dotnet run --project Learnix.API
@@ -226,6 +226,23 @@ mongodb://learnix:learnix@localhost:27017/learnix?authSource=admin
 ```
 
 Paste it into the connection dialog in MongoDB Compass and click **Connect**.
+
+---
+
+### Azurite (Blob Storage)
+
+**GUI client (Azure Storage Explorer)**
+
+Azurite runs locally and acts as a fully compatible emulator for Azure Blob Storage. To inspect the containers and files (images, videos, etc.) uploaded during development:
+
+1. Download and install **[Azure Storage Explorer](https://azure.microsoft.com/en-us/products/storage/storage-explorer/)**.
+2. Open the app and open the **Connect** dialog (plug icon on the left sidebar).
+3. Select **Local storage emulator** and click Next.
+4. Give it a Display name (e.g. `Azurite Local`) and make sure the **Blobs port** is set to `10000`. Leave the rest as defaults and click Next -> Connect.
+5. In the left panel, expand **Local & Attached** -> **Storage Accounts** -> **(Emulator - Default Ports)** -> **Blob Containers**.
+6. You will see all containers created by the seeder (e.g., `avatars`, `course-covers`, etc.). You can double-click them to view, upload, or delete files.
+
+> **Note:** The blob containers are only created locally during the seeder execution if `environment.IsDevelopment()` is true. In production, containers are managed by Terraform.
 
 ---
 
