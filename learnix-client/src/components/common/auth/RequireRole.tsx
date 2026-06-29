@@ -7,6 +7,11 @@ interface Props {
     children: React.ReactNode;
 }
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-AUTH-001: Access Token Storage & Silent Refresh (isInitializing logic)
+ * - ADR-FRONT-AUTH-005: Role-Based Routing & Default Entry Points
+ */
 export function RequireRole({ roles, children }: Props) {
     const { user, isInitializing } = useAuthStore();
     const location = useLocation();

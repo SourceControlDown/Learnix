@@ -86,29 +86,30 @@ export enum LessonType {
 ## Styling & UI
 
 ### 1. Tailwind CSS
-- **100% Tailwind.** No SCSS or CSS Modules.
+- **100% Tailwind v3.** No SCSS or CSS Modules.
 - Use **semantic tokens** (e.g., `bg-primary`, `text-muted-foreground`) instead of hardcoded colors (e.g., `bg-blue-600`).
 - Always use the `cn()` utility (`@/utils/cn`) for concatenating conditional classes.
 - **Mobile-First:** Use base classes for mobile screens, then apply `md:` or `lg:` for larger screens.
 - **Auto-Sorting:** `prettier-plugin-tailwindcss` is used to automatically sort classes.
 - **Extraction:** If a `className` becomes too long (e.g., >5 repeating classes across multiple elements), extract the UI into a reusable component.
+- For rationale and theming decisions, see [decisions/UI.md](decisions/UI.md).
 
-### 2. Localization
-- **Zero hardcoded strings in JSX.** All user-facing text must be defined in `src/const/localization/<page>.ts` and rendered via `react-i18next`.
-
-### 3. Safe Markdown Rendering
-- **Forbidden:** Developers must not use `react-markdown` or `ReactMarkdown` directly in components. You must use our custom `MarkdownRenderer` wrapper.
-- **Why?** Our wrapper explicitly overrides the anchor `<a>` tag to block non-HTTP protocols (specifically `javascript:`), protecting against XSS attacks.
+### 2. Safe Markdown Rendering
+- **Forbidden:** Developers must not use `react-markdown` or `ReactMarkdown` directly in components. You must use our custom `MarkdownRenderer` wrapper (`@/components/common/MarkdownRenderer`).
+- For rationale (XSS protection), see [decisions/UI.md — ADR-FRONT-UI-002](decisions/UI.md).
 
 ## Code Quality & Tooling
 
+> For full rationale and alternatives, see [decisions/LINTING_FORMATTING.md](decisions/LINTING_FORMATTING.md).
+
 ### 1. Formatting (Prettier)
-- **Zero Configuration:** Prettier is the sole source of truth for formatting. We explicitly use `eslint-config-prettier` to disable any ESLint rules that might conflict with Prettier.
-- **Automated Import Sorting:** Imports are automatically sorted on save using `@trivago/prettier-plugin-sort-imports`. They are grouped compactly without separation lines in the following order: React, third-party libraries, absolute aliases (`@/`), and relative paths.
-- **Tailwind Class Sorting:** `prettier-plugin-tailwindcss` is used to enforce a consistent order for utility classes.
+- **Zero Configuration:** Prettier is the sole source of truth for formatting.
+- **Automated Import Sorting:** Imports are sorted on save via `@trivago/prettier-plugin-sort-imports` (React → third-party → absolute aliases (`@/`) → relative paths).
+- **Tailwind Class Sorting:** `prettier-plugin-tailwindcss` enforces a consistent utility class order.
 
 ### 2. Linting (ESLint Flat Config)
-- **Strict Typing:** `any` is strictly forbidden (`@typescript-eslint/no-explicit-any`). 
+- **Strict Typing:** `any` is strictly forbidden (`@typescript-eslint/no-explicit-any`).
+- **Unused Imports:** `eslint-plugin-unused-imports` enforces removal of unused imports. Unused variables are an error; prefix with `_` to intentionally ignore.
 - **React Strictness:** We use `eslint-plugin-react` and `eslint-plugin-react-hooks`. Never ignore `react-hooks/exhaustive-deps`. For state side-effects, prefer derived state during render over `useEffect` cascades.
 - **Tailwind Validation:** `eslint-plugin-tailwindcss` is utilized to catch invalid classes. Note that `tailwindcss/enforces-shorthand` is active and will auto-fix verbose dimensions (e.g., converting `h-4 w-4` into `size-4`).
 

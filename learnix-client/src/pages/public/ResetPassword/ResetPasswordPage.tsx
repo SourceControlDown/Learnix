@@ -20,6 +20,10 @@ const RESET_FIELD_MAP: Partial<Record<string, keyof ResetPasswordFormData>> = {
     confirmPassword: 'confirmPassword',
 };
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-AUTH-003: Token-Based Password Reset Flow
+ */
 export default function ResetPasswordPage() {
     const { t } = useTranslation('auth');
     const navigate = useNavigate();

@@ -17,6 +17,10 @@ const FORGOT_FIELD_MAP: Partial<Record<string, keyof ForgotPasswordFormData>> = 
     email: 'email',
 };
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-AUTH-003: Token-Based Password Reset Flow
+ */
 export default function ForgotPasswordPage() {
     const { t } = useTranslation('auth');
     const [isSuccess, setIsSuccess] = useState(false);

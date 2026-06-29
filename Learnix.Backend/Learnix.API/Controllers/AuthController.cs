@@ -16,8 +16,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace Learnix.API.Controllers;
 
-[ApiController]
-[Route("api/auth")]
 /// <remarks>
 /// Related ADRs:
 /// - ADR-BACK-AUTH-001: JWT (short-lived) + Refresh Token
@@ -26,6 +24,8 @@ namespace Learnix.API.Controllers;
 /// - ADR-BACK-AUTH-012: Rate limiting — in-memory FixedWindow per IP
 /// - ADR-BACK-AUTH-014: Email confirmation soft restriction (Authorize policy)
 /// </remarks>
+[ApiController]
+[Route("api/auth")]
 public sealed class AuthController(ISender sender, IHostEnvironment environment) : ControllerBase
 {
     private const string RefreshCookieName = "learnix_refresh";

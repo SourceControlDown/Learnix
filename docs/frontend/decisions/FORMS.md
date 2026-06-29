@@ -30,6 +30,9 @@ Error handling follows three distinct levels:
 2. **Business Level (Toasts):** Global `onError` handlers in React Query catch standard business errors and display a user-friendly toast via `sonner` using `getErrorMessage`.
 3. **Application Level (Error Boundaries):** Unhandled JS crashes are caught by a root-level `<ErrorBoundary>` to prevent blank screens.
 
+**`suppressGlobalError` Escape Hatch:**
+Mutations that handle their own errors inline (e.g., mapping server validation to form fields) can opt out of the global toast handler by setting `meta.suppressGlobalError = true` on the mutation options. The global handler in `QueryClient` checks this flag before showing a toast.
+
 **Status Code Mapping to UI:**
 
 | HTTP Status | What it is | Where it is shown |

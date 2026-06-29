@@ -57,6 +57,10 @@ export function AdminLayout() {
         { to: APP_ROUTES.admin.categories, label: t('navCategories'), icon: <Tag size={16} /> },
     ];
 
+    /**
+     * Related ADRs:
+     * - ADR-FRONT-AUTH-004: Explicit Logout & State Clearing
+     */
     function handleSignOut() {
         authApi.logout().catch(() => {});
         logout();

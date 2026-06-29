@@ -45,6 +45,10 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    /**
+     * Related ADRs:
+     * - ADR-FRONT-AUTH-004: Explicit Logout & State Clearing
+     */
     function handleSignOut() {
         authApi.logout().catch(() => {});
         logout();

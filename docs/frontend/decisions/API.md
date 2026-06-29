@@ -7,6 +7,7 @@
 - Request interceptor attaches the in-memory JWT from Zustand.
 - Response interceptor catches `401 Unauthorized` responses. It performs a silent refresh using the HttpOnly refresh cookie.
 - **Concurrent 401 Queue:** If multiple requests fail with 401 simultaneously, they are queued. Only *one* refresh request is sent to the backend. After it succeeds, the queued requests are retried.
+- If the refresh itself fails, the user is logged out and redirected to `/login`.
 
 **Why:**
 - The 401 queue is critical to prevent race conditions (e.g., 5 failing requests causing 5 simultaneous refresh calls).
@@ -22,24 +23,39 @@
 **Decision:**
 We strictly separate Server State from Client State:
 - **TanStack Query** manages all Server State (courses, users, enrollments, etc.). API data is *never* stored in Zustand.
-- **Zustand** manages global Client State (auth tokens, user summary, theme, and global UI state like sidebar open/close).
+- **Zustand** manages global Client State. The five stores are:
+
+| Store | File | Persisted | Purpose |
+|-------|------|-----------|---------|
+| Auth | `auth.store.ts` | ❌ (in-memory) | Access token, user summary, `isInitializing` flag |
+| Theme | `theme.store.ts` | ✅ `localStorage` | Light/dark mode; applies `.dark` class on `<html>` |
+| Locale | `locale.store.ts` | ✅ `localStorage` | Active language (`en` / `uk`) |
+| UI | `ui.store.ts` | ❌ | AI chat widget open/close state (`isChatOpen`) |
+| Player | `player.store.ts` | ✅ `localStorage` | Video autoplay preference in the course player |
+
 - **useState / react-hook-form** manages local component/form state.
 
 **Why:**
 - React Query handles caching, refetching, and stale-while-revalidate out of the box. Duplicating this in Zustand leads to stale data bugs.
-- Zustand is perfect for auth state because it can be accessed outside of React components (e.g., inside Axios interceptors).
+- Zustand is perfect for auth state because it can be accessed outside of React components (e.g., inside Axios interceptors via `useAuthStore.getState()`).
 
 ---
 
-## ADR-FRONT-API-003: React Query Structure
+## ADR-FRONT-API-003: React Query Structure & Defaults
 
 **Decision:**
 - Query keys are defined hierarchically in `src/api/queryKeys.ts` (e.g., `queryKeys.courses.lists()`, `queryKeys.courses.detail(id)`).
-- Default stale time is 60 seconds.
+- The global `QueryClient` is configured in `main.tsx` with the following defaults:
+  - `staleTime: 60s` — data is considered fresh for 1 minute.
+  - `gcTime: 5min` — unused cache entries are garbage-collected after 5 minutes.
+  - `retry: 1` — failed requests are retried once before surfacing an error.
+  - `refetchOnWindowFocus: false` — prevents aggressive re-fetching when the user switches browser tabs.
+- **Global mutation error handler:** By default, all failed mutations show a toast via `sonner`. Individual mutations can opt out by setting `mutation.meta.suppressGlobalError = true`.
 
 **Why:**
 - Hierarchical keys allow invalidating entire groups of queries at once (e.g., invalidating all course lists regardless of filter parameters).
 - 60s stale time is a good compromise for an LMS to prevent aggressive over-fetching while keeping data reasonably fresh.
+- The `suppressGlobalError` escape hatch is essential for mutations that handle their own errors inline (e.g., form validation flows where errors are mapped to fields, not toasts).
 
 ---
 
@@ -50,7 +66,7 @@ Realtime features (Chat, Notifications, Achievements) use **SignalR** over WebSo
 
 **Code Fragment (useChatHub.ts):**
 ```ts
-// src/hooks/useChatHub.ts
+// src/hooks/realtime/useChatHub.ts
 import { useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import { useQueryClient } from '@tanstack/react-query';
@@ -113,9 +129,21 @@ export function useChatHub() {
 **Decision:**
 - Environment variables are defined in `.env` (development) and `.env.production` (production).
 - We use a centralized utility `src/utils/env.ts` to expose environment variables to the rest of the application.
-- Validation is done manually at startup inside `env.ts` by throwing an error if critical variables (like `VITE_API_URL`) are missing.
+- Critical variables (like `VITE_API_URL`) are validated at startup by throwing an error if missing:
+
+```ts
+// src/utils/env.ts
+const apiUrl = import.meta.env.VITE_API_URL;
+if (!apiUrl) throw new Error('Missing env variable: VITE_API_URL');
+
+export const env = {
+    API_URL: apiUrl,
+    HUB_URL: apiUrl.replace(/\/api\/?$/, ''),
+} as const;
+```
+
+**Note:** `HUB_URL` is derived automatically from `VITE_API_URL` by stripping the `/api` suffix, so SignalR hubs don't need a separate env variable.
 
 **Why:**
 - Centralizing env access in `env.ts` prevents scattering `import.meta.env` calls throughout the codebase, making it easier to mock in tests or change prefixes later.
-- Manual validation with standard JS `throw new Error()` is lightweight and sufficient for our needs, avoiding the necessity of adding `zod` schema parsing strictly for environment variables.
-
+- Runtime validation with `throw new Error()` catches misconfigured deployments immediately at app startup instead of silently failing on the first API call.

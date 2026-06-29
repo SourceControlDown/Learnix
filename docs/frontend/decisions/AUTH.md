@@ -84,3 +84,53 @@ The frontend receives the `id_token` from Google via the `GoogleLogin` component
 - The `/verify-email` route acts as an active verification gateway rather than a passive link receiver.
 - The `authApi.verifyEmail` payload expects `{ email, token }` and now returns a `LoginResponse` (AccessToken, Expiration, AvatarUrl).
 - The `RegisterPage` no longer handles inline success rendering, relying entirely on the dedicated verification page.
+
+---
+
+## ADR-FRONT-AUTH-003: Token-Based Password Reset Flow
+
+**Decision:**
+Unlike the Email Verification process (which utilizes a 6-digit OTP), the Password Reset flow relies on a standard URL query string (`?email=...&token=...`) embedded in the recovery email.
+
+**Why:**
+- Password resets often happen across different devices or out of active session context (e.g., requested on desktop, email opened on mobile). A standard link is more universally reliable in these scenarios than requiring the user to manually type an OTP on a secondary device.
+- It is an established industry standard for password recovery, creating less friction for users in distress.
+
+**Consequences:**
+- The `ResetPasswordPage` must parse `useSearchParams` to extract the `email` and `token` prior to rendering the new password form.
+- The UX divergence from registration (OTP vs URL) is intentional.
+
+---
+
+## ADR-FRONT-AUTH-004: Explicit Logout & State Clearing
+
+**Decision:**
+Manual logout operations (e.g., clicking "Sign Out" in the Header) must perform a strict 4-step sequence:
+1. `authApi.logout()`: Calls the backend to invalidate and clear the HttpOnly refresh cookie.
+2. `useAuthStore().logout()`: Clears the in-memory access token and user profile from Zustand.
+3. `queryClient.clear()`: Purges all cached server state from TanStack Query.
+4. `navigate(APP_ROUTES.public.login)`: Redirects the user to the login screen.
+
+**Why:**
+- Without `queryClient.clear()`, sensitive data fetched by the previous user would remain in the React Query cache, creating a severe data leak vulnerability if another user logs in on the same device.
+- The dual-logout approach (Zustand + Backend) guarantees that even if the backend call fails, the client is still forcefully logged out locally.
+
+**Consequences:**
+- Any new component implementing a "Sign Out" button must strictly adhere to this sequence.
+
+---
+
+## ADR-FRONT-AUTH-005: Role-Based Routing & Default Entry Points
+
+**Decision:**
+Routing logic for authenticated users is strictly role-dependent:
+- **Navigation Guard:** The `RequireRole` component intercepts protected routes, validating that the user's role array intersects with the required roles. If unauthorized, they are redirected to their default home.
+- **Default Entry Points:** The `getRoleHome` utility dynamically calculates the fallback URL upon login or unauthorized access (Admin → `/admin`, Instructor → `/instructor`, Student → `/courses`).
+
+**Why:**
+- Centralizing the fallback logic inside `getRoleHome` prevents hardcoded redirects across different auth components (Login, Registration, Google Auth, etc.).
+- The `RequireRole` wrapper provides a declarative way to restrict layout trees at the React Router level without scattering role-checking logic inside individual page components.
+
+**Consequences:**
+- All auth handlers must use `getRoleHome(user.roles)` rather than a static redirect when `location.state.from` is missing.
+

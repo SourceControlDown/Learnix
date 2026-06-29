@@ -56,7 +56,7 @@ src/
 │   │   ├── CourseEditor/         # Full course builder (lessons, tests, questions)
 │   │   ├── Dashboard/            # Instructor stats
 │   │   ├── Earnings/             # Revenue tracking
-│   │   ├── Messages/             # Chat with students
+│   │   ├── Messages/             # Shares the student/Messages/ page (same route: /messages)
 │   │   └── MyCourses/            # List of created courses
 │   │
 │   ├── public/                   # Publicly accessible routes (No auth required)
@@ -64,8 +64,10 @@ src/
 │   │   ├── CourseCatalog/        # Browsing all courses
 │   │   ├── CourseDetail/         # Single course view
 │   │   ├── Faq/                  # Frequently asked questions
+│   │   ├── InstructorProfile/    # Public instructor profile page
 │   │   ├── Landing/              # Home page
 │   │   ├── Login, Register, ForgotPassword, ResetPassword, VerifyEmail # Auth flows
+│   │   ├── NotFound/             # 404 error page
 │   │   └── VerifyCertificate/    # Public certificate verification
 │   │
 │   └── student/                  # Role: Student

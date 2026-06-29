@@ -50,6 +50,10 @@ function PasswordRule({ met, label }: PasswordRuleProps) {
     );
 }
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-AUTH-002: OTP-Based Email Verification & Auto-Login
+ */
 export default function RegisterPage() {
     const { t } = useTranslation('auth');
     const navigate = useNavigate();

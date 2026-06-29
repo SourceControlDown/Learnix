@@ -11,6 +11,10 @@ import { cn } from '@/utils/cn';
 import { getRoleHome } from '@/utils/getRoleHome';
 import { parseAccessToken } from '@/utils/parseAccessToken';
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-AUTH-002: OTP-Based Email Verification & Auto-Login
+ */
 export default function VerifyEmailPage() {
     const { t } = useTranslation('auth');
     const navigate = useNavigate();

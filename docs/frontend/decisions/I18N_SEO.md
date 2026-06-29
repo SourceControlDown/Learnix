@@ -59,3 +59,19 @@ Basic SEO optimization is implemented via `react-helmet-async` in a client-side 
 - When adding a new public page, add `<Helmet>` with `<title>` and `<meta name="description">` to the component; add `seo.title` / `seo.description` keys to the respective i18n namespace.
 - When adding a new private page or layout, add `<meta name="robots" content="noindex,nofollow">` to the layout component.
 - `robots.txt` must be updated manually when introducing new private route paths.
+
+---
+
+## ADR-FRONT-INTL-003: Zod Validation Localization
+
+**Decision:**
+Validation error messages are localized using `zod-i18n-map` integrated with `i18next`. The global error map is configured once during app initialization, allowing Zod schemas to be completely free of translation logic.
+
+**Why:**
+- Separation of concerns: Schemas describe the shape of the data, not the UI presentation or languages.
+- Prevents schema files from becoming bloated with boilerplate `t()` calls.
+- Easy to manage standard validation messages (e.g., "Required field", "Invalid email") across the entire app.
+
+**Alternatives:**
+- *Inline translations*: `z.string({ message: t('validation.required') })`. Discarded because it tightly couples validation logic to the React lifecycle (requiring hooks) and heavily clutters the schema definitions.
+- *React Hook Form Resolver mapping*: Catching errors at the `hookform/resolvers/zod` layer and translating them there. Discarded because `zod-i18n-map` solves this natively at the Zod core level.

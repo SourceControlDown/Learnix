@@ -86,13 +86,31 @@ export function RequireRole({ roles, children }: Props) {
 **Decision:**
 We standardize on the following core tooling stack:
 - **Package Manager:** `npm` (ships with Node LTS).
-- **Bundler:** Vite.
+- **Bundler:** Vite 8.
 - **Code Quality:** ESLint + Prettier + Husky + lint-staged (with `prettier-plugin-tailwindcss` for auto-sorting).
 - **Icons:** `lucide-react` (bundled with shadcn).
-- **Dates:** `date-fns` (tree-shakable).
 - **File Uploads:** Direct to Azure Blob Storage via presigned SAS URLs.
 
 **Why:**
 - Ensures consistent developer experience and eliminates "which library to use" debates.
 - `npm` avoids cross-platform workspace issues that sometimes plague `pnpm` on Windows.
 - Direct uploads to Azure bypass the backend, saving server memory and bandwidth for large video uploads.
+
+---
+
+## ADR-FRONT-ARCH-005: Centralized Route Dictionary (APP_ROUTES)
+
+**Decision:**
+All routing paths in `<Link>` components, `useNavigate`, and `Route` definitions must use the centralized `APP_ROUTES` dictionary from `src/routes/paths.ts` instead of hardcoded strings. Dynamic routes use factory functions (e.g., `APP_ROUTES.public.courseDetail(courseId)`).
+
+**Shared Messaging Route:**
+Both student and instructor roles use the same `APP_ROUTES.student.messages` path (`/messages`). There is a single `Messages` page that is shared across roles — the UI adapts based on the authenticated user's role.
+
+**Why:**
+- Prevents broken links when a URL structure changes, as we only need to update the dictionary.
+- Provides TypeScript autocomplete for all available application routes.
+- Factory functions ensure the correct parameters are passed for dynamic paths.
+
+**Alternatives:**
+- *Template-only dictionary with `generatePath`*: We considered keeping only the path templates (e.g., `/courses/:id`) in the dictionary and using `generatePath('/courses/:id', { id })` from React Router everywhere. Discarded because `generatePath` lacks strict type safety for the parameter names (depending on the router version setup), and factory functions are more explicit and ergonomic.
+- *Third-party routing libraries (`typesafe-routes` or `path-to-regexp`)*: Overkill and adds unnecessary bundle size for our needs.

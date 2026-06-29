@@ -1,22 +1,17 @@
 using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Application.Common.Events;
-using Learnix.Application.Common.Settings;
 using Learnix.Application.Users.Abstractions;
 using Learnix.Application.Users.Specifications;
 using Learnix.Domain.Events;
 using MediatR;
-using Microsoft.Extensions.Options;
 
 namespace Learnix.Application.Auth.EventHandlers;
 
 internal sealed class UserRegisteredDomainEventHandler(
     IEmailSender emailSender,
-    IUserRepository userRepository,
-    IOptions<AppSettings> appSettings)
+    IUserRepository userRepository)
     : INotificationHandler<DomainEventNotification<UserRegisteredDomainEvent>>
 {
-    private readonly AppSettings _appSettings = appSettings.Value;
-
     public async Task Handle(DomainEventNotification<UserRegisteredDomainEvent> notification, CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;

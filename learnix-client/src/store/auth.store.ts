@@ -19,6 +19,10 @@ interface AuthState {
     finishInitialization: () => void;
 }
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-AUTH-001: Access Token Storage & Silent Refresh
+ */
 export const useAuthStore = create<AuthState>((set) => ({
     accessToken: null,
     user: null,

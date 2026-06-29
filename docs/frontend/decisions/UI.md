@@ -7,24 +7,25 @@
 ## ADR-FRONT-UI-001: Tailwind CSS and shadcn/ui
 
 **Decision:**
-- We exclusively use **Tailwind CSS** for all styling. No SCSS or CSS Modules.
+- We exclusively use **Tailwind CSS v3** for all styling. No SCSS or CSS Modules.
 - Component primitives are generated via **shadcn/ui** and live in `src/components/ui/`. They work out-of-the-box because they are built on Tailwind.
-- **Design Tokens:** Static values (spacing, breakpoints, font sizes) are in `tailwind.config.ts`. Colors use CSS variables in `src/index.css` to easily support the dark theme.
-- **Theming:** Dark mode is controlled via a `.dark` class on the root `<html>` element. The state is managed globally using Zustand and persisted to `localStorage` via the `persist` middleware. The `onRehydrateStorage` hook guarantees the class is applied immediately on load.
-- Conditional class merging is handled by `clsx` and `tailwind-merge` via our `cn()` utility function.
-
-
+- **Design Tokens:** Static values (spacing, breakpoints, font sizes) are in `tailwind.config.ts`. Colors use CSS variables in `src/styles/index.css` to easily support the dark theme.
+- **Theming:** Dark mode is controlled via a `.dark` class on the root `<html>` element. The state is managed globally using Zustand (`theme.store.ts`) and persisted to `localStorage` via the `persist` middleware. The `onRehydrateStorage` hook guarantees the class is applied immediately on load, preventing a flash of wrong theme.
+- Conditional class merging is handled by `clsx` and `tailwind-merge` via our `cn()` utility function (`src/utils/cn.ts`).
+- **Font Stack:** `DM Sans` (body text) and `Plus Jakarta Sans` (headings) are self-hosted via `@fontsource` packages. No Google Fonts CDN calls — fonts are bundled with the app for privacy and performance.
 
 **Why:**
 - Keeps developers in a single mental context (Tailwind everywhere), significantly speeding up delivery.
 - shadcn/ui provides highly accessible, copy-pasteable components without lock-in.
 - Using HSL CSS variables allows Tailwind's opacity modifiers (e.g., `bg-primary/50`) to work seamlessly.
-- Dark mode is supported from the very start.
+- Dark mode and multi-language support are supported from the very start.
+- Self-hosted fonts via `@fontsource` eliminate external requests and GDPR concerns.
 
 **Alternatives:**
 - SCSS Modules + shadcn hybrid: Discarded because it creates two mental contexts and requires complex Tailwind config setup for custom tokens.
 - SCSS Modules without shadcn: Discarded because building fully accessible primitives from scratch would take weeks.
 - CSS-in-JS (styled-components, Emotion): Discarded due to runtime overhead and incompatibility with modern SSR patterns (if we migrate later).
+- Google Fonts CDN: Discarded in favor of `@fontsource` to avoid external network dependency and improve load reliability.
 
 ---
 
@@ -68,3 +69,4 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
 **Consequences:**
 - When adding a new component with markdown content, import `MarkdownRenderer` and pass `className` for custom typography (prose) classes.
 - Links starting with `javascript:`, `data:`, or relative URLs will render as plain text without being clickable.
+- **Forbidden:** Developers must not use `react-markdown` or `ReactMarkdown` directly. Always use `MarkdownRenderer`.

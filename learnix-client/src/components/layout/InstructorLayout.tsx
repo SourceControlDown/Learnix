@@ -81,6 +81,10 @@ export function InstructorLayout() {
         },
     ];
 
+    /**
+     * Related ADRs:
+     * - ADR-FRONT-AUTH-004: Explicit Logout & State Clearing
+     */
     function handleSignOut() {
         authApi.logout().catch(() => {});
         logout();

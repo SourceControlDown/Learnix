@@ -8,6 +8,10 @@ type AuthInitializerProps = {
     children: React.ReactNode;
 };
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-AUTH-001: Access Token Storage & Silent Refresh
+ */
 export function AuthInitializer({ children }: AuthInitializerProps) {
     const setAccessToken = useAuthStore((s) => s.setAccessToken);
     const setUser = useAuthStore((s) => s.setUser);
