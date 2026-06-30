@@ -37,16 +37,22 @@ public sealed class DeleteReviewCommandHandler(
         if (review.StudentId != currentUser.UserId.Value && !isAdmin)
             return Result.Fail(new ForbiddenError(ReviewMessages.CanOnlyDeleteOwnReviews));
 
-        var deletedRating = review.Rating;
-        await reviewRepository.DeleteAsync(review, cancellationToken);
-
         var course = await courseRepository.FirstOrDefaultAsync(
             new CourseByIdSpecification(request.CourseId, forUpdate: true), cancellationToken);
 
         if (course is not null)
-            course.RemoveRating(deletedRating);
+        {
+            await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                await reviewRepository.DeleteAsync(review, cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+                var metrics = await reviewRepository.GetCourseRatingMetricsAsync(request.CourseId, cancellationToken);
+                course.SyncRating(metrics.Count, metrics.Average);
+
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+            }, cancellationToken);
+        }
 
         await cache.RemoveAsync(CacheKeys.Course(request.CourseId), cancellationToken);
 

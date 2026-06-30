@@ -35,16 +35,22 @@ public sealed class UpdateReviewCommandHandler(
         if (review.StudentId != currentUser.UserId.Value)
             return Result.Fail(new ForbiddenError(ReviewMessages.CanOnlyEditOwnReviews));
 
-        var oldRating = review.Rating;
-        review.Update(request.Rating, request.Comment);
-
         var course = await courseRepository.FirstOrDefaultAsync(
             new CourseByIdSpecification(request.CourseId, forUpdate: true), cancellationToken);
 
         if (course is not null)
-            course.UpdateRating(oldRating, request.Rating);
+        {
+            await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                review.Update(request.Rating, request.Comment);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+                var metrics = await reviewRepository.GetCourseRatingMetricsAsync(request.CourseId, cancellationToken);
+                course.SyncRating(metrics.Count, metrics.Average);
+
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+            }, cancellationToken);
+        }
 
         await cache.RemoveAsync(CacheKeys.Course(request.CourseId), cancellationToken);
 

@@ -68,11 +68,8 @@ export function CourseCard({ course, className }: CourseCardProps) {
                         />
                     )}
                     {course.badge === 'bestseller' && (
-                        <Badge
-                            variant="secondary"
-                            className="absolute left-3 top-3 bg-card/90 backdrop-blur"
-                        >
-                            ⭐ Bestseller
+                        <Badge className="absolute left-3 top-3 border-0 bg-yellow-400 font-bold text-yellow-950 shadow-sm hover:bg-yellow-500">
+                            Bestseller
                         </Badge>
                     )}
                     {course.badge === 'new' && <Badge className="absolute left-3 top-3">NEW</Badge>}

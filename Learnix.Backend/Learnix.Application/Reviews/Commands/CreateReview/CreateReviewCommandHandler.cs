@@ -56,11 +56,17 @@ public sealed class CreateReviewCommandHandler(
             return Result.Fail(new ConflictError(ReviewMessages.AlreadyReviewed));
 
         var review = CourseReview.Create(request.CourseId, studentId, request.Rating, request.Comment);
-        await reviewRepository.AddAsync(review, cancellationToken);
 
-        course.AddRating(request.Rating);
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await reviewRepository.AddAsync(review, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+            var metrics = await reviewRepository.GetCourseRatingMetricsAsync(request.CourseId, cancellationToken);
+            course.SyncRating(metrics.Count, metrics.Average);
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }, cancellationToken);
 
         await cache.RemoveAsync(CacheKeys.Course(request.CourseId), cancellationToken);
 

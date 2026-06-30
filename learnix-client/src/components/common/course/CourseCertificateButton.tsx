@@ -53,7 +53,7 @@ export function CourseCertificateButton({
     const handleGenerate = async () => {
         try {
             const url = await generateMutation.mutateAsync(courseId);
-            window.location.href = url;
+            window.open(url, '_blank', 'noopener,noreferrer');
         } catch (error) {
             console.error('Failed to generate certificate:', error);
         }
@@ -64,6 +64,8 @@ export function CourseCertificateButton({
             <div className="flex items-center gap-2">
                 <a
                     href={certificate.downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={cn(baseStyles, variants[variant], 'px-4 py-2', className)}
                 >
                     <Award className="size-4 shrink-0" />

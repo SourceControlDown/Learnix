@@ -19,6 +19,9 @@ export function useSubmitTestAttempt(courseId: string, lessonId: string) {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.progress.course(courseId),
             });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.certificates.mine(),
+            });
         },
     });
 }
