@@ -53,50 +53,71 @@ public sealed class StudentSeeder(
         if (student is null)
             return;
 
-        for (int i = 1; i <= 9; i++)
+        for (int i = 1; i <= 15; i++)
         {
             var dummyEmail = $"learnix-student-dev-{i}@learnix.dev";
             await EnsureStudentAsync(userManager, dummyEmail, password);
         }
 
-        var courseIds = await db.Courses.Select(c => c.Id).ToListAsync(cancellationToken);
-        if (courseIds.Count > 0)
+        var courses = await db.Courses.ToListAsync(cancellationToken);
+        if (courses.Count > 0)
         {
             var random = new Random();
-            for (int i = 1; i <= 9; i++)
+            var dummyStudents = new List<User>();
+
+            for (int i = 1; i <= 15; i++)
             {
                 var dummyEmail = $"learnix-student-dev-{i}@learnix.dev";
                 var dummyUser = await userManager.FindByEmailAsync(dummyEmail);
-                if (dummyUser is null) continue;
+                if (dummyUser is not null) dummyStudents.Add(dummyUser);
+            }
 
-                int numEnrollments = random.Next(1, Math.Min(5, courseIds.Count + 1));
-                var selectedCourseIds = courseIds.OrderBy(x => random.Next()).Take(numEnrollments).ToList();
+            foreach (var course in courses)
+            {
+                int numReviews = random.Next(4, 9); // 4 to 8 reviews
+                var selectedStudents = dummyStudents.OrderBy(x => random.Next()).Take(numReviews).ToList();
 
-                foreach (var cid in selectedCourseIds)
+                foreach (var dummyUser in selectedStudents)
                 {
-                    var exists = await db.Set<Enrollment>().AnyAsync(e => e.CourseId == cid && e.StudentId == dummyUser.Id, cancellationToken);
+                    var exists = await db.Set<Enrollment>().AnyAsync(e => e.CourseId == course.Id && e.StudentId == dummyUser.Id, cancellationToken);
                     if (!exists)
                     {
-                        var enrollment = Enrollment.Create(cid, dummyUser.Id, 0m);
+                        var enrollment = Enrollment.Create(course.Id, dummyUser.Id, 0m);
                         db.Set<Enrollment>().Add(enrollment);
 
-                        if (random.NextDouble() > 0.5)
+                        var reviewExists = await db.Set<CourseReview>().AnyAsync(r => r.CourseId == course.Id && r.StudentId == dummyUser.Id, cancellationToken);
+                        if (!reviewExists)
                         {
-                            var reviewExists = await db.Set<CourseReview>().AnyAsync(r => r.CourseId == cid && r.StudentId == dummyUser.Id, cancellationToken);
-                            if (!reviewExists)
-                            {
-                                int rating = random.Next(3, 6);
-                                string[] reviews = [
-                                    "Great course!",
-                                    "I really enjoyed this course. The materials were very clear and well organized.",
-                                    "This course completely exceeded my expectations. The instructor explained the complex topics in a very easy-to-understand manner, and the practical exercises were extremely helpful for solidifying my knowledge. Highly recommended to anyone looking to master this subject!"
-                                ];
-                                string comment = reviews[random.Next(reviews.Length)];
-                                var review = CourseReview.Create(cid, dummyUser.Id, rating, comment);
-                                db.Set<CourseReview>().Add(review);
-                            }
+                            int rating = random.Next(3, 6); // 3, 4 or 5
+                            string[] reviews = [
+                                "Great course!",
+                                "I really enjoyed this course. The materials were very clear and well organized.",
+                                "This course completely exceeded my expectations. The instructor explained the complex topics in a very easy-to-understand manner, and the practical exercises were extremely helpful for solidifying my knowledge. Highly recommended to anyone looking to master this subject!",
+                                "Very informative and engaging. Would recommend.",
+                                "Good content but could be a bit slower in pace.",
+                                "Excellent structure and practical examples."
+                            ];
+                            string comment = reviews[random.Next(reviews.Length)];
+                            var review = CourseReview.Create(course.Id, dummyUser.Id, rating, comment);
+                            db.Set<CourseReview>().Add(review);
                         }
                     }
+                }
+            }
+            await db.SaveChangesAsync(cancellationToken);
+
+            // Re-sync ratings from DB for accuracy
+            foreach (var course in courses)
+            {
+                var stats = await db.Set<CourseReview>()
+                    .Where(r => r.CourseId == course.Id)
+                    .GroupBy(r => r.CourseId)
+                    .Select(g => new { Count = g.Count(), Average = g.Average(r => (decimal)r.Rating) })
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (stats != null)
+                {
+                    course.SyncRating(stats.Count, Math.Round(stats.Average, 2));
                 }
             }
             await db.SaveChangesAsync(cancellationToken);

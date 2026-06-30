@@ -113,6 +113,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseMiddleware<LogEnrichmentMiddleware>();
 app.UseSerilogRequestLogging();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();

@@ -66,6 +66,7 @@ docker push yourusername/learnix-api:latest
     - `Mongo__ConnectionString` = `<YOUR_COSMOS_CONN_STRING>`
     - `Mongo__DatabaseName` = `learnix`
     - `Jwt__Secret` = `<YOUR_64_CHAR_SECRET>`
+    - `Jwt__RefreshTokenSecret` = `<YOUR_ANOTHER_64_CHAR_SECRET_PEPPER>`
     - `Jwt__Issuer` = `Learnix`
     - `Jwt__Audience` = `LearnixClient`
     - `Smtp__Host`, `Smtp__Username`, `Smtp__Password` (from SendGrid)

@@ -286,6 +286,7 @@ az containerapp create `
     "Mongo__ConnectionString=<COSMOS_CONN_STRING>" `
     "Mongo__DatabaseName=learnix" `
     "Jwt__Secret=<YOUR_64_CHAR_SECRET>" `
+    "Jwt__RefreshTokenSecret=<YOUR_ANOTHER_64_CHAR_SECRET_PEPPER>" `
     "Jwt__Issuer=Learnix" `
     "Jwt__Audience=LearnixClient" `
     "Smtp__Host=smtp.sendgrid.net" `
@@ -416,6 +417,7 @@ Generate a JWT secret:
 | `ConnectionStrings__AzureBlobStorage` | Step 6 — `az storage account show-connection-string` |
 | `Mongo__ConnectionString` | Step 4 — `az cosmosdb keys list` |
 | `Jwt__Secret` | Generate with PowerShell above |
+| `Jwt__RefreshTokenSecret` | Generate with PowerShell above (use a new one) |
 | `Smtp__Password` | SendGrid → Settings → API Keys → Create |
 | `Google__ClientId/Secret` | Google Cloud Console → Credentials |
 | `Gemini__ApiKey` | aistudio.google.com |

@@ -159,6 +159,12 @@ internal sealed class OutboxProcessorService(
                     await emailSender.SendUserUnbannedAsync(payload.ToEmail, payload.FirstName, payload.Language, ct);
                     break;
                 }
+            case OutboxMessageTypes.PasswordResetEmail:
+                {
+                    var payload = JsonSerializer.Deserialize<SendPasswordResetEmailPayload>(message.Payload)!;
+                    await emailSender.SendPasswordResetAsync(payload.ToEmail, payload.FirstName, payload.ResetLink, payload.Language, ct);
+                    break;
+                }
             case OutboxMessageTypes.UserRoleChangedEmail:
                 {
                     var payload = JsonSerializer.Deserialize<SendUserRoleChangedEmailPayload>(message.Payload)!;

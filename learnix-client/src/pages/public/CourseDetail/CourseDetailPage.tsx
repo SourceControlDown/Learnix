@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Clock, Star, Tag, Users } from 'lucide-react';
 import { QueryError } from '@/components/common/system/QueryError';
+import { Pagination } from '@/components/common/ui/Pagination';
 import { useCourseDetail } from '@/hooks/course/useCourseDetail';
 import { useCourseReviews } from '@/hooks/student/useCourseReviews';
 import { useEnroll } from '@/hooks/student/useEnroll';
@@ -28,7 +30,12 @@ export default function CourseDetailPage() {
         isError: courseError,
         refetch: refetchCourse,
     } = useCourseDetail(courseId!);
-    const { data: reviewsData } = useCourseReviews(courseId!);
+
+    const [page, setPage] = useState(1);
+    const take = 5; // Show 5 reviews per page
+    const skip = (page - 1) * take;
+
+    const { data: reviewsData } = useCourseReviews(courseId!, skip, take);
     const { data: myReview } = useMyReview(courseId!);
     const { data: enrollmentsData } = useMyEnrollments();
     const enroll = useEnroll();
@@ -183,6 +190,18 @@ export default function CourseDetailPage() {
                             averageRating={course.averageRating}
                             totalCount={course.reviewsCount}
                         />
+
+                        {/* Pagination for reviews */}
+                        {reviewsData && reviewsData.totalCount > take && (
+                            <Pagination
+                                className="mt-8"
+                                page={page}
+                                totalPages={Math.ceil(reviewsData.totalCount / take)}
+                                onChange={setPage}
+                                prevLabel={t('reviews.prev', 'Previous')}
+                                nextLabel={t('reviews.next', 'Next')}
+                            />
+                        )}
 
                         {/* Review form */}
                         {user && !isOwnCourse && isEnrolled && (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User } from 'lucide-react';
 import { RatingStars } from '@/components/common/ui/RatingStars';
@@ -18,12 +18,20 @@ type ReviewItemProps = {
 function ReviewItem({ review }: ReviewItemProps) {
     const { t } = useTranslation('courseDetail');
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpandable, setIsExpandable] = useState(false);
+    const textRef = useRef<HTMLParagraphElement>(null);
 
-    // Heuristic for showing the 'Read more' toggle:
-    // If the text has more than 250 characters or more than 4 newlines
-    const isLong =
-        review.comment &&
-        (review.comment.length > 250 || (review.comment.match(/\n/g) || []).length > 4);
+    useEffect(() => {
+        const checkTruncation = () => {
+            if (textRef.current && !isExpanded) {
+                setIsExpandable(textRef.current.scrollHeight > textRef.current.clientHeight);
+            }
+        };
+
+        checkTruncation();
+        window.addEventListener('resize', checkTruncation);
+        return () => window.removeEventListener('resize', checkTruncation);
+    }, [review.comment, isExpanded]);
 
     return (
         <div className="rounded-xl border border-border bg-card p-5">
@@ -59,6 +67,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                     {review.comment && (
                         <div className="mt-2">
                             <p
+                                ref={textRef}
                                 className={cn(
                                     'whitespace-pre-wrap break-words text-sm text-foreground',
                                     !isExpanded && 'line-clamp-6',
@@ -66,7 +75,7 @@ function ReviewItem({ review }: ReviewItemProps) {
                             >
                                 {review.comment}
                             </p>
-                            {isLong && (
+                            {isExpandable && (
                                 <button
                                     onClick={() => setIsExpanded(!isExpanded)}
                                     className="mt-1 text-sm font-medium text-primary hover:underline"

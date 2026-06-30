@@ -39,7 +39,7 @@ Learnix is a comprehensive platform where students can browse and purchase cours
 - **Transactional Outbox Pattern** — Async messaging via PostgreSQL LISTEN/NOTIFY
 - **ASP.NET Identity + JWT** — Auth with refresh token rotation
 - **FluentValidation & FluentResults** — Pipeline behavior without exceptions for business logic
-- **Serilog + Azure Application Insights** — Structured logging and telemetry
+- **Serilog + Seq (local) + Azure Application Insights** — Structured JSON logging with CorrelationId tracing
 - **AI Integrations** — Anthropic Claude API & Google Gemini API
 - **Document & Email Generation** — QuestPDF (certificates) and MailKit (SMTP)
 - **Azure Blob Storage** — File uploads (videos, images) via Azure SDK

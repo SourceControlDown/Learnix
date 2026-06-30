@@ -52,6 +52,7 @@ internal sealed class CertificatePdfGenerator : ICertificatePdfGenerator
 
                 page.Content()
                     .Padding(60)
+                    .AlignMiddle()
                     .Column(col =>
                     {
                         col.Spacing(0);
@@ -122,7 +123,7 @@ internal sealed class CertificatePdfGenerator : ICertificatePdfGenerator
                         col.Item().Row(row =>
                         {
                             // Left: Instructor Signature
-                            row.RelativeItem().AlignBottom().Column(c =>
+                            row.RelativeItem().AlignMiddle().Column(c =>
                             {
                                 c.Item().PaddingBottom(2).Text(data.InstructorName).FontSize(24).Italic().FontColor(primaryColor);
                                 c.Item().LineHorizontal(1).LineColor(mutedColor);
@@ -130,11 +131,11 @@ internal sealed class CertificatePdfGenerator : ICertificatePdfGenerator
                             });
 
                             // Center: Date & Code
-                            row.RelativeItem().AlignBottom().AlignCenter().Column(c =>
+                            row.RelativeItem().AlignMiddle().AlignCenter().Column(c =>
                             {
                                 c.Item().AlignCenter().Text("Awarded on").FontSize(10).FontColor(mutedColor);
                                 c.Item().AlignCenter()
-                                    .Text(data.CompletedAt.ToString("MMMM d, yyyy"))
+                                    .Text(data.CompletedAt.ToString("MMMM d, yyyy", System.Globalization.CultureInfo.InvariantCulture))
                                     .FontSize(14).SemiBold().FontColor(textColor);
 
                                 c.Item().Height(10);
@@ -144,11 +145,11 @@ internal sealed class CertificatePdfGenerator : ICertificatePdfGenerator
                             });
 
                             // Right: QR Code & Verify
-                            row.RelativeItem().AlignBottom().AlignRight().Column(c =>
+                            row.RelativeItem().AlignMiddle().AlignRight().Column(c =>
                             {
-                                c.Item().AlignRight().Width(90).Height(90).Hyperlink(data.VerificationUrl).Image(qrCodeBytes);
+                                c.Item().AlignCenter().Width(90).Height(90).Hyperlink(data.VerificationUrl).Image(qrCodeBytes);
                                 c.Item().Height(4);
-                                c.Item().AlignRight().Hyperlink(data.VerificationUrl).Text("Verify Certificate")
+                                c.Item().AlignCenter().Hyperlink(data.VerificationUrl).Text("Verify Certificate")
                                     .FontSize(9)
                                     .FontColor(primaryColor)
                                     .Underline();

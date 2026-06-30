@@ -1,4 +1,25 @@
 services:
+  migrator:
+    profiles: ["apps"]
+    build:
+      context: ./Learnix.Backend
+      dockerfile: Learnix.DbMigrator/Dockerfile
+    container_name: learnix-migrator
+    command: ["--seed-demo"]
+    env_file:
+      - ./Learnix.Backend/Learnix.API/.env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      azurite:
+        condition: service_healthy
+
   api:
     profiles: ["apps"]
     build:
@@ -9,17 +30,13 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
     env_file:
-      - ./Learnix.Backend/.env
+      - ./Learnix.Backend/Learnix.API/.env
     depends_on:
-      postgres:
-        condition: service_healthy
-      mongo:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
 
   client:
     profiles: ["apps"]
@@ -32,7 +49,6 @@ services:
       - "80:80"
     depends_on:
       - api
-
 
   postgres:
     image: postgres:16-alpine
@@ -110,8 +126,20 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  seq:
+    image: datalust/seq:latest
+    container_name: learnix-seq
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: Y
+    ports:
+      - "5341:80"
+    volumes:
+      - seq_data:/data
+
 volumes:
   postgres_data:
   mongo_data:
   redis_data:
   azurite_data:
+  seq_data:

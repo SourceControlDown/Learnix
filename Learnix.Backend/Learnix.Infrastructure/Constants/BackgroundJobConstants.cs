@@ -12,4 +12,5 @@ public static class BackgroundJobConstants
 
     // Maintenance Jobs
     public static readonly TimeSpan CategoryReconciliationInterval = TimeSpan.FromHours(1);
+    public static readonly TimeSpan CourseRatingReconciliationInterval = TimeSpan.FromHours(24);
 }

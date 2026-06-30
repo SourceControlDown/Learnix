@@ -159,24 +159,10 @@ public class Course : SoftDeletableEntity
 
     public void IncrementEnrollmentsCount() => EnrollmentsCount++;
 
-    public void AddRating(int rating)
+    public void SyncRating(int reviewsCount, decimal averageRating)
     {
-        var newCount = ReviewsCount + 1;
-        AverageRating = Math.Round((AverageRating * ReviewsCount + rating) / newCount, 2);
-        ReviewsCount = newCount;
-    }
-
-    public void UpdateRating(int oldRating, int newRating)
-    {
-        if (ReviewsCount == 0) return;
-        AverageRating = Math.Round((AverageRating * ReviewsCount - oldRating + newRating) / ReviewsCount, 2);
-    }
-
-    public void RemoveRating(int rating)
-    {
-        var newCount = ReviewsCount - 1;
-        AverageRating = newCount == 0 ? 0m : Math.Round((AverageRating * ReviewsCount - rating) / newCount, 2);
-        ReviewsCount = newCount;
+        ReviewsCount = reviewsCount;
+        AverageRating = averageRating;
     }
 
     // Section structure (Course as aggregate root, see ADR-044)

@@ -30,6 +30,7 @@ This guide walks you through getting a fully working dev environment from a fres
 | PostgreSQL | Docker (port 5432) | Primary database |
 | MongoDB | Docker (port 27017) | Chat & reviews |
 | Redis | Docker (port 6379) | Caching |
+| Seq | Docker (port 5341) | UI for structured logs (Tracing/Debugging) |
 | Azurite | Docker (port 10000) | Local Azure Blob Storage emulator |
 | Mailpit | Docker (port 1025 / 8025) | Local email catcher for dev |
 
@@ -56,7 +57,7 @@ docker compose up -d
 
 This starts PostgreSQL, MongoDB, Redis, Azurite (blob storage emulator), and Mailpit. All containers run with persistent volumes so data survives restarts.
 
-> **Note:** If you want to run the entire platform via Docker (including the .NET backend and React frontend), run `docker compose --profile apps up -d` instead.
+> **Note:** If you want to run the entire platform via Docker (including the .NET backend and React frontend), run `docker compose --profile apps up -d` instead. This will automatically start a temporary `learnix-migrator` container, which will create the database schema, apply migrations, and seed it with demo data (admins, courses, students) before starting the API.
 
 Verify everything is healthy:
 
@@ -83,7 +84,7 @@ cp .env.example .env
 These match the Docker Compose credentials exactly. Leave them as-is. MongoDB and Redis connection strings are already set in `appsettings.json` and `appsettings.Development.json` — you do not need to add them to `.env` unless you want to override them.
 
 **JWT — no action needed in development**
-`Jwt__Secret` is **not required in the `.env` file for development**. `appsettings.Development.json` already provides a dev-only secret. This secret is fine for local development, but in production it must be replaced with a random 64+ character string.
+`Jwt__Secret` and `Jwt__RefreshTokenSecret` are **not required in the `.env` file for development**. `appsettings.Development.json` already provides dev-only secrets. These secrets are fine for local development, but in production they must be replaced with random 64+ character strings.
 
 > **IMPORTANT:** Out of the box, the project will run with just these defaults, except for **Google Login** and **AI Chat** which require real API keys. 
 > 
@@ -159,6 +160,7 @@ You can also register a new account through the UI to get a fresh Student role.
 | Backend (HTTP) | http://localhost:5000 | API base |
 | Backend (HTTPS) | https://localhost:5001 | API base (HTTPS) |
 | Swagger | http://localhost:5000/swagger | API docs & testing |
+| Seq (Logs) | http://localhost:5341 | View structured logs & traces |
 | Mailpit | http://localhost:8025 | View emails sent by the app |
 | Azurite Blob | http://localhost:10000 | Local blob storage emulator |
 | PostgreSQL | localhost:5432 | DB: `learnix`, user: `learnix`, pass: `learnix` |

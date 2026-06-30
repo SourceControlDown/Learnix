@@ -65,7 +65,8 @@ internal sealed class JwtTokenService(IOptions<JwtSettings> jwtSettings) : IToke
 
     public string HashRefreshToken(string plainToken)
     {
-        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(plainToken));
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_settings.RefreshTokenSecret));
+        var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(plainToken));
         return Convert.ToBase64String(hashBytes);
     }
 }

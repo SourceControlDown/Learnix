@@ -421,3 +421,23 @@ Simulation of a request journey from the client to business logic execution:
 - `UserRegisteredDomainEventHandler` sends the raw 6-digit code to the email service without base64 encoding.
 - The `ConfirmEmail` API endpoint is heavily protected against brute-force attacks by the existing `AuthStrict` rate-limiting policy (5 requests per 15 minutes per IP), making guessing a 6-digit code mathematically impossible.
 - `ConfirmEmailCommandHandler` now generates and returns JWT and Refresh tokens upon successful verification (calling `ITokenService`), functioning similarly to `LoginCommandHandler`.
+
+---
+
+## ADR-BACK-AUTH-017: HMAC-SHA256 with Pepper for Refresh Tokens
+
+**Decision:** The hashing mechanism for Refresh Tokens was upgraded from a standard `SHA256` to `HMAC-SHA256` utilizing a globally configured Secret Key (Pepper) defined in `Jwt:RefreshTokenSecret`.
+
+**Why:**
+- While a 64-byte random string (512-bit entropy) is already mathematically immune to brute-force attacks even with standard SHA256, adding a Pepper provides absolute immunity against **offline verification**.
+- In the event of a database leak, an attacker would possess the token hashes. Without the Pepper (which resides only in the application's configuration/environment variables and not in the database), the attacker cannot verify whether a stolen raw refresh token matches any hash in the database.
+- Key Separation Principle: `Jwt:Secret` is used exclusively for signing Access Tokens (JWTs), while `Jwt:RefreshTokenSecret` is used exclusively for hashing Refresh Tokens. 
+
+**Alternatives:**
+- **Standard SHA256 (Previous Implementation):** Secure against brute force due to high entropy, but allows an attacker with a leaked database to verify intercepted raw tokens offline.
+- **Salting (bcrypt/Argon2):** Unnecessary for machine-generated high-entropy tokens. Salts protect low-entropy secrets (like human passwords) against rainbow tables.
+
+**Consequences:**
+- `JwtSettings` requires a new configuration property `RefreshTokenSecret`.
+- CI/CD pipelines and deployment documentation must include the provisioning of `PROD_JWT_REFRESH_SECRET`.
+- The `HashRefreshToken` method in `JwtTokenService` now requires the instantiation of `HMACSHA256` with the provided Pepper.
