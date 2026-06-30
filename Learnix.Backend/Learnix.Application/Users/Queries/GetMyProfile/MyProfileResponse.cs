@@ -7,4 +7,5 @@ public sealed record MyProfileResponse(
     string LastName,
     string? Bio,
     string? AvatarUrl,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    bool HasPassword);

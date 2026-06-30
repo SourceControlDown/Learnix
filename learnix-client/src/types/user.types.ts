@@ -11,6 +11,7 @@ export interface MyProfileDto {
     bio: string | null;
     avatarUrl: string | null;
     createdAt: string;
+    hasPassword: boolean;
 }
 
 export interface UserProfileDto {

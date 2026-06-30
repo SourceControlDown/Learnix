@@ -6,6 +6,8 @@ import { ChangePasswordDialog } from './ChangePasswordDialog';
 interface AvatarUploadProps {
     firstName?: string;
     lastName?: string;
+    email?: string;
+    hasPassword?: boolean;
     displayAvatar: string | null;
     isUploading: boolean;
     createdAt?: string;
@@ -15,6 +17,8 @@ interface AvatarUploadProps {
 export function AvatarUpload({
     firstName,
     lastName,
+    email,
+    hasPassword,
     displayAvatar,
     isUploading,
     createdAt,
@@ -76,7 +80,7 @@ export function AvatarUpload({
                     </div>
                 )}
 
-                <ChangePasswordDialog />
+                <ChangePasswordDialog hasPassword={hasPassword} email={email} />
             </div>
         </div>
     );

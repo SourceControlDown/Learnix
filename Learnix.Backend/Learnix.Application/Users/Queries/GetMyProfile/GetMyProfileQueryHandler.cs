@@ -35,6 +35,7 @@ internal sealed class GetMyProfileQueryHandler(
             user.LastName,
             user.Bio,
             !string.IsNullOrWhiteSpace(user.AvatarBlobPath) ? blobStorage.GetPublicUrl(user.AvatarBlobPath) : null,
-            user.CreatedAt));
+            user.CreatedAt,
+            user.PasswordHash != null));
     }
 }

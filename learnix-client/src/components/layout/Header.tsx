@@ -56,8 +56,28 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
         navigate(APP_ROUTES.public.login);
     }
 
+    const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    function handleMouseEnter() {
+        if (closeTimeoutRef.current) {
+            clearTimeout(closeTimeoutRef.current);
+        }
+        setOpen(true);
+    }
+
+    function handleMouseLeave() {
+        closeTimeoutRef.current = setTimeout(() => {
+            setOpen(false);
+        }, 300); // grace period for diagonal mouse movement
+    }
+
     return (
-        <div ref={ref} className="relative">
+        <div
+            ref={ref}
+            className="relative"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
             <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
@@ -73,52 +93,54 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
             </button>
 
             {open && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
-                    <div className="flex items-center gap-3 px-4 py-3">
-                        <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-sm font-semibold text-primary">
-                            {avatarUrl ? (
-                                <img
-                                    src={avatarUrl}
-                                    alt={fullName}
-                                    className="size-full object-cover"
-                                />
-                            ) : (
-                                initials
-                            )}
+                <div className="absolute right-0 top-full z-50 pt-2">
+                    <div className="w-64 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+                        <div className="flex items-center gap-3 px-4 py-3">
+                            <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-sm font-semibold text-primary">
+                                {avatarUrl ? (
+                                    <img
+                                        src={avatarUrl}
+                                        alt={fullName}
+                                        className="size-full object-cover"
+                                    />
+                                ) : (
+                                    initials
+                                )}
+                            </div>
+                            <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-foreground">
+                                    {fullName}
+                                </p>
+                                <p className="truncate text-xs text-muted-foreground">{email}</p>
+                            </div>
                         </div>
-                        <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-foreground">
-                                {fullName}
-                            </p>
-                            <p className="truncate text-xs text-muted-foreground">{email}</p>
-                        </div>
+                        <div className="border-t border-border" />
+                        <Link
+                            to={APP_ROUTES.student.profile}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
+                        >
+                            <User size={14} className="text-muted-foreground" />
+                            {t('menuProfile')}
+                        </Link>
+                        <Link
+                            to={APP_ROUTES.student.myLearning}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
+                        >
+                            <BookOpen size={14} className="text-muted-foreground" />
+                            {t('menuMyLearning')}
+                        </Link>
+                        <div className="my-1 border-t border-border" />
+                        <button
+                            type="button"
+                            onClick={handleSignOut}
+                            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                        >
+                            <LogOut size={14} />
+                            {t('menuSignOut')}
+                        </button>
                     </div>
-                    <div className="border-t border-border" />
-                    <Link
-                        to={APP_ROUTES.student.profile}
-                        onClick={() => setOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
-                    >
-                        <User size={14} className="text-muted-foreground" />
-                        {t('menuProfile')}
-                    </Link>
-                    <Link
-                        to={APP_ROUTES.student.myLearning}
-                        onClick={() => setOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
-                    >
-                        <BookOpen size={14} className="text-muted-foreground" />
-                        {t('menuMyLearning')}
-                    </Link>
-                    <div className="my-1 border-t border-border" />
-                    <button
-                        type="button"
-                        onClick={handleSignOut}
-                        className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                    >
-                        <LogOut size={14} />
-                        {t('menuSignOut')}
-                    </button>
                 </div>
             )}
         </div>

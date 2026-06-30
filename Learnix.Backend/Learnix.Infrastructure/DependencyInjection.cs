@@ -196,6 +196,7 @@ public static class DependencyInjection
         services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
         services.AddScoped<IPasswordResetService, PasswordResetService>();
         services.AddScoped<IChangePasswordService, ChangePasswordService>();
+        services.AddScoped<ISetPasswordService, SetPasswordService>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IUserRoleService, UserRoleService>();
         services.AddScoped<OutboxDbContextHolder>();
@@ -306,6 +307,7 @@ public static class DependencyInjection
         services.AddHostedService<MongoIndexInitializer>();
         services.AddHostedService<ChatSessionCleanupService>();
         services.AddHostedService<CategoryCoursesCountReconciliationService>();
+        services.AddHostedService<CourseRatingReconciliationService>();
 
         return services;
     }

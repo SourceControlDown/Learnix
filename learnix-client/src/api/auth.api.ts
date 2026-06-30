@@ -51,6 +51,10 @@ export interface ChangePasswordRequest {
     newPassword: string;
 }
 
+export interface SetPasswordRequest {
+    newPassword: string;
+}
+
 export const authApi = {
     logout: () => api.post('/auth/logout').then((r) => r.data),
 
@@ -76,4 +80,7 @@ export const authApi = {
 
     changePassword: (data: ChangePasswordRequest) =>
         api.post('/auth/change-password', data).then((r) => r.data),
+
+    setPassword: (data: SetPasswordRequest) =>
+        api.post('/auth/set-password', data).then((r) => r.data),
 };

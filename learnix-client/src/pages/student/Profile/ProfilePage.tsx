@@ -123,12 +123,12 @@ export default function ProfilePage() {
     const displayAvatar = avatarPreview ?? profile?.avatarUrl ?? null;
 
     return (
-        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-3xl p-4 sm:p-6">
             <h1 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
                 {t('pageTitle')}
             </h1>
 
-            <div className="mt-6 space-y-6 sm:mt-8">
+            <div className="mt-4 space-y-6 sm:mt-6">
                 {/* Profile Information */}
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <section className="rounded-xl border border-border bg-card">
@@ -143,6 +143,8 @@ export default function ProfilePage() {
                             <AvatarUpload
                                 firstName={profile?.firstName}
                                 lastName={profile?.lastName}
+                                email={profile?.email}
+                                hasPassword={profile?.hasPassword}
                                 displayAvatar={displayAvatar}
                                 isUploading={isUploading}
                                 onAvatarChange={handleAvatarChange}
@@ -159,7 +161,7 @@ export default function ProfilePage() {
                             />
                         </div>
 
-                        <div className="flex flex-col justify-end border-t border-border bg-muted/20 p-4 sm:flex-row sm:px-6">
+                        <div className="flex flex-col justify-end border-t border-border bg-muted/20 p-3 sm:flex-row sm:px-5">
                             <button
                                 type="submit"
                                 disabled={

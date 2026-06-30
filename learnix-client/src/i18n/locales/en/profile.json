@@ -19,7 +19,8 @@
     "uploading": "Uploading...",
     "hint": "JPG or PNG, max 5 MB",
     "memberSince": "Member since",
-    "changePassword": "Change Password"
+    "changePassword": "Change Password",
+    "setPassword": "Set Password"
   },
   "changePasswordDialog": {
     "title": "Change Password",
@@ -29,7 +30,14 @@
     "confirmPassword": "Confirm New Password",
     "submit": "Update Password",
     "forgotPassword": "Forgot password?",
-    "success": "Password changed successfully"
+    "success": "Password changed successfully",
+    "resetLinkSent": "Password reset link has been sent to your email"
+  },
+  "setPasswordDialog": {
+    "title": "Set Password",
+    "description": "Set a password so you can log in without using Google.",
+    "submit": "Set Password",
+    "success": "Password set successfully"
   },
   "preferences": {
     "comingSoon": "Coming Soon",
