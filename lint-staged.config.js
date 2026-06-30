@@ -24,6 +24,7 @@ module.exports = {
     // Build validation is done once, sequentially, in .husky/pre-commit after lint-staged finishes.
     const files = filenames.join(' ');
     return [
+      `dotnet format whitespace Learnix.Backend/Learnix.Backend.slnx --no-restore --include ${files}`,
       `dotnet format Learnix.Backend/Learnix.Backend.slnx --no-restore --include ${files}`
     ];
   }
