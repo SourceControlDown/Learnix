@@ -133,7 +133,7 @@ docker compose up -d
 
 # Seed database and start API
 cd Learnix.Backend
-dotnet run --project Learnix.DbMigrator -- --seed-demo
+dotnet run --project Learnix.DbMigrator -- --create-blob --seed-demo
 dotnet run --project Learnix.API
 
 # Start frontend
