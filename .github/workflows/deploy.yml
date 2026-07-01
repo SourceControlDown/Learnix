@@ -4,33 +4,37 @@ name: Deploy to Azure
 # Builds Docker image → pushes to ACR → deploys to Container Apps.
 # Frontend is deployed to Azure Static Web Apps via the built-in action.
 # 
-# Required GitHub Secrets (Settings → Secrets and variables → Actions):
+# Required GitHub Secrets (Settings → Secrets and variables → Actions → Secrets):
 # AZURE_CREDENTIALS           — JSON output of: az ad sp create-for-rbac --sdk-auth
-# ACR_LOGIN_SERVER            — e.g. learnixacr.azurecr.io
-# ACR_USERNAME                — ACR admin username
 # ACR_PASSWORD                — ACR admin password
-# CONTAINER_APP_NAME          — e.g. learnix-api
-# CONTAINER_APP_RG            — e.g. learnix-rg
 # AZURE_STATIC_WEB_APPS_API_TOKEN — from Azure Portal > Static Web App > Manage deployment token
-# 
-# --- Production secrets injected into Container App ---
 # PROD_POSTGRES_CONN          — Azure PostgreSQL connection string
 # PROD_REDIS_CONN             — Azure Redis connection string
 # PROD_MONGO_CONN             — Azure Cosmos DB MongoDB connection string
 # PROD_BLOB_CONN              — Azure Blob Storage connection string
 # PROD_JWT_SECRET             — 64+ char random secret
 # PROD_JWT_REFRESH_SECRET     — 64+ char random secret (Pepper for Refresh Tokens)
-# PROD_SMTP_PASSWORD          — SendGrid API key
-# PROD_GOOGLE_CLIENT_ID       — Google OAuth client ID
+# PROD_SMTP_PASSWORD          — SMTP password or app password
 # PROD_GOOGLE_CLIENT_SECRET   — Google OAuth client secret
 # PROD_ANTHROPIC_KEY          — Anthropic API key (or Gemini)
 # PROD_GEMINI_KEY             — Gemini API key
-# PROD_SEED_ADMIN_EMAIL       — Admin email for seeding
 # PROD_SEED_ADMIN_PASSWORD    — Admin password for seeding
+#
+# Required GitHub Variables (Settings → Secrets and variables → Actions → Variables):
+# ACR_LOGIN_SERVER            — e.g. learnixacr.azurecr.io
+# ACR_USERNAME                — ACR admin username
+# CONTAINER_APP_NAME          — e.g. learnix-api
+# CONTAINER_APP_RG            — e.g. learnix-rg
+# PROD_SMTP_HOST              — SMTP server host (e.g., smtp.gmail.com)
+# PROD_SMTP_PORT              — SMTP server port (e.g., 587)
+# PROD_SMTP_USERNAME          — SMTP username (e.g., noreply.learnix@gmail.com)
+# PROD_SMTP_SENDER_EMAIL      — From email address (e.g., noreply.learnix@gmail.com)
+# PROD_SMTP_SENDER_NAME       — From name (e.g., Learnix)
+# PROD_GOOGLE_CLIENT_ID       — Google OAuth client ID
+# PROD_SEED_ADMIN_EMAIL       — Admin email for seeding
 # PROD_ALLOWED_ORIGINS        — Frontend URL, e.g. https://learnix.azurestaticapps.net
 # PROD_CLIENT_BASE_URL        — Same as PROD_ALLOWED_ORIGINS
 # VITE_API_URL                — Production API URL for frontend build
-# VITE_GOOGLE_CLIENT_ID       — Same as PROD_GOOGLE_CLIENT_ID
 
 on:
   push:
@@ -55,15 +59,15 @@ jobs:
     - name: Log in to Azure Container Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ secrets.ACR_LOGIN_SERVER }}
-        username: ${{ secrets.ACR_USERNAME }}
+        registry: ${{ vars.ACR_LOGIN_SERVER }}
+        username: ${{ vars.ACR_USERNAME }}
         password: ${{ secrets.ACR_PASSWORD }}
 
     - name: Extract metadata (tags, labels)
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ secrets.ACR_LOGIN_SERVER }}/learnix-api
+        images: ${{ vars.ACR_LOGIN_SERVER }}/learnix-api
         tags: |
           type=sha,prefix=,format=short
           type=raw,value=latest
@@ -113,9 +117,9 @@ jobs:
     - name: Deploy to Container Apps
       uses: azure/container-apps-deploy-action@v1
       with:
-        resourceGroup: ${{ secrets.CONTAINER_APP_RG }}
-        containerAppName: ${{ secrets.CONTAINER_APP_NAME }}
-        imageToDeploy: ${{ secrets.ACR_LOGIN_SERVER }}/learnix-api:${{ needs.build-api.outputs.image-tag }}
+        resourceGroup: ${{ vars.CONTAINER_APP_RG }}
+        containerAppName: ${{ vars.CONTAINER_APP_NAME }}
+        imageToDeploy: ${{ vars.ACR_LOGIN_SERVER }}/learnix-api:${{ needs.build-api.outputs.image-tag }}
         environmentVariables: |
           ASPNETCORE_ENVIRONMENT=Production
           ASPNETCORE_URLS=http://+:8080
@@ -127,15 +131,20 @@ jobs:
           Jwt__RefreshTokenSecret=${{ secrets.PROD_JWT_REFRESH_SECRET }}
           Jwt__Issuer=Learnix
           Jwt__Audience=LearnixClient
+          Smtp__Host=${{ vars.PROD_SMTP_HOST }}
+          Smtp__Port=${{ vars.PROD_SMTP_PORT }}
+          Smtp__Username=${{ vars.PROD_SMTP_USERNAME }}
           Smtp__Password=${{ secrets.PROD_SMTP_PASSWORD }}
-          Google__ClientId=${{ secrets.PROD_GOOGLE_CLIENT_ID }}
+          Smtp__SenderEmail=${{ vars.PROD_SMTP_SENDER_EMAIL }}
+          Smtp__SenderName=${{ vars.PROD_SMTP_SENDER_NAME }}
+          Google__ClientId=${{ vars.PROD_GOOGLE_CLIENT_ID }}
           Google__ClientSecret=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
           Anthropic__ApiKey=${{ secrets.PROD_ANTHROPIC_KEY }}
           Gemini__ApiKey=${{ secrets.PROD_GEMINI_KEY }}
-          SeedAdmin__Email=${{ secrets.PROD_SEED_ADMIN_EMAIL }}
+          SeedAdmin__Email=${{ vars.PROD_SEED_ADMIN_EMAIL }}
           SeedAdmin__Password=${{ secrets.PROD_SEED_ADMIN_PASSWORD }}
-          Cors__AllowedOrigins__0=${{ secrets.PROD_ALLOWED_ORIGINS }}
-          App__ClientBaseUrl=${{ secrets.PROD_CLIENT_BASE_URL }}
+          Cors__AllowedOrigins__0=${{ vars.PROD_ALLOWED_ORIGINS }}
+          App__ClientBaseUrl=${{ vars.PROD_CLIENT_BASE_URL }}
           # =========================================================================
           # WARNING: DO NOT ENABLE `Proxy__TrustedProxies__0` FOR AZURE CONTAINER APPS!
           # Azure Container Apps provides a managed, network-isolated Envoy Ingress.
@@ -167,8 +176,8 @@ jobs:
     - name: Install and build
       working-directory: ./learnix-client
       env:
-        VITE_API_URL: ${{ secrets.VITE_API_URL }}
-        VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        VITE_API_URL: ${{ vars.VITE_API_URL }}
+        VITE_GOOGLE_CLIENT_ID: ${{ vars.PROD_GOOGLE_CLIENT_ID }}
       run: |
         npm ci
         npm run build
