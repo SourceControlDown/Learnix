@@ -10,8 +10,7 @@ namespace Learnix.DbMigrator.Seeders;
 internal sealed class StorageSeeder(
     BlobServiceClient blobServiceClient,
     IOptions<BlobStorageOptions> options,
-    ILogger<StorageSeeder> logger,
-    IHostEnvironment environment
+    ILogger<StorageSeeder> logger
 )
 {
     public async Task SeedAsync(CancellationToken ct = default)
@@ -22,11 +21,6 @@ internal sealed class StorageSeeder(
         // are managed exclusively via Terraform (infrastructure/storage.tf).
         // Azurite does not support Advanced Azure features like Lifecycle Policies,
         // which is why they are not configured here.
-        if (!environment.IsDevelopment())
-        {
-            logger.LogInformation("StorageSeeder is bypassed in Production. Relying on Terraform-provisioned infrastructure.");
-            return;
-        }
 
         var containers = new[]
         {

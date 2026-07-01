@@ -23,10 +23,12 @@
     <File Path="../docs/backend/decisions/REVIEWS.md" />
     <File Path="../docs/backend/decisions/TEMPLATE.md" />
   </Folder>
-  <Folder Name="/Documentation/deploy/">
-    <File Path="../docs/deploy/AZURE_DEPLOYMENT_UI.md" />
-    <File Path="../docs/deploy/AZURE_DEPLOY_CLI.md" />
-    <File Path="../docs/deploy/AZURE_PROVISIONING_UI.md" />
+  <Folder Name="/Documentation/deployment/">
+    <File Path="../docs/deployment/README.md" />
+    <File Path="../docs/deployment/AZURE_DEPLOYMENT_UI.md" />
+    <File Path="../docs/deployment/AZURE_DEPLOY_CLI.md" />
+    <File Path="../docs/deployment/AZURE_PROVISIONING_UI.md" />
+    <File Path="../docs/deployment/TERRAFORM_GUIDE.md" />
   </Folder>
   <Folder Name="/Documentation/frontend/">
     <File Path="../docs/frontend/README.md" />
@@ -44,12 +46,9 @@
     <File Path="../docs/frontend/decisions/TEMPLATE.md" />
     <File Path="../docs/frontend/decisions/UI.md" />
   </Folder>
-  <Folder Name="/Documentation/infrastructure/">
-    <File Path="../docs/infrastructure/TERRAFORM_GUIDE.md" />
-  </Folder>
+
   <Folder Name="/Documentation/root/">
     <File Path="../docs/API_KEYS_GUIDE.md" />
-    <File Path="../docs/AZURE_DEPLOY.md" />
     <File Path="../docs/CONTRIBUTING.md" />
     <File Path="../docs/DATA_MODEL.md" />
     <File Path="../docs/DEV_SETUP.md" />

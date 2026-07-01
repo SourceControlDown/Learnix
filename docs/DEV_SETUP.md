@@ -112,9 +112,10 @@ The backend uses a standalone migrator project (`Learnix.DbMigrator`) that safel
 ```bash
 cd Learnix.Backend
 
-# 1. Apply database migrations, initialize storage, and seed system data
+# 1. Apply database migrations and seed system data
+# Required for local storage: Add --create-blob to initialize Azurite containers
 # Optional: Add --seed-demo to automatically generate fake courses and students
-dotnet run --project Learnix.DbMigrator --launch-profile Development -- --seed-demo
+dotnet run --project Learnix.DbMigrator --launch-profile Development -- --create-blob --seed-demo
 
 # 2. Start the API (HTTP on port 5000, HTTPS on 5001)
 dotnet run --project Learnix.API
@@ -244,7 +245,7 @@ Azurite runs locally and acts as a fully compatible emulator for Azure Blob Stor
 5. In the left panel, expand **Local & Attached** -> **Storage Accounts** -> **(Emulator - Default Ports)** -> **Blob Containers**.
 6. You will see all containers created by the seeder (e.g., `avatars`, `course-covers`, etc.). You can double-click them to view, upload, or delete files.
 
-> **Note:** The blob containers are only created locally during the seeder execution if `environment.IsDevelopment()` is true. In production, containers are managed by Terraform.
+> **Note:** The blob containers are only created locally during the seeder execution if you pass the `--create-blob` flag. In production, containers are managed by Terraform.
 
 ---
 

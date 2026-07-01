@@ -109,17 +109,35 @@ This connects to the **Azurite** emulator running in Docker. The account key is 
 
 ---
 
-## 6. Email (SMTP) — no action needed in development
+## 6. Email (SMTP)
 
+**Development (Local): No action needed.**
 ```env
 Smtp__Password=
 ```
+In development, `appsettings.Development.json` points SMTP to **Mailpit** running in Docker (`localhost:1025`). No password is needed — Mailpit accepts all email without authentication. To see emails sent by the app (confirmations, notifications), open **[http://localhost:8025](http://localhost:8025)** in your browser.
 
-In development, `appsettings.Development.json` points SMTP to **Mailpit** running in Docker (`localhost:1025`). No password is needed — Mailpit accepts all email without authentication.
+**Production (Real Email Sending via Gmail):**
+To send real emails (e.g. for user registration or password reset) using a standard Gmail account:
 
-To see emails sent by the app (confirmations, notifications), open **[http://localhost:8025](http://localhost:8025)** in your browser — that is the Mailpit web UI.
+1. Go to your [Google Account Manage page](https://myaccount.google.com/).
+2. Navigate to **Security** on the left menu.
+3. Under "How you sign in to Google", enable **2-Step Verification** (required for App Passwords).
+4. After enabling 2-Step Verification, search for **App passwords** in the top search bar of your Google Account.
+5. Create a new App Password (you can name it "Learnix"). Google will generate a 16-character password (e.g., `abcd efgh ijkl mnop`).
+6. Remove the spaces from this password and use it in your configuration.
 
-You do not need a real SMTP password or SendGrid account for local development.
+Configure these values in **GitHub Secrets** (Settings → Secrets and variables → Actions). 
+*(Примітка: оскільки у вас налаштовано CI/CD через `deploy.yml`, GitHub Actions при кожному деплої буде перезаписувати змінні середовища в Azure Container App значеннями з ваших GitHub Secrets. Тому додавати їх напряму в порталі Azure немає сенсу — вони затруться при наступному релізі).*
+
+```env
+PROD_SMTP_HOST=smtp.gmail.com
+PROD_SMTP_PORT=587
+PROD_SMTP_USERNAME=your-email@gmail.com
+PROD_SMTP_PASSWORD=abcdefghijklmnop
+PROD_SMTP_SENDER_EMAIL=your-email@gmail.com
+PROD_SMTP_SENDER_NAME=Learnix
+```
 
 ---
 

@@ -29,7 +29,7 @@ The backend is split into the main API and a standalone migration runner.
 
 1. **Run Database Migrations & Seeding:**
    ```bash
-   dotnet run --project Learnix.DbMigrator --launch-profile Development
+   dotnet run --project Learnix.DbMigrator --launch-profile Development -- --create-blob
    ```
    *(Run this first to ensure your local PostgreSQL database schema is up-to-date and seeded with initial data).*
 

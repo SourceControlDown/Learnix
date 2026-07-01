@@ -224,13 +224,13 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| D-06 | Azure Container Apps for API | not started | See docs/AZURE_DEPLOY.md Steps 8-9 |
+| D-06 | Azure Container Apps for API | not started | See docs/deployment/README.md Steps 8-9 |
 | D-06.5 | Configure ForwardedHeaders for rate limiting partition-by-real-IP behind reverse proxy | done | Prerequisite for rate limiter to work correctly in Azure |
-| D-07 | Azure Static Web Apps for frontend | not started | `staticwebapp.config.json` + `.env.production` created; see AZURE_DEPLOY.md Step 10 |
-| D-08 | Azure Database for PostgreSQL (Flexible Server) | not started | See AZURE_DEPLOY.md Step 3 |
-| D-09 | Azure Cosmos DB for MongoDB API | not started | See AZURE_DEPLOY.md Step 4 |
-| D-10 | Azure Cache for Redis | not started | See AZURE_DEPLOY.md Step 5 |
-| D-11 | Azure Blob Storage account + containers | not started | See AZURE_DEPLOY.md Step 6; containers: avatars, course-covers, course-videos, certificates |
+| D-07 | Azure Static Web Apps for frontend | not started | `staticwebapp.config.json` + `.env.production` created; see deployment/README.md Step 10 |
+| D-08 | Azure Database for PostgreSQL (Flexible Server) | not started | See deployment/README.md Step 3 |
+| D-09 | Azure Cosmos DB for MongoDB API | not started | See deployment/README.md Step 4 |
+| D-10 | Azure Cache for Redis | not started | See deployment/README.md Step 5 |
+| D-11 | Azure Blob Storage account + containers | not started | See deployment/README.md Step 6; containers: avatars, course-covers, course-videos, certificates |
 | D-12 | Azure Service Bus namespace + queues | CANCELED | MassTransit is not used |
 | D-13 | Azure Key Vault for secrets | not started | Deferred — secrets stored in Container Apps env vars for now |
 | D-14 | Custom domain + SSL | not started | After D-06, D-07 done |

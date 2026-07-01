@@ -50,8 +50,9 @@ builder.ConfigureServices((context, services) =>
     // Core registrations (needed for DbContext, Identity, etc.)
     services.AddApplication();
 
-    // Infrastructure
-    services.AddInfrastructure(configuration);
+    // Infrastructure (Targeted for Migrator)
+    services.AddPersistence(configuration);
+    services.AddStorage(configuration);
 
     // Register Seeders
     services.AddScoped<AdminSeeder>();
@@ -75,9 +76,16 @@ try
     await dbContext.Database.MigrateAsync();
     logger.LogInformation("Migrations applied successfully.");
 
-    logger.LogInformation("Initializing local Blob Storage...");
-    var storageSeeder = services.GetRequiredService<StorageSeeder>();
-    await storageSeeder.SeedAsync();
+    if (args.Contains("--create-blob"))
+    {
+        logger.LogInformation("Initializing local Blob Storage (--create-blob flag detected)...");
+        var storageSeeder = services.GetRequiredService<StorageSeeder>();
+        await storageSeeder.SeedAsync();
+    }
+    else
+    {
+        logger.LogInformation("Skipping Blob Storage initialization. Use --create-blob flag to initialize containers locally.");
+    }
 
     logger.LogInformation("Running System Seeders...");
     var roleSeeder = services.GetRequiredService<RoleSeeder>();
