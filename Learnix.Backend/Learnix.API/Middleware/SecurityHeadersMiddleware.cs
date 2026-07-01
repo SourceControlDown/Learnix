@@ -1,4 +1,4 @@
-﻿namespace Learnix.API.Middleware;
+namespace Learnix.API.Middleware;
 
 public sealed class SecurityHeadersMiddleware(RequestDelegate next)
 {

@@ -68,7 +68,7 @@
     ]
   },
   "aiAssistant": {
-    "badge": "✨ Powered by Claude",
+    "badge": "✨ Powered by {{aiProvider}}",
     "heading": { "line1": "Your personal", "line2": "AI tutor.", "highlight": "Always on." },
     "subtitle": "No more hunting through Stack Overflow at 2 AM. Ask the AI tutor anything — it knows your course context, your progress, and how you learn best.",
     "features": [

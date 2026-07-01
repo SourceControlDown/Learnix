@@ -51,7 +51,8 @@ internal sealed class AzureBlobStorageService(
         string contentType,
         CancellationToken ct)
     {
-        var (containerName, blobName) = BuildBlobLocation(target);
+        var containerName = _options.TempContainer;
+        var blobName = $"{Guid.NewGuid():N}";
         var blob = blobServiceClient
             .GetBlobContainerClient(containerName)
             .GetBlobClient(blobName);
@@ -74,57 +75,57 @@ internal sealed class AzureBlobStorageService(
             ExpiresAt: sasBuilder.ExpiresOn));
     }
 
-    public async Task<Result<BlobMetadata>> ValidateAsync(
-        string blobPath,
+    public async Task<Result<BlobMetadata>> CommitUploadAsync(
+        string tempBlobPath,
         UploadTarget target,
         CancellationToken ct)
     {
-        var (container, blobName) = ParseBlobPath(blobPath);
-        var blob = blobServiceClient
-            .GetBlobContainerClient(container)
-            .GetBlobClient(blobName);
+        var (tempContainer, tempBlobName) = ParseBlobPath(tempBlobPath);
+        if (tempContainer != _options.TempContainer)
+            return Result.Fail(new BlobValidationError("Invalid temporary blob path."));
 
-        if (!await blob.ExistsAsync(ct))
-            return Result.Fail(new NotFoundError($"Blob not found: {blobPath}"));
+        var tempBlob = blobServiceClient
+            .GetBlobContainerClient(tempContainer)
+            .GetBlobClient(tempBlobName);
 
-        var properties = await blob.GetPropertiesAsync(cancellationToken: ct);
+        if (!await tempBlob.ExistsAsync(ct))
+            return Result.Fail(new NotFoundError($"File not found or expired. Please upload it again."));
+
+        var properties = await tempBlob.GetPropertiesAsync(cancellationToken: ct);
         var size = properties.Value.ContentLength;
 
         var maxSize = MaxSizes[target];
         if (size > maxSize)
         {
-            await blob.DeleteIfExistsAsync(cancellationToken: ct);
+            await tempBlob.DeleteIfExistsAsync(cancellationToken: ct);
             return Result.Fail(new BlobValidationError(
-                $"File too large. Size: {size} bytes, max: {maxSize} bytes"));
+                $"File too large. Size: {FormatBytes(size)}, max: {FormatBytes(maxSize)}"));
         }
 
-        var actualContentType = await DetectContentTypeAsync(blob, ct);
+        var actualContentType = await DetectContentTypeAsync(tempBlob, ct);
         if (!AllowedContentTypes[target].Contains(actualContentType))
         {
-            await blob.DeleteIfExistsAsync(cancellationToken: ct);
+            await tempBlob.DeleteIfExistsAsync(cancellationToken: ct);
             return Result.Fail(new BlobValidationError(
                 $"Content type '{actualContentType}' not allowed for {target}"));
         }
 
+        var (finalContainer, finalBlobName) = BuildBlobLocation(target);
+        var finalBlob = blobServiceClient
+            .GetBlobContainerClient(finalContainer)
+            .GetBlobClient(finalBlobName);
+
+        var copyOp = await finalBlob.StartCopyFromUriAsync(tempBlob.Uri, cancellationToken: ct);
+        await copyOp.WaitForCompletionAsync(ct);
+
+        await tempBlob.DeleteIfExistsAsync(cancellationToken: ct);
+
         // Overwrite Content-Type header with trusted value (in case client lied)
-        await blob.SetHttpHeadersAsync(
+        await finalBlob.SetHttpHeadersAsync(
             new BlobHttpHeaders { ContentType = actualContentType },
             cancellationToken: ct);
 
-        return Result.Ok(new BlobMetadata(blobPath, actualContentType, size));
-    }
-
-    public async Task MarkConfirmedAsync(string blobPath, CancellationToken ct)
-    {
-        var (container, blobName) = ParseBlobPath(blobPath);
-        var blob = blobServiceClient
-            .GetBlobContainerClient(container)
-            .GetBlobClient(blobName);
-
-        // Idempotent: setting same tag twice is a no-op in Azure
-        await blob.SetTagsAsync(
-            new Dictionary<string, string> { ["confirmed"] = "true" },
-            cancellationToken: ct);
+        return Result.Ok(new BlobMetadata($"{finalContainer}/{finalBlobName}", actualContentType, size));
     }
 
     public string GenerateReadUrl(string blobPath, TimeSpan ttl)
@@ -254,5 +255,18 @@ internal sealed class AzureBlobStorageService(
             return "application/pdf";
 
         return "application/octet-stream";
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] suffix = { "B", "KB", "MB", "GB", "TB" };
+        int i;
+        double dblSByte = bytes;
+        for (i = 0; i < suffix.Length && bytes >= 1024; i++, bytes /= 1024)
+        {
+            dblSByte = bytes / 1024.0;
+        }
+
+        return $"{dblSByte:0.##} {suffix[i]}";
     }
 }

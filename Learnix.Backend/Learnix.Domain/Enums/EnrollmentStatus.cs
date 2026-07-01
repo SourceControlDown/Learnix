@@ -1,4 +1,4 @@
-﻿namespace Learnix.Domain.Enums;
+namespace Learnix.Domain.Enums;
 
 public enum EnrollmentStatus
 {

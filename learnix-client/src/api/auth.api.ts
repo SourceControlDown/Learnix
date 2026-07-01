@@ -32,7 +32,7 @@ export interface ResendConfirmationRequest {
 }
 
 export interface VerifyEmailRequest {
-    userId: string;
+    email: string;
     token: string;
 }
 
@@ -43,6 +43,15 @@ export interface ForgotPasswordRequest {
 export interface ResetPasswordRequest {
     email: string;
     token: string;
+    newPassword: string;
+}
+
+export interface ChangePasswordRequest {
+    currentPassword: string;
+    newPassword: string;
+}
+
+export interface SetPasswordRequest {
     newPassword: string;
 }
 
@@ -58,7 +67,7 @@ export const authApi = {
         api.post('/auth/resend-confirmation', data).then((r) => r.data),
 
     verifyEmail: (data: VerifyEmailRequest) =>
-        api.post('/auth/confirm-email', data).then((r) => r.data),
+        api.post<LoginResponse>('/auth/confirm-email', data).then((r) => r.data),
 
     googleLogin: (data: GoogleLoginRequest) =>
         api.post<LoginResponse>('/auth/google', data).then((r) => r.data),
@@ -68,4 +77,10 @@ export const authApi = {
 
     resetPassword: (data: ResetPasswordRequest) =>
         api.post('/auth/reset-password', data).then((r) => r.data),
+
+    changePassword: (data: ChangePasswordRequest) =>
+        api.post('/auth/change-password', data).then((r) => r.data),
+
+    setPassword: (data: SetPasswordRequest) =>
+        api.post('/auth/set-password', data).then((r) => r.data),
 };

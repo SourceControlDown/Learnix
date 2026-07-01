@@ -1,21 +1,22 @@
 import { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { GoogleLogin } from '@react-oauth/google';
+import { useMutation } from '@tanstack/react-query';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 import { authApi } from '@/api/auth.api';
-import { loginSchema, type LoginFormData } from '@/schemas/auth.schema';
+import { Logo } from '@/components/common/ui/Logo';
+import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
+import { APP_ROUTES } from '@/routes/paths';
+import { type LoginFormData, loginSchema } from '@/schemas/auth.schema';
 import { useAuthStore } from '@/store/auth.store';
-import { useGoogleAuth } from '@/hooks/useGoogleAuth';
-import { isValidationError, setApiFieldErrors, getErrorMessage } from '@/utils/errors';
-import { parseAccessToken } from '@/utils/parseAccessToken';
-import { getRoleHome } from '@/utils/getRoleHome';
 import { cn } from '@/utils/cn';
-import { Logo } from '@/components/common/Logo';
+import { getErrorMessage, isValidationError, setApiFieldErrors } from '@/utils/errors';
+import { getRoleHome } from '@/utils/getRoleHome';
+import { parseAccessToken } from '@/utils/parseAccessToken';
 
 const LOGIN_FIELD_MAP: Partial<Record<string, keyof LoginFormData>> = {
     Email: 'email',
@@ -45,6 +46,10 @@ export default function LoginPage() {
         resolver: zodResolver(loginSchema),
     });
 
+    /**
+     * Related ADRs:
+     * - ADR-FRONT-FORMS-004: Form Errors vs Global Errors
+     */
     const { mutateAsync } = useMutation({
         mutationFn: authApi.login,
         meta: { suppressGlobalError: true },
@@ -54,12 +59,15 @@ export default function LoginPage() {
 
     const onSubmit = async (data: LoginFormData) => {
         try {
-            const response = await mutateAsync(data);
+            // ADR-FRONT-FORMS-002: Explicit transformation from FormValues to DTO
+            const response = await mutateAsync(data as Parameters<typeof authApi.login>[0]);
             setAccessToken(response.accessToken);
             const user = parseAccessToken(response.accessToken);
             if (user) setUser({ ...user, avatarUrl: response.avatarUrl });
             toast.success(t('login.successRedirect'));
-            navigate(from ?? (user ? getRoleHome(user.role) : '/courses'), { replace: true });
+            navigate(from ?? (user ? getRoleHome(user.roles) : APP_ROUTES.public.courses), {
+                replace: true,
+            });
         } catch (err) {
             resetField('password');
             if (isValidationError(err)) {
@@ -78,11 +86,11 @@ export default function LoginPage() {
             <div className="rounded-2xl border border-border bg-card p-8 shadow-[0_4px_20px_rgba(59,130,246,0.05)]">
                 <div className="mb-8 text-center">
                     <Link
-                        to="/"
+                        to={APP_ROUTES.public.home}
                         className="mb-6 inline-flex items-center gap-2 font-heading font-bold"
                     >
-                        <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary font-heading text-lg font-bold text-primary-foreground">
-                            <Logo className="h-6 w-6" />
+                        <div className="grid size-9 place-items-center rounded-lg bg-primary font-heading text-lg font-bold text-primary-foreground">
+                            <Logo className="size-6" />
                         </div>
                         <span className="text-xl">Learnix</span>
                     </Link>
@@ -138,7 +146,7 @@ export default function LoginPage() {
                                 {t('login.password.label')}
                             </label>
                             <Link
-                                to="/forgot-password"
+                                to={APP_ROUTES.public.forgotPassword}
                                 className="text-xs text-primary hover:underline"
                             >
                                 {t('login.forgotPassword')}
@@ -166,9 +174,9 @@ export default function LoginPage() {
                                 tabIndex={-1}
                             >
                                 {showPassword ? (
-                                    <EyeOff className="h-4 w-4" />
+                                    <EyeOff className="size-4" />
                                 ) : (
-                                    <Eye className="h-4 w-4" />
+                                    <Eye className="size-4" />
                                 )}
                             </button>
                         </div>
@@ -212,7 +220,10 @@ export default function LoginPage() {
 
                 <p className="mt-6 text-center text-sm text-muted-foreground">
                     {t('login.noAccount')}{' '}
-                    <Link to="/register" className="font-medium text-primary hover:underline">
+                    <Link
+                        to={APP_ROUTES.public.register}
+                        className="font-medium text-primary hover:underline"
+                    >
                         {t('login.register')}
                     </Link>
                 </p>

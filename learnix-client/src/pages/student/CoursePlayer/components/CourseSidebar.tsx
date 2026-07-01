@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { CheckCircle2, PlayCircle, FileText, ClipboardList, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/utils/cn';
+import { Link } from 'react-router-dom';
+import { CheckCircle2, ChevronDown, ClipboardList, FileText, PlayCircle } from 'lucide-react';
+import { APP_ROUTES } from '@/routes/paths';
 import type { SectionProgressDto } from '@/types/progress.types';
+import { cn } from '@/utils/cn';
 
 interface CourseSidebarProps {
     sections: SectionProgressDto[];
@@ -24,8 +25,6 @@ export function CourseSidebar({
     sections,
     currentLessonId,
     courseId,
-    totalLessons,
-    completedLessons,
     onCloseMobile,
 }: CourseSidebarProps) {
     const { t } = useTranslation('lessonPlayer');
@@ -37,25 +36,29 @@ export function CourseSidebar({
     const [openSections, setOpenSections] = useState<Set<string>>(
         () => new Set(activeSectionId ? [activeSectionId] : []),
     );
+    const [prevActiveSectionId, setPrevActiveSectionId] = useState(activeSectionId);
 
-    useEffect(() => {
-        if (activeSectionId) {
-            setOpenSections((prev) =>
-                prev.has(activeSectionId) ? prev : new Set([...prev, activeSectionId]),
-            );
+    if (activeSectionId !== prevActiveSectionId) {
+        setPrevActiveSectionId(activeSectionId);
+        if (activeSectionId && !openSections.has(activeSectionId)) {
+            setOpenSections((prev) => new Set([...prev, activeSectionId]));
         }
-    }, [activeSectionId]);
+    }
 
     function toggleSection(id: string) {
         setOpenSections((prev) => {
             const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
             return next;
         });
     }
 
     return (
-        <aside className="flex h-full w-72 shrink-0 flex-col overflow-hidden border-r border-border bg-card">
+        <aside className="flex h-full w-72 shrink-0 flex-col overflow-hidden border-r border-border bg-card lg:w-full">
             <div className="flex items-center justify-between border-b border-border p-4">
                 <span className="text-sm font-semibold uppercase tracking-wider text-foreground">
                     {t('sidebar.courseContent')}
@@ -128,7 +131,10 @@ export function CourseSidebar({
                                             return (
                                                 <li key={lesson.lessonId}>
                                                     <Link
-                                                        to={`/courses/${courseId}/learn/${lesson.lessonId}`}
+                                                        to={APP_ROUTES.student.learnLesson(
+                                                            courseId,
+                                                            lesson.lessonId,
+                                                        )}
                                                         className={cn(
                                                             'flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-secondary',
                                                             isActive
@@ -136,12 +142,12 @@ export function CourseSidebar({
                                                                 : 'text-muted-foreground',
                                                         )}
                                                     >
-                                                        <Icon className="h-4 w-4 shrink-0 opacity-60" />
+                                                        <Icon className="size-4 shrink-0 opacity-60" />
                                                         <span className="line-clamp-2 flex-1 leading-snug">
                                                             {lesson.title}
                                                         </span>
                                                         {lesson.isCompleted && (
-                                                            <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+                                                            <CheckCircle2 className="size-4 shrink-0 text-success" />
                                                         )}
                                                     </Link>
                                                 </li>

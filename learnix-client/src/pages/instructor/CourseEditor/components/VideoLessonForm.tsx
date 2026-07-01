@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { videoLessonSchema, type VideoLessonFormData } from '@/schemas/lesson.schema';
-import { VideoUploader } from './VideoUploader';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { LESSON_LIMITS } from '@/const/lesson.constants';
+import { type VideoLessonFormData, videoLessonSchema } from '@/schemas/lesson.schema';
 import type { CourseForEditLessonDto } from '@/types/course.types';
+import { VideoUploader } from './VideoUploader';
+
 interface Props {
     lesson?: CourseForEditLessonDto;
     isPending: boolean;
@@ -20,7 +21,7 @@ export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel, onDirty
         register,
         handleSubmit,
         setValue,
-        watch,
+        control,
         formState: { errors, isDirty },
     } = useForm<VideoLessonFormData>({
         resolver: zodResolver(videoLessonSchema),
@@ -36,9 +37,9 @@ export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel, onDirty
         onDirtyChange?.(isDirty);
     }, [isDirty, onDirtyChange]);
 
-    const videoUrl = watch('videoUrl');
-    const title = watch('title') || '';
-    const description = watch('description') || '';
+    const videoUrl = useWatch({ control, name: 'videoUrl' });
+    const title = useWatch({ control, name: 'title' }) || '';
+    const description = useWatch({ control, name: 'description' }) || '';
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

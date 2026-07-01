@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
+import { CourseCard } from '@/components/common/course/CourseCard';
+import { QueryError } from '@/components/common/system/QueryError';
+import { APP_ROUTES } from '@/routes/paths';
 import type { CourseSummaryDto } from '@/types/course.types';
-import { CourseCard } from '@/components/common/CourseCard';
-import { QueryError } from '@/components/common/QueryError';
 
 interface FeaturedCoursesSectionProps {
     courses: CourseSummaryDto[];
@@ -49,7 +50,7 @@ export function FeaturedCoursesSection({
         if (courses.length === 0) {
             return (
                 <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 text-center">
-                    <BookOpen className="h-10 w-10 text-muted-foreground/40" />
+                    <BookOpen className="size-10 text-muted-foreground/40" />
                     <p className="text-sm text-muted-foreground">{t('featuredCourses.empty')}</p>
                 </div>
             );
@@ -76,7 +77,10 @@ export function FeaturedCoursesSection({
                             {t('featuredCourses.subtitle')}
                         </p>
                     </div>
-                    <Link to="/courses" className="text-sm text-primary hover:underline">
+                    <Link
+                        to={APP_ROUTES.public.courses}
+                        className="text-sm text-primary hover:underline"
+                    >
                         {t('featuredCourses.viewAll')}
                     </Link>
                 </div>
@@ -85,7 +89,7 @@ export function FeaturedCoursesSection({
 
                 <div className="mt-10 text-center">
                     <Link
-                        to="/courses"
+                        to={APP_ROUTES.public.courses}
                         className="inline-flex items-center gap-2 font-medium text-primary hover:underline"
                     >
                         {totalCount !== undefined

@@ -4,8 +4,8 @@ using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Messaging.Abstractions;
+using Learnix.Application.Messaging.Constants;
 using Learnix.Application.Messaging.Specifications;
-using Learnix.Domain.Constants;
 using MediatR;
 
 namespace Learnix.Application.Messaging.Commands.MarkConversationRead;
@@ -31,10 +31,10 @@ public sealed class MarkConversationReadCommandHandler(
             cancellationToken);
 
         if (conversation is null)
-            return Result.Fail(new NotFoundError("Conversation not found."));
+            return Result.Fail(new NotFoundError(MessagingMessages.ConversationNotFound));
 
         if (conversation.StudentId != userId && conversation.InstructorId != userId)
-            return Result.Fail(new ForbiddenError("You are not a participant of this conversation."));
+            return Result.Fail(new ForbiddenError(MessagingMessages.NotAParticipant));
 
         var isInstructor = conversation.InstructorId == userId;
 

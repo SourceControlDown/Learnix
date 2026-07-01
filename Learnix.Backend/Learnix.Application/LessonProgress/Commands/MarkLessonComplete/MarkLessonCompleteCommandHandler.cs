@@ -6,9 +6,9 @@ using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.Enrollments.Specifications;
-using Learnix.Application.Lessons.Abstractions;
 using Learnix.Application.LessonProgress.Abstractions;
 using Learnix.Application.LessonProgress.Specifications;
+using Learnix.Application.Lessons.Abstractions;
 using Learnix.Domain.Entities;
 using Learnix.Domain.Enums;
 using MediatR;
@@ -80,9 +80,8 @@ public sealed class MarkLessonCompleteCommandHandler(
         var visibleCount = await lessonRepository.GetVisibleLessonCountAsync(courseId, ct);
         if (visibleCount == 0) return;
 
-        // Count already-completed lessons in DB; the current lesson will make it +1 after save
-        var completedCount = await lessonProgressRepository.CountAsync(
-            new CompletedLessonCountByStudentAndCourseSpecification(studentId, courseId), ct);
+        // Count already-completed visible lessons in DB; the current lesson will make it +1 after save
+        var completedCount = await lessonRepository.GetCompletedVisibleLessonCountAsync(studentId, courseId, ct);
 
         if (completedCount + 1 < visibleCount) return;
 

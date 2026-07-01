@@ -1,11 +1,11 @@
-using Learnix.Application.Common.Constants;
 using FluentResults;
 using Learnix.Application.Certificates.Abstractions;
+using Learnix.Application.Certificates.Constants;
 using Learnix.Application.Certificates.Specifications;
 using Learnix.Application.Common.Abstractions.Storage;
+using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Users.Abstractions;
-using Learnix.Application.Users.Specifications;
 using MediatR;
 
 namespace Learnix.Application.Certificates.Queries.VerifyCertificate;
@@ -25,10 +25,10 @@ public sealed class VerifyCertificateQueryHandler(
             cancellationToken);
 
         if (certificate is null)
-            return Result.Fail(new NotFoundError("Certificate not found or invalid code."));
+            return Result.Fail(new NotFoundError(CertificateMessages.NotFoundOrInvalidCode));
 
         if (certificate.Course is null)
-            return Result.Fail(new NotFoundError("Course associated with this certificate was not found."));
+            return Result.Fail(new NotFoundError(CertificateMessages.CourseAssociatedNotFound));
 
         var student = await userRepository.GetByIdAsync(certificate.StudentId, cancellationToken);
         var instructor = await userRepository.GetByIdAsync(certificate.Course.InstructorId, cancellationToken);

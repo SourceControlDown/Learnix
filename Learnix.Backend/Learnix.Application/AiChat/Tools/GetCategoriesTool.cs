@@ -1,7 +1,7 @@
+using System.Text.Json;
 using Learnix.Application.AiChat.Abstractions.Models;
 using Learnix.Application.AiChat.Queries.GetCategories;
 using MediatR;
-using System.Text.Json;
 
 namespace Learnix.Application.AiChat.Tools;
 

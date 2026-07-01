@@ -1,11 +1,22 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
+import axios from 'axios';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/api/admin.api';
-import { cn } from '@/utils/cn';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { useAuthStore } from '@/store/auth.store';
 import type { AdminUserDto } from '@/types/admin.types';
+import { cn } from '@/utils/cn';
+import { env } from '@/utils/env';
+import { parseAccessToken } from '@/utils/parseAccessToken';
 
 const ALL_ROLES = ['Student', 'Instructor', 'Admin'] as const;
 
@@ -23,21 +34,46 @@ interface Props {
 
 export function ChangeRoleDialog({ user, onClose, onRolesChanged }: Props) {
     const { t } = useTranslation('admin');
-    const [selectedRole, setSelectedRole] = useState<string>(ALL_ROLES[0]);
+    const currentUser = useAuthStore((s) => s.user);
+    const setAccessToken = useAuthStore((s) => s.setAccessToken);
+    const setUser = useAuthStore((s) => s.setUser);
+
+    const [selectedRole, setSelectedRole] = useState<string>('Instructor');
+
+    const refreshSelfIfNeeded = async () => {
+        if (user.id !== currentUser?.id) return;
+        try {
+            const { data } = await axios.post<{ accessToken: string; avatarUrl: string | null }>(
+                `${env.API_URL}/auth/refresh`,
+                {},
+                { withCredentials: true },
+            );
+            setAccessToken(data.accessToken);
+            const updatedUser = parseAccessToken(data.accessToken);
+            if (updatedUser) setUser({ ...updatedUser, avatarUrl: data.avatarUrl });
+        } catch (e) {
+            console.error('Failed to refresh token after self-role change', e);
+        }
+    };
 
     const assignMutation = useMutation({
         mutationFn: (role: string) => adminApi.assignRole(user.id, role),
-        onSuccess: (_, role) => {
+        onSuccess: async (_, role) => {
             toast.success(t('toastRoleAssigned', { role }));
             onRolesChanged();
+            await refreshSelfIfNeeded();
         },
     });
 
     const removeMutation = useMutation({
         mutationFn: (role: string) => adminApi.removeRole(user.id, role),
-        onSuccess: (_, role) => {
+        onSuccess: async (_, role) => {
             toast.success(t('toastRoleRemoved', { role }));
             onRolesChanged();
+            await refreshSelfIfNeeded();
+        },
+        onError: (err: Error) => {
+            toast.error(err?.message ?? t('toastRoleRemoveError'));
         },
     });
 
@@ -88,14 +124,18 @@ export function ChangeRoleDialog({ user, onClose, onRolesChanged }: Props) {
                                         )}
                                     >
                                         {role}
-                                        <button
-                                            onClick={() => removeMutation.mutate(role)}
-                                            disabled={isLoading}
-                                            className="ml-0.5 opacity-60 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
-                                            title={`Remove ${role}`}
-                                        >
-                                            <X size={10} />
-                                        </button>
+                                        {/* Student is the base role and cannot be removed. Admin cannot be removed from self */}
+                                        {role !== 'Student' &&
+                                            !(role === 'Admin' && user.id === currentUser?.id) && (
+                                                <button
+                                                    onClick={() => removeMutation.mutate(role)}
+                                                    disabled={isLoading}
+                                                    className="ml-0.5 opacity-60 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
+                                                    title={`Remove ${role}`}
+                                                >
+                                                    <X size={10} />
+                                                </button>
+                                            )}
                                     </span>
                                 ))}
                             </div>
@@ -108,17 +148,23 @@ export function ChangeRoleDialog({ user, onClose, onRolesChanged }: Props) {
                             {t('roleDialogAddLabel')}
                         </p>
                         <div className="flex gap-2">
-                            <select
-                                value={selectedRole}
-                                onChange={(e) => setSelectedRole(e.target.value)}
-                                className="flex-1 rounded-lg border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                            >
-                                {ALL_ROLES.map((r) => (
-                                    <option key={r} value={r}>
-                                        {r}
-                                    </option>
-                                ))}
-                            </select>
+                            <Select value={selectedRole} onValueChange={setSelectedRole}>
+                                <SelectTrigger className="flex-1">
+                                    <SelectValue
+                                        placeholder={t(
+                                            'roleDialogSelectPlaceholder',
+                                            'Select role',
+                                        )}
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ALL_ROLES.filter((r) => r !== 'Student').map((r) => (
+                                        <SelectItem key={r} value={r}>
+                                            {r}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                             <button
                                 onClick={() => assignMutation.mutate(selectedRole)}
                                 disabled={isLoading}

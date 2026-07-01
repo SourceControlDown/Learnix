@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Text;
 using Anthropic.SDK;
 using Azure.Storage.Blobs;
 using Learnix.Application.Achievements.Abstractions;
@@ -14,35 +16,37 @@ using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Settings;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Enrollments.Abstractions;
-using Learnix.Application.Payments.Abstractions;
-using Learnix.Application.Wishlist.Abstractions;
 using Learnix.Application.InstructorApplications.Abstractions;
 using Learnix.Application.LessonProgress.Abstractions;
 using Learnix.Application.Lessons.Abstractions;
-using Learnix.Application.Sections.Abstractions;
 using Learnix.Application.Messaging.Abstractions;
-using Learnix.Application.Reviews.Abstractions;
-using Learnix.Application.TestAttempts.Abstractions;
 using Learnix.Application.Notifications.Abstractions;
+using Learnix.Application.Payments.Abstractions;
+using Learnix.Application.Reviews.Abstractions;
+using Learnix.Application.Sections.Abstractions;
+using Learnix.Application.TestAttempts.Abstractions;
 using Learnix.Application.Users.Abstractions;
+using Learnix.Application.Wishlist.Abstractions;
 using Learnix.Domain.Entities;
 using Learnix.Infrastructure.AiChat.Anthropic;
 using Learnix.Infrastructure.AiChat.Gemini;
 using Learnix.Infrastructure.Email;
 using Learnix.Infrastructure.Identity;
 using Learnix.Infrastructure.Outbox;
-using Learnix.Infrastructure.Persistence;
-using Learnix.Infrastructure.Persistence.Interceptors;
+using Learnix.Infrastructure.Persistence.EntityFramework;
+using Learnix.Infrastructure.Persistence.EntityFramework.Interceptors;
+using Learnix.Infrastructure.Persistence.EntityFramework.Repositories;
 using Learnix.Infrastructure.Persistence.Mongo;
 using Learnix.Infrastructure.Persistence.Mongo.Conventions;
 using Learnix.Infrastructure.Persistence.Mongo.Repositories;
-using Learnix.Infrastructure.Persistence.Repositories;
-using Learnix.Infrastructure.Services;
 using Learnix.Infrastructure.Services.Achievements;
+using Learnix.Infrastructure.Services.Catalog;
 using Learnix.Infrastructure.Services.Certificates;
+using Learnix.Infrastructure.Services.HostedServices.Cleanup;
+using Learnix.Infrastructure.Services.HostedServices.Maintenance;
 using Learnix.Infrastructure.Services.Messaging;
 using Learnix.Infrastructure.Services.Notifications;
-using Learnix.Infrastructure.Settings;
+using Learnix.Infrastructure.Services.Outbox;
 using Learnix.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -52,30 +56,33 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
-using System.Reflection;
-using System.Text;
 
 namespace Learnix.Infrastructure;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-005: JWT secret — placeholder in base + dev-secret in Development + env var in production
+/// - ADR-BACK-AUTH-015: Infrastructure gets FrameworkReference to Microsoft.AspNetCore.App
+/// - ADR-BACK-AUTH-016: 6-Digit OTP for Email Confirmation instead of Magic Link
+/// </remarks>
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Redis distributed cache
-        services.AddStackExchangeRedisCache(options =>
-        {
-            options.Configuration = configuration.GetConnectionString("Redis")
-                ?? throw new InvalidOperationException("Connection string 'Redis' is not configured.");
-        });
+        services.AddPersistence(configuration);
+        services.AddStorage(configuration);
+        services.AddAuth(configuration);
+        services.AddExternalServices(configuration);
 
-        // App settings
-        services.Configure<AppSettings>(configuration.GetSection("App"));
-        services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
-        services.Configure<GoogleSettings>(configuration.GetSection("Google"));
-        services.Configure<BlobStorageOptions>(configuration.GetSection("BlobStorage"));
+        return services;
+    }
 
+    public static IServiceCollection AddPersistence(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
         // EF Core + interceptors
         services.AddSingleton<AuditableInterceptor>();
         services.AddSingleton<SoftDeleteInterceptor>();
@@ -95,15 +102,12 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
-        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         // ASP.NET Core Identity
         services
             .AddIdentity<User, IdentityRole<Guid>>(options =>
             {
                 options.User.RequireUniqueEmail = true;
-                // Email confirmation is enforced via JWT email_verified claim + EmailConfirmed
-                // authorization policy — not by blocking login (see ADR-AUTH-014).
                 options.SignIn.RequireConfirmedEmail = false;
 
                 options.Password.RequiredLength = AuthValidationConstants.PasswordMinLength;
@@ -114,91 +118,13 @@ public static class DependencyInjection
 
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+
+                options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
-        // JWT Authentication
-        var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>()
-            ?? throw new InvalidOperationException("Missing 'Jwt' configuration section.");
-
-        if (string.IsNullOrWhiteSpace(jwtSettings.Secret))
-            throw new InvalidOperationException("JWT secret is not configured.");
-
-        services
-            .AddAuthentication(options =>
-            {
-                // Override Identity's default cookie scheme — we use JWT everywhere.
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.MapInboundClaims = false; // keep raw claim names (sub, email, role)
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
-                    ClockSkew = TimeSpan.FromSeconds(30),
-                    NameClaimType = "name",
-                    RoleClaimType = "role"
-                };
-
-                // SignalR WebSocket connections can't set headers — accept token via query string
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        var token = context.Request.Query["access_token"].ToString();
-                        if (!string.IsNullOrEmpty(token) &&
-                            context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
-                        {
-                            context.Token = token;
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
-            });
-
-        services.AddAuthorization(options =>
-        {
-            // Soft email-confirmation gate (ADR-AUTH-014).
-            // Applied to write endpoints that require a verified identity.
-            options.AddPolicy("EmailConfirmed", policy =>
-                policy.RequireClaim("email_verified", "true"));
-        });
-
-        // Fail-fast validation
-        var googleSettings = configuration.GetSection("Google").Get<GoogleSettings>()
-            ?? throw new InvalidOperationException("Missing 'Google' configuration section.");
-
-        if (string.IsNullOrWhiteSpace(googleSettings.ClientId))
-            throw new InvalidOperationException("Google OAuth Client ID is not configured.");
-
-        // Auth services
-        services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
-        services.AddScoped<IUserRegistrationService, UserRegistrationService>();
-        services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
-        services.AddScoped<IPasswordResetService, PasswordResetService>();
-        services.AddScoped<ITokenService, JwtTokenService>();
-        services.AddScoped<IUserRoleService, UserRoleService>();
-        services.AddScoped<OutboxDbContextHolder>();
-        services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
-        services.AddLocalization();
-        services.AddSingleton<EmailRenderer>();
-        services.AddSingleton<IEmailSender, SmtpEmailSender>();
-        services.AddHttpContextAccessor();
-
-        // Course services
         services.AddScoped<ICurrentUserService, CurrentUserService>();
-        services.AddScoped<IPublicCourseCatalogSearchService, PublicCourseCatalogSearchService>();
-        services.AddScoped<IFeaturedCoursesService, FeaturedCoursesService>();
 
         // Repositories
         services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -222,6 +148,134 @@ public static class DependencyInjection
         // Messaging
         services.AddScoped<IConversationRepository, ConversationRepository>();
         services.AddScoped<IMessageRepository, MessageRepository>();
+
+        // Notifications
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddStorage(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<BlobStorageOptions>(configuration.GetSection("BlobStorage"));
+
+        services.AddSingleton(sp =>
+        {
+            var connectionString = configuration.GetConnectionString("AzureBlobStorage")
+                ?? throw new InvalidOperationException("AzureBlobStorage connection string is missing");
+            return new BlobServiceClient(connectionString);
+        });
+        services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddAuth(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
+        services.Configure<GoogleSettings>(configuration.GetSection("Google"));
+
+        // JWT Authentication
+        var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>()
+            ?? throw new InvalidOperationException("Missing 'Jwt' configuration section.");
+
+        if (string.IsNullOrWhiteSpace(jwtSettings.Secret))
+            throw new InvalidOperationException("JWT secret is not configured.");
+
+        services
+            .AddAuthentication(options =>
+            {
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.MapInboundClaims = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidAudience = jwtSettings.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+                    ClockSkew = TimeSpan.FromSeconds(30),
+                    NameClaimType = "name",
+                    RoleClaimType = "role"
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var token = context.Request.Query["access_token"].ToString();
+                        if (!string.IsNullOrEmpty(token) &&
+                            context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                        {
+                            context.Token = token;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("EmailConfirmed", policy =>
+                policy.RequireClaim("email_verified", "true"));
+        });
+
+        // Fail-fast validation
+        var googleSettings = configuration.GetSection("Google").Get<GoogleSettings>()
+            ?? throw new InvalidOperationException("Missing 'Google' configuration section.");
+
+        if (string.IsNullOrWhiteSpace(googleSettings.ClientId))
+            throw new InvalidOperationException("Google OAuth Client ID is not configured.");
+
+        // Auth services
+        services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
+        services.AddScoped<IUserRegistrationService, UserRegistrationService>();
+        services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
+        services.AddScoped<IPasswordResetService, PasswordResetService>();
+        services.AddScoped<IChangePasswordService, ChangePasswordService>();
+        services.AddScoped<ISetPasswordService, SetPasswordService>();
+        services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IUserRoleService, UserRoleService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddExternalServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<AppSettings>(configuration.GetSection("App"));
+
+        // Redis distributed cache
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration.GetConnectionString("Redis")
+                ?? throw new InvalidOperationException("Connection string 'Redis' is not configured.");
+        });
+
+        services.AddScoped<OutboxDbContextHolder>();
+        services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
+        services.AddLocalization();
+        services.AddSingleton<EmailRenderer>();
+        services.AddSingleton<IEmailSender, SmtpEmailSender>();
+        services.AddHttpContextAccessor();
+
+        // Course services
+        services.AddScoped<IPublicCourseCatalogSearchService, PublicCourseCatalogSearchService>();
+        services.AddScoped<IFeaturedCoursesService, FeaturedCoursesService>();
+
+        // Messaging
         services.AddScoped<IChatNotifier, SignalRChatNotifier>();
 
         // Achievements
@@ -231,23 +285,10 @@ public static class DependencyInjection
         services.AddScoped<ICertificateNotifier, SignalRCertificateNotifier>();
 
         // Notifications
-        services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<INotificationSender, SignalRNotificationSender>();
 
-        // Register MediatR notification handlers defined in the Infrastructure assembly
-        // (e.g., outbox event handlers that translate domain events into outbox messages).
-        // The Application-layer AddMediatR only scans its own assembly.
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
-
-        // Storage
-        services.AddSingleton(sp =>
-        {
-            var connectionString = configuration.GetConnectionString("AzureBlobStorage")
-                ?? throw new InvalidOperationException("AzureBlobStorage connection string is missing");
-            return new BlobServiceClient(connectionString);
-        });
-        services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
 
         // MongoDB
         services.Configure<MongoSettings>(configuration.GetSection("Mongo"));
@@ -260,7 +301,7 @@ public static class DependencyInjection
         services.AddSingleton<MongoDbContext>();
         services.AddScoped<IChatSessionRepository, ChatSessionRepository>();
 
-        // AI Chat — provider (swap by changing AiChat:Provider in config)
+        // AI Chat
         services.Configure<AnthropicSettings>(configuration.GetSection("Anthropic"));
         services.Configure<GeminiSettings>(configuration.GetSection("Gemini"));
         services.Configure<AiChatSettings>(configuration.GetSection("AiChat"));
@@ -278,7 +319,6 @@ public static class DependencyInjection
             services.AddScoped<IAiChatProvider, AnthropicChatProvider>();
         }
 
-        // AI Chat — tools and orchestrator
         services.AddScoped<IChatTool, SearchCoursesTool>();
         services.AddScoped<IChatTool, GetCategoriesTool>();
         services.AddSingleton<IChatTool, GetPlatformInfoTool>();
@@ -288,12 +328,6 @@ public static class DependencyInjection
         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
         services.AddSingleton<ICertificatePdfGenerator, CertificatePdfGenerator>();
 
-        services.AddHostedService<BlobStorageBootstrapper>();
-        services.AddHostedService<RoleSeederHostedService>();
-        services.AddHostedService<AdminSeederHostedService>();
-        services.AddHostedService<CategorySeederHostedService>();
-        services.AddHostedService<DevCourseSeederHostedService>();
-        services.AddHostedService<DevStudentSeederHostedService>();
         services.AddHostedService<RefreshTokenCleanupHostedService>();
         services.AddSingleton<OutboxSignal>();
         services.AddHostedService<OutboxNotificationListener>();
@@ -301,6 +335,7 @@ public static class DependencyInjection
         services.AddHostedService<MongoIndexInitializer>();
         services.AddHostedService<ChatSessionCleanupService>();
         services.AddHostedService<CategoryCoursesCountReconciliationService>();
+        services.AddHostedService<CourseRatingReconciliationService>();
 
         return services;
     }

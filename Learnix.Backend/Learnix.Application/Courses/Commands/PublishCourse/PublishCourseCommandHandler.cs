@@ -5,6 +5,7 @@ using Learnix.Application.Common.Commands;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
+using Learnix.Application.Courses.Constants;
 using Learnix.Domain.Entities;
 using Microsoft.Extensions.Caching.Distributed;
 
@@ -21,13 +22,13 @@ public sealed class PublishCourseCommandHandler(
         PublishCourseCommand request, Course course, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(course.CoverBlobPath))
-            return Result.Fail(new ConflictError("Course cannot be published without a cover image."));
+            return Result.Fail(new ConflictError(CourseMessages.CannotPublishNoCoverImage));
 
         if (course.Sections.Count == 0)
-            return Result.Fail(new ConflictError("Course cannot be published without at least one section."));
+            return Result.Fail(new ConflictError(CourseMessages.CannotPublishNoSection));
 
         if (course.Sections.All(s => s.Lessons.Count == 0))
-            return Result.Fail(new ConflictError("Course cannot be published without at least one lesson."));
+            return Result.Fail(new ConflictError(CourseMessages.CannotPublishNoLesson));
 
         course.Publish();
 

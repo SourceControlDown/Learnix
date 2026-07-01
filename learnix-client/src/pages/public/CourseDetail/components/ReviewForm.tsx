@@ -1,14 +1,18 @@
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { reviewSchema, type ReviewFormValues } from '@/schemas/review.schema';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { RatingStars } from '@/components/common/ui/RatingStars';
 import { REVIEW_LIMITS } from '@/const/review.constants';
-import { RatingStars } from '@/components/common/RatingStars';
+import {
+    useCreateReview,
+    useDeleteReview,
+    useUpdateReview,
+} from '@/hooks/student/useReviewMutations';
+import { type ReviewFormValues, reviewSchema } from '@/schemas/review.schema';
+import type { MyReviewDto } from '@/types/review.types';
 import { cn } from '@/utils/cn';
 import { isValidationError } from '@/utils/errors';
-import type { MyReviewDto } from '@/types/review.types';
-import { useCreateReview, useUpdateReview, useDeleteReview } from '@/hooks/useReviewMutations';
 
 interface ReviewFormProps {
     courseId: string;
@@ -61,9 +65,10 @@ export function ReviewForm({ courseId, existing }: ReviewFormProps) {
     const isPending = createReview.isPending || updateReview.isPending;
     const title = existing ? t('reviews.editReview') : t('reviews.writeReview');
 
-    const commentValue = form.watch('comment') || '';
+    const commentValue = useWatch({ control: form.control, name: 'comment' }) || '';
+    const ratingValue = useWatch({ control: form.control, name: 'rating' });
     const isUnchanged = existing
-        ? form.watch('rating') === existing.rating && commentValue === (existing.comment || '')
+        ? ratingValue === existing.rating && commentValue === (existing.comment || '')
         : false;
 
     return (

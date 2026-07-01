@@ -1,4 +1,4 @@
-﻿namespace Learnix.Application.Common.Abstractions.Caching;
+namespace Learnix.Application.Common.Abstractions.Caching;
 
 public interface ICacheable
 {

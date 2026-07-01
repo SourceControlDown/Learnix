@@ -1,24 +1,17 @@
 using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Application.Common.Events;
-using Learnix.Application.Common.Settings;
 using Learnix.Application.Users.Abstractions;
 using Learnix.Application.Users.Specifications;
 using Learnix.Domain.Events;
 using MediatR;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Options;
-using System.Text;
 
 namespace Learnix.Application.Auth.EventHandlers;
 
 internal sealed class UserRegisteredDomainEventHandler(
     IEmailSender emailSender,
-    IUserRepository userRepository,
-    IOptions<AppSettings> appSettings)
+    IUserRepository userRepository)
     : INotificationHandler<DomainEventNotification<UserRegisteredDomainEvent>>
 {
-    private readonly AppSettings _appSettings = appSettings.Value;
-
     public async Task Handle(DomainEventNotification<UserRegisteredDomainEvent> notification, CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
@@ -28,10 +21,9 @@ internal sealed class UserRegisteredDomainEventHandler(
 
         var language = user?.Language ?? "en";
 
-        // Identity tokens contain '+', '/', '=' — must be base64-url encoded for safe URL transport
-        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(domainEvent.EmailConfirmationToken));
-        var link = $"{_appSettings.ClientBaseUrl}/verify-email?userId={domainEvent.UserId}&token={encodedToken}";
+        // Identity TOTP 6-digit code does not need base64 encoding
+        var confirmationCode = domainEvent.EmailConfirmationToken;
 
-        await emailSender.SendEmailConfirmationAsync(domainEvent.Email, domainEvent.FirstName, link, language, cancellationToken);
+        await emailSender.SendEmailConfirmationAsync(domainEvent.Email, domainEvent.FirstName, confirmationCode, language, cancellationToken);
     }
 }

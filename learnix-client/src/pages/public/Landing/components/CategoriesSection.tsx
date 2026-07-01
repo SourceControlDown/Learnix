@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
+import { QueryError } from '@/components/common/system/QueryError';
+import { APP_ROUTES } from '@/routes/paths';
 import { cn } from '@/utils/cn';
-import { QueryError } from '@/components/common/QueryError';
-import type { LandingCategory } from '@/mocks/landing.mock';
+import type { LandingCategory } from '@/utils/mocks/landing.mock';
 
 interface CategoriesSectionProps {
     categories: LandingCategory[];
@@ -23,11 +24,11 @@ export function CategoriesSection({
     const renderContent = () => {
         if (isLoading) {
             return (
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-                    {Array.from({ length: 12 }).map((_, i) => (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {Array.from({ length: 8 }).map((_, i) => (
                         <div
                             key={i}
-                            className="h-28 animate-pulse rounded-xl border border-border bg-card"
+                            className="h-[88px] animate-pulse rounded-2xl border border-white/5 bg-card/50"
                         />
                     ))}
                 </div>
@@ -47,33 +48,70 @@ export function CategoriesSection({
         if (categories.length === 0) {
             return (
                 <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 text-center">
-                    <BookOpen className="h-10 w-10 text-muted-foreground/40" />
+                    <BookOpen className="size-10 text-muted-foreground/40" />
                     <p className="text-sm text-muted-foreground">{t('categories.empty')}</p>
                 </div>
             );
         }
 
         return (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {categories.map((cat) => (
                     <Link
                         key={cat.id}
                         to={`/courses?categoryId=${cat.id}`}
-                        className="group rounded-xl border border-border bg-card p-5 transition-all hover:border-primary hover:shadow-md"
+                        className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-card/80 to-card/40 p-4 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_10px_40px_-10px_rgba(var(--primary),0.3)]"
                     >
-                        <div
-                            className={cn(
-                                'grid h-12 w-12 place-items-center rounded-lg text-2xl transition-transform group-hover:scale-110',
-                                cat.iconBgClass,
-                                cat.iconTextClass,
+                        {/* Hover glow effect */}
+                        <div className="absolute -right-8 -top-8 size-32 rounded-full bg-primary/10 opacity-0 blur-[30px] transition-opacity duration-500 group-hover:opacity-100" />
+
+                        {/* Icon */}
+                        <div className="relative z-10 shrink-0">
+                            {cat.imageUrl ? (
+                                <img
+                                    src={cat.imageUrl}
+                                    alt=""
+                                    className="size-14 rounded-xl object-cover shadow-sm transition-transform duration-500 group-hover:scale-110"
+                                />
+                            ) : (
+                                <div
+                                    className={cn(
+                                        'grid size-14 place-items-center rounded-xl text-2xl shadow-sm transition-transform duration-500 group-hover:scale-110',
+                                        cat.iconBgClass,
+                                        cat.iconTextClass,
+                                    )}
+                                >
+                                    {cat.emoji}
+                                </div>
                             )}
-                        >
-                            {cat.emoji}
                         </div>
-                        <h3 className="mt-4 font-heading font-semibold">{cat.name}</h3>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            {cat.coursesCount} {t('categories.coursesLabel')}
-                        </p>
+
+                        {/* Content */}
+                        <div className="relative z-10 flex min-w-0 flex-1 flex-col py-1">
+                            <h3 className="truncate font-heading text-base font-bold text-foreground/90 transition-colors group-hover:text-foreground">
+                                {cat.name}
+                            </h3>
+                            <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground/70 transition-colors group-hover:text-muted-foreground">
+                                {cat.coursesCount} {t('categories.coursesLabel')}
+                            </p>
+                        </div>
+
+                        {/* Animated Arrow */}
+                        <div className="relative z-10 grid size-8 shrink-0 -translate-x-2 place-items-center rounded-full bg-primary/10 text-primary opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
+                            <svg
+                                className="size-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                />
+                            </svg>
+                        </div>
                     </Link>
                 ))}
             </div>
@@ -90,7 +128,7 @@ export function CategoriesSection({
                         </h2>
                     </div>
                     <Link
-                        to="/courses"
+                        to={APP_ROUTES.public.courses}
                         className="hidden text-sm text-primary hover:underline md:inline"
                     >
                         {t('categories.viewAll')}

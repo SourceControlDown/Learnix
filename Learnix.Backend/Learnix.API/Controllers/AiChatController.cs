@@ -1,21 +1,24 @@
-﻿using Learnix.API.Extensions;
+using System.Text;
+using Learnix.API.Extensions;
 using Learnix.API.RateLimiting;
 using Learnix.Application.AiChat.Commands.ClearChatSession;
 using Learnix.Application.AiChat.Queries.GetActiveChatSession;
 using Learnix.Application.AiChat.Services;
+using Learnix.Application.Common.Abstractions.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using System.Text;
-using System.Text.Json;
 
 namespace Learnix.API.Controllers;
 
 [ApiController]
 [Route("api/ai-chat")]
 [Authorize]
-public sealed class AiChatController(ISender sender, ChatStreamOrchestrator orchestrator) : ControllerBase
+public sealed class AiChatController(
+    ISender sender,
+    ChatStreamOrchestrator orchestrator,
+    ICurrentUserService currentUser) : ControllerBase
 {
     [HttpGet("session")]
     public async Task<IActionResult> GetSession(CancellationToken ct)
@@ -28,12 +31,12 @@ public sealed class AiChatController(ISender sender, ChatStreamOrchestrator orch
     [EnableRateLimiting(RateLimitPolicies.AiChat)]
     public async Task StreamMessage([FromBody] SendMessageRequest request, CancellationToken ct)
     {
-        var sub = User.FindFirst("sub")?.Value;
-        if (!Guid.TryParse(sub, out var userId))
+        if (currentUser.UserId is null)
         {
             Response.StatusCode = StatusCodes.Status401Unauthorized;
             return;
         }
+        var userId = currentUser.UserId.Value;
 
         if (string.IsNullOrWhiteSpace(request.Message))
         {

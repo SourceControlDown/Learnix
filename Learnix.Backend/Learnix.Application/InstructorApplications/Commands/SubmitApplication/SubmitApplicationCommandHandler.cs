@@ -4,6 +4,7 @@ using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.InstructorApplications.Abstractions;
+using Learnix.Application.InstructorApplications.Constants;
 using Learnix.Application.InstructorApplications.Specifications;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Entities;
@@ -23,8 +24,11 @@ internal sealed class SubmitApplicationCommandHandler(
         if (currentUser.UserId is null)
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
 
-        if (currentUser.IsInRole(Roles.Instructor) || currentUser.IsInRole(Roles.Admin))
-            return Result.Fail(new ConflictError("You are already an instructor."));
+        if (currentUser.IsInRole(Roles.Instructor))
+            return Result.Fail(new ConflictError(InstructorApplicationMessages.AlreadyInstructor));
+
+        if (currentUser.IsInRole(Roles.Admin))
+            return Result.Fail(new ConflictError("Admins cannot submit applications. You can assign the Instructor role to yourself via User Management."));
 
         var existing = await repo.FirstOrDefaultAsync(
             new ApplicationByUserIdSpecification(currentUser.UserId.Value, forUpdate: true),
@@ -33,16 +37,16 @@ internal sealed class SubmitApplicationCommandHandler(
         if (existing is not null)
         {
             if (existing.Status == ApplicationStatus.Pending)
-                return Result.Fail(new ConflictError("You already have a pending application."));
+                return Result.Fail(new ConflictError(InstructorApplicationMessages.PendingApplicationExists));
 
             if (existing.Status == ApplicationStatus.Approved)
-                return Result.Fail(new ConflictError("Your application has already been approved."));
+                return Result.Fail(new ConflictError(InstructorApplicationMessages.ApplicationAlreadyApproved));
 
             // Rejected — allow resubmission by updating the existing record
             existing.Resubmit(request.MotivationText, request.PortfolioUrl);
-            
+
             await unitOfWork.SaveChangesAsync(cancellationToken);
-            
+
             return Result.Ok(existing.Id);
         }
 
@@ -54,7 +58,7 @@ internal sealed class SubmitApplicationCommandHandler(
         await repo.AddAsync(application, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        
+
         return Result.Ok(application.Id);
     }
 }

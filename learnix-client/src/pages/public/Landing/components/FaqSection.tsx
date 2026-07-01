@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { APP_ROUTES } from '@/routes/paths';
 
 export function FaqSection() {
     const { t } = useTranslation('landing');
@@ -35,7 +36,7 @@ export function FaqSection() {
                                 <span className="pr-6 font-heading text-[15px] font-semibold text-foreground/90 transition-colors group-hover:text-primary">
                                     {item.q}
                                 </span>
-                                <span className="faq-icon grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xl font-light text-primary transition-all group-hover:bg-primary/20">
+                                <span className="faq-icon grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xl font-light text-primary transition-all group-hover:bg-primary/20">
                                     +
                                 </span>
                             </summary>
@@ -47,7 +48,10 @@ export function FaqSection() {
                 </div>
 
                 <div className="mt-8 text-center">
-                    <Link to="/faq" className="font-medium text-primary hover:underline">
+                    <Link
+                        to={APP_ROUTES.public.faq}
+                        className="font-medium text-primary hover:underline"
+                    >
                         {t('faq.viewAll')}
                     </Link>
                 </div>

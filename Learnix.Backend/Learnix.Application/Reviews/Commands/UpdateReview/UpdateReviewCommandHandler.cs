@@ -6,6 +6,7 @@ using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Courses.Specifications;
 using Learnix.Application.Reviews.Abstractions;
+using Learnix.Application.Reviews.Constants;
 using Learnix.Application.Reviews.Specifications;
 using MediatR;
 using Microsoft.Extensions.Caching.Distributed;
@@ -29,21 +30,27 @@ public sealed class UpdateReviewCommandHandler(
             new CourseReviewByIdSpecification(request.ReviewId, forUpdate: true), cancellationToken);
 
         if (review is null || review.CourseId != request.CourseId)
-            return Result.Fail(new NotFoundError("Review not found."));
+            return Result.Fail(new NotFoundError(ReviewMessages.ReviewNotFound));
 
         if (review.StudentId != currentUser.UserId.Value)
-            return Result.Fail(new ForbiddenError("You can only edit your own reviews."));
-
-        var oldRating = review.Rating;
-        review.Update(request.Rating, request.Comment);
+            return Result.Fail(new ForbiddenError(ReviewMessages.CanOnlyEditOwnReviews));
 
         var course = await courseRepository.FirstOrDefaultAsync(
             new CourseByIdSpecification(request.CourseId, forUpdate: true), cancellationToken);
 
         if (course is not null)
-            course.UpdateRating(oldRating, request.Rating);
+        {
+            await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                review.Update(request.Rating, request.Comment);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+                var metrics = await reviewRepository.GetCourseRatingMetricsAsync(request.CourseId, cancellationToken);
+                course.SyncRating(metrics.Count, metrics.Average);
+
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+            }, cancellationToken);
+        }
 
         await cache.RemoveAsync(CacheKeys.Course(request.CourseId), cancellationToken);
 

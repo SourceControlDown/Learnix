@@ -1,126 +1,20 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/utils/cn';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import type { MockPaymentDto } from '@/types/admin.types';
-
-const MOCK_PAYMENTS: MockPaymentDto[] = [
-    {
-        id: '1',
-        userName: 'Alice Johnson',
-        userEmail: 'alice@example.com',
-        courseTitle: 'Advanced React Patterns',
-        amount: 49.99,
-        status: 'Completed',
-        createdAt: '2025-04-28T10:14:00Z',
-    },
-    {
-        id: '2',
-        userName: 'Bob Martinez',
-        userEmail: 'bob@example.com',
-        courseTitle: 'Node.js Masterclass',
-        amount: 34.99,
-        status: 'Completed',
-        createdAt: '2025-04-27T15:32:00Z',
-    },
-    {
-        id: '3',
-        userName: 'Carol Williams',
-        userEmail: 'carol@example.com',
-        courseTitle: 'TypeScript Deep Dive',
-        amount: 39.99,
-        status: 'Pending',
-        createdAt: '2025-04-27T09:05:00Z',
-    },
-    {
-        id: '4',
-        userName: 'David Lee',
-        userEmail: 'david@example.com',
-        courseTitle: 'Docker & Kubernetes',
-        amount: 59.99,
-        status: 'Completed',
-        createdAt: '2025-04-26T18:20:00Z',
-    },
-    {
-        id: '5',
-        userName: 'Eva Chen',
-        userEmail: 'eva@example.com',
-        courseTitle: 'Python for Data Science',
-        amount: 44.99,
-        status: 'Failed',
-        createdAt: '2025-04-26T11:48:00Z',
-    },
-    {
-        id: '6',
-        userName: 'Frank Brown',
-        userEmail: 'frank@example.com',
-        courseTitle: 'AWS Cloud Practitioner',
-        amount: 29.99,
-        status: 'Completed',
-        createdAt: '2025-04-25T14:00:00Z',
-    },
-    {
-        id: '7',
-        userName: 'Grace Kim',
-        userEmail: 'grace@example.com',
-        courseTitle: 'GraphQL Fundamentals',
-        amount: 24.99,
-        status: 'Completed',
-        createdAt: '2025-04-25T09:30:00Z',
-    },
-    {
-        id: '8',
-        userName: 'Henry Taylor',
-        userEmail: 'henry@example.com',
-        courseTitle: 'Advanced React Patterns',
-        amount: 49.99,
-        status: 'Failed',
-        createdAt: '2025-04-24T20:15:00Z',
-    },
-    {
-        id: '9',
-        userName: 'Iris Walker',
-        userEmail: 'iris@example.com',
-        courseTitle: 'Node.js Masterclass',
-        amount: 34.99,
-        status: 'Completed',
-        createdAt: '2025-04-24T16:40:00Z',
-    },
-    {
-        id: '10',
-        userName: 'Jack Wilson',
-        userEmail: 'jack@example.com',
-        courseTitle: 'Docker & Kubernetes',
-        amount: 59.99,
-        status: 'Pending',
-        createdAt: '2025-04-23T13:05:00Z',
-    },
-    {
-        id: '11',
-        userName: 'Karen Davis',
-        userEmail: 'karen@example.com',
-        courseTitle: 'TypeScript Deep Dive',
-        amount: 39.99,
-        status: 'Completed',
-        createdAt: '2025-04-23T08:55:00Z',
-    },
-    {
-        id: '12',
-        userName: 'Liam Garcia',
-        userEmail: 'liam@example.com',
-        courseTitle: 'Python for Data Science',
-        amount: 44.99,
-        status: 'Completed',
-        createdAt: '2025-04-22T17:30:00Z',
-    },
-];
+import { cn } from '@/utils/cn';
+import { MOCK_PAYMENTS } from '@/utils/mocks/payments.mock';
+import { PaymentHistoryRow } from './components/PaymentHistoryRow';
 
 type StatusFilter = 'All' | 'Completed' | 'Pending' | 'Failed';
-
-const STATUS_STYLES: Record<MockPaymentDto['status'], string> = {
-    Completed: 'bg-success/20 text-success',
-    Pending: 'bg-warning/20 text-warning',
-    Failed: 'bg-destructive/10 text-destructive',
-};
 
 export default function PaymentHistoryPage() {
     const { t } = useTranslation('admin');
@@ -180,82 +74,55 @@ export default function PaymentHistoryPage() {
                 ))}
             </div>
 
-            {/* Table */}
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
-                {displayed.length === 0 ? (
-                    <div className="py-16 text-center text-sm text-muted-foreground">
-                        {t('emptyPayments')}
-                    </div>
-                ) : (
-                    <div className="min-h-0 flex-1 overflow-y-auto">
-                        <table className="w-full text-sm">
-                            <thead className="sticky top-0 bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
-                                <tr>
-                                    <th className="px-5 py-3 text-left font-medium">
-                                        {t('colPayer')}
-                                    </th>
-                                    <th className="px-5 py-3 text-left font-medium">
-                                        {t('colCourseTitle')}
-                                    </th>
-                                    <th className="px-5 py-3 text-left font-medium">
-                                        {t('colAmount')}
-                                    </th>
-                                    <th className="px-5 py-3 text-left font-medium">
-                                        {t('colPayStatus')}
-                                    </th>
-                                    <th className="px-5 py-3 text-left font-medium">
-                                        {t('colDate')}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {displayed.map((p) => (
-                                    <tr key={p.id} className="hover:bg-secondary/30">
-                                        <td className="px-5 py-3">
-                                            <p className="font-medium text-foreground">
-                                                {p.userName}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {p.userEmail}
-                                            </p>
-                                        </td>
-                                        <td className="px-5 py-3 text-foreground">
-                                            {p.courseTitle}
-                                        </td>
-                                        <td className="px-5 py-3 font-medium text-foreground">
-                                            ${p.amount.toFixed(2)}
-                                        </td>
-                                        <td className="px-5 py-3">
-                                            <span
-                                                className={cn(
-                                                    'rounded px-2 py-0.5 text-xs font-medium',
-                                                    STATUS_STYLES[p.status],
-                                                )}
-                                            >
-                                                {STATUS_LABELS[p.status]}
-                                            </span>
-                                        </td>
-                                        <td className="px-5 py-3 text-muted-foreground">
-                                            {new Date(p.createdAt).toLocaleDateString()}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {/* Summary */}
-                {displayed.length > 0 && filter !== 'Failed' && (
-                    <div className="flex justify-end border-t border-border px-5 py-3">
-                        <p className="text-sm text-muted-foreground">
-                            Completed total:{' '}
-                            <span className="font-semibold text-foreground">
-                                ${total.toFixed(2)}
-                            </span>
-                        </p>
-                    </div>
-                )}
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                    <Table>
+                        <TableHeader className="sticky top-0 bg-secondary/50 text-xs uppercase tracking-wider">
+                            <TableRow>
+                                <TableHead>{t('colPayer')}</TableHead>
+                                <TableHead>{t('colCourseTitle')}</TableHead>
+                                <TableHead>{t('colAmount')}</TableHead>
+                                <TableHead>{t('colPayStatus')}</TableHead>
+                                <TableHead>{t('colDate')}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {displayed.length === 0 ? (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={5}
+                                        className="py-16 text-center text-muted-foreground"
+                                    >
+                                        {t('emptyPayments')}
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                displayed.map((p) => (
+                                    <PaymentHistoryRow
+                                        key={p.id}
+                                        payment={p}
+                                        statusLabel={STATUS_LABELS[p.status]}
+                                    />
+                                ))
+                            )}
+                        </TableBody>
+                        {displayed.length > 0 && filter !== 'Failed' && (
+                            <TableFooter className="sticky bottom-0 bg-card">
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={4}
+                                        className="text-right text-muted-foreground"
+                                    >
+                                        Completed total:
+                                    </TableCell>
+                                    <TableCell className="font-semibold text-foreground">
+                                        ${total.toFixed(2)}
+                                    </TableCell>
+                                </TableRow>
+                            </TableFooter>
+                        )}
+                    </Table>
+                </div>
             </div>
         </div>
     );

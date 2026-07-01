@@ -1,4 +1,4 @@
-﻿namespace Learnix.Application.Common.Models;
+namespace Learnix.Application.Common.Models;
 
 public sealed record AccessTokenResult(string Token, DateTime ExpiresAt);
 

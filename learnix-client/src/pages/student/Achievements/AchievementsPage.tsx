@@ -1,15 +1,19 @@
 import { useEffect } from 'react';
-import { BookOpen, GraduationCap, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useMyAchievements } from '@/hooks/useMyAchievements';
-import { useMarkAchievementSeen } from '@/hooks/useMarkAchievementSeen';
-import { AchievementBadge } from '@/components/common/AchievementBadge';
-import { ALL_ACHIEVEMENT_CODES } from '@/const/localization/achievements';
+import { useQueryClient } from '@tanstack/react-query';
+import { BookOpen, Globe, GraduationCap } from 'lucide-react';
+import { notificationsApi } from '@/api/notifications.api';
+import { queryKeys } from '@/api/queryKeys';
+import { AchievementBadge } from '@/components/common/course/AchievementBadge';
+import { ALL_ACHIEVEMENT_CODES } from '@/const/achievements.constants';
+import { useMarkAchievementSeen } from '@/hooks/user/useMarkAchievementSeen';
+import { useMyAchievements } from '@/hooks/user/useMyAchievements';
 
 export default function AchievementsPage() {
     const { t } = useTranslation('achievements');
     const { data, isLoading } = useMyAchievements();
     const markSeen = useMarkAchievementSeen();
+    const queryClient = useQueryClient();
 
     const unlockedMap = new Map(data?.unlocked.map((a) => [a.code, a]));
     const unseenIds = data?.unlocked.filter((a) => !a.seen).map((a) => a.id) ?? [];
@@ -19,6 +23,17 @@ export default function AchievementsPage() {
             unseenIds.forEach((id) => markSeen.mutate(id));
         }
     }, [unseenIds.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        // Mark all achievement notifications as read when visiting this page
+        notificationsApi
+            .markReadByType('AchievementEarned')
+            .then(() => {
+                queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
+                queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
+            })
+            .catch(() => {});
+    }, [queryClient]);
 
     if (isLoading) {
         return (
@@ -54,7 +69,7 @@ export default function AchievementsPage() {
                     </h2>
                     <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                         <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/50 p-4 text-left sm:flex-col sm:items-center sm:justify-start sm:text-center">
-                            <BookOpen className="h-6 w-6 text-primary" />
+                            <BookOpen className="size-6 text-primary" />
                             <span className="font-heading text-2xl font-bold text-foreground">
                                 {progress.lessonsCompleted}
                             </span>
@@ -63,7 +78,7 @@ export default function AchievementsPage() {
                             </span>
                         </div>
                         <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/50 p-4 text-left sm:flex-col sm:items-center sm:justify-start sm:text-center">
-                            <GraduationCap className="h-6 w-6 text-accent" />
+                            <GraduationCap className="size-6 text-accent" />
                             <span className="font-heading text-2xl font-bold text-foreground">
                                 {progress.coursesCompleted}
                             </span>
@@ -72,7 +87,7 @@ export default function AchievementsPage() {
                             </span>
                         </div>
                         <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/50 p-4 text-left sm:flex-col sm:items-center sm:justify-start sm:text-center">
-                            <Globe className="h-6 w-6 text-success" />
+                            <Globe className="size-6 text-success" />
                             <span className="font-heading text-2xl font-bold text-foreground">
                                 {progress.distinctCategoriesCompleted}
                             </span>

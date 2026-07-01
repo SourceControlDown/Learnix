@@ -1,11 +1,10 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-
+import { CourseCertificateButton } from '@/components/common/course/CourseCertificateButton';
 import type { EnrolledCourseDto } from '@/types/enrollment.types';
 import { cn } from '@/utils/cn';
-import { CourseCertificateButton } from '@/components/common/CourseCertificateButton';
 
 interface EnrolledCourseCardProps {
     enrollment: EnrolledCourseDto;
@@ -58,12 +57,12 @@ export function EnrolledCourseCard({ enrollment, className }: EnrolledCourseCard
                     <img
                         src={enrollment.coverImageUrl!}
                         alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="absolute inset-0 size-full object-cover"
                         onError={() => setImgFailed(true)}
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <BookOpen className="h-10 w-10 text-white/40" />
+                        <BookOpen className="size-10 text-white/40" />
                     </div>
                 )}
 
@@ -82,7 +81,7 @@ export function EnrolledCourseCard({ enrollment, className }: EnrolledCourseCard
                     {enrollment.courseTitle}
                 </h3>
 
-                <div className="mt-auto space-y-1 pt-4 text-xs text-muted-foreground">
+                <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                     <p>
                         {t('enrolledOn')} {new Date(enrollment.enrolledAt).toLocaleDateString()}
                     </p>
@@ -94,8 +93,8 @@ export function EnrolledCourseCard({ enrollment, className }: EnrolledCourseCard
                     )}
                 </div>
 
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-                    {isCompleted && (
+                {isCompleted && (
+                    <div className="mt-auto flex flex-wrap items-center gap-3 pt-4">
                         <div onClick={(e) => e.stopPropagation()}>
                             <CourseCertificateButton
                                 courseId={enrollment.courseId}
@@ -103,14 +102,8 @@ export function EnrolledCourseCard({ enrollment, className }: EnrolledCourseCard
                                 className="h-9 py-0"
                             />
                         </div>
-                    )}
-                    <span className="ml-auto shrink-0 text-sm font-medium text-primary">
-                        {isCompleted
-                            ? t('continueLearning', { defaultValue: 'Review Course' })
-                            : t('continueLearning')}{' '}
-                        →
-                    </span>
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );

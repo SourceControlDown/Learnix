@@ -17,7 +17,27 @@
     "change": "Змінити фото",
     "remove": "Видалити",
     "uploading": "Завантаження...",
-    "hint": "JPG або PNG, макс. 5 МБ"
+    "hint": "JPG або PNG, макс. 5 МБ",
+    "memberSince": "З нами від",
+    "changePassword": "Змінити пароль",
+    "setPassword": "Встановити пароль"
+  },
+  "changePasswordDialog": {
+    "title": "Змінити пароль",
+    "description": "Введіть ваш поточний пароль та новий пароль для оновлення безпеки вашого акаунта.",
+    "currentPassword": "Поточний пароль",
+    "newPassword": "Новий пароль",
+    "confirmPassword": "Підтвердіть новий пароль",
+    "submit": "Оновити пароль",
+    "forgotPassword": "Забули пароль?",
+    "success": "Пароль успішно змінено",
+    "resetLinkSent": "Посилання для скидання пароля надіслано на твою пошту"
+  },
+  "setPasswordDialog": {
+    "title": "Встановити пароль",
+    "description": "Встановіть пароль, щоб ви могли входити без використання Google.",
+    "submit": "Встановити пароль",
+    "success": "Пароль успішно встановлено"
   },
   "preferences": {
     "comingSoon": "Незабаром",

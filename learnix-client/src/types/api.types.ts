@@ -1,4 +1,4 @@
-﻿/**
+/**
  * RFC 7807 ProblemDetails — backend error format.
  */
 export interface ProblemDetails {
@@ -12,7 +12,10 @@ export interface ProblemDetails {
 }
 
 /**
- * Generic paginated wrapper from backend (matches ADR-013).
+ * Related ADRs:
+ * - ADR-FRONT-API-005: Type Definition Strategy (Manual vs Codegen)
+ *
+ * Generic paginated wrapper from backend.
  */
 export interface PaginatedResult<T> {
     items: T[];

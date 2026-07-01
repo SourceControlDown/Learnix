@@ -7,6 +7,12 @@ using RefreshTokenEntity = Learnix.Domain.Entities.RefreshToken;
 
 namespace Learnix.Application.Auth.Commands.Login;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-001: JWT (short-lived) + Refresh Token
+/// - ADR-BACK-AUTH-006: Decomposition of Identity service
+/// - ADR-BACK-AUTH-014: Email confirmation soft restriction
+/// </remarks>
 internal sealed class LoginCommandHandler(
     IUserAuthenticationService authService,
     ITokenService tokenService,
@@ -18,10 +24,10 @@ internal sealed class LoginCommandHandler(
     public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var authResult = await authService.ValidateCredentialsAsync(
-            request.Email, 
-            request.Password, 
+            request.Email,
+            request.Password,
             cancellationToken);
-        
+
         if (authResult.IsFailed)
             return Result.Fail<LoginResponse>(authResult.Errors);
 
@@ -34,15 +40,15 @@ internal sealed class LoginCommandHandler(
             user.LastName,
             user.Roles,
             user.EmailConfirmed);
-        
+
         var refresh = tokenService.GenerateRefreshToken();
 
         await refreshTokenRepository.AddAsync(
             new RefreshTokenEntity(
-                user.UserId, 
-                refresh.TokenHash, 
+                user.UserId,
+                refresh.TokenHash,
                 refresh.ExpiresAt), cancellationToken);
-        
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var avatarUrl = !string.IsNullOrWhiteSpace(user.AvatarBlobPath) ? blobStorage.GetPublicUrl(user.AvatarBlobPath) : null;

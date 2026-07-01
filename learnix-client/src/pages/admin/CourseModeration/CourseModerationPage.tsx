@@ -1,24 +1,33 @@
 import { useEffect, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { EyeOff, Eye, Trash2, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
 import { adminApi } from '@/api/admin.api';
 import { queryKeys } from '@/api/queryKeys';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@/components/common/ui/ConfirmDialog';
+import { Pagination } from '@/components/common/ui/Pagination';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { PAGINATION } from '@/const/ui.constants';
-import { cn } from '@/utils/cn';
-import type { ManageCourseCardDto, CourseStatus } from '@/types/course.types';
+import type { ManageCourseCardDto } from '@/types/course.types';
+import { CourseModerationTableRow } from './components/CourseModerationTableRow';
 
-const PAGE_SIZE = PAGINATION.DEFAULT;
-
-const STATUS_STYLES: Record<CourseStatus, string> = {
-    Published: 'bg-success/20 text-success',
-    Draft: 'bg-muted text-muted-foreground',
-    Archived: 'bg-warning/20 text-warning',
-};
-
-type PendingAction =
+const DEFAULT_PAGE_SIZE = PAGINATION.DEFAULT;
+export type PendingAction =
     | { type: 'publish'; course: ManageCourseCardDto }
     | { type: 'unpublish'; course: ManageCourseCardDto }
     | { type: 'delete'; course: ManageCourseCardDto }
@@ -31,6 +40,7 @@ export default function CourseModerationPage() {
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [includeDeleted, setIncludeDeleted] = useState(false);
     const [skip, setSkip] = useState(0);
+    const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
     const [pending, setPending] = useState<PendingAction | null>(null);
 
     useEffect(() => {
@@ -41,17 +51,11 @@ export default function CourseModerationPage() {
         return () => clearTimeout(timer);
     }, [search]);
 
-    const STATUS_LABELS: Record<CourseStatus, string> = {
-        Published: t('courseStatusPublished'),
-        Draft: t('courseStatusDraft'),
-        Archived: t('courseStatusArchived'),
-    };
-
     const filters = {
         search: debouncedSearch || undefined,
         includeDeleted,
         skip,
-        take: PAGE_SIZE,
+        take: pageSize,
     };
 
     const { data, isLoading } = useQuery({
@@ -101,7 +105,7 @@ export default function CourseModerationPage() {
 
     const courses = data?.items ?? [];
     const totalPages = data?.totalPages ?? 0;
-    const currentPage = Math.floor(skip / PAGE_SIZE) + 1;
+    const currentPage = Math.floor(skip / pageSize) + 1;
 
     const isAnyPending =
         publishMutation.isPending ||
@@ -192,168 +196,93 @@ export default function CourseModerationPage() {
 
             {/* Table */}
             <div className="overflow-hidden rounded-xl border border-border bg-card">
-                {isLoading ? (
-                    <div className="py-16 text-center text-sm text-muted-foreground">
-                        Loading...
-                    </div>
-                ) : courses.length === 0 ? (
-                    <div className="py-16 text-center text-sm text-muted-foreground">
-                        {t('emptyCourses')}
-                    </div>
-                ) : (
-                    <table className="w-full text-sm">
-                        <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
-                            <tr>
-                                <th className="px-5 py-3 text-left font-medium">
-                                    {t('colCourse')}
-                                </th>
-                                <th className="px-5 py-3 text-left font-medium">
-                                    {t('colCourseStatus')}
-                                </th>
-                                <th className="px-5 py-3 text-left font-medium">
-                                    {t('colEnrollments')}
-                                </th>
-                                <th className="px-5 py-3 text-left font-medium">{t('colPrice')}</th>
-                                <th className="px-5 py-3 text-right font-medium">
-                                    {t('colActions')}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {courses.map((c) => (
-                                <tr
-                                    key={c.id}
-                                    className={cn(
-                                        'hover:bg-secondary/30',
-                                        c.isDeleted && 'opacity-50',
-                                    )}
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-secondary/50 text-xs uppercase tracking-wider hover:bg-secondary/50">
+                            <TableHead>{t('colCourse')}</TableHead>
+                            <TableHead>{t('colCourseStatus')}</TableHead>
+                            <TableHead>{t('colEnrollments')}</TableHead>
+                            <TableHead>{t('colPrice')}</TableHead>
+                            <TableHead className="text-right">{t('colActions')}</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {isLoading ? (
+                            Array.from({ length: 3 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell>
+                                        <Skeleton className="h-10 w-full" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton className="h-6 w-20" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton className="h-6 w-16" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton className="h-6 w-16" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton className="ml-auto h-8 w-24" />
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : courses.length === 0 ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={5}
+                                    className="py-16 text-center text-muted-foreground"
                                 >
-                                    {/* Course */}
-                                    <td className="px-5 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-14 shrink-0 overflow-hidden rounded bg-gradient-to-br from-primary/30 to-accent/30">
-                                                {c.coverImageUrl && (
-                                                    <img
-                                                        src={c.coverImageUrl}
-                                                        alt=""
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                )}
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-foreground">
-                                                    {c.title}
-                                                </p>
-                                                {c.isDeleted && (
-                                                    <span className="text-xs text-destructive">
-                                                        {t('courseStatusDeleted')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </td>
+                                    {t('emptyCourses')}
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            courses.map((c) => (
+                                <CourseModerationTableRow
+                                    key={c.id}
+                                    course={c}
+                                    onSetPending={setPending}
+                                />
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
 
-                                    {/* Status */}
-                                    <td className="px-5 py-3">
-                                        <span
-                                            className={cn(
-                                                'rounded px-2 py-0.5 text-xs font-medium',
-                                                STATUS_STYLES[c.status] ??
-                                                    'bg-muted text-muted-foreground',
-                                            )}
-                                        >
-                                            {STATUS_LABELS[c.status] ?? c.status}
-                                        </span>
-                                    </td>
-
-                                    {/* Enrollments */}
-                                    <td className="px-5 py-3 text-muted-foreground">
-                                        {c.enrollmentsCount}
-                                    </td>
-
-                                    {/* Price */}
-                                    <td className="px-5 py-3 text-muted-foreground">
-                                        {c.isFree ? t('courseFree') : `$${c.price.toFixed(2)}`}
-                                    </td>
-
-                                    {/* Actions */}
-                                    <td className="px-5 py-3">
-                                        <div className="flex items-center justify-end gap-1">
-                                            {!c.isDeleted && c.status === 'Draft' && (
-                                                <button
-                                                    onClick={() =>
-                                                        setPending({ type: 'publish', course: c })
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
-                                                    title={t('btnPublish')}
-                                                >
-                                                    <Eye size={14} />
-                                                </button>
-                                            )}
-                                            {!c.isDeleted && c.status === 'Published' && (
-                                                <button
-                                                    onClick={() =>
-                                                        setPending({ type: 'unpublish', course: c })
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-warning"
-                                                    title={t('btnUnpublish')}
-                                                >
-                                                    <EyeOff size={14} />
-                                                </button>
-                                            )}
-                                            {c.isDeleted ? (
-                                                <button
-                                                    onClick={() =>
-                                                        setPending({ type: 'recover', course: c })
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-success"
-                                                    title={t('btnRecoverCourse')}
-                                                >
-                                                    <RefreshCw size={14} />
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() =>
-                                                        setPending({ type: 'delete', course: c })
-                                                    }
-                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
-                                                    title={t('btnDeleteCourse')}
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between border-t border-border px-5 py-3">
-                        <span className="text-sm text-muted-foreground">
-                            {t('pageOf', { page: currentPage, total: totalPages })}
-                        </span>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setSkip(Math.max(0, skip - PAGE_SIZE))}
-                                disabled={skip === 0}
-                                className="rounded px-3 py-1 text-sm text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                {t('prev')}
-                            </button>
-                            <button
-                                onClick={() => setSkip(skip + PAGE_SIZE)}
-                                disabled={currentPage >= totalPages}
-                                className="rounded px-3 py-1 text-sm text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                {t('next')}
-                            </button>
-                        </div>
+                {/* Footer Controls */}
+                <div className="flex items-center justify-between border-t border-border px-5 py-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>{t('rowsPerPage')}</span>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="flex items-center gap-1 rounded-md border border-border px-2 py-1 hover:bg-secondary">
+                                    {pageSize} <ChevronDown className="size-4 opacity-50" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                {[10, 20, 50, 100].map((size) => (
+                                    <DropdownMenuItem
+                                        key={size}
+                                        onClick={() => {
+                                            setPageSize(size);
+                                            setSkip(0);
+                                        }}
+                                        className={pageSize === size ? 'bg-secondary' : ''}
+                                    >
+                                        {size}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
-                )}
+
+                    <Pagination
+                        page={currentPage}
+                        totalPages={totalPages}
+                        onChange={(p) => setSkip((p - 1) * pageSize)}
+                        prevLabel={t('prev')}
+                        nextLabel={t('next')}
+                    />
+                </div>
             </div>
 
             {/* Confirm dialog */}

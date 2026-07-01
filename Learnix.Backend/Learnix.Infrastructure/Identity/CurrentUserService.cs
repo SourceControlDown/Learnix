@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Learnix.Application.Common.Abstractions.Identity;
 using Microsoft.AspNetCore.Http;
 

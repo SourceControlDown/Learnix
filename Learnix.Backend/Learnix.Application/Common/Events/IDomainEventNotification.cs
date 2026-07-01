@@ -1,4 +1,4 @@
-﻿using Learnix.Domain.Common;
+using Learnix.Domain.Common;
 using MediatR;
 
 namespace Learnix.Application.Common.Events;
@@ -13,6 +13,10 @@ public interface IDomainEventNotification<out TDomainEvent> : INotification
     TDomainEvent DomainEvent { get; }
 }
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-ARCH-008: IDomainEvent without dependency on MediatR — adapter in Application
+/// </remarks>
 public sealed record DomainEventNotification<TDomainEvent>(TDomainEvent DomainEvent)
     : IDomainEventNotification<TDomainEvent>
     where TDomainEvent : IDomainEvent;

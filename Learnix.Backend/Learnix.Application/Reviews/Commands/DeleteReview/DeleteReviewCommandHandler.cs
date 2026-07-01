@@ -6,6 +6,7 @@ using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Courses.Specifications;
 using Learnix.Application.Reviews.Abstractions;
+using Learnix.Application.Reviews.Constants;
 using Learnix.Application.Reviews.Specifications;
 using Learnix.Domain.Constants;
 using MediatR;
@@ -30,22 +31,28 @@ public sealed class DeleteReviewCommandHandler(
             new CourseReviewByIdSpecification(request.ReviewId, forUpdate: true), cancellationToken);
 
         if (review is null || review.CourseId != request.CourseId)
-            return Result.Fail(new NotFoundError("Review not found."));
+            return Result.Fail(new NotFoundError(ReviewMessages.ReviewNotFound));
 
         var isAdmin = currentUser.IsInRole(Roles.Admin);
         if (review.StudentId != currentUser.UserId.Value && !isAdmin)
-            return Result.Fail(new ForbiddenError("You can only delete your own reviews."));
-
-        var deletedRating = review.Rating;
-        await reviewRepository.DeleteAsync(review, cancellationToken);
+            return Result.Fail(new ForbiddenError(ReviewMessages.CanOnlyDeleteOwnReviews));
 
         var course = await courseRepository.FirstOrDefaultAsync(
             new CourseByIdSpecification(request.CourseId, forUpdate: true), cancellationToken);
 
         if (course is not null)
-            course.RemoveRating(deletedRating);
+        {
+            await unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                await reviewRepository.DeleteAsync(review, cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+                var metrics = await reviewRepository.GetCourseRatingMetricsAsync(request.CourseId, cancellationToken);
+                course.SyncRating(metrics.Count, metrics.Average);
+
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+            }, cancellationToken);
+        }
 
         await cache.RemoveAsync(CacheKeys.Course(request.CourseId), cancellationToken);
 

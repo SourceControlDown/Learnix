@@ -1,24 +1,25 @@
-import { useEffect, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { VideoLessonForm } from './VideoLessonForm';
-import { PostLessonForm } from './PostLessonForm';
-import { TestLessonForm } from './TestLessonForm';
+import { X } from 'lucide-react';
+import { ConfirmDialog } from '@/components/common/ui/ConfirmDialog';
+import { LessonType } from '@/enums/lesson.enums';
 import {
-    useCreateVideoLesson,
     useCreatePostLesson,
     useCreateTestLesson,
-    useUpdateVideoLesson,
+    useCreateVideoLesson,
     useUpdatePostLesson,
     useUpdateTestLesson,
-} from '@/hooks/useLessonMutations';
-import type { CourseForEditLessonDto, LessonType } from '@/types/course.types';
+    useUpdateVideoLesson,
+} from '@/hooks/instructor/useLessonMutations';
 import type {
-    VideoLessonFormData,
     PostLessonFormData,
     TestLessonFormData,
+    VideoLessonFormData,
 } from '@/schemas/lesson.schema';
+import type { CourseForEditLessonDto } from '@/types/course.types';
+import { PostLessonForm } from './PostLessonForm';
+import { TestLessonForm } from './TestLessonForm';
+import { VideoLessonForm } from './VideoLessonForm';
 
 interface Props {
     courseId: string;
@@ -34,13 +35,13 @@ export function LessonEditorModal({ courseId, sectionId, lessonType, lesson, onC
     const [isDirty, setIsDirty] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
 
-    function handleAttemptClose() {
+    const handleAttemptClose = useCallback(() => {
         if (isDirty) {
             setShowConfirm(true);
         } else {
             onClose();
         }
-    }
+    }, [isDirty, onClose]);
 
     const createVideo = useCreateVideoLesson(courseId, sectionId);
     const createPost = useCreatePostLesson(courseId, sectionId);
@@ -77,7 +78,7 @@ export function LessonEditorModal({ courseId, sectionId, lessonType, lesson, onC
 
     function handleTestSubmit(data: TestLessonFormData) {
         if (isEditing) {
-            updateTest.mutate({ lessonId: lesson.id, data }, { onSuccess: onClose });
+            updateTest.mutate({ lessonId: lesson!.id, data }, { onSuccess: onClose });
         } else {
             createTest.mutate(data, { onSuccess: onClose });
         }
@@ -89,7 +90,7 @@ export function LessonEditorModal({ courseId, sectionId, lessonType, lesson, onC
         }
         document.addEventListener('keydown', onKey);
         return () => document.removeEventListener('keydown', onKey);
-    }, [isDirty]); // Dependency added to capture current isDirty state
+    }, [handleAttemptClose]);
 
     const videoIsPending = createVideo.isPending || updateVideo.isPending;
     const postIsPending = createPost.isPending || updatePost.isPending;

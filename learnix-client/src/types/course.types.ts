@@ -1,10 +1,11 @@
-// learnix-client/src/types/course.types.ts
+import { CourseBadge, CourseStatus } from '@/enums/course.enums';
+import { LessonType, QuestionType } from '@/enums/lesson.enums';
 
 export interface LessonSummaryDto {
     id: string;
     title: string;
     order: number;
-    lessonType: 'Video' | 'Post' | 'Test';
+    lessonType: LessonType;
 }
 
 export interface SectionDetailDto {
@@ -39,10 +40,6 @@ export interface CategoryDto {
     slug: string;
     coursesCount: number;
 }
-
-// ── Instructor management types ──────────────────────────────────────────────
-
-export type CourseStatus = 'Draft' | 'Published' | 'Archived';
 
 /** Returned by GET /api/courses/mine */
 export interface ManageCourseCardDto {
@@ -87,8 +84,6 @@ export interface CourseForEditSectionDto {
     lessons: CourseForEditLessonDto[];
 }
 
-export type LessonType = 'Video' | 'Post' | 'Test';
-
 export interface CourseForEditLessonDto {
     id: string;
     title: string;
@@ -108,7 +103,7 @@ export interface CourseForEditLessonDto {
 export interface CourseForEditQuestionDto {
     id: string;
     text: string;
-    type: 'SingleChoice' | 'MultipleChoice' | 'TextInput';
+    type: QuestionType;
     order: number;
     options: CourseForEditQuestionOptionDto[];
     correctAnswer: string | null;
@@ -123,11 +118,10 @@ export interface CourseForEditQuestionOptionDto {
     order: number;
 }
 
-// ── Lightweight course representation ────────────────────────────────────────
+// Lightweight course representation
 
 /**
  * Lightweight course representation for catalog/featured listings.
- * Full CourseDto will be added when course detail page is implemented.
  */
 export interface CourseSummaryDto {
     id: string;
@@ -143,5 +137,5 @@ export interface CourseSummaryDto {
         id: string;
         fullName: string;
     };
-    badge?: 'bestseller' | 'new' | null;
+    badge?: CourseBadge | null;
 }

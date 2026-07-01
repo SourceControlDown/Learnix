@@ -1,188 +1,41 @@
+import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Search, X, SlidersHorizontal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { CourseCard } from '@/components/common/CourseCard';
-import { QueryError } from '@/components/common/QueryError';
-import { useCategories } from '@/hooks/useCategories';
-import { useCatalogCourses } from '@/hooks/useCatalogCourses';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { CourseCard } from '@/components/common/course/CourseCard';
+import { QueryError } from '@/components/common/system/QueryError';
+import { Pagination } from '@/components/common/ui/Pagination';
 import { PAGINATION } from '@/const/ui.constants';
+import { useCatalogCourses } from '@/hooks/course/useCatalogCourses';
+import { useCategories } from '@/hooks/course/useCategories';
 import { cn } from '@/utils/cn';
 import { FilterSidebar } from './FilterSidebar';
 import { SortDropdown } from './SortDropdown';
+import { useCatalogFilters } from './hooks/useCatalogFilters';
 
 const PAGE_SIZE = PAGINATION.CATALOG;
 
-type SortBy = 'popular' | 'newest' | 'rating';
-
-function useDebounce<T>(value: T, delay: number): T {
-    const [debounced, setDebounced] = useState(value);
-    useEffect(() => {
-        const timer = setTimeout(() => setDebounced(value), delay);
-        return () => clearTimeout(timer);
-    }, [value, delay]);
-    return debounced;
-}
-
-function Pagination({
-    page,
-    totalPages,
-    onChange,
-    prevLabel,
-    nextLabel,
-}: {
-    page: number;
-    totalPages: number;
-    onChange: (p: number) => void;
-    prevLabel: string;
-    nextLabel: string;
-}) {
-    if (totalPages <= 1) return null;
-
-    const pages: (number | '...')[] = [];
-    if (totalPages <= 7) {
-        for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-        pages.push(1);
-        if (page > 3) pages.push('...');
-        for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++)
-            pages.push(i);
-        if (page < totalPages - 2) pages.push('...');
-        pages.push(totalPages);
-    }
-
-    return (
-        <div className="flex justify-center gap-1.5 pt-10">
-            <button
-                onClick={() => onChange(page - 1)}
-                disabled={page === 1}
-                className="grid h-9 w-9 place-items-center rounded-lg border border-border hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
-            >
-                {prevLabel}
-            </button>
-            {pages.map((p, idx) =>
-                p === '...' ? (
-                    <span
-                        key={`ellipsis-${idx}`}
-                        className="grid h-9 w-9 place-items-center text-muted-foreground"
-                    >
-                        …
-                    </span>
-                ) : (
-                    <button
-                        key={p}
-                        onClick={() => onChange(p)}
-                        className={cn(
-                            'grid h-9 w-9 place-items-center rounded-lg text-sm font-medium transition-colors',
-                            p === page
-                                ? 'bg-primary text-primary-foreground'
-                                : 'border border-border hover:bg-secondary',
-                        )}
-                    >
-                        {p}
-                    </button>
-                ),
-            )}
-            <button
-                onClick={() => onChange(page + 1)}
-                disabled={page === totalPages}
-                className="grid h-9 w-9 place-items-center rounded-lg border border-border hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
-            >
-                {nextLabel}
-            </button>
-        </div>
-    );
-}
-
 export default function CourseCatalogPage() {
     const { t } = useTranslation('catalog');
-    const [searchParams, setSearchParams] = useSearchParams();
 
-    // Read URL state
-    const searchParam = searchParams.get('search') ?? '';
-    const categoryId = searchParams.get('categoryId') ?? '';
-    const sortBy = (searchParams.get('sortBy') as SortBy) ?? 'popular';
-    const isFreeParam = searchParams.get('isFree');
-    const isFree: boolean | undefined =
-        isFreeParam === '1' ? true : isFreeParam === '0' ? false : undefined;
-    const minRatingParam = searchParams.get('minRating');
-    const minRating: number | undefined = minRatingParam ? parseFloat(minRatingParam) : undefined;
-    const page = parseInt(searchParams.get('page') ?? '1', 10) || 1;
+    const {
+        categoryId,
+        sortBy,
+        isFree,
+        minRating,
+        page,
+        searchInput,
+        debouncedSearch,
+        setSearchInput,
+        setPage,
+        setCategoryId,
+        setSortBy,
+        setIsFree,
+        setMinRating,
+        clearAllFilters,
+    } = useCatalogFilters();
 
-    // Local search input state (debounced before hitting URL/API)
-    const [searchInput, setSearchInput] = useState(searchParam);
-    const debouncedSearch = useDebounce(searchInput, 350);
-    const isFirstMount = useRef(true);
     const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-
-    useEffect(() => {
-        if (isFirstMount.current) {
-            isFirstMount.current = false;
-            return;
-        }
-        setParam('search', debouncedSearch || null);
-        setParam('page', null); // reset pagination on search change
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [debouncedSearch]);
-
-    function setParam(key: string, value: string | null) {
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            if (value === null || value === '') next.delete(key);
-            else next.set(key, value);
-            return next;
-        });
-    }
-
-    function setPage(p: number) {
-        setParam('page', p === 1 ? null : String(p));
-    }
-
-    function setCategoryId(id: string) {
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            if (!id) next.delete('categoryId');
-            else next.set('categoryId', id);
-            next.delete('page');
-            return next;
-        });
-    }
-
-    function setSortBy(val: SortBy) {
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            if (val === 'popular') next.delete('sortBy');
-            else next.set('sortBy', val);
-            next.delete('page');
-            return next;
-        });
-    }
-
-    function setIsFree(val: boolean | undefined) {
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            if (val === undefined) next.delete('isFree');
-            else next.set('isFree', val ? '1' : '0');
-            next.delete('page');
-            return next;
-        });
-    }
-
-    function setMinRating(val: number | undefined) {
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            if (val === undefined) next.delete('minRating');
-            else next.set('minRating', String(val));
-            next.delete('page');
-            return next;
-        });
-    }
-
-    function clearAllFilters() {
-        setSearchInput('');
-        setSearchParams(new URLSearchParams());
-    }
 
     const { data: categoriesData } = useCategories();
     const categories = categoriesData ?? [];
@@ -234,7 +87,7 @@ export default function CourseCatalogPage() {
             <div className="min-h-screen bg-background">
                 <div className="mx-auto max-w-7xl px-4 pb-8 pt-4 sm:px-6 md:pt-6">
                     {/* Page title */}
-                    <div className="mb-6 flex flex-col items-center justify-between gap-2 md:flex-row md:items-end md:justify-start md:gap-4 text-center md:text-left">
+                    <div className="mb-6 flex flex-col items-center justify-between gap-2 text-center md:flex-row md:items-end md:justify-start md:gap-4 md:text-left">
                         <h1 className="font-heading text-3xl font-bold md:text-4xl">
                             {t('pageTitle')}
                         </h1>
@@ -257,7 +110,7 @@ export default function CourseCatalogPage() {
                                 onClick={() => setIsFiltersOpen((prev) => !prev)}
                                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3.5 font-semibold shadow-sm transition-all hover:bg-secondary active:scale-[0.98]"
                             >
-                                <SlidersHorizontal className="h-5 w-5" />
+                                <SlidersHorizontal className="size-5" />
                                 {t('filters.title')}
                             </button>
                         </div>
@@ -281,13 +134,13 @@ export default function CourseCatalogPage() {
                             {/* Search + Sort row */}
                             <div className="mb-4 flex items-center gap-3">
                                 <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                                     <input
                                         type="text"
                                         value={searchInput}
                                         onChange={(e) => setSearchInput(e.target.value)}
                                         placeholder={t('searchPlaceholder')}
-                                        className="w-full rounded-lg border border-input bg-card py-2.5 pl-9 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                        className="w-full rounded-lg border border-input bg-card px-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                     />
                                     {searchInput && (
                                         <button
@@ -295,7 +148,7 @@ export default function CourseCatalogPage() {
                                             onClick={() => setSearchInput('')}
                                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                         >
-                                            <X className="h-4 w-4" />
+                                            <X className="size-4" />
                                         </button>
                                     )}
                                 </div>
@@ -317,7 +170,7 @@ export default function CourseCatalogPage() {
                                                 className="ml-0.5 rounded-full hover:text-primary/70"
                                                 aria-label={`Remove ${chip.label} filter`}
                                             >
-                                                <X className="h-3 w-3" />
+                                                <X className="size-3" />
                                             </button>
                                         </span>
                                     ))}
@@ -377,6 +230,7 @@ export default function CourseCatalogPage() {
                                 onChange={setPage}
                                 prevLabel={t('pagination.prev')}
                                 nextLabel={t('pagination.next')}
+                                className="pt-10"
                             />
                         </div>
                     </div>

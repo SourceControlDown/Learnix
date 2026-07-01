@@ -1,5 +1,4 @@
 using FluentValidation;
-using Learnix.Application.Common.Pagination;
 
 namespace Learnix.Application.Courses.Queries.GetAdminCourses;
 
@@ -9,6 +8,6 @@ public sealed class GetAdminCoursesValidator : AbstractValidator<GetAdminCourses
     {
         RuleFor(x => x.Skip).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Take)
-            .InclusiveBetween(1, PaginationRequest.MaxPageSize);
+            .InclusiveBetween(1, Learnix.Application.Common.Constants.PaginationConstants.MaxPageSize);
     }
 }

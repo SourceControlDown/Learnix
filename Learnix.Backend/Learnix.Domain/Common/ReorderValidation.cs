@@ -1,4 +1,4 @@
-﻿namespace Learnix.Domain.Common;
+namespace Learnix.Domain.Common;
 
 /// <summary>
 /// Shared invariants for bulk reorder operations. Used by Course.ReorderSections

@@ -35,13 +35,13 @@ internal sealed class UpdateVideoLessonCommandHandler(
 
         if (request.VideoBlobPath is not null && request.VideoBlobPath != lesson.VideoBlobPath)
         {
-            var validateResult = await blobStorage.ValidateAsync(
+            var commitResult = await blobStorage.CommitUploadAsync(
                 request.VideoBlobPath, UploadTarget.LessonVideo, ct);
 
-            if (validateResult.IsFailed)
-                return Result.Fail(validateResult.Errors);
+            if (commitResult.IsFailed)
+                return Result.Fail(commitResult.Errors);
 
-            lesson.ReplaceVideo(request.VideoBlobPath);
+            lesson.ReplaceVideo(commitResult.Value.BlobPath);
         }
 
         await unitOfWork.SaveChangesAsync(ct);

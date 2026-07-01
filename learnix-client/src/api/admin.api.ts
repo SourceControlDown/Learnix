@@ -1,12 +1,13 @@
-import { api } from './axios.instance';
+import type { AdminStatsDto, AdminUserDto, PendingApplicationDto } from '@/types/admin.types';
 import type { PaginatedResult } from '@/types/api.types';
-import type { AdminUserDto, AdminStatsDto, PendingApplicationDto } from '@/types/admin.types';
 import type { ManageCourseCardDto } from '@/types/course.types';
+import { api } from './axios.instance';
 
 export interface AdminUsersFilters {
     search?: string;
     skip?: number;
     take?: number;
+    includeDeleted?: boolean;
 }
 
 export interface AdminCoursesFilters {
@@ -23,11 +24,11 @@ export interface AdminApplicationsParams {
 }
 
 export const adminApi = {
-    // ── Stats ─────────────────────────────────────────────────────────────────
+    // Stats
 
     getStats: () => api.get<AdminStatsDto>('/admin/stats').then((r) => r.data),
 
-    // ── Users ──────────────────────────────────────────────────────────────────
+    // Users
 
     getUsers: (params: AdminUsersFilters = {}) =>
         api.get<PaginatedResult<AdminUserDto>>('/admin/users', { params }).then((r) => r.data),
@@ -46,7 +47,7 @@ export const adminApi = {
     removeRole: (userId: string, role: string) =>
         api.delete(`/admin/users/${userId}/roles/${role}`).then((r) => r.data),
 
-    // ── Courses ────────────────────────────────────────────────────────────────
+    // Courses
 
     getCourses: (params: AdminCoursesFilters = {}) =>
         api
@@ -65,7 +66,7 @@ export const adminApi = {
     recoverCourse: (courseId: string) =>
         api.post(`/admin/courses/${courseId}/recover`).then((r) => r.data),
 
-    // ── Instructor applications ────────────────────────────────────────────────
+    // Instructor applications
 
     getPendingApplications: (params: AdminApplicationsParams = {}) =>
         api

@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Learnix.Domain.Constants;
 
 namespace Learnix.Application.Lessons.Commands.CreateVideoLesson;

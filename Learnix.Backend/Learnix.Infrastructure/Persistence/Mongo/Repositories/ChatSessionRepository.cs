@@ -1,4 +1,4 @@
-﻿using Learnix.Application.AiChat.Abstractions;
+using Learnix.Application.AiChat.Abstractions;
 using Learnix.Application.AiChat.Abstractions.Models;
 using Learnix.Infrastructure.Persistence.Mongo.Documents;
 using MongoDB.Bson;

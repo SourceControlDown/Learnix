@@ -41,4 +41,11 @@ public sealed class NotificationsController(ISender sender) : ControllerBase
         var result = await sender.Send(new MarkAllNotificationsReadCommand(), ct);
         return result.ToActionResult();
     }
+
+    [HttpPost("read-by-type")]
+    public async Task<IActionResult> MarkReadByType([FromQuery] Learnix.Domain.Enums.NotificationType type, CancellationToken ct)
+    {
+        var result = await sender.Send(new Learnix.Application.Notifications.Commands.MarkNotificationsReadByType.MarkNotificationsReadByTypeCommand(type), ct);
+        return result.ToActionResult();
+    }
 }

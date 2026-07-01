@@ -1,4 +1,4 @@
-﻿namespace Learnix.Domain.Constants;
+namespace Learnix.Domain.Constants;
 
 public static class CategoryConstants
 {

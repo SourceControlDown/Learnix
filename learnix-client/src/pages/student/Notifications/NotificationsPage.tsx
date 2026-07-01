@@ -1,15 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Award, CheckCircle2, XCircle, MessageSquare } from 'lucide-react';
-import { cn } from '@/utils/cn';
-import { notificationsApi } from '@/api/notifications.api';
+import { useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Award, CheckCircle2, MessageSquare, Trophy, XCircle } from 'lucide-react';
 import { messagesApi } from '@/api/messages.api';
+import { notificationsApi } from '@/api/notifications.api';
 import { queryKeys } from '@/api/queryKeys';
-import { formatRelativeTime } from '@/utils/formatDate';
-import type { NotificationDto, NotificationEventType } from '@/types/notification.types';
 import type { ConversationSummary } from '@/types/message.types';
-import { useAuthStore } from '@/store/auth.store';
+import type { NotificationDto, NotificationEventType } from '@/types/notification.types';
+import { cn } from '@/utils/cn';
+import { formatRelativeTime } from '@/utils/formatDate';
 
 const TYPE_ICON: Record<NotificationEventType, React.ReactNode> = {
     AchievementEarned: <Trophy size={16} className="text-warning" />,
@@ -25,13 +24,12 @@ const TYPE_ROUTE: Record<NotificationEventType, string> = {
     InstructorRejected: '/become-instructor',
 };
 
-function NotificationItem({
-    notification,
-    onRead,
-}: {
+type NotificationItemProps = {
     notification: NotificationDto;
     onRead: (id: string) => void;
-}) {
+};
+
+function NotificationItem({ notification, onRead }: NotificationItemProps) {
     const navigate = useNavigate();
 
     function handleClick() {
@@ -58,16 +56,19 @@ function NotificationItem({
                 </p>
             </div>
             {!notification.isRead && (
-                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
             )}
         </button>
     );
 }
 
-function ConversationItem({ conversation }: { conversation: ConversationSummary }) {
+type ConversationItemProps = {
+    conversation: ConversationSummary;
+};
+
+function ConversationItem({ conversation }: ConversationItemProps) {
     const navigate = useNavigate();
-    const user = useAuthStore((s) => s.user);
-    const messagesPath = user?.role === 'Instructor' ? '/instructor/messages' : '/messages';
+    const messagesPath = '/messages';
 
     return (
         <button
@@ -113,10 +114,11 @@ export default function NotificationsPage() {
         queryFn: notificationsApi.getAll,
     });
 
-    const { data: conversations = [] } = useQuery({
+    const { data: conversationsData } = useQuery({
         queryKey: queryKeys.messages.conversations(),
-        queryFn: messagesApi.getConversations,
+        queryFn: () => messagesApi.getConversations(),
     });
+    const conversations = conversationsData?.items || [];
 
     const markReadMutation = useMutation({
         mutationFn: notificationsApi.markRead,

@@ -1,14 +1,15 @@
-import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle, Clock, XCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useMyApplication } from '@/hooks/instructor/useMyApplication';
+import { useSubmitApplication } from '@/hooks/instructor/useSubmitApplication';
+import { APP_ROUTES } from '@/routes/paths';
 import {
-    instructorApplicationSchema,
     type InstructorApplicationFormData,
+    instructorApplicationSchema,
 } from '@/schemas/instructorApplication.schema';
-import { useMyApplication } from '@/hooks/useMyApplication';
-import { useSubmitApplication } from '@/hooks/useSubmitApplication';
 import { useAuthStore } from '@/store/auth.store';
 
 export default function BecomeInstructorPage() {
@@ -59,7 +60,7 @@ export default function BecomeInstructorPage() {
             )}
 
             {/* Already an instructor */}
-            {user?.role === 'Instructor' && (
+            {user?.roles.includes('Instructor') && (
                 <div className="rounded-xl border border-border bg-card p-8 text-center">
                     <CheckCircle className="mx-auto mb-3 text-success" size={40} />
                     <h2 className="mb-2 font-heading text-xl font-semibold">
@@ -67,7 +68,7 @@ export default function BecomeInstructorPage() {
                     </h2>
                     <p className="mb-6 text-muted-foreground">{t('alreadyInstructorBody')}</p>
                     <Link
-                        to="/instructor"
+                        to={APP_ROUTES.instructor.dashboard}
                         className="inline-block rounded-lg bg-primary px-6 py-2.5 font-medium text-primary-foreground hover:bg-primary/90"
                     >
                         {t('btnGoToDashboard')}
@@ -76,24 +77,27 @@ export default function BecomeInstructorPage() {
             )}
 
             {/* Loading application status */}
-            {user && user.role === 'Student' && isLoading && (
+            {user && user.roles.includes('Student') && isLoading && (
                 <div className="py-16 text-center text-sm text-muted-foreground">Loading...</div>
             )}
 
             {/* Pending application */}
-            {user && user.role === 'Student' && !isLoading && application?.status === 'Pending' && (
-                <div className="rounded-xl border border-border bg-card p-8 text-center">
-                    <Clock className="mx-auto mb-3 text-warning" size={40} />
-                    <h2 className="mb-2 font-heading text-xl font-semibold">
-                        {t('applicationPendingTitle')}
-                    </h2>
-                    <p className="text-muted-foreground">{t('applicationPendingBody')}</p>
-                </div>
-            )}
+            {user &&
+                user.roles.includes('Student') &&
+                !isLoading &&
+                application?.status === 'Pending' && (
+                    <div className="rounded-xl border border-border bg-card p-8 text-center">
+                        <Clock className="mx-auto mb-3 text-warning" size={40} />
+                        <h2 className="mb-2 font-heading text-xl font-semibold">
+                            {t('applicationPendingTitle')}
+                        </h2>
+                        <p className="text-muted-foreground">{t('applicationPendingBody')}</p>
+                    </div>
+                )}
 
             {/* Approved */}
             {user &&
-                user.role === 'Student' &&
+                user.roles.includes('Student') &&
                 !isLoading &&
                 application?.status === 'Approved' && (
                     <div className="rounded-xl border border-border bg-card p-8 text-center">
@@ -103,7 +107,7 @@ export default function BecomeInstructorPage() {
                         </h2>
                         <p className="mb-6 text-muted-foreground">{t('applicationApprovedBody')}</p>
                         <Link
-                            to="/instructor"
+                            to={APP_ROUTES.instructor.dashboard}
                             className="inline-block rounded-lg bg-primary px-6 py-2.5 font-medium text-primary-foreground hover:bg-primary/90"
                         >
                             {t('btnGoToDashboard')}
@@ -113,7 +117,7 @@ export default function BecomeInstructorPage() {
 
             {/* Rejected */}
             {user &&
-                user.role === 'Student' &&
+                user.roles.includes('Student') &&
                 !isLoading &&
                 application?.status === 'Rejected' && (
                     <div className="space-y-6">
@@ -151,7 +155,7 @@ export default function BecomeInstructorPage() {
                 )}
 
             {/* No application yet */}
-            {user && user.role === 'Student' && !isLoading && !application && (
+            {user && user.roles.includes('Student') && !isLoading && !application && (
                 <ApplicationForm
                     register={register}
                     handleSubmit={handleSubmit}

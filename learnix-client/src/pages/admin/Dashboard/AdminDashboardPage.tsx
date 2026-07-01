@@ -1,11 +1,17 @@
-import { Link } from 'react-router-dom';
-import { Users, BookOpen, FileCheck, CreditCard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { BookOpen, CreditCard, FileCheck, Users } from 'lucide-react';
 import { adminApi } from '@/api/admin.api';
 import { queryKeys } from '@/api/queryKeys';
 
-function StatCard({ label, value, sub }: { label: string; value: string; sub: string }) {
+type StatCardProps = {
+    label: string;
+    value: string;
+    sub: string;
+};
+
+function StatCard({ label, value, sub }: StatCardProps) {
     return (
         <div className="rounded-xl border border-border bg-card p-5">
             <p className="text-sm text-muted-foreground">{label}</p>

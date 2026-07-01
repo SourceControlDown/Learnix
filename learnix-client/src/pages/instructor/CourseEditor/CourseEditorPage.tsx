@@ -1,21 +1,22 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { CheckCircle, XCircle, ArchiveRestore } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/utils/cn';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { useCourseForEdit } from '@/hooks/useCourseForEdit';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArchiveRestore, CheckCircle, XCircle } from 'lucide-react';
+import { ConfirmDialog } from '@/components/common/ui/ConfirmDialog';
+import { useCourseForEdit } from '@/hooks/instructor/useCourseForEdit';
 import {
     useCreateCourse,
-    useUpdateCourse,
     usePublishCourse,
-    useUnpublishCourse,
     useUnarchiveCourse,
-} from '@/hooks/useCourseMutations';
-import { CourseInfoForm } from './components/CourseInfoForm';
-import { CurriculumTab } from './components/CurriculumTab';
+    useUnpublishCourse,
+    useUpdateCourse,
+} from '@/hooks/instructor/useCourseMutations';
+import { APP_ROUTES } from '@/routes/paths';
 import type { CourseInfoFormData } from '@/schemas/course.schema';
 import type { CourseForEditDto } from '@/types/course.types';
+import { cn } from '@/utils/cn';
+import { CourseInfoForm } from './components/CourseInfoForm';
+import { CurriculumTab } from './components/CurriculumTab';
 
 type Tab = 'info' | 'curriculum';
 
@@ -108,7 +109,7 @@ export default function CourseEditorPage() {
                 <div className="flex h-14 items-center justify-between px-6">
                     <div className="flex min-w-0 items-center gap-3">
                         <Link
-                            to="/instructor"
+                            to={APP_ROUTES.instructor.dashboard}
                             className="shrink-0 text-sm text-muted-foreground transition-colors hover:text-foreground"
                         >
                             {t('editorBack')}

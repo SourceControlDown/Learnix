@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Learnix.Application.Auth.Constants;
 using Learnix.Application.Auth.Validation;
 

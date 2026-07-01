@@ -1,35 +1,32 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     DndContext,
-    closestCenter,
+    type DragEndEvent,
     PointerSensor,
+    closestCenter,
     useSensor,
     useSensors,
-    type DragEndEvent,
 } from '@dnd-kit/core';
 import {
     SortableContext,
+    arrayMove,
     useSortable,
     verticalListSortingStrategy,
-    arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { LessonRow } from './LessonRow';
-import { LessonEditorModal } from './LessonEditorModal';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { useDeleteSection, useUpdateSectionTitle } from '@/hooks/useSectionMutations';
+import { ConfirmDialog } from '@/components/common/ui/ConfirmDialog';
+import { LessonType } from '@/enums/lesson.enums';
 import {
     useDeleteLesson,
     useReorderLessons as useReorderLessonsMutation,
     useToggleLessonVisibility,
-} from '@/hooks/useLessonMutations';
-import type {
-    CourseForEditSectionDto,
-    CourseForEditLessonDto,
-    LessonType,
-} from '@/types/course.types';
+} from '@/hooks/instructor/useLessonMutations';
+import { useDeleteSection, useUpdateSectionTitle } from '@/hooks/instructor/useSectionMutations';
+import type { CourseForEditLessonDto, CourseForEditSectionDto } from '@/types/course.types';
+import { LessonEditorModal } from './LessonEditorModal';
+import { LessonRow } from './LessonRow';
 
 interface Props {
     courseId: string;
@@ -147,7 +144,7 @@ export function SectionItem({ courseId, section }: Props) {
                                 onToggleVisibility={() =>
                                     toggleVisibility.mutate({
                                         lessonId: lesson.id,
-                                        isHidden: !lesson.isHidden,
+                                        isVisible: lesson.isHidden,
                                     })
                                 }
                             />

@@ -1,4 +1,4 @@
-﻿namespace Learnix.Domain.Common;
+namespace Learnix.Domain.Common;
 
 public interface IHasDomainEvents
 {

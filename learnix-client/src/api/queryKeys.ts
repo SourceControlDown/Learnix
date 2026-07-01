@@ -1,3 +1,7 @@
+/**
+ * Related ADRs:
+ * - ADR-FRONT-API-003: React Query Structure & Defaults
+ */
 export const queryKeys = {
     courses: {
         all: ['courses'] as const,
@@ -85,5 +89,8 @@ export const queryKeys = {
         applicationsList: () => ['admin', 'applications'] as const,
         applications: (params: Record<string, unknown>) =>
             ['admin', 'applications', params] as const,
+    },
+    config: {
+        public: () => ['config', 'public'] as const,
     },
 } as const;

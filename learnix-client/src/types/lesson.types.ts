@@ -1,4 +1,4 @@
-export type LessonType = 'Video' | 'Post' | 'Test';
+import { LessonType, QuestionType } from '@/enums/lesson.enums';
 
 export interface LessonContentDto {
     lessonId: string;
@@ -11,7 +11,6 @@ export interface LessonContentDto {
     // Post only
     content: string | null;
 }
-export type QuestionType = 'SingleChoice' | 'MultipleChoice' | 'TextInput';
 
 export interface QuestionOptionDto {
     text: string;

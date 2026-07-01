@@ -1,8 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
-import { Trophy, ChevronDown } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, Trophy } from 'lucide-react';
+import { CourseCertificateButton } from '@/components/common/course/CourseCertificateButton';
 import { cn } from '@/utils/cn';
-import { useTranslation } from 'react-i18next';
-import { CourseCertificateButton } from '@/components/common/CourseCertificateButton';
 
 interface CourseCertificateDropdownProps {
     courseId: string;
@@ -17,7 +16,6 @@ export function CourseCertificateDropdown({
 }: CourseCertificateDropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const { t } = useTranslation('lessonPlayer');
 
     const isCompleted = completedLessons === totalLessons && totalLessons > 0;
 
@@ -48,7 +46,7 @@ export function CourseCertificateDropdown({
                     {isCompleted ? 'Get certificate' : 'Your progress'}
                 </span>
                 <ChevronDown
-                    className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    className={`size-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                 />
             </button>
 

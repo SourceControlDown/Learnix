@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Commands;
@@ -23,7 +23,7 @@ internal sealed class CreatePostLessonCommandHandler(
         var lesson = PostLesson.Create(request.SectionId, request.Title, displayOrder, request.Content);
 
         await lessonRepository.AddAsync(lesson, ct);
-        
+
         await unitOfWork.SaveChangesAsync(ct);
 
         return Result.Ok(lesson.Id);

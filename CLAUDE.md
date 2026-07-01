@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Learnix** is a full-stack Learning Management System (LMS). Students browse and complete courses; instructors create content; admins moderate the platform.
 
-- **Backend:** .NET 8 / C# 12, Clean Architecture + CQRS (MediatR), PostgreSQL primary DB, MongoDB for chat/reviews, Redis for caching
+- **Backend:** .NET 8 / C# 12, Clean Architecture + CQRS (MediatR), PostgreSQL primary DB, MongoDB for AI-powered chat, Redis for caching
 - **Frontend:** React 19 + Vite, TypeScript, Tailwind CSS, TanStack Query + Zustand
 
 ## Running Locally
@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Prerequisites:** Docker, .NET 8 SDK, Node 20
 
 ```bash
-# 1. Start infrastructure (PostgreSQL:5432, MongoDB:27017, Redis:6379)
+# 1. Start infrastructure (PostgreSQL:5432, MongoDB:27017, Redis:6379, Mailpit:1025 for testing emails, Seq:5341 for logs)
 docker compose up -d
 
 # 2. Backend — copy .env.example → .env, then:

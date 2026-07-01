@@ -7,6 +7,10 @@ interface LocaleState {
     setLanguage: (lang: SupportedLanguage) => void;
 }
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-API-002: State Management Boundary (Client State via Zustand)
+ */
 export const useLocaleStore = create<LocaleState>()(
     persist(
         (set) => ({
@@ -17,7 +21,7 @@ export const useLocaleStore = create<LocaleState>()(
             },
         }),
         {
-            name: 'learnix-language',
+            name: 'locale-store',
             onRehydrateStorage: () => (state) => {
                 if (state) i18n.changeLanguage(state.language);
             },

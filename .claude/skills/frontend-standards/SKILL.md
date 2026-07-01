@@ -405,4 +405,6 @@ export function CourseCard({ course }: { course: CourseDto }) { ... }
 | Relative import `../../..` | `@/` alias |
 | `useState` for cross-component UI state | `ui.store` (Zustand) |
 | Per-page guard (`<RequireAuth><Page />`) | `ProtectedRoute` layout with `<Outlet />` |
+| `const handler = () => {}` for local events | `function handler() {}` for hoisting |
+| Blindly using `useCallback` | Only use for memoized children or `useEffect` deps |
 | pnpm | npm only (FADR-011) |

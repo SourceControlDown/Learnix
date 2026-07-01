@@ -1,20 +1,22 @@
-import { useMemo, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { MessageSquare, ChevronLeft, ChevronRight, CheckCircle2, Menu, X } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { cn } from '@/utils/cn';
+import { CheckCircle2, ChevronLeft, ChevronRight, Menu, MessageSquare } from 'lucide-react';
 import { messagesApi } from '@/api/messages.api';
-import { useCourseDetail } from '@/hooks/useCourseDetail';
-import { useCourseProgress } from '@/hooks/useCourseProgress';
-import { useMarkLessonComplete } from '@/hooks/useMarkLessonComplete';
+import { CourseCertificateButton } from '@/components/common/course/CourseCertificateButton';
+import { Logo } from '@/components/common/ui/Logo';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { useCourseDetail } from '@/hooks/course/useCourseDetail';
+import { useCourseProgress } from '@/hooks/lesson/useCourseProgress';
+import { useMarkLessonComplete } from '@/hooks/lesson/useMarkLessonComplete';
+import { APP_ROUTES } from '@/routes/paths';
+import { cn } from '@/utils/cn';
+import { CourseCertificateDropdown } from './components/CourseCertificateDropdown';
 import { CourseSidebar } from './components/CourseSidebar';
-import { VideoLessonView } from './components/VideoLessonView';
 import { PostLessonView } from './components/PostLessonView';
 import { TestLessonPreview } from './components/TestLessonPreview';
-import { CourseCertificateButton } from '@/components/common/CourseCertificateButton';
-import { CourseCertificateDropdown } from './components/CourseCertificateDropdown';
-import { Logo } from '@/components/common/Logo';
+import { VideoLessonView } from './components/VideoLessonView';
 
 export default function CoursePlayerPage() {
     const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
@@ -25,6 +27,12 @@ export default function CoursePlayerPage() {
     const { data: progress, isLoading } = useCourseProgress(courseId!);
     const markComplete = useMarkLessonComplete(courseId!);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [prevLessonId, setPrevLessonId] = useState(lessonId);
+
+    if (lessonId !== prevLessonId) {
+        setPrevLessonId(lessonId);
+        setIsSidebarOpen(false);
+    }
 
     const startChat = useMutation({
         mutationFn: () => messagesApi.startOrGet({ courseId: courseId! }),
@@ -36,8 +44,6 @@ export default function CoursePlayerPage() {
     useEffect(() => {
         if (courseId && lessonId) {
             localStorage.setItem(`lastLesson_${courseId}`, lessonId);
-            // Close sidebar automatically when navigating to a new lesson on mobile
-            setIsSidebarOpen(false);
         }
     }, [courseId, lessonId]);
 
@@ -70,6 +76,19 @@ export default function CoursePlayerPage() {
         });
     };
 
+    // Called when video crosses the near-end threshold: mark as done, but do NOT redirect.
+    const handleAutoMarkComplete = () => {
+        if (!lessonId || currentLesson?.isCompleted) return;
+        markComplete.mutate(lessonId);
+    };
+
+    // Called only when the video reaches its true end: navigate to the next lesson.
+    const handleVideoFullyEnded = () => {
+        if (nextLesson) {
+            navigate(`/courses/${courseId}/learn/${nextLesson.lessonId}`);
+        }
+    };
+
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-background">
             {/* Top bar */}
@@ -80,20 +99,20 @@ export default function CoursePlayerPage() {
                         onClick={() => setIsSidebarOpen(true)}
                         className="mr-1 rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground lg:hidden"
                     >
-                        <Menu className="h-5 w-5" />
+                        <Menu className="size-5" />
                     </button>
                     <Link
-                        to="/"
+                        to={APP_ROUTES.public.home}
                         className="flex shrink-0 items-center gap-2 font-heading font-bold"
                     >
-                        <Logo className="h-7 w-7 text-primary" />
+                        <Logo className="size-7 text-primary" />
                         <span className="hidden text-sm sm:block">Learnix</span>
                     </Link>
                     {course && (
                         <>
                             <span className="text-border">|</span>
                             <Link
-                                to={`/courses/${courseId}`}
+                                to={APP_ROUTES.public.courseDetail(courseId!)}
                                 className="truncate text-sm font-medium text-foreground transition-colors hover:text-primary"
                             >
                                 {course.title}
@@ -117,19 +136,19 @@ export default function CoursePlayerPage() {
                         onClick={() => startChat.mutate()}
                         disabled={startChat.isPending}
                         title={t('header.messageInstructor')}
-                        className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
+                        className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
                     >
                         {startChat.isPending ? (
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                            <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                         ) : (
-                            <MessageSquare className="h-4 w-4" />
+                            <MessageSquare className="size-4" />
                         )}
                     </button>
                 </div>
             </header>
 
             {/* Content */}
-            <div className="relative flex min-h-0 flex-1">
+            <ResizablePanelGroup direction="horizontal" className="relative flex min-h-0 flex-1">
                 {/* Mobile sidebar overlay */}
                 {isSidebarOpen && (
                     <div
@@ -139,9 +158,12 @@ export default function CoursePlayerPage() {
                 )}
 
                 {/* Sidebar */}
-                <div
+                <ResizablePanel
+                    defaultSize={'20'}
+                    minSize={'15'}
+                    maxSize={'30'}
                     className={cn(
-                        'fixed inset-y-0 left-0 z-50 transform bg-card transition-transform duration-300 lg:static lg:z-0 lg:translate-x-0',
+                        'fixed inset-y-0 left-0 z-50 transform bg-card transition-transform duration-300 lg:static lg:z-0 lg:translate-x-0 lg:!transform-none',
                         isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
                     )}
                 >
@@ -153,15 +175,20 @@ export default function CoursePlayerPage() {
                         completedLessons={progress?.completedLessons ?? 0}
                         onCloseMobile={() => setIsSidebarOpen(false)}
                     />
-                </div>
+                </ResizablePanel>
+
+                <ResizableHandle withHandle className="hidden lg:flex" />
 
                 {/* Main lesson area */}
-                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                <ResizablePanel
+                    defaultSize={'80'}
+                    className="flex min-w-0 flex-1 flex-col overflow-hidden"
+                >
                     <main className="flex-1 overflow-y-auto p-8">
                         {isLoading && (
                             <div className="flex h-full items-center justify-center">
                                 <div className="space-y-3 text-center">
-                                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                    <div className="mx-auto size-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                                     <p className="text-sm text-muted-foreground">{t('loading')}</p>
                                 </div>
                             </div>
@@ -177,9 +204,12 @@ export default function CoursePlayerPage() {
                             <>
                                 {currentLesson.lessonType === 'Video' && (
                                     <VideoLessonView
+                                        key={currentLesson.lessonId}
                                         lesson={currentLesson}
                                         courseId={courseId!}
-                                        onVideoEnded={handleMarkComplete}
+                                        nextLessonTitle={nextLesson?.title}
+                                        onVideoNearEnd={handleAutoMarkComplete}
+                                        onPlayNext={handleVideoFullyEnded}
                                     />
                                 )}
                                 {currentLesson.lessonType === 'Post' && (
@@ -201,10 +231,13 @@ export default function CoursePlayerPage() {
                         <div className="order-1 w-auto sm:w-32">
                             {prevLesson && (
                                 <Link
-                                    to={`/courses/${courseId}/learn/${prevLesson.lessonId}`}
+                                    to={APP_ROUTES.student.learnLesson(
+                                        courseId!,
+                                        prevLesson.lessonId,
+                                    )}
                                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                 >
-                                    <ChevronLeft className="h-4 w-4" />
+                                    <ChevronLeft className="size-4" />
                                     <span className="hidden sm:inline">
                                         {t('actions.previousLesson')}
                                     </span>
@@ -228,7 +261,7 @@ export default function CoursePlayerPage() {
                                     )}
                                 >
                                     {currentLesson.isCompleted && (
-                                        <CheckCircle2 className="h-4 w-4" />
+                                        <CheckCircle2 className="size-4" />
                                     )}
                                     {currentLesson.isCompleted
                                         ? t('actions.completed')
@@ -242,7 +275,7 @@ export default function CoursePlayerPage() {
                                 currentLesson.lessonType === 'Test' &&
                                 currentLesson.isCompleted && (
                                     <span className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-success/15 px-5 py-2.5 text-sm font-medium text-success sm:w-auto sm:py-2">
-                                        <CheckCircle2 className="h-4 w-4" />
+                                        <CheckCircle2 className="size-4" />
                                         {t('actions.completed')}
                                     </span>
                                 )}
@@ -252,14 +285,17 @@ export default function CoursePlayerPage() {
                         <div className="order-2 flex w-auto justify-end sm:order-3 sm:w-32">
                             {nextLesson ? (
                                 <Link
-                                    to={`/courses/${courseId}/learn/${nextLesson.lessonId}`}
+                                    to={APP_ROUTES.student.learnLesson(
+                                        courseId!,
+                                        nextLesson.lessonId,
+                                    )}
                                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                 >
                                     <span className="hidden sm:inline">
                                         {t('actions.nextLesson')}
                                     </span>
                                     <span className="sm:hidden">Next</span>
-                                    <ChevronRight className="h-4 w-4" />
+                                    <ChevronRight className="size-4" />
                                 </Link>
                             ) : progress?.completedLessons === progress?.totalLessons ? (
                                 <CourseCertificateButton
@@ -270,8 +306,8 @@ export default function CoursePlayerPage() {
                             ) : null}
                         </div>
                     </div>
-                </div>
-            </div>
+                </ResizablePanel>
+            </ResizablePanelGroup>
         </div>
     );
 }

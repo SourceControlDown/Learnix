@@ -1,4 +1,4 @@
-﻿using Learnix.Application.AiChat.Abstractions.Models;
+using Learnix.Application.AiChat.Abstractions.Models;
 
 namespace Learnix.Application.AiChat.Abstractions;
 

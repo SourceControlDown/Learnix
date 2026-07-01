@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
+import { toast } from 'sonner';
 import { authApi } from '@/api/auth.api';
-import { resetPasswordSchema, type ResetPasswordFormData } from '@/schemas/auth.schema';
-import { isValidationError, setApiFieldErrors, getErrorMessage } from '@/utils/errors';
+import { Logo } from '@/components/common/ui/Logo';
+import { APP_ROUTES } from '@/routes/paths';
+import { type ResetPasswordFormData, resetPasswordSchema } from '@/schemas/auth.schema';
+import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/utils/cn';
-import { Logo } from '@/components/common/Logo';
+import { getErrorMessage, isValidationError, setApiFieldErrors } from '@/utils/errors';
 
 const RESET_FIELD_MAP: Partial<Record<string, keyof ResetPasswordFormData>> = {
     NewPassword: 'password',
@@ -19,9 +21,15 @@ const RESET_FIELD_MAP: Partial<Record<string, keyof ResetPasswordFormData>> = {
     confirmPassword: 'confirmPassword',
 };
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-AUTH-003: Token-Based Password Reset Flow
+ */
 export default function ResetPasswordPage() {
     const { t } = useTranslation('auth');
     const navigate = useNavigate();
+    const { user } = useAuthStore();
+    const isAuthenticated = !!user;
     const [searchParams] = useSearchParams();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -57,7 +65,7 @@ export default function ResetPasswordPage() {
                 newPassword: data.password,
             });
             toast.success(t('resetPassword.successMessage'));
-            navigate('/login', { replace: true });
+            navigate(APP_ROUTES.public.login, { replace: true });
         } catch (err) {
             if (isValidationError(err)) {
                 setApiFieldErrors(err, setError, RESET_FIELD_MAP);
@@ -78,12 +86,21 @@ export default function ResetPasswordPage() {
                         {t('resetPassword.invalidToken')}
                     </h1>
                     <div className="mt-6">
-                        <Link
-                            to="/login"
-                            className="text-sm font-medium text-primary hover:underline"
-                        >
-                            {t('resetPassword.backToLogin')}
-                        </Link>
+                        {isAuthenticated ? (
+                            <Link
+                                to={APP_ROUTES.student.profile}
+                                className="text-sm font-medium text-primary hover:underline"
+                            >
+                                {t('backToProfile')}
+                            </Link>
+                        ) : (
+                            <Link
+                                to={APP_ROUTES.public.login}
+                                className="text-sm font-medium text-primary hover:underline"
+                            >
+                                {t('resetPassword.backToLogin')}
+                            </Link>
+                        )}
                     </div>
                 </div>
             </div>
@@ -95,11 +112,11 @@ export default function ResetPasswordPage() {
             <div className="rounded-2xl border border-border bg-card p-8 shadow-[0_4px_20px_rgba(59,130,246,0.05)]">
                 <div className="mb-8 text-center">
                     <Link
-                        to="/"
+                        to={APP_ROUTES.public.home}
                         className="mb-6 inline-flex items-center gap-2 font-heading font-bold"
                     >
-                        <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary font-heading text-lg font-bold text-primary-foreground">
-                            <Logo className="h-6 w-6" />
+                        <div className="grid size-9 place-items-center rounded-lg bg-primary font-heading text-lg font-bold text-primary-foreground">
+                            <Logo className="size-6" />
                         </div>
                         <span className="text-xl">Learnix</span>
                     </Link>
@@ -147,9 +164,9 @@ export default function ResetPasswordPage() {
                                 tabIndex={-1}
                             >
                                 {showPassword ? (
-                                    <EyeOff className="h-4 w-4" />
+                                    <EyeOff className="size-4" />
                                 ) : (
-                                    <Eye className="h-4 w-4" />
+                                    <Eye className="size-4" />
                                 )}
                             </button>
                         </div>
@@ -191,9 +208,9 @@ export default function ResetPasswordPage() {
                                 tabIndex={-1}
                             >
                                 {showConfirmPassword ? (
-                                    <EyeOff className="h-4 w-4" />
+                                    <EyeOff className="size-4" />
                                 ) : (
-                                    <Eye className="h-4 w-4" />
+                                    <Eye className="size-4" />
                                 )}
                             </button>
                         </div>
@@ -214,9 +231,21 @@ export default function ResetPasswordPage() {
                 </form>
 
                 <div className="mt-6 text-center">
-                    <Link to="/login" className="text-sm font-medium text-primary hover:underline">
-                        {t('resetPassword.backToLogin')}
-                    </Link>
+                    {isAuthenticated ? (
+                        <Link
+                            to={APP_ROUTES.student.profile}
+                            className="text-sm font-medium text-primary hover:underline"
+                        >
+                            {t('backToProfile')}
+                        </Link>
+                    ) : (
+                        <Link
+                            to={APP_ROUTES.public.login}
+                            className="text-sm font-medium text-primary hover:underline"
+                        >
+                            {t('resetPassword.backToLogin')}
+                        </Link>
+                    )}
                 </div>
             </div>
         </div>

@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
-import { BookOpen, Users, PlusCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/utils/cn';
-import { useMyCoursesQuery } from '@/hooks/useMyCoursesQuery';
+import { Link } from 'react-router-dom';
+import { BookOpen, PlusCircle, Users } from 'lucide-react';
 import { PAGINATION } from '@/const/ui.constants';
-import type { CourseStatus } from '@/types/course.types';
+import { CourseStatus } from '@/enums/course.enums';
+import { useMyCoursesQuery } from '@/hooks/instructor/useMyCoursesQuery';
+import { APP_ROUTES } from '@/routes/paths';
+import { cn } from '@/utils/cn';
 
 const STATUS_STYLES: Record<CourseStatus, string> = {
     Published: 'bg-success/20 text-success',
@@ -37,7 +38,7 @@ export default function InstructorDashboardPage() {
                     <p className="mt-1 text-muted-foreground">{t('dashboardSubtitle')}</p>
                 </div>
                 <Link
-                    to="/instructor/courses/new"
+                    to={APP_ROUTES.instructor.newCourse}
                     className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                     {t('btnNewCourse')}
@@ -47,7 +48,7 @@ export default function InstructorDashboardPage() {
             {/* Stats */}
             <div className="mb-8 grid gap-4 md:grid-cols-2">
                 <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5">
-                    <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10">
+                    <div className="grid size-10 place-items-center rounded-lg bg-primary/10">
                         <BookOpen size={20} className="text-primary" />
                     </div>
                     <div>
@@ -58,7 +59,7 @@ export default function InstructorDashboardPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5">
-                    <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10">
+                    <div className="grid size-10 place-items-center rounded-lg bg-primary/10">
                         <Users size={20} className="text-primary" />
                     </div>
                     <div>
@@ -73,7 +74,7 @@ export default function InstructorDashboardPage() {
             {/* Quick actions */}
             <div className="mb-8 grid gap-4 md:grid-cols-2">
                 <Link
-                    to="/instructor/courses/new"
+                    to={APP_ROUTES.instructor.newCourse}
                     className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-card p-5 transition-colors hover:border-primary/50 hover:bg-primary/5"
                 >
                     <PlusCircle size={20} className="text-primary" />
@@ -83,7 +84,7 @@ export default function InstructorDashboardPage() {
                     </div>
                 </Link>
                 <Link
-                    to="/instructor/courses"
+                    to={APP_ROUTES.instructor.courses}
                     className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-card p-5 transition-colors hover:border-primary/50 hover:bg-primary/5"
                 >
                     <BookOpen size={20} className="text-primary" />
@@ -104,7 +105,7 @@ export default function InstructorDashboardPage() {
                     </h3>
                     {totalCourses > 0 && (
                         <Link
-                            to="/instructor/courses"
+                            to={APP_ROUTES.instructor.courses}
                             className="text-sm text-primary hover:underline"
                         >
                             {t('recentCoursesViewAll')}
@@ -120,7 +121,7 @@ export default function InstructorDashboardPage() {
                     <div className="py-12 text-center">
                         <p className="text-sm text-muted-foreground">{t('dashboardEmpty')}</p>
                         <Link
-                            to="/instructor/courses/new"
+                            to={APP_ROUTES.instructor.newCourse}
                             className="mt-3 inline-block text-sm text-primary hover:underline"
                         >
                             {t('dashboardEmptyCta')}
@@ -138,7 +139,7 @@ export default function InstructorDashboardPage() {
                                         <img
                                             src={course.coverImageUrl}
                                             alt=""
-                                            className="h-full w-full object-cover"
+                                            className="size-full object-cover"
                                         />
                                     )}
                                 </div>
@@ -160,7 +161,7 @@ export default function InstructorDashboardPage() {
                                     {STATUS_LABELS[course.status]}
                                 </span>
                                 <Link
-                                    to={`/instructor/courses/${course.id}/edit`}
+                                    to={APP_ROUTES.instructor.editCourse(course.id)}
                                     className="shrink-0 text-xs text-muted-foreground hover:text-primary"
                                 >
                                     {t('btnEdit')}

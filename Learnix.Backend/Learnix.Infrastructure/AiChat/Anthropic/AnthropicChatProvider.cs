@@ -1,12 +1,12 @@
+using System.Runtime.CompilerServices;
+using System.Text.Json.Nodes;
 using Anthropic.SDK;
 using Anthropic.SDK.Common;
 using Anthropic.SDK.Messaging;
-using AnthropicTool = Anthropic.SDK.Common.Tool;
 using Learnix.Application.AiChat.Abstractions;
 using Learnix.Application.AiChat.Abstractions.Models;
 using Microsoft.Extensions.Options;
-using System.Runtime.CompilerServices;
-using System.Text.Json.Nodes;
+using AnthropicTool = Anthropic.SDK.Common.Tool;
 
 namespace Learnix.Infrastructure.AiChat.Anthropic;
 

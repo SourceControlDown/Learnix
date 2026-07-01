@@ -1,7 +1,7 @@
 using FluentResults;
+using Learnix.Application.Categories.Constants;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
-using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
@@ -14,7 +14,6 @@ namespace Learnix.Application.Categories.Commands.DeleteCategoryImage;
 
 internal sealed class DeleteCategoryImageCommandHandler(
     ICategoryRepository categoryRepository,
-    IBlobStorageService blobStorage,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
     IDistributedCache cache)
@@ -35,9 +34,8 @@ internal sealed class DeleteCategoryImageCommandHandler(
             return Result.Fail(new NotFoundError(CommonMessages.CourseCategoryNotFound(request.CategoryId)));
 
         if (category.ImageBlobPath is null)
-            return Result.Fail(new NotFoundError("Category has no image."));
+            return Result.Fail(new NotFoundError(CategoryMessages.CategoryHasNoImage));
 
-        await blobStorage.DeleteAsync(category.ImageBlobPath, ct);
         category.RemoveImage();
         await unitOfWork.SaveChangesAsync(ct);
 

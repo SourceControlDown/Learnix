@@ -8,6 +8,7 @@ using Learnix.Application.Courses.Specifications;
 using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.Enrollments.Specifications;
 using Learnix.Application.Reviews.Abstractions;
+using Learnix.Application.Reviews.Constants;
 using Learnix.Application.Reviews.Specifications;
 using Learnix.Domain.Entities;
 using MediatR;
@@ -40,7 +41,7 @@ public sealed class CreateReviewCommandHandler(
             return Result.Fail(new NotFoundError(CommonMessages.CourseNotFound(request.CourseId)));
 
         if (course.InstructorId == studentId)
-            return Result.Fail(new ForbiddenError("Instructors cannot review their own courses."));
+            return Result.Fail(new ForbiddenError(ReviewMessages.InstructorsCannotReviewOwnCourses));
 
         var isEnrolled = await enrollmentRepository.AnyAsync(
             new EnrollmentByStudentAndCourseSpecification(studentId, request.CourseId), cancellationToken);
@@ -52,14 +53,20 @@ public sealed class CreateReviewCommandHandler(
             new CourseReviewByStudentAndCourseSpecification(studentId, request.CourseId), cancellationToken);
 
         if (alreadyReviewed)
-            return Result.Fail(new ConflictError("You have already reviewed this course."));
+            return Result.Fail(new ConflictError(ReviewMessages.AlreadyReviewed));
 
         var review = CourseReview.Create(request.CourseId, studentId, request.Rating, request.Comment);
-        await reviewRepository.AddAsync(review, cancellationToken);
 
-        course.AddRating(request.Rating);
+        await unitOfWork.ExecuteInTransactionAsync(async () =>
+        {
+            await reviewRepository.AddAsync(review, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+            var metrics = await reviewRepository.GetCourseRatingMetricsAsync(request.CourseId, cancellationToken);
+            course.SyncRating(metrics.Count, metrics.Average);
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }, cancellationToken);
 
         await cache.RemoveAsync(CacheKeys.Course(request.CourseId), cancellationToken);
 

@@ -1,8 +1,8 @@
-﻿using Learnix.Application.AiChat.Abstractions.Models;
-using Learnix.Application.AiChat.Queries.SearchCourses;
-using MediatR;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Learnix.Application.AiChat.Abstractions.Models;
+using Learnix.Application.AiChat.Queries.SearchCourses;
+using MediatR;
 
 namespace Learnix.Application.AiChat.Tools;
 

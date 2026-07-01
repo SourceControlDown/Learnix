@@ -1,17 +1,18 @@
 import { z } from 'zod';
 import { INSTRUCTOR_APP_LIMITS } from '@/const/instructor.constants';
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-FORMS-002: Zod Schemas as Source of Truth
+ */
 export const instructorApplicationSchema = z.object({
     motivationText: z
         .string()
-        .min(
-            INSTRUCTOR_APP_LIMITS.MOTIVATION_MIN,
-            'Please write at least 50 characters about your motivation',
-        )
-        .max(INSTRUCTOR_APP_LIMITS.MOTIVATION_MAX, 'Motivation text is too long'),
+        .min(INSTRUCTOR_APP_LIMITS.MOTIVATION_MIN)
+        .max(INSTRUCTOR_APP_LIMITS.MOTIVATION_MAX),
     portfolioUrl: z
         .string()
-        .url('Please enter a valid URL')
+        .url()
         .max(INSTRUCTOR_APP_LIMITS.PORTFOLIO_URL_MAX)
         .optional()
         .or(z.literal('')),

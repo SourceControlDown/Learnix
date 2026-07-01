@@ -2,7 +2,7 @@ using Learnix.Application.Achievements.Abstractions;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Entities;
-using Learnix.Infrastructure.Persistence;
+using Learnix.Infrastructure.Persistence.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 
 namespace Learnix.Infrastructure.Services.Achievements;

@@ -1,5 +1,4 @@
-export type EnrollmentStatus = 'Active' | 'Completed' | 'Suspended';
-export type PaymentStatus = 'Free' | 'Pending' | 'Completed' | 'Failed' | 'Refunded';
+import { EnrollmentStatus, PaymentStatus } from '@/enums/enrollment.enums';
 
 export interface EnrolledCourseDto {
     enrollmentId: string;

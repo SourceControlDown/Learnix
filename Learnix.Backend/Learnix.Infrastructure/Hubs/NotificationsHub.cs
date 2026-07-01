@@ -1,7 +1,7 @@
+using System.Security.Claims;
 using Learnix.Application.Common.Abstractions.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using System.Security.Claims;
 
 namespace Learnix.Infrastructure.Hubs;
 

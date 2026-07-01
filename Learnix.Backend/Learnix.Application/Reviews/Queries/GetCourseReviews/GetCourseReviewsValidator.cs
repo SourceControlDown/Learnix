@@ -1,5 +1,4 @@
 using FluentValidation;
-using Learnix.Application.Common.Pagination;
 
 namespace Learnix.Application.Reviews.Queries.GetCourseReviews;
 
@@ -13,6 +12,6 @@ public sealed class GetCourseReviewsValidator : AbstractValidator<GetCourseRevie
 
         RuleFor(x => x.Take)
             .GreaterThan(0)
-            .LessThanOrEqualTo(PaginationRequest.MaxPageSize);
+            .LessThanOrEqualTo(Learnix.Application.Common.Constants.PaginationConstants.MaxPageSize);
     }
 }

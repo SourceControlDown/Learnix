@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import {
-    TwitterIcon,
     GitHubIcon,
     LinkedInIcon,
+    TwitterIcon,
     YouTubeIcon,
 } from '@/components/common/icons/SocialIcons';
-import { Logo } from '@/components/common/Logo';
+import { Logo } from '@/components/common/ui/Logo';
+import { APP_ROUTES } from '@/routes/paths';
 
 interface FooterLink {
     label: string;
@@ -68,11 +69,11 @@ export function Footer() {
                 <div className="flex flex-col gap-10 border-b border-border pb-12 md:flex-row md:justify-between">
                     <div className="max-w-xs md:w-2/5">
                         <Link
-                            to="/"
+                            to={APP_ROUTES.public.home}
                             className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
                         >
-                            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                                <Logo className="h-6 w-6" />
+                            <div className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                                <Logo className="size-6" />
                             </div>
                             <span className="font-heading text-lg font-bold tracking-tight">
                                 Learnix
@@ -92,9 +93,9 @@ export function Footer() {
                                         target: '_blank',
                                         rel: 'noopener noreferrer',
                                     })}
-                                    className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-secondary hover:text-primary"
+                                    className="grid size-9 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-secondary hover:text-primary"
                                 >
-                                    <Icon className="h-4 w-4" />
+                                    <Icon className="size-4" />
                                 </a>
                             ))}
                         </div>
@@ -136,7 +137,11 @@ export function Footer() {
                     </div>
                     <div className="flex flex-wrap gap-x-6 gap-y-2">
                         {legalLinks.map((label) => (
-                            <Link key={label} to="/faq" className="hover:text-primary">
+                            <Link
+                                key={label}
+                                to={APP_ROUTES.public.faq}
+                                className="hover:text-primary"
+                            >
                                 {label}
                             </Link>
                         ))}

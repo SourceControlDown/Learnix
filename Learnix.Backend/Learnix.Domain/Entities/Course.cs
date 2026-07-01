@@ -1,4 +1,4 @@
-﻿using Learnix.Domain.Common;
+using Learnix.Domain.Common;
 using Learnix.Domain.Common.Exceptions;
 using Learnix.Domain.Enums;
 using Learnix.Domain.Events.Course;
@@ -77,7 +77,17 @@ public class Course : SoftDeletableEntity
 
     public void SetCoverImage(string? coverImageUrl)
     {
+        if (CoverBlobPath == coverImageUrl)
+            return;
+
+        if (CoverBlobPath is not null)
+            RaiseDomainEvent(new CourseCoverRemovedDomainEvent(Id, CoverBlobPath));
+
         CoverBlobPath = coverImageUrl;
+
+        if (CoverBlobPath is not null)
+            RaiseDomainEvent(new CourseCoverSetDomainEvent(Id, CoverBlobPath));
+
         if (Status == CourseStatus.Published && string.IsNullOrWhiteSpace(CoverBlobPath))
             throw new DomainException("Published course must have a cover image.");
     }
@@ -149,30 +159,20 @@ public class Course : SoftDeletableEntity
 
     public void IncrementEnrollmentsCount() => EnrollmentsCount++;
 
-    public void AddRating(int rating)
+    public void SyncRating(int reviewsCount, decimal averageRating)
     {
-        var newCount = ReviewsCount + 1;
-        AverageRating = Math.Round((AverageRating * ReviewsCount + rating) / newCount, 2);
-        ReviewsCount = newCount;
-    }
-
-    public void UpdateRating(int oldRating, int newRating)
-    {
-        if (ReviewsCount == 0) return;
-        AverageRating = Math.Round((AverageRating * ReviewsCount - oldRating + newRating) / ReviewsCount, 2);
-    }
-
-    public void RemoveRating(int rating)
-    {
-        var newCount = ReviewsCount - 1;
-        AverageRating = newCount == 0 ? 0m : Math.Round((AverageRating * ReviewsCount - rating) / newCount, 2);
-        ReviewsCount = newCount;
+        ReviewsCount = reviewsCount;
+        AverageRating = averageRating;
     }
 
     // Section structure (Course as aggregate root, see ADR-044)
     // =========================================================
     public bool SectionExists(Guid sectionId) => Sections.Any(s => s.Id == sectionId);
-    
+
+    public bool HasLesson(Guid lessonId) => Sections.Any(s => s.Lessons.Any(l => l.Id == lessonId));
+
+    public Lesson? TryGetLesson(Guid lessonId) => Sections.SelectMany(s => s.Lessons).FirstOrDefault(l => l.Id == lessonId);
+
     public Section AddSection(string title)
     {
         EnsureStructureMutable();
@@ -215,6 +215,32 @@ public class Course : SoftDeletableEntity
 
         var section = FindSection(sectionId);
         section.ReorderLessons(pairs);
+    }
+
+    public void RemoveLesson(Lesson lesson)
+    {
+        EnsureStructureMutable();
+
+        var section = _sections.FirstOrDefault(s => s.Id == lesson.SectionId)
+            ?? throw new DomainException($"Lesson {lesson.Id} does not belong to course {Id}.");
+
+        lesson.PrepareForDeletion();
+
+        section.RemoveLesson(lesson.Id);
+
+        EnsurePublishableInvariants();
+    }
+
+    public void ToggleLessonVisibility(Lesson lesson, bool isVisible)
+    {
+        EnsureStructureMutable();
+
+        var section = _sections.FirstOrDefault(s => s.Id == lesson.SectionId)
+            ?? throw new DomainException($"Lesson {lesson.Id} does not belong to course {Id}.");
+
+        lesson.SetVisibility(isVisible);
+
+        EnsurePublishableInvariants();
     }
 
     // Internal helpers

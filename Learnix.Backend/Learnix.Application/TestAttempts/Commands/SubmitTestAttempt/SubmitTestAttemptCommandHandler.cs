@@ -6,9 +6,9 @@ using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.Enrollments.Specifications;
-using Learnix.Application.Lessons.Abstractions;
 using Learnix.Application.LessonProgress.Abstractions;
 using Learnix.Application.LessonProgress.Specifications;
+using Learnix.Application.Lessons.Abstractions;
 using Learnix.Application.TestAttempts.Abstractions;
 using Learnix.Application.TestAttempts.Constants;
 using Learnix.Application.TestAttempts.Specifications;
@@ -123,8 +123,7 @@ public sealed class SubmitTestAttemptCommandHandler(
         var visibleCount = await lessonRepository.GetVisibleLessonCountAsync(courseId, ct);
         if (visibleCount == 0) return;
 
-        var completedCount = await lessonProgressRepository.CountAsync(
-            new CompletedLessonCountByStudentAndCourseSpecification(studentId, courseId), ct);
+        var completedCount = await lessonRepository.GetCompletedVisibleLessonCountAsync(studentId, courseId, ct);
 
         if (completedCount + 1 < visibleCount) return;
 

@@ -4,6 +4,7 @@ using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.InstructorApplications.Abstractions;
+using Learnix.Application.InstructorApplications.Constants;
 using Learnix.Application.InstructorApplications.Specifications;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Enums;
@@ -23,7 +24,7 @@ internal sealed class RejectApplicationCommandHandler(
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
 
         if (!currentUser.IsInRole(Roles.Admin))
-            return Result.Fail(new ForbiddenError("Only admins can reject applications."));
+            return Result.Fail(new ForbiddenError(InstructorApplicationMessages.OnlyAdminsReject));
 
         var application = await repo.FirstOrDefaultAsync(
             new ApplicationByIdSpecification(request.ApplicationId, forUpdate: true),
@@ -33,7 +34,7 @@ internal sealed class RejectApplicationCommandHandler(
             return Result.Fail(new NotFoundError(CommonMessages.InstructorApplicationNotFound(request.ApplicationId)));
 
         if (application.Status != ApplicationStatus.Pending)
-            return Result.Fail(new ConflictError("Only pending applications can be rejected."));
+            return Result.Fail(new ConflictError(InstructorApplicationMessages.OnlyPendingCanBeRejected));
 
         application.Reject(currentUser.UserId.Value, request.RejectionReason);
 

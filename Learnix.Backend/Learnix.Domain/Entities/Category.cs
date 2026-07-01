@@ -1,5 +1,5 @@
-﻿using Learnix.Domain.Common;
-using Learnix.Domain.Common.Exceptions;
+using Learnix.Domain.Common;
+using Learnix.Domain.Events.Category;
 
 namespace Learnix.Domain.Entities;
 
@@ -38,9 +38,32 @@ public class Category : BaseEntity
         Slug = slug;
     }
 
-    public void SetImage(string blobPath) => ImageBlobPath = blobPath;
+    public void SetImage(string blobPath)
+    {
+        if (ImageBlobPath == blobPath)
+            return;
 
-    public void RemoveImage() => ImageBlobPath = null;
+        if (ImageBlobPath is not null)
+            RaiseDomainEvent(new CategoryImageRemovedDomainEvent(Id, ImageBlobPath));
+
+        ImageBlobPath = blobPath;
+        RaiseDomainEvent(new CategoryImageSetDomainEvent(Id, ImageBlobPath));
+    }
+
+    public void RemoveImage()
+    {
+        if (ImageBlobPath is not null)
+        {
+            RaiseDomainEvent(new CategoryImageRemovedDomainEvent(Id, ImageBlobPath));
+            ImageBlobPath = null;
+        }
+    }
+
+    public override void PrepareForDeletion()
+    {
+        base.PrepareForDeletion();
+        RemoveImage();
+    }
 
     public void IncrementCoursesCount() => CoursesCount++;
     public void DecrementCoursesCount() => CoursesCount = Math.Max(0, CoursesCount - 1);

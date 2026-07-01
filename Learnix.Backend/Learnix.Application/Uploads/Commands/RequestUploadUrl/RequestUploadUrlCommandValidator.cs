@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Learnix.Application.Common.Abstractions.Storage;
 
 namespace Learnix.Application.Uploads.Commands.RequestUploadUrl;

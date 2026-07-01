@@ -4,7 +4,7 @@ export interface UserSummary {
     id: string;
     email: string;
     fullName: string;
-    role: 'Student' | 'Instructor' | 'Admin';
+    roles: ('Student' | 'Instructor' | 'Admin')[];
     emailVerified: boolean;
     avatarUrl: string | null;
 }
@@ -19,6 +19,11 @@ interface AuthState {
     finishInitialization: () => void;
 }
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-AUTH-001: Access Token Storage & Silent Refresh
+ * - ADR-FRONT-API-002: State Management Boundary (Client State via Zustand)
+ */
 export const useAuthStore = create<AuthState>((set) => ({
     accessToken: null,
     user: null,

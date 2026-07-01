@@ -5,6 +5,7 @@ using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Common.Pagination;
 using Learnix.Application.InstructorApplications.Abstractions;
+using Learnix.Application.InstructorApplications.Constants;
 using Learnix.Application.InstructorApplications.Specifications;
 using Learnix.Domain.Constants;
 using MediatR;
@@ -24,7 +25,7 @@ internal sealed class GetPendingApplicationsQueryHandler(
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
 
         if (!currentUser.IsInRole(Roles.Admin))
-            return Result.Fail(new ForbiddenError("Only admins can view pending applications."));
+            return Result.Fail(new ForbiddenError(InstructorApplicationMessages.OnlyAdminsViewPending));
 
         var pagination = PaginationRequest.FromOffset(request.Skip, request.Take);
 

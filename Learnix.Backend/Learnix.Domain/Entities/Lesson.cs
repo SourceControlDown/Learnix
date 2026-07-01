@@ -1,4 +1,4 @@
-﻿using Learnix.Domain.Common;
+using Learnix.Domain.Common;
 using Learnix.Domain.Common.Exceptions;
 using Learnix.Domain.Enums;
 
@@ -26,12 +26,12 @@ public abstract class Lesson : BaseEntity, IOrderable
     internal void SetOrder(int order) => DisplayOrder = order;
     public abstract bool IsPublishReady();
 
-    public void SetVisibility(bool isHidden)
+    internal void SetVisibility(bool isVisible)
     {
-        if (!isHidden && !IsPublishReady())
+        if (isVisible && !IsPublishReady())
             throw new DomainException("Cannot make this lesson visible");
 
-        IsHidden = isHidden;
+        IsHidden = !isVisible;
     }
 
     protected void EvaluateVisibility()

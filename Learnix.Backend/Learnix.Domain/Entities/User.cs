@@ -1,10 +1,16 @@
-﻿using Learnix.Domain.Common;
+using Learnix.Domain.Common;
 using Learnix.Domain.Events;
 using Learnix.Domain.Events.User;
 using Microsoft.AspNetCore.Identity;
 
 namespace Learnix.Domain.Entities;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-002: ASP.NET Identity — inherit from IdentityUser, custom DbContext
+/// - ADR-BACK-AUTH-003: Pure Identity roles instead of UserRole enum
+/// - ADR-BACK-AUTH-011: GoogleId as denormalized field on User
+/// </remarks>
 public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents, ISoftDeletable
 {
     private readonly List<IDomainEvent> _domainEvents = [];
@@ -29,10 +35,10 @@ public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents, ISoftDelet
     public bool IsDeleted { get; private set; } = false;
     public DateTime? DeletedAt { get; private set; } = null;
 
-    #pragma warning disable S1144
+#pragma warning disable S1144
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
-    #pragma warning restore S1144
+#pragma warning restore S1144
 
     public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
     protected void RaiseDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);

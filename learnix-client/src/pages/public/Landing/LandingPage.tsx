@@ -1,10 +1,9 @@
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { useCategories } from '@/hooks/useCategories';
-import { useFeaturedCourses } from '@/hooks/useFeaturedCourses';
-import { useCourseCount } from '@/hooks/useCourseCount';
+import { useCategories } from '@/hooks/course/useCategories';
+import { useCourseCount } from '@/hooks/course/useCourseCount';
+import { useFeaturedCourses } from '@/hooks/course/useFeaturedCourses';
 import { AIAssistantSection } from './components/AIAssistantSection';
-import { AnnouncementBar } from './components/AnnouncementBar';
 import { CategoriesSection } from './components/CategoriesSection';
 import { FaqSection } from './components/FaqSection';
 import { FeaturedCoursesSection } from './components/FeaturedCoursesSection';
@@ -14,7 +13,6 @@ import { HowItWorksSection } from './components/HowItWorksSection';
 import { InstructorsCTASection } from './components/InstructorsCTASection';
 import { StatsSection } from './components/StatsSection';
 import { TestimonialsSection } from './components/TestimonialsSection';
-import { PetProjectBanner } from './components/PetProjectBanner';
 
 export default function LandingPage() {
     const { t } = useTranslation('landing');

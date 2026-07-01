@@ -1,5 +1,6 @@
 using FluentResults;
 using Learnix.Application.Certificates.Abstractions;
+using Learnix.Application.Certificates.Constants;
 using Learnix.Application.Certificates.Specifications;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Storage;
@@ -32,7 +33,7 @@ public sealed class GetCourseCertificateQueryHandler(
             cancellationToken);
 
         if (certificate is null)
-            return Result.Fail(new NotFoundError("Certificate not found. Complete all course lessons to earn your certificate."));
+            return Result.Fail(new NotFoundError(CertificateMessages.NotFoundCompleteLessons));
 
         var verificationUrl = $"{appSettings.Value.ClientBaseUrl}/verify/{certificate.Code}";
 

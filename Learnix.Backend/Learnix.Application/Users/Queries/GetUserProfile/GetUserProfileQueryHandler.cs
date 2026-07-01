@@ -2,6 +2,7 @@ using FluentResults;
 using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Users.Abstractions;
+using Learnix.Application.Users.Constants;
 using Learnix.Application.Users.Specifications;
 using MediatR;
 
@@ -19,7 +20,7 @@ internal sealed class GetUserProfileQueryHandler(
             cancellationToken);
 
         if (user is null)
-            return Result.Fail<UserProfileResponse>(new NotFoundError("User not found."));
+            return Result.Fail<UserProfileResponse>(new NotFoundError(UserMessages.GenericUserNotFound));
 
         return Result.Ok(new UserProfileResponse(
             user.Id,

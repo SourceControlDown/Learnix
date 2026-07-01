@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using Learnix.API.Extensions;
+using Learnix.API.RateLimiting;
 using Learnix.Application.Messaging.Commands.MarkConversationRead;
 using Learnix.Application.Messaging.Commands.SendMessage;
 using Learnix.Application.Messaging.Queries.GetConversationMessages;
@@ -9,8 +11,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Learnix.API.RateLimiting;
-using System.Text.Json.Serialization;
 
 namespace Learnix.API.Controllers;
 
@@ -20,9 +20,13 @@ namespace Learnix.API.Controllers;
 public sealed class MessagesController(ISender sender) : ControllerBase
 {
     [HttpGet("conversations")]
-    public async Task<IActionResult> GetConversations(CancellationToken ct)
+    public async Task<IActionResult> GetConversations(
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 20,
+        [FromQuery] string? search = null,
+        CancellationToken ct = default)
     {
-        var result = await sender.Send(new GetMyConversationsQuery(), ct);
+        var result = await sender.Send(new GetMyConversationsQuery(skip, take, search), ct);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 

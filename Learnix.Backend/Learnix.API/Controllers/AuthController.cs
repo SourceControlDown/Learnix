@@ -16,6 +16,14 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace Learnix.API.Controllers;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-001: JWT (short-lived) + Refresh Token
+/// - ADR-BACK-AUTH-007: Refresh token rotation with replay-attack protection
+/// - ADR-BACK-AUTH-010: Google OAuth via Google Identity Services (ID token)
+/// - ADR-BACK-AUTH-012: Rate limiting — in-memory FixedWindow per IP
+/// - ADR-BACK-AUTH-014: Email confirmation soft restriction (Authorize policy)
+/// </remarks>
 [ApiController]
 [Route("api/auth")]
 public sealed class AuthController(ISender sender, IHostEnvironment environment) : ControllerBase
@@ -46,7 +54,17 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
     {
         var result = await sender.Send(command, ct);
 
-        return result.ToActionResult();
+        return result.ToActionResult(onSuccess: response =>
+        {
+            SetRefreshTokenCookie(response.RefreshToken, response.RefreshTokenExpiresAt);
+
+            return Ok(new
+            {
+                response.AccessToken,
+                response.AccessTokenExpiresAt,
+                response.AvatarUrl
+            });
+        });
     }
 
     [HttpPost("resend-confirmation")]
@@ -78,6 +96,24 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
     [HttpPost("reset-password")]
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("change-password")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
+    public async Task<IActionResult> ChangePassword([FromBody] Learnix.Application.Auth.Commands.ChangePassword.ChangePasswordCommand command, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("set-password")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
+    public async Task<IActionResult> SetPassword([FromBody] Learnix.Application.Auth.Commands.SetPassword.SetPasswordCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
         return result.ToActionResult();
@@ -143,7 +179,7 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
     public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
-        
+
         return result.ToActionResult(onSuccess: value =>
         {
             SetRefreshTokenCookie(value.RefreshToken, value.RefreshTokenExpiresAt);

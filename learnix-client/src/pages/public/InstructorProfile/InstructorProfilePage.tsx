@@ -1,9 +1,10 @@
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useUserProfile } from '@/hooks/useUserProfile';
-import { useInstructorCourses } from '@/hooks/useInstructorCourses';
-import { CourseCard } from '@/components/common/CourseCard';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, User } from 'lucide-react';
+import { CourseCard } from '@/components/common/course/CourseCard';
+import { useInstructorCourses } from '@/hooks/instructor/useInstructorCourses';
+import { useUserProfile } from '@/hooks/user/useUserProfile';
+import { APP_ROUTES } from '@/routes/paths';
 
 export default function InstructorProfilePage() {
     const { t } = useTranslation('instructorProfile');
@@ -20,7 +21,7 @@ export default function InstructorProfilePage() {
             <div className="mx-auto max-w-5xl px-6 py-12">
                 <div className="animate-pulse space-y-6">
                     <div className="flex items-center gap-5">
-                        <div className="h-20 w-20 rounded-full bg-muted" />
+                        <div className="size-20 rounded-full bg-muted" />
                         <div className="space-y-2">
                             <div className="h-6 w-48 rounded bg-muted" />
                             <div className="h-4 w-64 rounded bg-muted" />
@@ -40,7 +41,10 @@ export default function InstructorProfilePage() {
         return (
             <div className="mx-auto max-w-5xl px-6 py-20 text-center">
                 <p className="text-muted-foreground">{t('notFound')}</p>
-                <Link to="/courses" className="mt-4 inline-block text-primary hover:underline">
+                <Link
+                    to={APP_ROUTES.public.courses}
+                    className="mt-4 inline-block text-primary hover:underline"
+                >
                     {t('backToCatalog')}
                 </Link>
             </div>
@@ -52,10 +56,10 @@ export default function InstructorProfilePage() {
     return (
         <div className="mx-auto max-w-5xl px-6 py-12">
             <Link
-                to="/courses"
+                to={APP_ROUTES.public.courses}
                 className="mb-8 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="size-4" />
                 {t('backToCatalog')}
             </Link>
 
@@ -66,11 +70,11 @@ export default function InstructorProfilePage() {
                         <img
                             src={profile.avatarUrl}
                             alt={fullName}
-                            className="h-20 w-20 rounded-full object-cover ring-2 ring-border"
+                            className="size-20 rounded-full object-cover ring-2 ring-border"
                         />
                     ) : (
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted ring-2 ring-border">
-                            <User className="h-10 w-10 text-muted-foreground" />
+                        <div className="flex size-20 items-center justify-center rounded-full bg-muted ring-2 ring-border">
+                            <User className="size-10 text-muted-foreground" />
                         </div>
                     )}
                 </div>

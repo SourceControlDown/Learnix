@@ -1,59 +1,23 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ClipboardList, Clock, AlertCircle, Info } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/utils/cn';
-import { useTestLesson } from '@/hooks/useTestLesson';
-import { useStartTestAttempt } from '@/hooks/useStartTestAttempt';
-import { useSubmitTestAttempt } from '@/hooks/useSubmitTestAttempt';
-import { useMyTestAttempts } from '@/hooks/useMyTestAttempts';
+import { useParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { AlertCircle } from 'lucide-react';
 import { queryKeys } from '@/api/queryKeys';
+import { ConfirmDialog } from '@/components/common/ui/ConfirmDialog';
+import { useMyTestAttempts } from '@/hooks/lesson/useMyTestAttempts';
+import { useStartTestAttempt } from '@/hooks/lesson/useStartTestAttempt';
+import { useSubmitTestAttempt } from '@/hooks/lesson/useSubmitTestAttempt';
+import { useTestLesson } from '@/hooks/lesson/useTestLesson';
 import type { SubmitAttemptResponse, SubmittedAnswerDto } from '@/types/lesson.types';
-import { QuestionCard } from './components/QuestionCard';
-import { TestResults } from './components/TestResults';
+import { QuizForm } from './components/QuizForm';
 import { TestAttemptHistory } from './components/TestAttemptHistory';
+import { TestHeader } from './components/TestHeader';
+import { TestNotices } from './components/TestNotices';
+import { TestResults } from './components/TestResults';
+import { type AnswerState, clearDraft, getDraft, saveDraft } from './hooks/useTestDraft';
 
-// ---------------------------------------------------------------------------
-// SessionStorage draft helpers — keyed by lessonId so each test has its own slot
-// ---------------------------------------------------------------------------
-interface AnswerState {
-    selectedOptions: number[];
-    textValue: string;
-}
-
-interface TestDraft {
-    attemptId: string;
-    answers: Record<number, AnswerState>;
-}
-
-function getDraft(lessonId: string): TestDraft | null {
-    try {
-        const raw = sessionStorage.getItem(`test-draft-${lessonId}`);
-        return raw ? (JSON.parse(raw) as TestDraft) : null;
-    } catch {
-        return null;
-    }
-}
-
-function saveDraft(lessonId: string, draft: TestDraft): void {
-    try {
-        sessionStorage.setItem(`test-draft-${lessonId}`, JSON.stringify(draft));
-    } catch {
-        // sessionStorage might be full or blocked — fail silently
-    }
-}
-
-function clearDraft(lessonId: string): void {
-    try {
-        sessionStorage.removeItem(`test-draft-${lessonId}`);
-    } catch {}
-}
-
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
-type PageState = 'testing' | 'submitted';
+export type TestPageState = 'testing' | 'submitted';
 
 export default function TestLessonPage() {
     const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
@@ -66,12 +30,13 @@ export default function TestLessonPage() {
     const submit = useSubmitTestAttempt(courseId!, lessonId!);
 
     // Core page state
-    const [pageState, setPageState] = useState<PageState>('testing');
+    const [pageState, setPageState] = useState<TestPageState>('testing');
     const [attemptId, setAttemptId] = useState<string | null>(null);
     const [answers, setAnswers] = useState<Record<number, AnswerState>>({});
     const [submitResult, setSubmitResult] = useState<SubmitAttemptResponse | null>(null);
     const [submittedAnswers, setSubmittedAnswers] = useState<Record<number, AnswerState>>({});
     const [draftRestored, setDraftRestored] = useState(false);
+    const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
 
     // Cooldown countdown (seconds)
     const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null);
@@ -102,8 +67,11 @@ export default function TestLessonPage() {
 
         if (draft) {
             if (draft.attemptId) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setAttemptId(draft.attemptId);
+
                 setAnswers(draft.answers);
+
                 setDraftRestored(true);
                 didInitRef.current = true;
                 initialized = true;
@@ -115,6 +83,7 @@ export default function TestLessonPage() {
 
         if (!initialized && status?.inProgressAttemptId) {
             setAttemptId(status.inProgressAttemptId);
+
             setAnswers(
                 Object.fromEntries(
                     test.questions.map((q) => [q.order, { selectedOptions: [], textValue: '' }]),
@@ -144,11 +113,10 @@ export default function TestLessonPage() {
         return () => {
             didInitRef.current = false;
         };
-    }, [test, lessonId, canAttempt, pageState]); // eslint-disable-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [test, lessonId, canAttempt, pageState]);
 
-    // ---------------------------------------------------------------------------
     // Cooldown countdown timer
-    // ---------------------------------------------------------------------------
     useEffect(() => {
         const minutes = status?.cooldownRemainingMinutes;
 
@@ -158,6 +126,7 @@ export default function TestLessonPage() {
         }
 
         if (!minutes) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCooldownSeconds(null);
             return;
         }
@@ -186,9 +155,7 @@ export default function TestLessonPage() {
         };
     }, [status?.cooldownRemainingMinutes]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // ---------------------------------------------------------------------------
     // Answer handlers — save to sessionStorage on every change
-    // ---------------------------------------------------------------------------
     const handleOptionToggle = useCallback(
         (questionOrder: number, optionOrder: number, type: string) => {
             setAnswers((prev) => {
@@ -236,9 +203,7 @@ export default function TestLessonPage() {
         [lessonId, attemptId],
     );
 
-    // ---------------------------------------------------------------------------
     // Retry starting the attempt (if startAttempt failed)
-    // ---------------------------------------------------------------------------
     function retryStart() {
         if (!test || !lessonId) return;
         startAttempt.mutate(undefined, {
@@ -249,10 +214,28 @@ export default function TestLessonPage() {
         });
     }
 
-    // ---------------------------------------------------------------------------
+    // Progress indicator
+    const answeredCount =
+        test?.questions.filter((q) => {
+            const ans = answers[q.order];
+            if (!ans) return false;
+            if (q.type === 'TextInput') return ans.textValue.trim().length > 0;
+            return ans.selectedOptions.length > 0;
+        }).length ?? 0;
+
+    const totalQuestions = test?.questions.length ?? 0;
+
     // Submit
-    // ---------------------------------------------------------------------------
-    const handleSubmit = () => {
+    function handleSubmitClick() {
+        if (!test || !attemptId) return;
+        if (answeredCount < totalQuestions) {
+            setShowConfirmSubmit(true);
+        } else {
+            executeSubmit();
+        }
+    }
+
+    function executeSubmit() {
         if (!test || !attemptId) return;
 
         const submittedAnswersList: SubmittedAnswerDto[] = test.questions.map((q) => {
@@ -283,12 +266,10 @@ export default function TestLessonPage() {
                 },
             },
         );
-    };
+    }
 
-    // ---------------------------------------------------------------------------
     // Retake
-    // ---------------------------------------------------------------------------
-    const handleRetake = () => {
+    function handleRetake() {
         if (!test || !lessonId) return;
 
         setPageState('testing');
@@ -311,53 +292,22 @@ export default function TestLessonPage() {
                 saveDraft(lessonId, { attemptId: res.attemptId, answers: emptyAnswers });
             },
         });
-    };
-
-    // ---------------------------------------------------------------------------
-    // Progress indicator
-    // ---------------------------------------------------------------------------
-    const answeredCount =
-        test?.questions.filter((q) => {
-            const ans = answers[q.order];
-            if (!ans) return false;
-            if (q.type === 'TextInput') return ans.textValue.trim().length > 0;
-            return ans.selectedOptions.length > 0;
-        }).length ?? 0;
-
-    const totalQuestions = test?.questions.length ?? 0;
+    }
 
     // canRetake based on freshly-refetched status (after invalidation from submit)
     const canRetake = test?.studentStatus?.canAttempt === true;
 
-    // ---------------------------------------------------------------------------
-    // Render
-    // ---------------------------------------------------------------------------
     return (
         <div className="min-h-screen bg-background">
             {/* Header */}
-            <header className="sticky top-0 z-10 border-b border-border bg-card">
-                <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-6">
-                    <Link
-                        to={`/courses/${courseId}/learn/${lessonId}`}
-                        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                        {t('header.backToLesson')}
-                    </Link>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                        <ClipboardList className="h-4 w-4 text-primary" />
-                        {t('header.testLabel')}
-                    </div>
-                    <div className="w-24" />
-                </div>
-            </header>
+            <TestHeader courseId={courseId!} lessonId={lessonId!} />
 
             <div className="mx-auto max-w-4xl px-6 py-10">
                 {/* Loading */}
                 {isLoading && (
                     <div className="flex items-center justify-center py-20">
                         <div className="space-y-3 text-center">
-                            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                            <div className="mx-auto size-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                             <p className="text-sm text-muted-foreground">{t('loading')}</p>
                         </div>
                     </div>
@@ -366,7 +316,7 @@ export default function TestLessonPage() {
                 {/* Error */}
                 {isError && (
                     <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-destructive">
-                        <AlertCircle className="h-5 w-5 shrink-0" />
+                        <AlertCircle className="size-5 shrink-0" />
                         <p>{t('error')}</p>
                     </div>
                 )}
@@ -402,37 +352,12 @@ export default function TestLessonPage() {
                             </div>
                         </div>
 
-                        {/* Draft restored notice */}
-                        {draftRestored && pageState === 'testing' && (
-                            <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-5 py-3 text-sm">
-                                <Info className="h-4 w-4 shrink-0 text-primary" />
-                                <span>{t('draftRestored')}</span>
-                            </div>
-                        )}
-
-                        {/* Cooldown notice with live countdown */}
-                        {cooldownSeconds !== null && !canAttempt && (
-                            <div className="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning/10 px-5 py-4 text-sm">
-                                <Clock className="h-5 w-5 shrink-0 text-warning" />
-                                <span>
-                                    {t('status.cooldownTimer', {
-                                        mm: String(Math.floor(cooldownSeconds / 60)).padStart(
-                                            2,
-                                            '0',
-                                        ),
-                                        ss: String(cooldownSeconds % 60).padStart(2, '0'),
-                                    })}
-                                </span>
-                            </div>
-                        )}
-
-                        {/* No attempts left */}
-                        {!canAttempt && cooldownSeconds === null && pageState !== 'submitted' && (
-                            <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 px-5 py-4 text-sm text-destructive">
-                                <AlertCircle className="h-5 w-5 shrink-0" />
-                                {t('status.noAttemptsLeft')}
-                            </div>
-                        )}
+                        <TestNotices
+                            draftRestored={draftRestored}
+                            pageState={pageState}
+                            canAttempt={canAttempt}
+                            cooldownSeconds={cooldownSeconds}
+                        />
 
                         {/* Results view */}
                         {pageState === 'submitted' && submitResult && (
@@ -449,91 +374,20 @@ export default function TestLessonPage() {
 
                         {/* Quiz form */}
                         {pageState === 'testing' && canAttempt && (
-                            <div className="space-y-4">
-                                {/* Progress indicator */}
-                                {totalQuestions > 0 && (
-                                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                        <span>
-                                            {t('form.answeredOf', {
-                                                answered: answeredCount,
-                                                total: totalQuestions,
-                                            })}
-                                        </span>
-                                        <div className="h-1.5 w-48 overflow-hidden rounded-full bg-secondary">
-                                            <div
-                                                className="h-full rounded-full bg-primary transition-all"
-                                                style={{
-                                                    width: `${totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0}%`,
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {test.questions
-                                    .slice()
-                                    .sort((a, b) => a.order - b.order)
-                                    .map((question, idx) => (
-                                        <QuestionCard
-                                            key={question.order}
-                                            question={question}
-                                            index={idx}
-                                            total={test.questions.length}
-                                            selectedOptions={
-                                                answers[question.order]?.selectedOptions ?? []
-                                            }
-                                            textValue={answers[question.order]?.textValue ?? ''}
-                                            onOptionToggle={(optOrder) =>
-                                                handleOptionToggle(
-                                                    question.order,
-                                                    optOrder,
-                                                    question.type,
-                                                )
-                                            }
-                                            onTextChange={(val) =>
-                                                handleTextChange(question.order, val)
-                                            }
-                                        />
-                                    ))}
-
-                                <div className="flex justify-end pt-4">
-                                    {startAttempt.isError ? (
-                                        <div className="flex flex-col items-end gap-2">
-                                            <p className="text-sm text-destructive">
-                                                {t('form.startError')}
-                                            </p>
-                                            <button
-                                                type="button"
-                                                onClick={retryStart}
-                                                disabled={startAttempt.isPending}
-                                                className="rounded-lg bg-secondary px-6 py-2.5 text-sm font-medium transition-colors hover:bg-secondary/80 disabled:opacity-50"
-                                            >
-                                                {startAttempt.isPending
-                                                    ? t('form.starting')
-                                                    : t('form.retry')}
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={handleSubmit}
-                                            disabled={submit.isPending || !attemptId}
-                                            className={cn(
-                                                'rounded-lg px-8 py-3 text-sm font-medium text-primary-foreground transition-colors',
-                                                submit.isPending || !attemptId
-                                                    ? 'cursor-not-allowed bg-primary/60'
-                                                    : 'bg-primary hover:bg-primary/90',
-                                            )}
-                                        >
-                                            {submit.isPending
-                                                ? t('form.submitting')
-                                                : !attemptId
-                                                  ? t('form.starting')
-                                                  : t('form.submitButton')}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
+                            <QuizForm
+                                test={test}
+                                answeredCount={answeredCount}
+                                totalQuestions={totalQuestions}
+                                answers={answers}
+                                attemptId={attemptId}
+                                isStartError={startAttempt.isError}
+                                isStartPending={startAttempt.isPending}
+                                isSubmitPending={submit.isPending}
+                                onOptionToggle={handleOptionToggle}
+                                onTextChange={handleTextChange}
+                                onRetryStart={retryStart}
+                                onSubmitClick={handleSubmitClick}
+                            />
                         )}
 
                         {/* Attempt history — only after submitting */}
@@ -541,6 +395,22 @@ export default function TestLessonPage() {
                     </div>
                 )}
             </div>
+
+            {/* Unanswered questions confirm */}
+            {showConfirmSubmit && (
+                <ConfirmDialog
+                    title={t('form.incompleteTitle')}
+                    description={t('form.incompleteDesc')}
+                    confirmLabel={t('form.submitButton')}
+                    variant="warning"
+                    isPending={submit.isPending}
+                    onConfirm={() => {
+                        setShowConfirmSubmit(false);
+                        executeSubmit();
+                    }}
+                    onClose={() => setShowConfirmSubmit(false)}
+                />
+            )}
         </div>
     );
 }

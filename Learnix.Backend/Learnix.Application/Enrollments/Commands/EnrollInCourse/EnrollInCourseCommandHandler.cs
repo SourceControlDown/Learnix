@@ -6,6 +6,7 @@ using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Courses.Specifications;
 using Learnix.Application.Enrollments.Abstractions;
+using Learnix.Application.Enrollments.Constants;
 using Learnix.Application.Enrollments.Specifications;
 using Learnix.Application.Wishlist.Abstractions;
 using Learnix.Domain.Entities;
@@ -42,7 +43,7 @@ public sealed class EnrollInCourseCommandHandler(
             return Result.Fail(new ConflictError(CommonMessages.CourseNotPublished));
 
         if (course.InstructorId == studentId)
-            return Result.Fail(new ForbiddenError("Instructors cannot enroll in their own courses."));
+            return Result.Fail(new ForbiddenError(EnrollmentMessages.InstructorsCannotEnrollOwnCourses));
 
         var alreadyEnrolled = await enrollmentRepository.AnyAsync(
             new EnrollmentByStudentAndCourseSpecification(studentId, request.CourseId),

@@ -1,9 +1,9 @@
-﻿using Learnix.Application.AiChat.Abstractions;
+using System.Runtime.CompilerServices;
+using Learnix.Application.AiChat.Abstractions;
 using Learnix.Application.AiChat.Abstractions.Models;
 using Learnix.Application.AiChat.Tools;
 using Learnix.Application.Common.Settings;
 using Microsoft.Extensions.Options;
-using System.Runtime.CompilerServices;
 
 namespace Learnix.Application.AiChat.Services;
 

@@ -1,23 +1,31 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-import { authApi } from '@/api/auth.api';
-import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/schemas/auth.schema';
-import { isValidationError, setApiFieldErrors, getErrorMessage } from '@/utils/errors';
-import { cn } from '@/utils/cn';
-import { Logo } from '@/components/common/Logo';
 import { MailCheck } from 'lucide-react';
+import { authApi } from '@/api/auth.api';
+import { Logo } from '@/components/common/ui/Logo';
+import { APP_ROUTES } from '@/routes/paths';
+import { type ForgotPasswordFormData, forgotPasswordSchema } from '@/schemas/auth.schema';
+import { useAuthStore } from '@/store/auth.store';
+import { cn } from '@/utils/cn';
+import { getErrorMessage, isValidationError, setApiFieldErrors } from '@/utils/errors';
 
 const FORGOT_FIELD_MAP: Partial<Record<string, keyof ForgotPasswordFormData>> = {
     Email: 'email',
     email: 'email',
 };
 
+/**
+ * Related ADRs:
+ * - ADR-FRONT-AUTH-003: Token-Based Password Reset Flow
+ */
 export default function ForgotPasswordPage() {
     const { t } = useTranslation('auth');
+    const { user } = useAuthStore();
+    const isAuthenticated = !!user;
     const [isSuccess, setIsSuccess] = useState(false);
     const [submittedEmail, setSubmittedEmail] = useState('');
 
@@ -29,6 +37,9 @@ export default function ForgotPasswordPage() {
         formState: { errors, isSubmitting },
     } = useForm<ForgotPasswordFormData>({
         resolver: zodResolver(forgotPasswordSchema),
+        defaultValues: {
+            email: isAuthenticated && user ? user.email : '',
+        },
     });
 
     const { mutateAsync } = useMutation({
@@ -58,11 +69,11 @@ export default function ForgotPasswordPage() {
             <div className="rounded-2xl border border-border bg-card p-8 shadow-[0_4px_20px_rgba(59,130,246,0.05)]">
                 <div className="mb-8 text-center">
                     <Link
-                        to="/"
+                        to={APP_ROUTES.public.home}
                         className="mb-6 inline-flex items-center gap-2 font-heading font-bold"
                     >
-                        <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary font-heading text-lg font-bold text-primary-foreground">
-                            <Logo className="h-6 w-6" />
+                        <div className="grid size-9 place-items-center rounded-lg bg-primary font-heading text-lg font-bold text-primary-foreground">
+                            <Logo className="size-6" />
                         </div>
                         <span className="text-xl">Learnix</span>
                     </Link>
@@ -78,8 +89,8 @@ export default function ForgotPasswordPage() {
                         </>
                     ) : (
                         <>
-                            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                                <MailCheck className="h-6 w-6 text-primary" />
+                            <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-primary/10">
+                                <MailCheck className="size-6 text-primary" />
                             </div>
                             <h1 className="font-heading text-2xl font-bold text-foreground">
                                 {t('forgotPassword.successTitle')}
@@ -140,9 +151,21 @@ export default function ForgotPasswordPage() {
                 ) : null}
 
                 <div className="mt-6 text-center">
-                    <Link to="/login" className="text-sm font-medium text-primary hover:underline">
-                        {t('forgotPassword.backToLogin')}
-                    </Link>
+                    {isAuthenticated ? (
+                        <Link
+                            to={APP_ROUTES.student.profile}
+                            className="text-sm font-medium text-primary hover:underline"
+                        >
+                            {t('backToProfile')}
+                        </Link>
+                    ) : (
+                        <Link
+                            to={APP_ROUTES.public.login}
+                            className="text-sm font-medium text-primary hover:underline"
+                        >
+                            {t('forgotPassword.backToLogin')}
+                        </Link>
+                    )}
                 </div>
             </div>
         </div>

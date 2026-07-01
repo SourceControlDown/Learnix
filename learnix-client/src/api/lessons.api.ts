@@ -1,5 +1,6 @@
-import { api } from './axios.instance';
+import { QuestionType } from '@/enums/lesson.enums';
 import type { LessonContentDto } from '@/types/lesson.types';
+import { api } from './axios.instance';
 import type { ReorderItem } from './sections.api';
 
 export interface CreateVideoLessonRequest {
@@ -19,10 +20,17 @@ export interface QuestionOptionRequest {
     isCorrect: boolean;
 }
 
+export interface TextAnswerRequest {
+    correctAnswer: string;
+    ignoreCase: boolean;
+    allowFuzzy: boolean;
+}
+
 export interface QuestionRequest {
     text: string;
-    type: 'SingleChoice' | 'MultipleChoice';
-    options: QuestionOptionRequest[];
+    type: QuestionType;
+    options?: QuestionOptionRequest[];
+    textAnswer?: TextAnswerRequest;
 }
 
 export interface CreateTestLessonRequest {
@@ -63,9 +71,9 @@ export const lessonsApi = {
     updateTest: (courseId: string, lessonId: string, data: CreateTestLessonRequest) =>
         api.patch(`/courses/${courseId}/lessons/${lessonId}/test`, data).then((r) => r.data),
 
-    toggleVisibility: (courseId: string, lessonId: string, isHidden: boolean) =>
+    toggleVisibility: (courseId: string, lessonId: string, isVisible: boolean) =>
         api
-            .patch(`/courses/${courseId}/lessons/${lessonId}/toggle-visibility`, { isHidden })
+            .patch(`/courses/${courseId}/lessons/${lessonId}/toggle-visibility`, { isVisible })
             .then((r) => r.data),
 
     delete: (courseId: string, lessonId: string) =>

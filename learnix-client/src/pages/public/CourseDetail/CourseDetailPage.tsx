@@ -1,20 +1,23 @@
+import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Clock, Users, Star, Tag, ArrowLeft, BookOpen, Heart } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useCourseDetail } from '@/hooks/useCourseDetail';
-import { useCourseReviews } from '@/hooks/useCourseReviews';
-import { useMyReview } from '@/hooks/useMyReview';
-import { useMyEnrollments } from '@/hooks/useMyEnrollments';
-import { useEnroll } from '@/hooks/useEnroll';
-import { useWishlist } from '@/hooks/useWishlist';
-import { useAddToWishlist, useRemoveFromWishlist } from '@/hooks/useWishlistMutations';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Clock, Star, Tag, Users } from 'lucide-react';
+import { QueryError } from '@/components/common/system/QueryError';
+import { Pagination } from '@/components/common/ui/Pagination';
+import { useCourseDetail } from '@/hooks/course/useCourseDetail';
+import { useCourseReviews } from '@/hooks/student/useCourseReviews';
+import { useEnroll } from '@/hooks/student/useEnroll';
+import { useMyEnrollments } from '@/hooks/student/useMyEnrollments';
+import { useMyReview } from '@/hooks/student/useMyReview';
+import { useWishlist } from '@/hooks/student/useWishlist';
+import { useAddToWishlist, useRemoveFromWishlist } from '@/hooks/student/useWishlistMutations';
+import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
-import { QueryError } from '@/components/common/QueryError';
+import { CourseSidebar } from './components/CourseSidebar';
 import { CurriculumAccordion } from './components/CurriculumAccordion';
-import { ReviewsList } from './components/ReviewsList';
 import { ReviewForm } from './components/ReviewForm';
-import { cn } from '@/utils/cn';
+import { ReviewsList } from './components/ReviewsList';
 
 export default function CourseDetailPage() {
     const { courseId } = useParams<{ courseId: string }>();
@@ -27,7 +30,12 @@ export default function CourseDetailPage() {
         isError: courseError,
         refetch: refetchCourse,
     } = useCourseDetail(courseId!);
-    const { data: reviewsData } = useCourseReviews(courseId!);
+
+    const [page, setPage] = useState(1);
+    const take = 5; // Show 5 reviews per page
+    const skip = (page - 1) * take;
+
+    const { data: reviewsData } = useCourseReviews(courseId!, skip, take);
     const { data: myReview } = useMyReview(courseId!);
     const { data: enrollmentsData } = useMyEnrollments();
     const enroll = useEnroll();
@@ -43,13 +51,15 @@ export default function CourseDetailPage() {
     const totalLessons = course?.sections.reduce((sum, s) => sum + s.lessons.length, 0) ?? 0;
 
     const navigate = useNavigate();
+    const location = useLocation();
+    const backUrl = (location.state as { from?: string })?.from || APP_ROUTES.public.courses;
 
     function handleEnroll() {
         if (!courseId) return;
         if (isFree) {
             enroll.mutate(courseId);
         } else {
-            navigate(`/payment/${courseId}`);
+            navigate(APP_ROUTES.student.payment(courseId));
         }
     }
 
@@ -70,10 +80,10 @@ export default function CourseDetailPage() {
         return (
             <div className="mx-auto max-w-5xl px-6 py-12">
                 <Link
-                    to="/courses"
+                    to={backUrl}
                     className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="size-4" />
                     {t('backToCatalog')}
                 </Link>
                 <QueryError
@@ -89,7 +99,7 @@ export default function CourseDetailPage() {
         return (
             <div className="mx-auto max-w-5xl px-6 py-20 text-center">
                 <p className="text-muted-foreground">{t('notFound')}</p>
-                <Link to="/courses" className="mt-4 inline-block text-primary hover:underline">
+                <Link to={backUrl} className="mt-4 inline-block text-primary hover:underline">
                     {t('backToCatalog')}
                 </Link>
             </div>
@@ -113,10 +123,10 @@ export default function CourseDetailPage() {
             </Helmet>
             <div className="mx-auto max-w-5xl px-6 py-12">
                 <Link
-                    to="/courses"
+                    to={backUrl}
                     className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="size-4" />
                     {t('backToCatalog')}
                 </Link>
 
@@ -132,7 +142,7 @@ export default function CourseDetailPage() {
                             {/* Meta */}
                             <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
-                                    <Star className="h-4 w-4 fill-warning text-warning" />
+                                    <Star className="size-4 fill-warning text-warning" />
                                     <span className="font-medium text-foreground">
                                         {course.reviewsCount > 0
                                             ? course.averageRating.toFixed(1)
@@ -140,11 +150,11 @@ export default function CourseDetailPage() {
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <Users className="h-4 w-4" />
+                                    <Users className="size-4" />
                                     <span>{course.enrollmentsCount} students</span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <Clock className="h-4 w-4" />
+                                    <Clock className="size-4" />
                                     <span>{totalLessons} lessons</span>
                                 </div>
                             </div>
@@ -157,7 +167,7 @@ export default function CourseDetailPage() {
                                             key={tag}
                                             className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
                                         >
-                                            <Tag className="h-3 w-3" />
+                                            <Tag className="size-3" />
                                             {tag}
                                         </span>
                                     ))}
@@ -181,6 +191,18 @@ export default function CourseDetailPage() {
                             totalCount={course.reviewsCount}
                         />
 
+                        {/* Pagination for reviews */}
+                        {reviewsData && reviewsData.totalCount > take && (
+                            <Pagination
+                                className="mt-8"
+                                page={page}
+                                totalPages={Math.ceil(reviewsData.totalCount / take)}
+                                onChange={setPage}
+                                prevLabel={t('reviews.prev', 'Previous')}
+                                nextLabel={t('reviews.next', 'Next')}
+                            />
+                        )}
+
                         {/* Review form */}
                         {user && !isOwnCourse && isEnrolled && (
                             <ReviewForm courseId={courseId!} existing={myReview ?? null} />
@@ -193,116 +215,22 @@ export default function CourseDetailPage() {
                     </div>
 
                     {/* Sidebar card */}
-                    <aside className="order-1 shrink-0 lg:order-2">
-                        <div className="sticky top-24 rounded-xl border border-border bg-card p-6 shadow-sm">
-                            {/* Cover image */}
-                            {course.coverImageUrl ? (
-                                <img
-                                    src={course.coverImageUrl}
-                                    alt={course.title}
-                                    className="mb-5 aspect-video w-full rounded-lg object-cover"
-                                />
-                            ) : (
-                                <div className="mb-5 flex aspect-video w-full items-center justify-center rounded-lg bg-muted">
-                                    <BookOpen className="h-12 w-12 text-muted-foreground/40" />
-                                </div>
-                            )}
-
-                            {/* Price */}
-                            <p
-                                className={cn(
-                                    'font-heading text-3xl font-bold',
-                                    isFree ? 'text-success' : 'text-foreground',
-                                )}
-                            >
-                                {isFree ? t('price.free') : `$${course.price}`}
-                            </p>
-
-                            {/* Enroll button */}
-                            {isOwnCourse ? (
-                                <div className="mt-4 flex w-full items-center justify-center rounded-lg border border-border bg-muted px-4 py-3 text-sm font-medium text-muted-foreground">
-                                    {t('enroll.ownCourse')}
-                                </div>
-                            ) : isEnrolled ? (
-                                <Link
-                                    to={`/courses/${courseId}/learn/${course.sections[0]?.lessons[0]?.id ?? ''}`}
-                                    className="mt-4 flex w-full items-center justify-center rounded-lg bg-success px-4 py-3 font-medium text-white transition-opacity hover:opacity-90"
-                                >
-                                    {t('enroll.enrolled')}
-                                </Link>
-                            ) : user ? (
-                                <button
-                                    type="button"
-                                    onClick={handleEnroll}
-                                    disabled={enroll.isPending}
-                                    className="mt-4 w-full rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-                                >
-                                    {enroll.isPending
-                                        ? t('enroll.enrolling')
-                                        : isFree
-                                          ? t('enroll.free')
-                                          : t('enroll.paid', { price: course.price })}
-                                </button>
-                            ) : (
-                                <Link
-                                    to="/login"
-                                    className="mt-4 flex w-full items-center justify-center rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                                >
-                                    {t('enroll.loginRequired')}
-                                </Link>
-                            )}
-
-                            {user && !isEnrolled && !isOwnCourse && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        inWishlist
-                                            ? removeFromWishlist.mutate(courseId!)
-                                            : addToWishlist.mutate(courseId!)
-                                    }
-                                    disabled={
-                                        addToWishlist.isPending || removeFromWishlist.isPending
-                                    }
-                                    className={cn(
-                                        'mt-3 flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50',
-                                        inWishlist
-                                            ? 'border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20'
-                                            : 'border-border bg-card text-foreground hover:bg-muted',
-                                    )}
-                                >
-                                    <Heart
-                                        className={cn(
-                                            'h-4 w-4',
-                                            inWishlist && 'fill-destructive text-destructive',
-                                        )}
-                                    />
-                                    {addToWishlist.isPending
-                                        ? t('wishlist.saving')
-                                        : removeFromWishlist.isPending
-                                          ? t('wishlist.removing')
-                                          : inWishlist
-                                            ? t('wishlist.saved')
-                                            : t('wishlist.save')}
-                                </button>
-                            )}
-
-                            <div className="mt-5 border-t border-border pt-4 text-sm text-muted-foreground">
-                                <p>
-                                    <span className="font-medium text-foreground">
-                                        {t('instructor.label')}
-                                    </span>
-                                    {course.instructorFullName && (
-                                        <Link
-                                            to={`/instructors/${course.instructorId}`}
-                                            className="ml-1 text-primary hover:underline"
-                                        >
-                                            {course.instructorFullName}
-                                        </Link>
-                                    )}
-                                </p>
-                            </div>
-                        </div>
-                    </aside>
+                    <CourseSidebar
+                        course={course}
+                        isFree={isFree}
+                        isOwnCourse={isOwnCourse}
+                        isEnrolled={isEnrolled ?? false}
+                        user={user}
+                        inWishlist={inWishlist}
+                        enrollIsPending={enroll.isPending}
+                        onEnroll={handleEnroll}
+                        onToggleWishlist={() =>
+                            inWishlist
+                                ? removeFromWishlist.mutate(courseId!)
+                                : addToWishlist.mutate(courseId!)
+                        }
+                        wishlistIsPending={addToWishlist.isPending || removeFromWishlist.isPending}
+                    />
                 </div>
             </div>
         </>

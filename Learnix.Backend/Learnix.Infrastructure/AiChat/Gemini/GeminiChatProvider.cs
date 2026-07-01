@@ -1,10 +1,10 @@
-﻿using Google.GenAI;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using Google.GenAI;
 using Google.GenAI.Types;
 using Learnix.Application.AiChat.Abstractions;
 using Learnix.Application.AiChat.Abstractions.Models;
 using Microsoft.Extensions.Options;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
 using ChatMessage = Learnix.Application.AiChat.Abstractions.Models.ChatMessage;
 
 namespace Learnix.Infrastructure.AiChat.Gemini;

@@ -1,5 +1,5 @@
+import type { FieldValues, Path, UseFormSetError } from 'react-hook-form';
 import { AxiosError } from 'axios';
-import type { UseFormSetError, FieldValues, Path } from 'react-hook-form';
 import type { ProblemDetails } from '@/types/api.types';
 
 export function isValidationError(error: unknown): error is AxiosError<ProblemDetails> {
@@ -21,6 +21,9 @@ export function getErrorMessage(error: unknown, fallback = 'Something went wrong
 /**
  * Maps ProblemDetails field errors (PascalCase keys) onto RHF form fields (camelCase keys).
  * Unmatched fields are surfaced as a root error.
+ *
+ * Related ADRs:
+ * - ADR-FRONT-FORMS-003: Server-to-Client Validation Mapping
  */
 export function setApiFieldErrors<T extends FieldValues>(
     error: unknown,

@@ -1,4 +1,4 @@
-﻿using Learnix.Infrastructure.Persistence.Mongo.Documents;
+using Learnix.Infrastructure.Persistence.Mongo.Documents;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;

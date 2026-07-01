@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Learnix.Infrastructure.Identity;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-006: Decomposition of Identity service into three roles based on SRP
+/// </remarks>
 internal sealed class UserAuthenticationService(
     UserManager<User> userManager,
     SignInManager<User> signInManager)

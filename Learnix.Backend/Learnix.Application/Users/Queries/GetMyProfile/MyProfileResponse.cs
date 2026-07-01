@@ -6,4 +6,6 @@ public sealed record MyProfileResponse(
     string FirstName,
     string LastName,
     string? Bio,
-    string? AvatarUrl);
+    string? AvatarUrl,
+    DateTimeOffset CreatedAt,
+    bool HasPassword);

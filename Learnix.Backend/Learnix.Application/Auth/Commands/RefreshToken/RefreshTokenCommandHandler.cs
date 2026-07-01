@@ -1,6 +1,7 @@
 using FluentResults;
 using Learnix.Application.Auth.Abstractions;
 using Learnix.Application.Auth.Commands.Login;
+using Learnix.Application.Auth.Constants;
 using Learnix.Application.Auth.Specifications;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Abstractions.Storage;
@@ -11,6 +12,11 @@ using RefreshTokenEntity = Learnix.Domain.Entities.RefreshToken;
 
 namespace Learnix.Application.Auth.Commands.RefreshToken;
 
+/// <remarks>
+/// Related ADRs:
+/// - ADR-BACK-AUTH-007: Refresh token rotation with replay-attack protection
+/// - ADR-BACK-AUTH-009: Separation of AuthenticationError and ForbiddenError
+/// </remarks>
 internal sealed class RefreshTokenCommandHandler(
     IUserAuthenticationService authService,
     ITokenService tokenService,
@@ -28,7 +34,7 @@ internal sealed class RefreshTokenCommandHandler(
             new RefreshTokenByHashSpecification(hash), cancellationToken);
 
         if (presented is null)
-            return Result.Fail<LoginResponse>(new AuthenticationError("Invalid refresh token."));
+            return Result.Fail<LoginResponse>(new AuthenticationError(AuthMessages.InvalidRefreshToken));
 
         // Replay attack: revoked token presented again → burn all active sessions for this user.
         if (presented.IsRevoked)
@@ -50,7 +56,7 @@ internal sealed class RefreshTokenCommandHandler(
         }
 
         if (presented.ExpiresAt <= DateTime.UtcNow)
-            return Result.Fail<LoginResponse>(new AuthenticationError("Refresh token expired."));
+            return Result.Fail<LoginResponse>(new AuthenticationError(AuthMessages.RefreshTokenExpired));
 
         var userInfoResult = await authService.GetAuthenticationInfoAsync(presented.UserId, cancellationToken);
 

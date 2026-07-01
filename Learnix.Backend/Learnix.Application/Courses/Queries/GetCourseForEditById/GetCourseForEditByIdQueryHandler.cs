@@ -5,6 +5,7 @@ using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Common.Extensions;
 using Learnix.Application.Courses.Abstractions;
+using Learnix.Application.Courses.Constants;
 using Learnix.Application.Courses.Specifications;
 using Learnix.Domain.Entities;
 using MediatR;
@@ -20,7 +21,7 @@ public sealed class GetCourseForEditByIdQueryHandler(
     public async Task<Result<CourseForEditDto>> Handle(GetCourseForEditByIdQuery request, CancellationToken cancellationToken)
     {
         if (currentUser.UserId is null)
-            return Result.Fail(new AuthenticationError("Not authenticated."));
+            return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
 
         var course = await courseRepository.FirstOrDefaultAsync(
             new CourseByIdSpecification(request.CourseId, includeSections: true, includeLessons: true),
@@ -30,7 +31,7 @@ public sealed class GetCourseForEditByIdQueryHandler(
             return Result.Fail(new NotFoundError(CommonMessages.CourseNotFound(request.CourseId)));
 
         if (!course.IsOwnerOrAdmin(currentUser))
-            return Result.Fail(new ForbiddenError("You are not allowed to view this course."));
+            return Result.Fail(new ForbiddenError(CourseMessages.NotAllowedToViewCourse));
 
         var dto = new CourseForEditDto(
             course.Id,

@@ -1,6 +1,6 @@
-using Learnix.Application.AiChat.Abstractions.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Learnix.Application.AiChat.Abstractions.Models;
 
 namespace Learnix.Application.AiChat.Tools;
 

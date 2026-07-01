@@ -5,13 +5,13 @@ using Learnix.Application.Courses.Commands.AdminPublishCourse;
 using Learnix.Application.Courses.Commands.AdminRecoverCourse;
 using Learnix.Application.Courses.Commands.AdminUnpublishCourse;
 using Learnix.Application.Courses.Queries.GetAdminCourses;
+using Learnix.Application.Payments.Queries.GetAdminPayments;
 using Learnix.Application.Users.Commands.AdminAssignRole;
 using Learnix.Application.Users.Commands.AdminBanUser;
 using Learnix.Application.Users.Commands.AdminDeleteUser;
 using Learnix.Application.Users.Commands.AdminRecoverUser;
 using Learnix.Application.Users.Commands.AdminRemoveRole;
 using Learnix.Application.Users.Commands.AdminUnbanUser;
-using Learnix.Application.Payments.Queries.GetAdminPayments;
 using Learnix.Application.Users.Queries.GetAdminUsers;
 using Learnix.Domain.Constants;
 using MediatR;
@@ -25,7 +25,7 @@ namespace Learnix.API.Controllers;
 [Authorize(Roles = Roles.Admin)]
 public sealed class AdminController(ISender sender) : ControllerBase
 {
-    // ── Stats ────────────────────────────────────────────────────────────────
+    // Stats 
 
     [HttpGet("stats")]
     public async Task<IActionResult> GetStats(CancellationToken ct)
@@ -34,16 +34,17 @@ public sealed class AdminController(ISender sender) : ControllerBase
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
-    // ── Users ────────────────────────────────────────────────────────────────
+    // Users 
 
     [HttpGet("users")]
     public async Task<IActionResult> GetUsers(
         [FromQuery] string? search,
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
+        [FromQuery] bool includeDeleted = false,
         CancellationToken ct = default)
     {
-        var result = await sender.Send(new GetAdminUsersQuery(search, skip, take), ct);
+        var result = await sender.Send(new GetAdminUsersQuery(search, skip, take, includeDeleted), ct);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -89,7 +90,7 @@ public sealed class AdminController(ISender sender) : ControllerBase
         return result.ToActionResult();
     }
 
-    // ── Courses ──────────────────────────────────────────────────────────────
+    // Courses 
 
     [HttpGet("courses")]
     public async Task<IActionResult> GetCourses(
@@ -132,7 +133,7 @@ public sealed class AdminController(ISender sender) : ControllerBase
         return result.ToActionResult();
     }
 
-    // ── Payments ─────────────────────────────────────────────────────────────
+    // Payments 
 
     [HttpGet("payments")]
     public async Task<IActionResult> GetPayments(

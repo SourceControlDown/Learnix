@@ -1,4 +1,4 @@
-﻿namespace Learnix.Domain.Common.Exceptions;
+namespace Learnix.Domain.Common.Exceptions;
 
 public class DomainException : Exception
 {

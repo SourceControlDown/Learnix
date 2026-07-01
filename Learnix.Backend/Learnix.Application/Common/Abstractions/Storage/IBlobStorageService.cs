@@ -5,9 +5,9 @@ namespace Learnix.Application.Common.Abstractions.Storage;
 public interface IBlobStorageService
 {
     /// <summary>
-    /// Generates a SAS URL for client to upload directly to blob storage.
-    /// The blob is created without 'confirmed' tag and will be removed by 
-    /// lifecycle policy unless MarkConfirmedAsync is called within TTL.
+    /// Generates a SAS URL for client to upload directly to a temporary blob container.
+    /// The blob will be removed by an Azure lifecycle policy after 24 hours 
+    /// unless CommitUploadAsync is called to move it to its permanent location.
     /// </summary>
     Task<UploadUrlResponse> GenerateUploadUrlAsync(
         UploadTarget target,
@@ -15,20 +15,15 @@ public interface IBlobStorageService
         CancellationToken ct);
 
     /// <summary>
-    /// Validates uploaded blob: existence, size, magic bytes.
-    /// Does NOT modify the blob. Call this synchronously in command handlers
-    /// before saving entity changes to DB.
+    /// Validates an uploaded blob (size, magic bytes) in the temporary container,
+    /// moves it to the final destination container, and deletes the temporary blob.
+    /// Returns the new permanent blob path.
+    /// Call this synchronously in command handlers before saving entity changes to DB.
     /// </summary>
-    Task<Result<BlobMetadata>> ValidateAsync(
-        string blobPath,
+    Task<Result<BlobMetadata>> CommitUploadAsync(
+        string tempBlobPath,
         UploadTarget target,
         CancellationToken ct);
-
-    /// <summary>
-    /// Marks a blob as confirmed (sets tag). Called only from outbox dispatcher
-    /// after entity is successfully persisted. Idempotent.
-    /// </summary>
-    Task MarkConfirmedAsync(string blobPath, CancellationToken ct);
 
     /// <summary>
     /// Generates a read SAS URL for a confirmed blob.
