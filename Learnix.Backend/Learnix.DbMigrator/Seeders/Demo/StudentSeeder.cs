@@ -1,4 +1,5 @@
 using Learnix.Application.Common.Abstractions.Storage;
+using Learnix.DbMigrator.Constants;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Entities;
 using Learnix.Infrastructure.Persistence.EntityFramework;
@@ -29,18 +30,18 @@ public sealed class StudentSeeder(
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        if (!string.Equals(
-                configuration["SeedData:Enabled"], "true",
-                StringComparison.OrdinalIgnoreCase))
-            return;
+        var email = configuration[$"{ConfigurationSectionNameConstants.SeedData}:StudentEmail"];
+        var password = configuration[$"{ConfigurationSectionNameConstants.SeedData}:StudentPassword"];
 
-        var email = configuration["SeedData:StudentEmail"] ?? "student@learnix.dev";
-        var password = configuration["SeedData:StudentPassword"];
+        if (string.IsNullOrWhiteSpace(email) || !System.Net.Mail.MailAddress.TryCreate(email, out _))
+        {
+            logger.LogWarning($"Student seeder: {ConfigurationSectionNameConstants.SeedData}:StudentEmail is missing or invalid — skipping.");
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(password))
         {
-            logger.LogWarning(
-                "Student seeder: SeedData:StudentPassword is not set — skipping.");
+            logger.LogWarning($"Student seeder: {ConfigurationSectionNameConstants.SeedData}:StudentPassword is not set — skipping.");
             return;
         }
 

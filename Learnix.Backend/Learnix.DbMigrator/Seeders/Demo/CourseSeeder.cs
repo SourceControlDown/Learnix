@@ -1,4 +1,5 @@
 using Learnix.Application.Common.Abstractions.Storage;
+using Learnix.DbMigrator.Constants;
 using Learnix.DbMigrator.Seeders.Demo.CourseSeeders;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Entities;
@@ -47,18 +48,18 @@ public sealed class CourseSeeder(
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        var enabled = configuration["SeedData:Enabled"];
+        var email = configuration[$"{ConfigurationSectionNameConstants.SeedData}:InstructorEmail"];
+        var password = configuration[$"{ConfigurationSectionNameConstants.SeedData}:InstructorPassword"];
 
-        if (!string.Equals(enabled, "true", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(email) || !System.Net.Mail.MailAddress.TryCreate(email, out _))
+        {
+            logger.LogWarning($"Course seeder: {ConfigurationSectionNameConstants.SeedData}:InstructorEmail is missing or invalid — skipping course seeding.");
             return;
-
-        var email = configuration["SeedData:InstructorEmail"] ?? "instructor@learnix.dev";
-        var password = configuration["SeedData:InstructorPassword"];
+        }
 
         if (string.IsNullOrWhiteSpace(password))
         {
-            logger.LogWarning(
-                "Course seeder: SeedData:InstructorPassword is not set — skipping course seeding.");
+            logger.LogWarning($"Course seeder: {ConfigurationSectionNameConstants.SeedData}:InstructorPassword is not set — skipping course seeding.");
             return;
         }
 

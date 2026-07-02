@@ -1,3 +1,4 @@
+using Learnix.DbMigrator.Constants;
 using Learnix.Domain.Constants;
 using Learnix.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -14,13 +15,13 @@ internal sealed class AdminSeeder(
 {
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        var email = configuration["SeedAdmin:Email"];
-        var password = configuration["SeedAdmin:Password"];
+        var email = configuration[$"{ConfigurationSectionNameConstants.SeedAdmin}:Email"];
+        var password = configuration[$"{ConfigurationSectionNameConstants.SeedAdmin}:Password"];
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
             logger.LogWarning(
-                "SeedAdmin:Email or SeedAdmin:Password is not configured — skipping admin seeding. " +
+                $"SeedAdmin:Email or {ConfigurationSectionNameConstants.SeedAdmin}:Password is not configured — skipping admin seeding. " +
                 "Set both values to create the initial admin account on startup.");
             return;
         }
@@ -81,8 +82,4 @@ internal sealed class AdminSeeder(
             logger.LogError("Admin user created but Student role assignment failed: {Errors}",
                 string.Join("; ", studentResult.Errors.Select(e => e.Description)));
     }
-
-
 }
-
-
