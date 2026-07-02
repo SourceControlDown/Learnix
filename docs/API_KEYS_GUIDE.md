@@ -109,7 +109,7 @@ This connects to the **Azurite** emulator running in Docker. The account key is 
 
 ---
 
-## 6. Email (SMTP)
+## 6. Email (SMTP)і
 
 **Development (Local): No action needed.**
 ```env
@@ -127,7 +127,7 @@ To send real emails (e.g. for user registration or password reset) using a stand
 5. Create a new App Password (you can name it "Learnix"). Google will generate a 16-character password (e.g., `abcd efgh ijkl mnop`).
 6. Remove the spaces from this password and use it in your configuration.
 
-Configure these values in **GitHub Secrets** (Settings → Secrets and variables → Actions). 
+Configure PROD_SMTP_PASSWORD in GitHub Secrets, and the rest of the values (PROD_SMTP_HOST, PROD_SMTP_PORT, etc.) in GitHub Variables (Settings → Secrets and variables → Actions). 
 *(Примітка: оскільки у вас налаштовано CI/CD через `deploy.yml`, GitHub Actions при кожному деплої буде перезаписувати змінні середовища в Azure Container App значеннями з ваших GitHub Secrets. Тому додавати їх напряму в порталі Azure немає сенсу — вони затруться при наступному релізі).*
 
 ```env
@@ -141,10 +141,27 @@ PROD_SMTP_SENDER_NAME=Learnix
 
 ---
 
-## 7. Azure Service Bus — skip in development
+## 7. Azure Deployment Credentials — action required for GitHub Actions CI/CD
 
-```env
-# AzureServiceBus__ConnectionString=
-```
+These credentials are NOT used in your local `.env` file. They are required by the `.github/workflows/deploy.yml` pipeline to authenticate with Azure and deploy the application. 
 
-This is commented out in `.env.example` and is not used in development. Leave it commented out.
+You must add these values to **GitHub Repository Settings → Secrets and variables → Actions → Secrets**.
+
+### AZURE_CREDENTIALS
+This is a JSON object representing a Service Principal that gives GitHub Actions permission to manage your Azure resources.
+
+**How to get the credentials:**
+1. Open the [Azure Portal](https://portal.azure.com/) and launch the **Cloud Shell** (the terminal icon in the top right header).
+2. Ensure you are using **Bash**.
+3. Run the following command to get your Subscription ID:
+   ```bash
+   az account show --query id -o tsv
+   ```
+
+   Run the following command to create the Service Principal (replace {your-subscription-id} and {your-resource-group-name} with your actual values):
+   ```bash
+   az ad sp create-for-rbac --name "GitHubActionsDeploy" --role contributor --scopes /subscriptions/{your-subscription-id}/resourceGroups/{your-resource-group-name} --json-auth
+   ```
+
+   The command will output a JSON object. Copy the entire JSON block (from { to }) and save it in GitHub Secrets as AZURE_CREDENTIALS.
+

@@ -7,6 +7,37 @@ The deployment guides have been split into two separate documents depending on y
 
 ---
 
+## Configure GitHub Environments & Secrets
+
+To securely automate your deployment via GitHub Actions, restrict access to production configurations specifically to the `main` branch.
+
+### 1. Create a Protected Environment
+1. In your GitHub repository, go to **Settings** → **Environments**.
+2. Click **New environment** and name it `Production`.
+3. Under **Deployment branches and tags**, click the dropdown and select **Selected branches and tags**.
+4. Click **Add branch rule** and type `main`. This guarantees that these secrets are only accessible when a workflow runs from the main branch.
+
+### 2. Generate Secure JWT Secrets
+Do not use online generators for production secrets to avoid data leaks. Generate cryptographically secure strings locally.
+
+**Using Node.js:**
+```bash
+# Generates a random 64-byte hex string
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+### 3. Add Variables and Secrets
+On the Production environment settings page, add your configurations:
+
+Environment variables (Plain text): Click Add environment variable for non-sensitive settings (e.g., ASPNETCORE_ENVIRONMENT with the value Production).
+
+Environment secrets (Encrypted): Click Add environment secret and store sensitive data like PROD_POSTGRES_CONN, PROD_JWT_SECRET, and PROD_JWT_REFRESH_SECRET (using the strings generated in the previous step).
+
+[!NOTE]
+Name your secrets using flat, simple names in GitHub (e.g., PROD_POSTGRES_CONN). The .NET double-underscore syntax (ConnectionStrings__Postgres) should only be constructed inside your workflow .yml file when mapping the secret to the environment.
+
+---
+
 ## Order of Operations: The "Chicken and Egg" Problem
 
 When deploying the full stack, you might notice a cyclic dependency:
