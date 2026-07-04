@@ -12,29 +12,39 @@ type AuthInitializerProps = {
  * Related ADRs:
  * - ADR-FRONT-AUTH-001: Access Token Storage & Silent Refresh
  */
+let refreshPromise: Promise<void> | null = null;
+
 export function AuthInitializer({ children }: AuthInitializerProps) {
     const setAccessToken = useAuthStore((s) => s.setAccessToken);
     const setUser = useAuthStore((s) => s.setUser);
     const finishInitialization = useAuthStore((s) => s.finishInitialization);
 
     useEffect(() => {
-        axios
-            .post<{ accessToken: string; avatarUrl: string | null }>(
-                `${env.API_URL}/auth/refresh`,
-                {},
-                { withCredentials: true },
-            )
-            .then(({ data }) => {
-                setAccessToken(data.accessToken);
-                const user = parseAccessToken(data.accessToken);
-                if (user) setUser({ ...user, avatarUrl: data.avatarUrl });
-            })
-            .catch(() => {
-                // No valid refresh token — user is not logged in
-            })
-            .finally(() => {
-                finishInitialization();
-            });
+        if (!refreshPromise) {
+            refreshPromise = axios
+                .post<{ accessToken: string; avatarUrl: string | null }>(
+                    `${env.API_URL}/auth/refresh`,
+                    {},
+                    { withCredentials: true },
+                )
+                .then(({ data }) => {
+                    setAccessToken(data.accessToken);
+                    const user = parseAccessToken(data.accessToken);
+                    if (user) setUser({ ...user, avatarUrl: data.avatarUrl });
+                })
+                .catch(() => {
+                    // No valid refresh token — user is not logged in
+                })
+                .finally(() => {
+                    refreshPromise = null;
+                });
+        } else {
+            return;
+        }
+
+        refreshPromise.finally(() => {
+            finishInitialization();
+        });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
