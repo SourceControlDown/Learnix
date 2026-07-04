@@ -164,6 +164,7 @@ jobs:
       working-directory: ./Learnix.Backend
       env:
         ConnectionStrings__Postgres: ${{ secrets.PROD_POSTGRES_CONN }}
+        ConnectionStrings__AzureBlobStorage: ${{ needs.deploy-infrastructure.outputs.blob_conn }}
         ASPNETCORE_ENVIRONMENT: Production
         SeedAdmin__Email: ${{ vars.PROD_SEED_ADMIN_EMAIL }}
         SeedAdmin__Password: ${{ secrets.PROD_SEED_ADMIN_PASSWORD }}
