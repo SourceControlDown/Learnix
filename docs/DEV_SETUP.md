@@ -47,31 +47,12 @@ Install all of these before starting:
 
 ---
 
-## Step 1 — Start Infrastructure
-
-From the repository root:
-
-```bash
-docker compose up -d
-```
-
-This starts PostgreSQL, MongoDB, Redis, Azurite (blob storage emulator), and Mailpit. All containers run with persistent volumes so data survives restarts.
-
-> **Note:** If you want to run the entire platform via Docker (including the .NET backend and React frontend), run `docker compose --profile apps up -d` instead. This will automatically start a temporary `learnix-migrator` container (using the `init` profile under the hood) which will create the database schema, apply migrations, and seed it with demo data before starting the API. You can also run just the migrator via `docker compose --profile init up migrator`.
-
-Verify everything is healthy:
-
-```bash
-docker compose ps
-```
-
-All services should show `healthy` or `running`.
-
----
-
-## Step 2 — Environment Setup
+## Step 1 — Environment Setup
 
 Both the frontend and backend require an `.env` file to run correctly. 
+
+> [!IMPORTANT]
+> You MUST copy the `.env` files **BEFORE** running Docker Compose, as the frontend build process uses `learnix-client/.env` as a BuildKit secret.
 
 ### Backend .env variables
 
@@ -93,15 +74,41 @@ These match the Docker Compose credentials exactly. Leave them as-is. MongoDB an
 ### Frontend .env variables
 
 ```bash
-cd learnix-client
+cd ../../learnix-client
 cp .env.example .env
 ```
 
 **`VITE_API_URL` — no action needed**
 Points to the backend HTTP endpoint (`http://localhost:5000/api`). Leave as-is.
 
-**`VITE_GOOGLE_CLIENT_ID` — action required**
-This is the same **Client ID** you create for the backend (see [API_KEYS_GUIDE.md](API_KEYS_GUIDE.md)). Unlike the Client Secret, the Client ID is public by design — it is safe to expose in frontend code.
+**`VITE_GOOGLE_CLIENT_ID` — optional but recommended**
+This is the same **Client ID** you create for the backend (see [API_KEYS_GUIDE.md](API_KEYS_GUIDE.md)). If you leave the dummy value in place, the application will still run, but Google Login will not function.
+
+---
+
+## Step 2 — Start Infrastructure
+
+From the repository root, you have two options:
+
+### Option A: Run everything in Docker (Recommended for quick start)
+This approach runs the infrastructure, backend API, and frontend entirely within Docker containers. It automatically applies migrations and seeds demo data.
+```bash
+docker compose --profile apps up -d
+```
+
+### Option B: Run infrastructure only in Docker (Recommended for development)
+This starts PostgreSQL, MongoDB, Redis, Azurite (blob storage emulator), and Mailpit. All containers run with persistent volumes so data survives restarts. You will run the backend and frontend locally in subsequent steps.
+```bash
+docker compose up -d
+```
+
+Verify everything is healthy:
+
+```bash
+docker compose ps
+```
+
+All services should show `healthy` or `running`.
 
 ---
 
@@ -157,18 +164,18 @@ You can also register a new account through the UI to get a fresh Student role.
 
 ## Service URLs
 
-| Service | URL | Notes |
-|---|---|---|
-| Frontend | http://localhost:5173 | Vite dev server |
-| Backend (HTTP) | http://localhost:5000 | API base |
-| Backend (HTTPS) | https://localhost:5001 | API base (HTTPS) |
-| Swagger | http://localhost:5000/swagger | API docs & testing |
-| Seq (Logs) | http://localhost:5341 | View structured logs & traces |
-| Mailpit | http://localhost:8025 | View emails sent by the app |
-| Azurite Blob | http://localhost:10000 | Local blob storage emulator |
-| PostgreSQL | localhost:5432 | DB: `learnix`, user: `learnix`, pass: `learnix` |
-| MongoDB | localhost:27017 | user: `learnix`, pass: `learnix` |
-| Redis | localhost:6379 | No auth in dev |
+| Service | URL (Local Run) | URL (Docker Run) | Notes |
+|---|---|---|---|
+| Frontend | http://localhost:5173 | http://localhost:80 | React client |
+| Backend (HTTP) | http://localhost:5000 | http://localhost:8080 | API base |
+| Backend (HTTPS) | https://localhost:5001 | N/A | API base (HTTPS) |
+| Swagger | http://localhost:5000/swagger | http://localhost:8080/swagger | API docs & testing |
+| Seq (Logs) | http://localhost:5341 | http://localhost:5341 | View structured logs & traces |
+| Mailpit | http://localhost:8025 | http://localhost:8025 | View emails sent by the app |
+| Azurite Blob | http://localhost:10000 | http://localhost:10000 | Local blob storage emulator |
+| PostgreSQL | localhost:5432 | localhost:5432 | DB: `learnix`, user/pass: `learnix` |
+| MongoDB | localhost:27017 | localhost:27017 | user/pass: `learnix` |
+| Redis | localhost:6379 | localhost:6379 | No auth in dev |
 
 ---
 

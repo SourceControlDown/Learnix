@@ -44,7 +44,7 @@ Click **Next : Container >**
 * **Command override:** Leave empty
 * **Arguments override:** Leave empty
 * **Development stack-specific features:**
-  * **Development stack:** `Unspecified`
+  * **Development stack:** `.NET`
 * **Container resource allocation:**
   * **Workload profile:** `Consumption - Up to 4 vCPUs, 8 Gib memory`
   * **CPU and memory:** `0.5 CPU cores, 1 Gi memory`
@@ -58,8 +58,7 @@ Click **Next : Ingress >**
 ### 3. Ingress
 * **Application ingress settings:**
   * **Ingress:** `Enabled` (Checked)
-  * **Ingress traffic:** Select `Limited to Container Apps Environment` 
-    *(Important Note: While this matches the initial configuration, you will eventually need to change this to "Accepting traffic from anywhere" in the Ingress settings so your frontend Static Web App can communicate with this API over the internet).*
+  * **Ingress traffic:** Select `Accepting traffic from anywhere` *(Required for your frontend Static Web App to communicate with this API over the internet).*
   * **Ingress type:** `HTTP`
   * **Transport:** `Auto`
   * **Insecure connections:** Leave unchecked
@@ -71,5 +70,20 @@ Click **Review + create**, wait for validation, then click **Create**.
 
 ### 4. Post-Creation
 Once the deployment is complete, go to the resource.
+
+#### 1. Save Application URL
 Copy the **Application Url** (e.g., `https://learnix-api.xxxx.azurecontainerapps.io`). 
 Save this value in your GitHub Variables as `VITE_API_URL`.
+
+#### 2. Configure Scaling (Cost Control)
+By default, Azure Container Apps sets Max replicas to 10, which can cause unexpected costs if traffic spikes. Limit it to 1 for this deployment.
+1. In the left-hand menu under **Application**, click **Scale**.
+2. Under **Scale rule settings**, configure exactly as follows:
+   - **Min replicas:** `0`
+   - **Max replicas:** `1`
+   - **Cooldown period:** `300`
+   - **Polling interval:** `30`
+3. Under **Scale rules**, verify there is a default rule:
+   - **Name:** `http-scaler`
+   - **Type:** `HTTP scaling`
+4. Save your changes (this may create a new revision).

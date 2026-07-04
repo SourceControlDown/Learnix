@@ -1,6 +1,6 @@
 services:
   migrator:
-    profiles: ["init"]
+    profiles: ["init", "apps"]
     build:
       context: ./Learnix.Backend
       dockerfile: Learnix.DbMigrator/Dockerfile
@@ -10,6 +10,12 @@ services:
       - ./Learnix.Backend/Learnix.API/.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=learnix;Username=learnix;Password=learnix
+      - ConnectionStrings__AzureBlobStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;
+      - ConnectionStrings__Redis=redis:6379
+      - Mongo__ConnectionString=mongodb://learnix:learnix@mongo:27017/?authSource=admin
+      - Smtp__Host=mailpit
+      - Serilog__WriteTo__0__Args__serverUrl=http://seq:80
     volumes:
       - ./Learnix.Backend/Learnix.API/appsettings.Development.json:/app/Learnix.API/appsettings.Development.json:ro
       - ./Learnix.Backend/Learnix.API/.env:/app/Learnix.API/.env:ro
@@ -35,6 +41,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
+      - App__ClientBaseUrl=http://localhost
+      - Cors__AllowedOrigins__0=http://localhost
+      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=learnix;Username=learnix;Password=learnix
+      - ConnectionStrings__AzureBlobStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;
+      - ConnectionStrings__Redis=redis:6379
+      - Mongo__ConnectionString=mongodb://learnix:learnix@mongo:27017/?authSource=admin
+      - Smtp__Host=mailpit
+      - Serilog__WriteTo__0__Args__serverUrl=http://seq:80
     env_file:
       - ./Learnix.Backend/Learnix.API/.env
     volumes:
@@ -49,6 +63,10 @@ services:
     build:
       context: ./learnix-client
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:8080/api
+      secrets:
+        - frontend_env
     container_name: learnix-client
     restart: unless-stopped
     ports:
@@ -138,6 +156,7 @@ services:
     restart: unless-stopped
     environment:
       ACCEPT_EULA: Y
+      SEQ_FIRSTRUN_NOAUTHENTICATION: "true"
     ports:
       - "5341:80"
     volumes:
@@ -149,3 +168,7 @@ volumes:
   redis_data:
   azurite_data:
   seq_data:
+
+secrets:
+  frontend_env:
+    file: ./learnix-client/.env

@@ -126,19 +126,44 @@ Detailed setup instructions, including how to configure external API keys (Googl
 
 👉 **[Local Development Setup Guide (`docs/DEV_SETUP.md`)](./docs/DEV_SETUP.md)**
 
-A quick start using Docker:
+### Option 1: Run everything in Docker (Recommended for quick start)
+
+This approach runs the infrastructure, backend API, and frontend entirely within Docker containers.
+
+> [!IMPORTANT]
+> You must copy the `.env.example` files to `.env` in both `Learnix.Backend/Learnix.API` and `learnix-client` BEFORE running these commands. See `docs/DEV_SETUP.md` for details.
+
 ```bash
-# Start infrastructure (PostgreSQL, MongoDB, Redis, Azurite, Mailpit)
+# 1. Start infrastructure (PostgreSQL, MongoDB, Redis, Azurite, Mailpit, Seq)
 docker compose up -d
 
-# Initialize database and blob storage (runs the migrator container)
+# 2. Initialize database and blob storage (runs the migrator container)
 docker compose --profile init up migrator
 
-# Start API
+# 3. Start API and Frontend containers
+docker compose --profile apps up -d
+```
+
+**Available Endpoints (Docker Setup):**
+- **Frontend Client:** [http://localhost:80](http://localhost:80)
+- **Backend API:** [http://localhost:8080](http://localhost:8080)
+- **Mailpit (Email UI):** [http://localhost:8025](http://localhost:8025)
+- **Seq (Logs UI):** [http://localhost:5341](http://localhost:5341)
+
+### Option 2: Run infrastructure in Docker, Apps locally (Recommended for development)
+
+```bash
+# 1. Start infrastructure
+docker compose up -d
+
+# 2. Initialize database and blob storage
+docker compose --profile init up migrator
+
+# 3. Start API locally
 cd Learnix.Backend
 dotnet run --project Learnix.API
 
-# Start frontend
+# 4. Start frontend locally
 cd ../learnix-client
 npm install
 npm run dev

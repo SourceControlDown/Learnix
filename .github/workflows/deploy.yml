@@ -39,6 +39,7 @@ name: Deploy to Azure
 # (seed)         PROD_SEED_ADMIN_EMAIL           — Admin email for seeding
 # (seed)         PROD_SEED_INSTRUCTOR_EMAIL      — (Optional) Instructor email for seeding
 # (seed)         PROD_SEED_STUDENT_EMAIL         — (Optional) Student email for seeding
+# (AI)           PROD_AICHAT_PROVIDER            — 'Gemini' or 'Anthropic'
 # (cors)         PROD_ALLOWED_ORIGINS            — Frontend URL, e.g. https://learnix.azurestaticapps.net
 # (frontend)     PROD_CLIENT_BASE_URL            — Same as PROD_ALLOWED_ORIGINS
 # (frontend)     VITE_API_URL                    — Production API URL for frontend build
@@ -203,6 +204,7 @@ jobs:
           Smtp__SenderName=${{ vars.PROD_SMTP_SENDER_NAME }}
           Google__ClientId=${{ vars.PROD_GOOGLE_CLIENT_ID }}
           Google__ClientSecret=${{ secrets.PROD_GOOGLE_CLIENT_SECRET }}
+          AiChat__Provider=${{ vars.PROD_AICHAT_PROVIDER }}
           Anthropic__ApiKey=${{ secrets.PROD_ANTHROPIC_KEY }}
           Gemini__ApiKey=${{ secrets.PROD_GEMINI_KEY }}
           SeedAdmin__Email=${{ vars.PROD_SEED_ADMIN_EMAIL }}

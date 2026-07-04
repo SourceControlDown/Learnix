@@ -45,11 +45,14 @@ const queryClient = new QueryClient({
     },
 });
 
+const googleClientId =
+    import.meta.env.VITE_GOOGLE_CLIENT_ID || 'dummy_to_prevent_crash.apps.googleusercontent.com';
+
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <HelmetProvider>
             <ErrorBoundary>
-                <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+                <GoogleOAuthProvider clientId={googleClientId}>
                     <QueryClientProvider client={queryClient}>
                         <AuthInitializer>
                             <App />
