@@ -57,7 +57,7 @@ public sealed class StudentSeeder(
         for (int i = 1; i <= 15; i++)
         {
             var dummyEmail = $"learnix-student-dev-{i}@learnix.dev";
-            await EnsureStudentAsync(userManager, dummyEmail, password);
+            await EnsureStudentAsync(userManager, dummyEmail, password, $"Student_{i}");
         }
 
         var courses = await db.Courses.ToListAsync(cancellationToken);
@@ -85,6 +85,7 @@ public sealed class StudentSeeder(
                     {
                         var enrollment = Enrollment.Create(course.Id, dummyUser.Id, 0m);
                         db.Set<Enrollment>().Add(enrollment);
+                        course.IncrementEnrollmentsCount();
 
                         var reviewExists = await db.Set<CourseReview>().AnyAsync(r => r.CourseId == course.Id && r.StudentId == dummyUser.Id, cancellationToken);
                         if (!reviewExists)
@@ -208,13 +209,14 @@ public sealed class StudentSeeder(
     private async Task<User?> EnsureStudentAsync(
         UserManager<User> userManager,
         string email,
-        string password)
+        string password,
+        string lastName = "Student")
     {
         var student = await userManager.FindByEmailAsync(email);
 
         if (student is null)
         {
-            student = new User(email, "Dev", "Student") { EmailConfirmed = true };
+            student = new User(email, "Dev", lastName) { EmailConfirmed = true };
             var result = await userManager.CreateAsync(student, password);
 
             if (!result.Succeeded)

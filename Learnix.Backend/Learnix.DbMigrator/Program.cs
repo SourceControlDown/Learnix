@@ -1,4 +1,3 @@
-using Learnix.Application;
 using Learnix.DbMigrator.Seeders;
 using Learnix.Infrastructure;
 using Learnix.Infrastructure.Persistence.EntityFramework;
@@ -48,10 +47,9 @@ builder.ConfigureServices((context, services) =>
     var configuration = context.Configuration;
 
     // Core registrations (needed for DbContext, Identity, etc.)
-    services.AddApplication();
 
     // Infrastructure (Targeted for Migrator)
-    services.AddPersistence(configuration);
+    services.AddPersistence(configuration, enableDomainEvents: false);
     services.AddStorage(configuration);
 
     // Register Seeders

@@ -82,24 +82,37 @@ public static class DependencyInjection
 
     public static IServiceCollection AddPersistence(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        bool enableDomainEvents = true)
     {
         // EF Core + interceptors
         services.AddSingleton<AuditableInterceptor>();
         services.AddSingleton<SoftDeleteInterceptor>();
-        services.AddSingleton<DomainEventsInterceptor>();
+
+        if (enableDomainEvents)
+        {
+            services.AddSingleton<DomainEventsInterceptor>();
+        }
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             var connectionString = configuration.GetConnectionString("Postgres")
                 ?? throw new InvalidOperationException("Connection string 'Postgres' is not configured.");
 
+            var interceptors = new List<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor>
+            {
+                sp.GetRequiredService<AuditableInterceptor>(),
+                sp.GetRequiredService<SoftDeleteInterceptor>()
+            };
+
+            if (enableDomainEvents)
+            {
+                interceptors.Add(sp.GetRequiredService<DomainEventsInterceptor>());
+            }
+
             options
                 .UseNpgsql(connectionString)
-                .AddInterceptors(
-                    sp.GetRequiredService<AuditableInterceptor>(),
-                    sp.GetRequiredService<SoftDeleteInterceptor>(),
-                    sp.GetRequiredService<DomainEventsInterceptor>());
+                .AddInterceptors(interceptors);
         });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
