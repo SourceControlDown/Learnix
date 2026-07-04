@@ -165,6 +165,12 @@ jobs:
       env:
         ConnectionStrings__Postgres: ${{ secrets.PROD_POSTGRES_CONN }}
         ASPNETCORE_ENVIRONMENT: Production
+        SeedAdmin__Email: ${{ vars.PROD_SEED_ADMIN_EMAIL }}
+        SeedAdmin__Password: ${{ secrets.PROD_SEED_ADMIN_PASSWORD }}
+        SeedData__InstructorEmail: ${{ vars.PROD_SEED_INSTRUCTOR_EMAIL }}
+        SeedData__InstructorPassword: ${{ secrets.PROD_SEED_INSTRUCTOR_PASSWORD }}
+        SeedData__StudentEmail: ${{ vars.PROD_SEED_STUDENT_EMAIL }}
+        SeedData__StudentPassword: ${{ secrets.PROD_SEED_STUDENT_PASSWORD }}
       run: dotnet run --project Learnix.DbMigrator --no-launch-profile -- --seed-demo
 
   # 4. Deploy API to Azure Container Apps
