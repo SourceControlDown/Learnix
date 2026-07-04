@@ -32,6 +32,5 @@ COPY --from=build /app/publish .
 # because it searches upward for the Learnix.API directory.
 # In the Docker container, we'll place them exactly where they are expected.
 COPY --chown=appuser:appgroup Learnix.API/appsettings.json /app/Learnix.API/appsettings.json
-COPY --chown=appuser:appgroup Learnix.API/appsettings.Development.json /app/Learnix.API/appsettings.Development.json
 
 ENTRYPOINT ["dotnet", "Learnix.DbMigrator.dll"]

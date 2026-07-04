@@ -1,15 +1,18 @@
 services:
   migrator:
-    profiles: ["apps"]
+    profiles: ["init"]
     build:
       context: ./Learnix.Backend
       dockerfile: Learnix.DbMigrator/Dockerfile
     container_name: learnix-migrator
-    command: ["--seed-demo"]
+    command: ["--create-blob", "--seed-demo"]
     env_file:
       - ./Learnix.Backend/Learnix.API/.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - ./Learnix.Backend/Learnix.API/appsettings.Development.json:/app/Learnix.API/appsettings.Development.json:ro
+      - ./Learnix.Backend/Learnix.API/.env:/app/Learnix.API/.env:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,6 +37,9 @@ services:
       - ASPNETCORE_URLS=http://+:8080
     env_file:
       - ./Learnix.Backend/Learnix.API/.env
+    volumes:
+      - ./Learnix.Backend/Learnix.API/appsettings.Development.json:/app/appsettings.Development.json:ro
+      - ./Learnix.Backend/Learnix.API/.env:/app/.env:ro
     depends_on:
       migrator:
         condition: service_completed_successfully
