@@ -103,23 +103,29 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
 
-  # 2. Azure infrastructure
-  deploy-infrastructure:
-    name: Deploy Azure Infrastructure
+  # 2. Deploy Infrastructure, Run Migrations, and Deploy API
+  deploy-backend:
+    name: Provision, Migrate & Deploy API
     runs-on: ubuntu-latest
     environment: Production
-    outputs:
-      blob_conn: ${{ steps.tf-output.outputs.conn }}
-    
+    needs: [build-api]
+
     steps:
     - uses: actions/checkout@v4
 
-    # Authenticate to Azure before running Terraform
+    # Setup .NET 8 (needed for DbMigrator)
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    # Authenticate to Azure ONCE
     - name: Azure Login
       uses: azure/login@v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    # Provision Infrastructure
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
@@ -132,39 +138,20 @@ jobs:
         terraform init
         terraform apply -auto-approve
 
-    # 2.2 Export Connection String
-    - name: Export Connection String
-      id: tf-output
+    # Extract connection string locally and save to GITHUB_ENV
+    - name: Get Storage Connection String
       working-directory: ./infrastructure
-      env:
-        ARM_USE_CLI: "true"
       run: |
-        # Output raw connection string to use in downstream jobs
         CONN=$(terraform output -raw storage_connection_string)
         echo "::add-mask::$CONN"
-        echo "conn=$CONN" >> $GITHUB_OUTPUT
+        echo "BLOB_CONN=$CONN" >> $GITHUB_ENV
 
-  # 3. Run DB migrations (before deploying new API)
-  migrate-db:
-    name: EF Database Update
-    runs-on: ubuntu-latest
-    environment: Production
-    needs: [build-api, deploy-infrastructure]
-
-    steps:
-    - uses: actions/checkout@v4
-
-    # Setup .NET 8
-    - name: Setup .NET 8
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-
+    # Run Database Migrations & Seeding
     - name: Run migrations and seeding
       working-directory: ./Learnix.Backend
       env:
         ConnectionStrings__Postgres: ${{ secrets.PROD_POSTGRES_CONN }}
-        ConnectionStrings__AzureBlobStorage: ${{ needs.deploy-infrastructure.outputs.blob_conn }}
+        ConnectionStrings__AzureBlobStorage: ${{ env.BLOB_CONN }}
         ASPNETCORE_ENVIRONMENT: Production
         SeedAdmin__Email: ${{ vars.PROD_SEED_ADMIN_EMAIL }}
         SeedAdmin__Password: ${{ secrets.PROD_SEED_ADMIN_PASSWORD }}
@@ -173,19 +160,6 @@ jobs:
         SeedData__StudentEmail: ${{ vars.PROD_SEED_STUDENT_EMAIL }}
         SeedData__StudentPassword: ${{ secrets.PROD_SEED_STUDENT_PASSWORD }}
       run: dotnet run --project Learnix.DbMigrator --no-launch-profile -- --seed-demo
-
-  # 4. Deploy API to Azure Container Apps
-  deploy-api:
-    name: Deploy API → Container Apps
-    runs-on: ubuntu-latest
-    environment: Production
-    needs: [build-api, migrate-db, deploy-infrastructure]
-
-    steps:
-    - name: Azure Login
-      uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     # Deploy to Container Apps
     - name: Deploy to Container Apps
@@ -199,7 +173,7 @@ jobs:
           ASPNETCORE_URLS=http://+:8080
           ConnectionStrings__Postgres=${{ secrets.PROD_POSTGRES_CONN }}
           ConnectionStrings__Redis=${{ secrets.PROD_REDIS_CONN }}
-          ConnectionStrings__AzureBlobStorage=${{ needs.deploy-infrastructure.outputs.blob_conn }}
+          ConnectionStrings__AzureBlobStorage=${{ env.BLOB_CONN }}
           Mongo__ConnectionString=${{ secrets.PROD_MONGO_CONN }}
           Mongo__DatabaseName=${{ vars.PROD_MONGO_DATABASE_NAME }}
           Jwt__Secret=${{ secrets.PROD_JWT_SECRET }}
@@ -237,12 +211,12 @@ jobs:
         # =========================================================================
         # Proxy__TrustedProxies__0=${{ secrets.PROD_TRUSTED_PROXIES }}
 
-  # 5. Build & deploy frontend to Static Web Apps
+  # 3. Build & deploy frontend to Static Web Apps
   deploy-frontend:
     name: Deploy Frontend → Static Web Apps
     runs-on: ubuntu-latest
     environment: Production
-    needs: deploy-api
+    needs: deploy-backend
 
     steps:
     - uses: actions/checkout@v4

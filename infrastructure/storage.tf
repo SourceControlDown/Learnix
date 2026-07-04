@@ -20,6 +20,10 @@ resource "azurerm_storage_account" "storage" {
   access_tier              = "Hot"
   min_tls_version          = "TLS1_2"
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   # Advanced (Matching UI screenshot)
   is_hns_enabled                   = false
   sftp_enabled                     = false

@@ -177,8 +177,12 @@ public static class DependencyInjection
 
         services.AddSingleton(sp =>
         {
-            var connectionString = configuration.GetConnectionString("AzureBlobStorage")
-                ?? throw new InvalidOperationException("AzureBlobStorage connection string is missing");
+            var connectionString = configuration.GetConnectionString("AzureBlobStorage");
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException("AzureBlobStorage connection string is missing or empty.");
+            }
+
             return new BlobServiceClient(connectionString);
         });
         services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
