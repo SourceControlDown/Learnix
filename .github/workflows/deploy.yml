@@ -58,6 +58,7 @@ jobs:
   build-api:
     name: Build API → ACR or Docker Hub
     runs-on: ubuntu-latest
+    environment: Production
     outputs:
       image-tag: ${{ steps.meta.outputs.version }}
 
@@ -106,6 +107,7 @@ jobs:
   deploy-infrastructure:
     name: Deploy Azure Infrastructure
     runs-on: ubuntu-latest
+    environment: Production
     outputs:
       blob_conn: ${{ steps.tf-output.outputs.conn }}
     
@@ -147,6 +149,7 @@ jobs:
   migrate-db:
     name: EF Database Update
     runs-on: ubuntu-latest
+    environment: Production
     needs: [build-api, deploy-infrastructure]
 
     steps:
@@ -169,6 +172,7 @@ jobs:
   deploy-api:
     name: Deploy API → Container Apps
     runs-on: ubuntu-latest
+    environment: Production
     needs: [build-api, migrate-db, deploy-infrastructure]
 
     steps:
@@ -231,6 +235,7 @@ jobs:
   deploy-frontend:
     name: Deploy Frontend → Static Web Apps
     runs-on: ubuntu-latest
+    environment: Production
     needs: deploy-api
 
     steps:
