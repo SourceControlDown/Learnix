@@ -1,36 +1,75 @@
-## Container App (API)
+# Azure Container App (API)
 
-1. Search for **Container Apps** and click **Create**.
-2. **Resource group:** `learnix-rg`.
-3. **Container App name:** `learnix-api`.
-4. **Region:** `West Europe`.
-5. Under Container Apps Environment, click **Create new**. Name it `learnix-env` and save.
-6. Click **Next: Container**.
-7. **Use image from:** Select `Docker Hub or other registries` (if using Docker Hub) or `Azure Container Registry` (if using ACR).
-8. **Image details:** 
-   - **Image type:** `Public` (or `Private` if your repo is private).
-   - *If private*, enter **Registry login server**: `docker.io`, and provide your Docker Hub username and password.
-   - **Image and tag:** Enter your full image name, e.g., `yourusername/learnix-api:latest`.
-9. **CPU and Memory:** 0.5 CPU, 1.0 Gi memory.
-10. **Environment variables:** Add all necessary backend variables:
-    - `ASPNETCORE_ENVIRONMENT` = `Production`
-    - `ASPNETCORE_URLS` = `http://+:8080`
-    - `ConnectionStrings__Postgres` = `<YOUR_POSTGRES_CONN_STRING>` (Use the Supabase URI if you followed Step 3 Alternative)
-    - `ConnectionStrings__Redis` = `<YOUR_REDIS_CONN_STRING>`
-    - `ConnectionStrings__AzureBlobStorage` = `<YOUR_BLOB_CONN_STRING>`
-    - `Mongo__ConnectionString` = `<YOUR_COSMOS_CONN_STRING>`
-    - `Mongo__DatabaseName` = `learnix`
-    - `Jwt__Secret` = `<YOUR_64_CHAR_SECRET>`
-    - `Jwt__RefreshTokenSecret` = `<YOUR_ANOTHER_64_CHAR_SECRET_PEPPER>`
-    - `Jwt__Issuer` = `Learnix`
-    - `Jwt__Audience` = `LearnixClient`
-    - `Smtp__Host`, `Smtp__Username`, `Smtp__Password` (from SendGrid)
-    - etc. (Refer to the CLI guide for the full list of variables).
-11. Click **Next: Ingress**.
-12. **Ingress:** Enabled.
-13. **Ingress traffic:** Accepting traffic from anywhere.
-14. **Target port:** `8080`.
-15. Click **Review + create**, then **Create**.
-16. Once created, copy the **Application Url** (e.g., `https://learnix-api.xxxx.azurecontainerapps.io`). This is your `VITE_API_URL` for the frontend.
+## Environment Variables
+
+By completing this guide, you will determine the following values. Configure them in your GitHub repository (**Settings → Secrets and variables → Actions**):
+
+* **Variables:**
+  - `CONTAINER_APP_NAME` (e.g., `learnix-api`)
+  - `CONTAINER_APP_RG` (e.g., `learnix-rg`)
+  - `VITE_API_URL` (The Application Url generated at the end of this guide)
 
 ---
+
+## Create Container App
+
+Search for **Container Apps** in the Azure Portal and click **Create**. 
+
+### 1. Basics
+* **Project details:**
+  * **Subscription:** Select your active subscription (e.g., `Azure subscription 1`)
+  * **Resource group:** `learnix-rg`
+* **Container app name:** `learnix-api`
+* **Optimize for Azure Functions:** Leave unchecked
+* **Deployment source:** `Container image`
+* **Container Apps environment:**
+  * **Show environments in all regions:** Leave unchecked
+  * **Region:** Select your region (e.g., `Poland Central`)
+  * **Container Apps environment:** Select or create an environment (e.g., `(new) managedEnvironment-learnixrg-8e87 (learnix-rg)`)
+
+Click **Next : Container >**
+
+### 2. Container
+* **Use quickstart image:** Leave unchecked
+* **Container details:**
+  * **Name:** `learnix-api`
+* **Image source:** `Docker Hub or other registries`
+* **Image type:** `Private`
+* **Registry login server:** `docker.io`
+* **Registry authentication:**
+  * **Authentication type:** `Secret-based`
+  * **Registry user name:** Enter your Docker Hub username
+  * **Registry password:** Enter your Docker Hub Personal Access Token (or password)
+* **Image and tag:** Enter your full image name (e.g., `yourusername/learnix-api:latest`)
+* **Command override:** Leave empty
+* **Arguments override:** Leave empty
+* **Development stack-specific features:**
+  * **Development stack:** `Unspecified`
+* **Container resource allocation:**
+  * **Workload profile:** `Consumption - Up to 4 vCPUs, 8 Gib memory`
+  * **CPU and memory:** `0.5 CPU cores, 1 Gi memory`
+* **Environment variables:**
+  * **Name:** Leave empty
+  * **Value:** Leave empty
+  * *(Note: Leave these completely empty during manual creation. The GitHub Actions pipeline will automatically inject all required environment variables and secrets during deployment).*
+
+Click **Next : Ingress >**
+
+### 3. Ingress
+* **Application ingress settings:**
+  * **Ingress:** `Enabled` (Checked)
+  * **Ingress traffic:** Select `Limited to Container Apps Environment` 
+    *(Important Note: While this matches the initial configuration, you will eventually need to change this to "Accepting traffic from anywhere" in the Ingress settings so your frontend Static Web App can communicate with this API over the internet).*
+  * **Ingress type:** `HTTP`
+  * **Transport:** `Auto`
+  * **Insecure connections:** Leave unchecked
+  * **Target port:** `8080`
+  * **Session affinity:** Leave unchecked
+  * **Additional TCP ports:** Leave empty / collapsed
+
+Click **Review + create**, wait for validation, then click **Create**.
+
+### 4. Post-Creation
+Once the deployment is complete, go to the resource.
+Copy the **Application Url** (e.g., `https://learnix-api.xxxx.azurecontainerapps.io`). 
+Save this value in your GitHub Variables as `VITE_API_URL`.

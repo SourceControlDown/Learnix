@@ -17,7 +17,42 @@ resource "azurerm_storage_account" "storage" {
   location                 = data.azurerm_resource_group.rg.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
+  access_tier              = "Hot"
   min_tls_version          = "TLS1_2"
+
+  # Advanced (Matching UI screenshot)
+  is_hns_enabled                   = false
+  sftp_enabled                     = false
+  cross_tenant_replication_enabled = false
+  nfsv3_enabled                    = false
+  infrastructure_encryption_enabled = false
+
+  # Explicit Security & Networking (Ensuring parity with UI screenshots)
+  public_network_access_enabled   = true
+  allow_nested_items_to_be_public = true # Critical: allows 'blob' access level for public containers
+  https_traffic_only_enabled      = true
+  shared_access_key_enabled       = true
+  default_to_oauth_authentication = false
+
+  routing {
+    choice = "MicrosoftRouting"
+  }
+
+  # Data Protection (Matching UI screenshot for 7-day soft delete)
+  blob_properties {
+    delete_retention_policy {
+      days = 7
+    }
+    container_delete_retention_policy {
+      days = 7
+    }
+  }
+
+  share_properties {
+    retention_policy {
+      days = 7
+    }
+  }
 }
 
 # Public Containers

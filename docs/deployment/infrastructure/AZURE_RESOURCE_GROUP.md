@@ -25,8 +25,10 @@
 | PostgreSQL Server | `learnix-postgres` |
 | Cosmos DB (Mongo API) | `learnix-cosmos` |
 | Redis Cache | `learnix-redis` |
-| Storage Account | `learnixstorage` |
+| Storage Account (App Data) | `learnixstorage` |
 | Static Web App | `learnix-frontend` |
+| Terraform State Resource Group | `terraform-state-rg` |
+| Terraform State Storage Account | `tfstatelearnix` |
 
 > **Note:** Storage account names must be globally unique, all lowercase, 3–24 chars, no hyphens.  
 > Replace `learnixstorage` with something unique if it's taken.
@@ -94,19 +96,68 @@ If you plan to automate your Azure infrastructure deployment using GitHub Action
    - Click **Review + create**, then **Create**.
 
 2. **Create the State Storage Account:**
-   - Search for **Storage accounts** and click **Create**.
-   - **Resource group:** Select the newly created `terraform-state-rg`.
-   - **Storage account name:** `tfstatelearnix` (Must be globally unique, 3-24 characters, lowercase only. Add random numbers if the name is taken).
-   - **Region:** Match your resource group region.
-   - **Performance:** `Standard`
-   - **Redundancy:** `Locally-redundant storage (LRS)` (This is the most cost-effective option and is sufficient for state files).
-   - Click **Review + create**, then **Create**. Wait for the deployment to finish.
+   Search for **Storage accounts** and click **Create**. Follow these tabs carefully (do **NOT** use the app blob storage guide for this, as Terraform state requires maximum security and no public access):
+   
+   - **Basics Tab:**
+     - **Resource group:** Select the newly created `terraform-state-rg`.
+     - **Storage account name:** `tfstatelearnix` (Must be globally unique, 3-24 characters, lowercase only. Add numbers if taken).
+     - **Region:** Match your resource group region.
+     - **Primary service:** `Azure Blob Storage or Azure Data Lake Storage`
+     - **Performance:** `Standard`
+     - **Redundancy:** `Locally-redundant storage (LRS)` (Sufficient for state files).
+   
+   - **Advanced Tab:**
+     - **Enable hierarchical namespace:** Unchecked
+     - **Enable SFTP:** Unchecked
+     - **Allow cross-tenant replication:** Unchecked
+     - **Access tier:** `Hot`
+     - **Enable network file system v3:** Unchecked
+     - **Enable Managed Identity for SMB:** Unchecked
+     - **Require Encryption in Transit for SMB:** Checked *(Note: This is checked by default in Azure)*
+     - **Require Encryption in Transit for NFS:** Unchecked
+   
+   - **Networking Tab:**
+     - **Public network access:** `Enable`
+     - **Public network access scope:** `Enable from all networks` (Required for GitHub Actions to reach it over the internet).
+     - **Routing preference:** `Microsoft network routing`
+   
+   - **Data protection Tab:**
+     - **Enable point-in-time restore for containers:** Unchecked
+     - **Enable soft delete for blobs:** Checked (7 days) - *Crucial to prevent accidental loss of your Terraform state.*
+     - **Enable soft delete for containers:** Checked (7 days)
+     - **Enable versioning for blobs:** Unchecked
+     - **Enable blob change feed:** Unchecked
+     - **Enable version-level immutability support:** Unchecked
+     - **Enable soft delete for classic file shares:** Checked (7 days)
+   
+   - **Security Tab:**
+     - **Require secure transfer for REST API operations:** Checked
+     - **Allow enabling anonymous access on individual containers:** **UNCHECKED** 
+       > [!CAUTION]
+       > **SECURITY WARNING:** Unlike the main application storage, this MUST remain UNCHECKED. The Terraform state file contains sensitive infrastructure secrets (like DB passwords) and must NEVER be publicly accessible.
+     - **Enable storage account key access:** Checked
+     - **Default to Microsoft Entra authorization in the Azure portal:** Unchecked
+     - **Minimum TLS version:** `Version 1.2`
+     - **Permitted scope for copy operations (Preview):** `From any storage account`
+     - **Enable Defender for Storage:** Unchecked
+   
+   - **Encryption Tab:**
+     - **Encryption type:** `Microsoft-managed keys (MMK)`
+     - **Enable support for customer-managed keys:** `Blobs and files only`
+     - **Enable infrastructure encryption:** Unchecked
+   
+   Click **Review + create**, wait for validation, then click **Create**. Wait for the deployment to finish.
 
 3. **Create the Blob Container:**
    - Go to your newly created storage account.
    - In the left-hand menu under **Data storage**, click **Containers**.
    - Click **+ Container**.
    - **Name:** `tfstate`
+   - **Anonymous access level:** `Private (no anonymous access)` *(Note: This is automatically enforced because we disabled anonymous access in the Security tab).*
+   - Expand the **Advanced** section:
+     - **Encryption scope:** `Select from existing account scopes`
+     - **Use this encryption scope for all blobs in the container:** Unchecked
+     - **Enable version-level immutability support:** Unchecked
    - Click **Create**.
 
 Once this is done, your GitHub Actions pipeline will automatically drop the `storage.tfstate` file into this container during its first run.

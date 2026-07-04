@@ -33,7 +33,7 @@ Learnix is a comprehensive platform where students can browse and purchase cours
 ### Backend — `Learnix.Backend/`
 - **.NET 8** — C# 12, ASP.NET Core 8
 - **Clean Architecture + CQRS** via MediatR
-- **PostgreSQL** (primary data) + **MongoDB** (chat sessions, reviews) + **Redis** (caching)
+- **PostgreSQL** (primary data) + **MongoDB** (chat sessions) + **Redis** (caching)
 - **Entity Framework Core** — ORM with Specification Pattern
 - **SignalR** — Real-time WebSockets for chat and notifications
 - **Transactional Outbox Pattern** — Async messaging via PostgreSQL LISTEN/NOTIFY
@@ -131,9 +131,11 @@ A quick start using Docker:
 # Start infrastructure (PostgreSQL, MongoDB, Redis, Azurite, Mailpit)
 docker compose up -d
 
-# Seed database and start API
+# Initialize database and blob storage (runs the migrator container)
+docker compose --profile init up migrator
+
+# Start API
 cd Learnix.Backend
-dotnet run --project Learnix.DbMigrator -- --create-blob --seed-demo
 dotnet run --project Learnix.API
 
 # Start frontend

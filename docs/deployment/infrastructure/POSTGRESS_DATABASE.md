@@ -2,13 +2,8 @@
 
 ## Environment Variables
 
-Depending on your choice of database provider, configure the following in your GitHub repository (**Settings → Secrets and variables → Actions**):
-
 **For Azure PostgreSQL:**
-* Secrets: `PROD_POSTGRES_CONN` (Your Azure connection string format)
-
-**For Supabase (Alternative):**
-* Secrets: `PROD_POSTGRES_CONN` (Your Supabase connection string format)
+* Secrets: `PROD_POSTGRES_CONN` (Your Azure or Supabase connection string format)
 
 ## Azure Database for PostgreSQL (Flexible Server)
 

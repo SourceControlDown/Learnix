@@ -57,7 +57,7 @@ docker compose up -d
 
 This starts PostgreSQL, MongoDB, Redis, Azurite (blob storage emulator), and Mailpit. All containers run with persistent volumes so data survives restarts.
 
-> **Note:** If you want to run the entire platform via Docker (including the .NET backend and React frontend), run `docker compose --profile apps up -d` instead. This will automatically start a temporary `learnix-migrator` container, which will create the database schema, apply migrations, and seed it with demo data (admins, courses, students) before starting the API.
+> **Note:** If you want to run the entire platform via Docker (including the .NET backend and React frontend), run `docker compose --profile apps up -d` instead. This will automatically start a temporary `learnix-migrator` container (using the `init` profile under the hood) which will create the database schema, apply migrations, and seed it with demo data before starting the API. You can also run just the migrator via `docker compose --profile init up migrator`.
 
 Verify everything is healthy:
 
@@ -110,14 +110,16 @@ This is the same **Client ID** you create for the backend (see [API_KEYS_GUIDE.m
 The backend uses a standalone migrator project (`Learnix.DbMigrator`) that safely initializes databases, blob storage containers, and default system accounts.
 
 ```bash
-cd Learnix.Backend
-
 # 1. Apply database migrations and seed system data
-# Required for local storage: Add --create-blob to initialize Azurite containers
-# Optional: Add --seed-demo to automatically generate fake courses and students
-dotnet run --project Learnix.DbMigrator --launch-profile Development -- --create-blob --seed-demo
+# The easiest way is to run the migrator via Docker Compose:
+docker compose --profile init up migrator
+
+# Alternatively, you can run it locally using the .NET CLI:
+# cd Learnix.Backend
+# dotnet run --project Learnix.DbMigrator --launch-profile Development -- --create-blob --seed-demo
 
 # 2. Start the API (HTTP on port 5000, HTTPS on 5001)
+cd Learnix.Backend
 dotnet run --project Learnix.API
 ```
 

@@ -35,7 +35,7 @@ name: Deploy to Azure
 # (SMTP)         PROD_SMTP_SENDER_EMAIL          — From email address (e.g., noreply.learnix@gmail.com)
 # (SMTP)         PROD_SMTP_SENDER_NAME           — From name (e.g., Learnix)
 # (Google)       PROD_GOOGLE_CLIENT_ID           — Google OAuth client ID
-# (Mongo)        PROD_PROD_MONGO_DATABASE_NAME   — 
+# (Mongo)        PROD_MONGO_DATABASE_NAME        — Name of the MongoDB database (e.g. learnix)
 # (seed)         PROD_SEED_ADMIN_EMAIL           — Admin email for seeding
 # (seed)         PROD_SEED_INSTRUCTOR_EMAIL      — (Optional) Instructor email for seeding
 # (seed)         PROD_SEED_STUDENT_EMAIL         — (Optional) Student email for seeding
@@ -190,7 +190,7 @@ jobs:
           ConnectionStrings__Redis=${{ secrets.PROD_REDIS_CONN }}
           ConnectionStrings__AzureBlobStorage=${{ needs.deploy-infrastructure.outputs.blob_conn }}
           Mongo__ConnectionString=${{ secrets.PROD_MONGO_CONN }}
-          Mongo__DatabaseName=${{ secrets.PROD_MONGO_DATABASE_NAME }}
+          Mongo__DatabaseName=${{ vars.PROD_MONGO_DATABASE_NAME }}
           Jwt__Secret=${{ secrets.PROD_JWT_SECRET }}
           Jwt__RefreshTokenSecret=${{ secrets.PROD_JWT_REFRESH_SECRET }}
           Jwt__Issuer=Learnix
