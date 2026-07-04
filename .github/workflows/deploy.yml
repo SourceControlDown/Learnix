@@ -5,7 +5,7 @@ name: Deploy to Azure
 # Frontend is deployed to Azure Static Web Apps via the built-in action.
 # 
 # Required GitHub Secrets (Settings → Secrets and variables → Actions → Secrets):
-# (azure)        AZURE_CREDENTIALS               — JSON output of: az ad sp create-for-rbac --name "learnix-github-actions" --role Contributor --scopes /subscriptions/{subscription-id}
+# (azure)        AZURE_CREDENTIALS               — JSON output of: az ad sp create-for-rbac --name "learnix-github-actions" --role Contributor --scopes /subscriptions/{subscription-id} --sdk-auth
 # (acr img)      ACR_PASSWORD                    — ACR admin password
 # (frontend app) AZURE_STATIC_WEB_APPS_API_TOKEN — from Azure Portal > Static Web App > Manage deployment token
 # (postgress)    PROD_POSTGRES_CONN              — Azure PostgreSQL connection string
