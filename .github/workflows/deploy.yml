@@ -161,6 +161,18 @@ jobs:
         SeedData__StudentPassword: ${{ secrets.PROD_SEED_STUDENT_PASSWORD }}
       run: dotnet run --project Learnix.DbMigrator --no-launch-profile -- --seed-demo
 
+    # Configure Private Registry Credentials (Required for Docker Hub)
+    - name: Configure Container App Registry
+      run: |
+        if [ "${{ vars.REGISTRY_TYPE }}" == "DOCKERHUB" ]; then
+          az containerapp registry set \
+            --name ${{ vars.CONTAINER_APP_NAME }} \
+            --resource-group ${{ vars.CONTAINER_APP_RG }} \
+            --server docker.io \
+            --username ${{ vars.DOCKERHUB_USERNAME }} \
+            --password ${{ secrets.DOCKERHUB_TOKEN }}
+        fi
+
     # Deploy to Container Apps
     - name: Deploy to Container Apps
       uses: azure/container-apps-deploy-action@v1
