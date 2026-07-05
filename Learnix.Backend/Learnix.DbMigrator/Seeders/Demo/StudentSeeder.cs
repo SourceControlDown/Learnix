@@ -149,11 +149,11 @@ public sealed class StudentSeeder(
         }
 
         // Avatar (best-effort) 
-        var avatarPath = $"{blobOptions.Value.AvatarContainer}/{Guid.NewGuid()}-student-avatar.png";
+        var avatarPath = $"{blobOptions.Value.AvatarContainer}/{Guid.NewGuid()}-student-avatar.webp";
         try
         {
             var assembly = typeof(StudentSeeder).Assembly;
-            using var stream = assembly.GetManifestResourceStream("Learnix.DbMigrator.Assets.generic_thumbnail.png");
+            using var stream = assembly.GetManifestResourceStream("Learnix.DbMigrator.Assets.generic_thumbnail.webp");
 
             if (stream != null)
             {

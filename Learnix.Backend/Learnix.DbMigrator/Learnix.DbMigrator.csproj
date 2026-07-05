@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\Learnix.Infrastructure\Learnix.Infrastructure.csproj" />
@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\**\*.png" />
+    <EmbeddedResource Include="Assets\**\*.webp" />
     <EmbeddedResource Include="Assets\**\*.mp4" />
   </ItemGroup>
 

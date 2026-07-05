@@ -121,7 +121,7 @@ internal static class CSharpFundamentalsSeeder
                     CooldownMinutes: 1),
             ]),
         ],
-        "csharp_thumbnail.png");
+        "csharp_thumbnail.webp");
 }
 
 

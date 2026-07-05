@@ -50,7 +50,7 @@ internal static class CloudArchitectureSeeder
                     CooldownMinutes: 1)
             ])
         ],
-        "generic_thumbnail.png");
+        "generic_thumbnail.webp");
 }
 
 

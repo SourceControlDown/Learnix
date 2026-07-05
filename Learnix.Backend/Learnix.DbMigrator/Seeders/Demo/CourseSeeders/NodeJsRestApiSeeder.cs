@@ -129,7 +129,7 @@ internal static class NodeJsRestApiSeeder
                     CooldownMinutes: 1),
             ]),
         ],
-        "node_js_thumbnail.png");
+        "node_js_thumbnail.webp");
 }
 
 
