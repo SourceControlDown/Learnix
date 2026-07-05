@@ -54,24 +54,34 @@ public sealed class StudentSeeder(
         if (student is null)
             return;
 
+        var dummyStudents = new List<User>(15);
         for (int i = 1; i <= 15; i++)
         {
             var dummyEmail = $"learnix-student-dev-{i}@learnix.dev";
-            await EnsureStudentAsync(userManager, dummyEmail, password, $"Student_{i}");
+            var dummyStudent = await EnsureStudentAsync(userManager, dummyEmail, password, $"Student_{i}");
+            if (dummyStudent is not null)
+            {
+                dummyStudents.Add(dummyStudent);
+            }
         }
 
         var courses = await db.Courses.ToListAsync(cancellationToken);
-        if (courses.Count > 0)
+        if (courses.Count > 0 && dummyStudents.Count > 0)
         {
             var random = new Random();
-            var dummyStudents = new List<User>();
+            var dummyStudentIds = dummyStudents.Select(u => u.Id).ToList();
 
-            for (int i = 1; i <= 15; i++)
-            {
-                var dummyEmail = $"learnix-student-dev-{i}@learnix.dev";
-                var dummyUser = await userManager.FindByEmailAsync(dummyEmail);
-                if (dummyUser is not null) dummyStudents.Add(dummyUser);
-            }
+            var existingEnrollments = await db.Set<Enrollment>()
+                .Where(e => dummyStudentIds.Contains(e.StudentId))
+                .Select(e => new { e.CourseId, e.StudentId })
+                .ToListAsync(cancellationToken);
+            var existingEnrollmentSet = existingEnrollments.Select(e => $"{e.CourseId}_{e.StudentId}").ToHashSet();
+
+            var existingReviews = await db.Set<CourseReview>()
+                .Where(r => dummyStudentIds.Contains(r.StudentId))
+                .Select(r => new { r.CourseId, r.StudentId })
+                .ToListAsync(cancellationToken);
+            var existingReviewSet = existingReviews.Select(r => $"{r.CourseId}_{r.StudentId}").ToHashSet();
 
             foreach (var course in courses)
             {
@@ -80,15 +90,15 @@ public sealed class StudentSeeder(
 
                 foreach (var dummyUser in selectedStudents)
                 {
-                    var exists = await db.Set<Enrollment>().AnyAsync(e => e.CourseId == course.Id && e.StudentId == dummyUser.Id, cancellationToken);
-                    if (!exists)
+                    var enrollmentKey = $"{course.Id}_{dummyUser.Id}";
+                    if (!existingEnrollmentSet.Contains(enrollmentKey))
                     {
                         var enrollment = Enrollment.Create(course.Id, dummyUser.Id, 0m);
                         db.Set<Enrollment>().Add(enrollment);
                         course.IncrementEnrollmentsCount();
+                        existingEnrollmentSet.Add(enrollmentKey);
 
-                        var reviewExists = await db.Set<CourseReview>().AnyAsync(r => r.CourseId == course.Id && r.StudentId == dummyUser.Id, cancellationToken);
-                        if (!reviewExists)
+                        if (!existingReviewSet.Contains(enrollmentKey))
                         {
                             int rating = random.Next(3, 6); // 3, 4 or 5
                             string[] reviews = [
@@ -102,6 +112,7 @@ public sealed class StudentSeeder(
                             string comment = reviews[random.Next(reviews.Length)];
                             var review = CourseReview.Create(course.Id, dummyUser.Id, rating, comment);
                             db.Set<CourseReview>().Add(review);
+                            existingReviewSet.Add(enrollmentKey);
                         }
                     }
                 }
@@ -109,15 +120,16 @@ public sealed class StudentSeeder(
             await db.SaveChangesAsync(cancellationToken);
 
             // Re-sync ratings from DB for accuracy
+            var courseIds = courses.Select(c => c.Id).ToList();
+            var allStats = await db.Set<CourseReview>()
+                .Where(r => courseIds.Contains(r.CourseId))
+                .GroupBy(r => r.CourseId)
+                .Select(g => new { CourseId = g.Key, Count = g.Count(), Average = g.Average(r => (decimal)r.Rating) })
+                .ToDictionaryAsync(x => x.CourseId, cancellationToken);
+
             foreach (var course in courses)
             {
-                var stats = await db.Set<CourseReview>()
-                    .Where(r => r.CourseId == course.Id)
-                    .GroupBy(r => r.CourseId)
-                    .Select(g => new { Count = g.Count(), Average = g.Average(r => (decimal)r.Rating) })
-                    .FirstOrDefaultAsync(cancellationToken);
-
-                if (stats != null)
+                if (allStats.TryGetValue(course.Id, out var stats))
                 {
                     course.SyncRating(stats.Count, Math.Round(stats.Average, 2));
                 }
