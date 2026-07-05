@@ -180,7 +180,7 @@ jobs:
         resourceGroup: ${{ vars.CONTAINER_APP_RG }}
         containerAppName: ${{ vars.CONTAINER_APP_NAME }}
         imageToDeploy: ${{ vars.REGISTRY_TYPE == 'ACR' && vars.ACR_LOGIN_SERVER || format('docker.io/{0}', vars.DOCKERHUB_USERNAME) }}/learnix-api:${{ needs.build-api.outputs.image-tag }}
-        environmentVariables: |
+        environmentVariables: >
           ASPNETCORE_ENVIRONMENT=Production
           ASPNETCORE_URLS=http://+:8080
           ConnectionStrings__Postgres=${{ secrets.PROD_POSTGRES_CONN }}
