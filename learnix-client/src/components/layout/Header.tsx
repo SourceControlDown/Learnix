@@ -72,6 +72,16 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
         }, 300); // grace period for diagonal mouse movement
     }
 
+    const avatarContent = (
+        <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-xs font-semibold text-primary">
+            {avatarUrl ? (
+                <img src={avatarUrl} alt={fullName} className="size-full object-cover" />
+            ) : (
+                initials
+            )}
+        </div>
+    );
+
     return (
         <div
             ref={ref}
@@ -81,20 +91,21 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
         >
             <button
                 type="button"
-                onClick={() => setOpen(true)}
-                className="flex items-center transition-opacity hover:opacity-80"
+                onClick={() => setOpen((prev) => !prev)}
+                className="hidden items-center transition-opacity hover:opacity-80 sm:flex"
             >
-                <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-xs font-semibold text-primary">
-                    {avatarUrl ? (
-                        <img src={avatarUrl} alt={fullName} className="size-full object-cover" />
-                    ) : (
-                        initials
-                    )}
-                </div>
+                {avatarContent}
             </button>
 
+            <Link
+                to={APP_ROUTES.student.profile}
+                className="flex items-center transition-opacity hover:opacity-80 sm:hidden"
+            >
+                {avatarContent}
+            </Link>
+
             {open && (
-                <div className="absolute right-0 top-full z-50 pt-2">
+                <div className="absolute right-0 top-full z-50 hidden pt-2 sm:block">
                     <div className="w-64 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
                         <div className="flex items-center gap-3 px-4 py-3">
                             <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-sm font-semibold text-primary">
