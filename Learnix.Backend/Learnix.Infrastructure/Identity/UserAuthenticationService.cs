@@ -46,6 +46,10 @@ internal sealed class UserAuthenticationService(
         if (user is null)
             return Result.Fail<UserAuthenticationInfo>(new NotFoundError("User not found."));
 
+        if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
+            return Result.Fail<UserAuthenticationInfo>(
+                new AuthenticationError("Account is locked. Please try again later."));
+
         var roles = await userManager.GetRolesAsync(user);
         return Result.Ok(new UserAuthenticationInfo(
             user.Id, user.Email!, user.FirstName, user.LastName,

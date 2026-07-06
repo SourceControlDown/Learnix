@@ -122,7 +122,7 @@ internal static class DigitalMarketingSeeder
                     CooldownMinutes: 1),
             ]),
         ],
-        "marketing_thumbnail.png");
+        "marketing_thumbnail.webp");
 }
 
 

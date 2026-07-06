@@ -138,7 +138,7 @@ internal static class React19Seeder
                     CooldownMinutes: 1),
             ]),
         ],
-        "react_thumbnail.png");
+        "react_thumbnail.webp");
 }
 
 

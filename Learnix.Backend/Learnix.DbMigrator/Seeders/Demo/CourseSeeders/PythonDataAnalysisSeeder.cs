@@ -118,7 +118,7 @@ internal static class PythonDataAnalysisSeeder
                     CooldownMinutes: 1),
             ]),
         ],
-        "pythin_thumbnail.png");
+        "pythin_thumbnail.webp");
 }
 
 

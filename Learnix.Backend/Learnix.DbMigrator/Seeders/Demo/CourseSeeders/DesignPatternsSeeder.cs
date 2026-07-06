@@ -120,7 +120,7 @@ internal static class DesignPatternsSeeder
                     CooldownMinutes: 1),
             ]),
         ],
-        "desing_paterns_thumbnail.png");
+        "desing_paterns_thumbnail.webp");
 }
 
 

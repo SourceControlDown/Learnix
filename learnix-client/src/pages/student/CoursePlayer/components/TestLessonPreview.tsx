@@ -2,7 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, ClipboardList, Clock, XCircle } from 'lucide-react';
 import { useMarkLessonComplete } from '@/hooks/lesson/useMarkLessonComplete';
+import { useMyTestAttempts } from '@/hooks/lesson/useMyTestAttempts';
 import { useTestLesson } from '@/hooks/lesson/useTestLesson';
+import { TestAttemptHistory } from '@/pages/student/TestLesson/components/TestAttemptHistory';
 import { APP_ROUTES } from '@/routes/paths';
 import type { LessonProgressItemDto } from '@/types/progress.types';
 import { cn } from '@/utils/cn';
@@ -15,6 +17,7 @@ interface TestLessonPreviewProps {
 export function TestLessonPreview({ lesson, courseId }: TestLessonPreviewProps) {
     const { t } = useTranslation('lessonPlayer');
     const { data: test, isLoading } = useTestLesson(courseId, lesson.lessonId);
+    const { data: attempts = [] } = useMyTestAttempts(courseId, lesson.lessonId);
     const markComplete = useMarkLessonComplete(courseId);
 
     const status = test?.studentStatus;
@@ -151,6 +154,13 @@ export function TestLessonPreview({ lesson, courseId }: TestLessonPreviewProps) 
                     </div>
                 )}
             </div>
+
+            {/* Attempt History */}
+            {!isLoading && !isEmpty && test && attempts.length > 0 && (
+                <div className="mt-8">
+                    <TestAttemptHistory attempts={attempts} />
+                </div>
+            )}
         </div>
     );
 }

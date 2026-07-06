@@ -38,27 +38,27 @@ export function TestResults({
             {/* Score card */}
             <div
                 className={cn(
-                    'rounded-xl border p-8 text-center',
+                    'rounded-xl border p-5 text-center sm:p-6',
                     result.passed
                         ? 'border-success/30 bg-success/10'
                         : 'border-destructive/30 bg-destructive/10',
                 )}
             >
-                <div className="mb-4 flex justify-center">
+                <div className="mb-3 flex justify-center">
                     {result.passed ? (
-                        <CheckCircle2 className="size-16 text-success" />
+                        <CheckCircle2 className="size-12 text-success" />
                     ) : (
-                        <XCircle className="size-16 text-destructive" />
+                        <XCircle className="size-12 text-destructive" />
                     )}
                 </div>
-                <h2 className="mb-2 font-heading text-2xl font-bold">{t('results.heading')}</h2>
-                <p className="mb-4 text-muted-foreground">
+                <h2 className="mb-1 font-heading text-2xl font-bold">{t('results.heading')}</h2>
+                <p className="mb-4 text-sm text-muted-foreground">
                     {result.passed ? t('status.passed') : t('status.failed')}
                 </p>
-                <div className="mb-2 text-4xl font-bold">
+                <div className="mb-1 text-3xl font-bold">
                     {t('status.score', { score: result.score, max: result.maxScore })}
                 </div>
-                <p className="text-lg text-muted-foreground">{percentage}%</p>
+                <p className="text-base text-muted-foreground">{percentage}%</p>
             </div>
 
             {/* Reviewed questions — show what the student actually selected */}
@@ -97,10 +97,10 @@ export function TestResults({
             </div>
 
             {/* Actions */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
                     to={APP_ROUTES.student.learnLesson(courseId, lessonId)}
-                    className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-secondary"
+                    className="flex justify-center rounded-lg border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-secondary sm:w-auto"
                 >
                     {t('results.returnToLesson')}
                 </Link>
@@ -108,7 +108,7 @@ export function TestResults({
                     <button
                         type="button"
                         onClick={onRetake}
-                        className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                        className="flex justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
                     >
                         {t('results.retakeTest')}
                     </button>

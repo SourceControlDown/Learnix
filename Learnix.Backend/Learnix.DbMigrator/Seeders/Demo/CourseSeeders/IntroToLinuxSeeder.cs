@@ -29,7 +29,7 @@ internal static class IntroToLinuxSeeder
                     CooldownMinutes: 1)
             ])
         ],
-        "generic_thumbnail.png");
+        "generic_thumbnail.webp");
 }
 
 
