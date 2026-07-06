@@ -21,6 +21,7 @@ name: Deploy to Azure
 # (seed)         PROD_SEED_INSTRUCTOR_PASSWORD   — (Optional) Instructor password for seeding
 # (seed)         PROD_SEED_STUDENT_PASSWORD      — (Optional) Student password for seeding
 # (docker img)   DOCKERHUB_TOKEN                 — Docker Hub token
+# (github)       ADMIN_PAT                       — PAT with 'repo' scope to bypass branch protection rules
 #
 # Required GitHub Variables (Settings → Secrets and variables → Actions → Variables):
 # (backend img)  REGISTRY_TYPE                   — 'ACR' or 'DOCKERHUB'
@@ -330,7 +331,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.ADMIN_PAT }}
         # We need fetch-depth 0 to push back, though actions/checkout defaults to detached HEAD sometimes
         # Let's specify the branch so we can push directly
         ref: main
