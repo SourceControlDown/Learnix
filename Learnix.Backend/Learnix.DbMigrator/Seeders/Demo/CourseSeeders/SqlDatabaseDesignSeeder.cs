@@ -123,7 +123,7 @@ internal static class SqlDatabaseDesignSeeder
                     CooldownMinutes: 1),
             ]),
         ],
-        "database_thumbnail.png");
+        "database_thumbnail.webp");
 }
 
 

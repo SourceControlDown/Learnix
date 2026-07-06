@@ -122,7 +122,7 @@ internal static class UiUxDesignSeeder
                     CooldownMinutes: 1),
             ]),
         ],
-        "UI-UX_thumbnail.png");
+        "UI-UX_thumbnail.webp");
 }
 
 

@@ -141,7 +141,7 @@ public sealed class CourseSeeder(
                                 new SeedPost("Post Lesson 3", "Generic post lesson content.")
                             ])
                         ],
-                        "generic_thumbnail.png"
+                        "generic_thumbnail.webp"
                     );
 
                     await SeedSingleCourseAsync(
@@ -212,7 +212,7 @@ public sealed class CourseSeeder(
             definition.Title, definition.Description,
             definition.Price, definition.Tags);
 
-        var coverPath = $"{blobOptions.Value.CourseCoverContainer}/{Guid.NewGuid()}-cover.png";
+        var coverPath = $"{blobOptions.Value.CourseCoverContainer}/{Guid.NewGuid()}-cover.webp";
         try
         {
             var assembly = typeof(CourseSeeder).Assembly;

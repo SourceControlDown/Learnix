@@ -2,15 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { CheckCircle2, ChevronLeft, ChevronRight, Menu, MessageSquare } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, Menu, MessageSquare, X } from 'lucide-react';
 import { messagesApi } from '@/api/messages.api';
 import { CourseCertificateButton } from '@/components/common/course/CourseCertificateButton';
+import { ConversationView } from '@/components/common/messaging/ConversationView';
 import { Logo } from '@/components/common/ui/Logo';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { useCourseDetail } from '@/hooks/course/useCourseDetail';
 import { useCourseProgress } from '@/hooks/lesson/useCourseProgress';
 import { useMarkLessonComplete } from '@/hooks/lesson/useMarkLessonComplete';
 import { APP_ROUTES } from '@/routes/paths';
+import type { ConversationSummary } from '@/types/message.types';
 import { cn } from '@/utils/cn';
 import { CourseCertificateDropdown } from './components/CourseCertificateDropdown';
 import { CourseSidebar } from './components/CourseSidebar';
@@ -27,6 +29,7 @@ export default function CoursePlayerPage() {
     const { data: progress, isLoading } = useCourseProgress(courseId!);
     const markComplete = useMarkLessonComplete(courseId!);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [activeChat, setActiveChat] = useState<ConversationSummary | null>(null);
     const [prevLessonId, setPrevLessonId] = useState(lessonId);
 
     if (lessonId !== prevLessonId) {
@@ -37,7 +40,7 @@ export default function CoursePlayerPage() {
     const startChat = useMutation({
         mutationFn: () => messagesApi.startOrGet({ courseId: courseId! }),
         onSuccess: (conversation) => {
-            navigate('/messages', { state: { initialConversation: conversation } });
+            setActiveChat(conversation as unknown as ConversationSummary);
         },
     });
 
@@ -88,6 +91,129 @@ export default function CoursePlayerPage() {
             navigate(`/courses/${courseId}/learn/${nextLesson.lessonId}`);
         }
     };
+
+    const sidebarElement = (
+        <CourseSidebar
+            sections={progress?.sections ?? []}
+            currentLessonId={lessonId!}
+            courseId={courseId!}
+            totalLessons={progress?.totalLessons ?? 0}
+            completedLessons={progress?.completedLessons ?? 0}
+            onCloseMobile={() => setIsSidebarOpen(false)}
+        />
+    );
+
+    const mainElement = (
+        <>
+            <main className="flex-1 overflow-y-auto px-4 py-6 md:p-8">
+                {isLoading && (
+                    <div className="flex h-full items-center justify-center">
+                        <div className="space-y-3 text-center">
+                            <div className="mx-auto size-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                            <p className="text-sm text-muted-foreground">{t('loading')}</p>
+                        </div>
+                    </div>
+                )}
+
+                {!isLoading && !currentLesson && (
+                    <div className="flex h-full items-center justify-center text-muted-foreground">
+                        {t('lessonNotFound')}
+                    </div>
+                )}
+
+                {!isLoading && currentLesson && (
+                    <>
+                        {currentLesson.lessonType === 'Video' && (
+                            <VideoLessonView
+                                key={currentLesson.lessonId}
+                                lesson={currentLesson}
+                                courseId={courseId!}
+                                nextLessonTitle={nextLesson?.title}
+                                onVideoNearEnd={handleAutoMarkComplete}
+                                onPlayNext={handleVideoFullyEnded}
+                            />
+                        )}
+                        {currentLesson.lessonType === 'Post' && (
+                            <PostLessonView lesson={currentLesson} courseId={courseId!} />
+                        )}
+                        {currentLesson.lessonType === 'Test' && (
+                            <TestLessonPreview lesson={currentLesson} courseId={courseId!} />
+                        )}
+                    </>
+                )}
+            </main>
+
+            {/* Bottom navigation bar */}
+            <div className="flex shrink-0 items-center justify-between gap-2 border-t border-border bg-card p-3 sm:p-4 sm:px-6">
+                {/* Prev */}
+                <div className="flex flex-1 justify-start">
+                    {prevLesson && (
+                        <Link
+                            to={APP_ROUTES.student.learnLesson(courseId!, prevLesson.lessonId)}
+                            className="inline-flex items-center gap-1.5 rounded-lg p-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:px-4"
+                            title={t('actions.previousLesson')}
+                        >
+                            <ChevronLeft className="size-5" />
+                            <span className="hidden sm:inline">{t('actions.previousLesson')}</span>
+                        </Link>
+                    )}
+                </div>
+
+                {/* Center Action Button */}
+                <div className="flex shrink-0 justify-center">
+                    {currentLesson && currentLesson.lessonType !== 'Test' && (
+                        <button
+                            type="button"
+                            onClick={handleMarkComplete}
+                            disabled={currentLesson.isCompleted || markComplete.isPending}
+                            className={cn(
+                                'inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-medium transition-colors',
+                                currentLesson.isCompleted
+                                    ? 'cursor-default bg-success/15 text-success'
+                                    : 'bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60',
+                            )}
+                        >
+                            {currentLesson.isCompleted && <CheckCircle2 className="size-5" />}
+                            {currentLesson.isCompleted
+                                ? t('actions.completed')
+                                : markComplete.isPending
+                                  ? 'Saving...'
+                                  : t('actions.markComplete')}
+                        </button>
+                    )}
+                    {/* For test lessons, show completion badge only */}
+                    {currentLesson &&
+                        currentLesson.lessonType === 'Test' &&
+                        currentLesson.isCompleted && (
+                            <span className="inline-flex items-center justify-center gap-2 rounded-lg bg-success/15 px-6 py-3 text-sm font-medium text-success">
+                                <CheckCircle2 className="size-5" />
+                                {t('actions.completed')}
+                            </span>
+                        )}
+                </div>
+
+                {/* Next */}
+                <div className="flex flex-1 justify-end">
+                    {nextLesson ? (
+                        <Link
+                            to={APP_ROUTES.student.learnLesson(courseId!, nextLesson.lessonId)}
+                            className="inline-flex items-center gap-1.5 rounded-lg p-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:px-4"
+                            title={t('actions.nextLesson')}
+                        >
+                            <span className="hidden sm:inline">{t('actions.nextLesson')}</span>
+                            <ChevronRight className="size-5" />
+                        </Link>
+                    ) : progress?.completedLessons === progress?.totalLessons ? (
+                        <CourseCertificateButton
+                            courseId={courseId!}
+                            variant="primary"
+                            showIconOnlyOnMobile
+                        />
+                    ) : null}
+                </div>
+            </div>
+        </>
+    );
 
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-background">
@@ -148,166 +274,85 @@ export default function CoursePlayerPage() {
             </header>
 
             {/* Content */}
-            <ResizablePanelGroup direction="horizontal" className="relative flex min-h-0 flex-1">
-                {/* Mobile sidebar overlay */}
-                {isSidebarOpen && (
-                    <div
-                        className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
-                        onClick={() => setIsSidebarOpen(false)}
-                    />
-                )}
-
-                {/* Sidebar */}
-                <ResizablePanel
-                    defaultSize={'20'}
-                    minSize={'15'}
-                    maxSize={'30'}
-                    className={cn(
-                        'fixed inset-y-0 left-0 z-50 transform bg-card transition-transform duration-300 lg:static lg:z-0 lg:translate-x-0 lg:!transform-none',
-                        isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+            <div className="relative flex min-h-0 flex-1 overflow-hidden">
+                {/* MOBILE LAYOUT */}
+                <div className="flex size-full flex-col overflow-hidden lg:hidden">
+                    {/* Mobile sidebar overlay */}
+                    {isSidebarOpen && (
+                        <div
+                            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
+                            onClick={() => setIsSidebarOpen(false)}
+                        />
                     )}
-                >
-                    <CourseSidebar
-                        sections={progress?.sections ?? []}
-                        currentLessonId={lessonId!}
-                        courseId={courseId!}
-                        totalLessons={progress?.totalLessons ?? 0}
-                        completedLessons={progress?.completedLessons ?? 0}
-                        onCloseMobile={() => setIsSidebarOpen(false)}
+
+                    {/* Mobile sidebar drawer */}
+                    <div
+                        className={cn(
+                            'fixed inset-y-0 left-0 z-50 flex w-72 transform flex-col bg-card shadow-2xl transition-transform duration-300',
+                            isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+                        )}
+                    >
+                        {sidebarElement}
+                    </div>
+
+                    {/* Mobile main content */}
+                    <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
+                        {mainElement}
+                    </div>
+                </div>
+
+                {/* DESKTOP LAYOUT (Resizable) */}
+                <div className="hidden size-full overflow-hidden lg:flex">
+                    <ResizablePanelGroup direction="horizontal" className="size-full">
+                        <ResizablePanel
+                            defaultSize="20"
+                            minSize="15"
+                            maxSize="30"
+                            className="flex min-w-0 flex-col overflow-hidden bg-card"
+                        >
+                            {sidebarElement}
+                        </ResizablePanel>
+
+                        <ResizableHandle withHandle />
+
+                        <ResizablePanel
+                            defaultSize="80"
+                            className="flex min-w-0 flex-col overflow-hidden bg-background"
+                        >
+                            {mainElement}
+                        </ResizablePanel>
+                    </ResizablePanelGroup>
+                </div>
+            </div>
+            {/* Chat Slide-over Overlay */}
+            {activeChat && (
+                <>
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm"
+                        onClick={() => setActiveChat(null)}
                     />
-                </ResizablePanel>
 
-                <ResizableHandle withHandle className="hidden lg:flex" />
+                    {/* Drawer Panel */}
+                    <div className="fixed inset-y-0 right-0 z-[70] flex w-full max-w-md translate-x-0 transform flex-col bg-card shadow-2xl transition-transform duration-300">
+                        <div className="relative flex h-full flex-col">
+                            {/* Desktop Close Button (Mobile uses the back button in ConversationView) */}
+                            <button
+                                onClick={() => setActiveChat(null)}
+                                className="absolute right-4 top-3 z-10 hidden rounded-md p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground md:block"
+                            >
+                                <X className="size-5" />
+                                <span className="sr-only">Close chat</span>
+                            </button>
 
-                {/* Main lesson area */}
-                <ResizablePanel
-                    defaultSize={'80'}
-                    className="flex min-w-0 flex-1 flex-col overflow-hidden"
-                >
-                    <main className="flex-1 overflow-y-auto p-8">
-                        {isLoading && (
-                            <div className="flex h-full items-center justify-center">
-                                <div className="space-y-3 text-center">
-                                    <div className="mx-auto size-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                    <p className="text-sm text-muted-foreground">{t('loading')}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {!isLoading && !currentLesson && (
-                            <div className="flex h-full items-center justify-center text-muted-foreground">
-                                {t('lessonNotFound')}
-                            </div>
-                        )}
-
-                        {!isLoading && currentLesson && (
-                            <>
-                                {currentLesson.lessonType === 'Video' && (
-                                    <VideoLessonView
-                                        key={currentLesson.lessonId}
-                                        lesson={currentLesson}
-                                        courseId={courseId!}
-                                        nextLessonTitle={nextLesson?.title}
-                                        onVideoNearEnd={handleAutoMarkComplete}
-                                        onPlayNext={handleVideoFullyEnded}
-                                    />
-                                )}
-                                {currentLesson.lessonType === 'Post' && (
-                                    <PostLessonView lesson={currentLesson} courseId={courseId!} />
-                                )}
-                                {currentLesson.lessonType === 'Test' && (
-                                    <TestLessonPreview
-                                        lesson={currentLesson}
-                                        courseId={courseId!}
-                                    />
-                                )}
-                            </>
-                        )}
-                    </main>
-
-                    {/* Bottom navigation bar */}
-                    <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 sm:px-6">
-                        {/* Prev */}
-                        <div className="order-1 w-auto sm:w-32">
-                            {prevLesson && (
-                                <Link
-                                    to={APP_ROUTES.student.learnLesson(
-                                        courseId!,
-                                        prevLesson.lessonId,
-                                    )}
-                                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                                >
-                                    <ChevronLeft className="size-4" />
-                                    <span className="hidden sm:inline">
-                                        {t('actions.previousLesson')}
-                                    </span>
-                                    <span className="sm:hidden">Prev</span>
-                                </Link>
-                            )}
-                        </div>
-
-                        {/* Mark complete — hidden for test lessons (completed via submission) */}
-                        <div className="order-3 mt-2 flex w-full flex-1 justify-center sm:order-2 sm:mt-0 sm:w-auto sm:flex-none">
-                            {currentLesson && currentLesson.lessonType !== 'Test' && (
-                                <button
-                                    type="button"
-                                    onClick={handleMarkComplete}
-                                    disabled={currentLesson.isCompleted || markComplete.isPending}
-                                    className={cn(
-                                        'inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-colors sm:w-auto sm:py-2',
-                                        currentLesson.isCompleted
-                                            ? 'cursor-default bg-success/15 text-success'
-                                            : 'bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60',
-                                    )}
-                                >
-                                    {currentLesson.isCompleted && (
-                                        <CheckCircle2 className="size-4" />
-                                    )}
-                                    {currentLesson.isCompleted
-                                        ? t('actions.completed')
-                                        : markComplete.isPending
-                                          ? 'Saving...'
-                                          : t('actions.markComplete')}
-                                </button>
-                            )}
-                            {/* For test lessons, show completion badge only */}
-                            {currentLesson &&
-                                currentLesson.lessonType === 'Test' &&
-                                currentLesson.isCompleted && (
-                                    <span className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-success/15 px-5 py-2.5 text-sm font-medium text-success sm:w-auto sm:py-2">
-                                        <CheckCircle2 className="size-4" />
-                                        {t('actions.completed')}
-                                    </span>
-                                )}
-                        </div>
-
-                        {/* Next or Certificate */}
-                        <div className="order-2 flex w-auto justify-end sm:order-3 sm:w-32">
-                            {nextLesson ? (
-                                <Link
-                                    to={APP_ROUTES.student.learnLesson(
-                                        courseId!,
-                                        nextLesson.lessonId,
-                                    )}
-                                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                                >
-                                    <span className="hidden sm:inline">
-                                        {t('actions.nextLesson')}
-                                    </span>
-                                    <span className="sm:hidden">Next</span>
-                                    <ChevronRight className="size-4" />
-                                </Link>
-                            ) : progress?.completedLessons === progress?.totalLessons ? (
-                                <CourseCertificateButton
-                                    courseId={courseId!}
-                                    variant="primary"
-                                    showIconOnlyOnMobile
-                                />
-                            ) : null}
+                            <ConversationView
+                                conversation={activeChat}
+                                onBack={() => setActiveChat(null)}
+                            />
                         </div>
                     </div>
-                </ResizablePanel>
-            </ResizablePanelGroup>
+                </>
+            )}
         </div>
     );
 }

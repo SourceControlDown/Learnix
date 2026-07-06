@@ -54,7 +54,7 @@ internal static class AdvancedAlgorithmsSeeder
                     CooldownMinutes: 1)
             ])
         ],
-        "generic_thumbnail.png");
+        "generic_thumbnail.webp");
 }
 
 
