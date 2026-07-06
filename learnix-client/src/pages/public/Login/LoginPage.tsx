@@ -83,7 +83,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="w-full max-w-[420px] py-12">
+        <div className="w-full max-w-[420px] py-1">
             <div className="rounded-2xl border border-border bg-card p-5 shadow-[0_4px_20px_rgba(59,130,246,0.05)] sm:p-8">
                 <div className="mb-8 text-center">
                     <Link

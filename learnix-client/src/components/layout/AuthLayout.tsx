@@ -19,7 +19,7 @@ export function AuthLayout() {
                     {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
                 </button>
             </div>
-            <div className="flex flex-1 items-center justify-center p-4 pt-16 sm:p-8">
+            <div className="flex flex-1 items-center justify-center p-4 pt-14 sm:p-8">
                 <Outlet />
             </div>
         </div>

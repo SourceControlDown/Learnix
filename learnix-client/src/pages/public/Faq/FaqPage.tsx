@@ -40,10 +40,10 @@ export default function FaqPage() {
             <div className="bg-background">
                 {/* Pet-project disclaimer */}
                 <div className="border-b border-warning/30 bg-warning/10">
-                    <div className="mx-auto flex max-w-7xl items-start gap-3 px-6 py-3 text-sm md:items-center">
-                        <FlaskConical className="mt-0.5 size-4 shrink-0 text-warning md:mt-0" />
-                        <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
-                            <div>
+                    <div className="mx-auto flex max-w-7xl items-start gap-4 px-6 py-4 text-base md:items-center">
+                        <FlaskConical className="mt-0.5 size-6 shrink-0 text-warning md:mt-0" />
+                        <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center">
+                            <div className="leading-relaxed">
                                 <span className="font-semibold text-warning">
                                     {t('disclaimer.badge')}:
                                 </span>{' '}
@@ -55,9 +55,9 @@ export default function FaqPage() {
                                 href={GITHUB_URL}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="ml-auto flex shrink-0 items-center gap-1.5 font-medium text-warning hover:underline"
+                                className="ml-auto flex shrink-0 items-center gap-2 font-medium text-warning hover:underline"
                             >
-                                <GitHubIcon className="size-3.5" />
+                                <GitHubIcon className="size-5" />
                                 View source on GitHub ↗
                             </a>
                         </div>
@@ -118,7 +118,7 @@ export default function FaqPage() {
                     <FaqSidebar />
 
                     {/* Content */}
-                    <div className="max-w-3xl space-y-12">
+                    <div className="min-w-0 max-w-3xl space-y-12">
                         <FaqCategory
                             category={
                                 gettingStarted as Parameters<typeof FaqCategory>[0]['category']

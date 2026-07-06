@@ -49,7 +49,7 @@ export function AiChatInput({ onSend, disabled = false }: AiChatInputProps) {
                     onInput={handleInput}
                     placeholder={t('placeholder')}
                     disabled={disabled}
-                    className="flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
+                    className="flex-1 resize-none bg-transparent py-[2px] text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
                 />
                 <button
                     onClick={handleSend}

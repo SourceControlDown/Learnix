@@ -13,6 +13,7 @@
     "retry": "Try again"
   },
   "notFound": "Course not found.",
+  "back": "Back",
   "backToCatalog": "Back to catalog",
   "enroll": {
     "free": "Enroll for Free",

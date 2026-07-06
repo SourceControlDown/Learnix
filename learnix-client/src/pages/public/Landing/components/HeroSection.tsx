@@ -89,7 +89,7 @@ export function HeroSection() {
                                 +85k
                             </div>
                         </div>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col items-center sm:items-start">
                             <div className="flex text-warning">
                                 {[...Array(5)].map((_, i) => (
                                     <svg

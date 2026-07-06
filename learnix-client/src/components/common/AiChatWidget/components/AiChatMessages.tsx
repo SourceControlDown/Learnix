@@ -46,27 +46,47 @@ export function AiChatMessages({
         );
     }
 
-    const streamingMessage: LocalChatMessage | null = isStreaming
-        ? { id: '__streaming__', role: 'assistant', content: streamingContent || ' ' }
-        : null;
+    const isTyping = isStreaming && !streamingContent && !activeToolName;
+    const streamingMessage: LocalChatMessage | null =
+        isStreaming && streamingContent
+            ? { id: '__streaming__', role: 'assistant', content: streamingContent }
+            : null;
 
-    const isEmpty = messages.length === 0 && !streamingMessage;
+    const validMessages = messages.filter((msg) => msg.content.trim().length > 0);
+    const isEmpty = validMessages.length === 0 && !isStreaming;
 
     return (
-        <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-3">
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto overscroll-contain p-3">
             {isEmpty ? (
                 <p className="m-auto px-4 text-center text-xs text-muted-foreground">
                     {t('welcome')}
                 </p>
             ) : (
                 <>
-                    {messages.map((msg) => (
+                    {validMessages.map((msg) => (
                         <AiChatMessage key={msg.id} message={msg} />
                     ))}
                     {activeToolName && (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5 px-2 text-xs text-muted-foreground">
                             <Search size={12} className="animate-pulse" />
                             <span>{getToolLabel(activeToolName)}</span>
+                        </div>
+                    )}
+                    {isTyping && (
+                        <div className="flex justify-start">
+                            <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/50 bg-muted px-4 py-3 shadow-sm">
+                                <span className="inline-flex items-center gap-1">
+                                    <span className="size-1.5 animate-pulse rounded-full bg-foreground/40" />
+                                    <span
+                                        className="size-1.5 animate-pulse rounded-full bg-foreground/40"
+                                        style={{ animationDelay: '0.2s' }}
+                                    />
+                                    <span
+                                        className="size-1.5 animate-pulse rounded-full bg-foreground/40"
+                                        style={{ animationDelay: '0.4s' }}
+                                    />
+                                </span>
+                            </div>
                         </div>
                     )}
                     {streamingMessage && <AiChatMessage message={streamingMessage} isStreaming />}
