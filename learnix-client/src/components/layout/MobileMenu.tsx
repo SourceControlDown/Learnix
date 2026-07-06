@@ -195,7 +195,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
                                                 }
                                             >
                                                 <BookOpen size={20} />
-                                                {t('menuMyLearning')}
+                                                {t('common:navigation.myLearning')}
                                             </NavLink>
                                             <NavLink
                                                 to="/wishlist"
@@ -210,7 +210,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
                                                 }
                                             >
                                                 <Heart size={20} />
-                                                {t('menuWishlist')}
+                                                {t('common:navigation.wishlist')}
                                             </NavLink>
                                             <NavLink
                                                 to="/messages"
@@ -225,7 +225,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
                                                 }
                                             >
                                                 <MessageSquare size={20} />
-                                                {t('menuMessages')}
+                                                {t('common:navigation.messages')}
                                             </NavLink>
                                         </div>
                                     </>
@@ -255,7 +255,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
                                                 onClick={() => setIsOpen(false)}
                                                 className="flex h-11 items-center justify-center rounded-lg border border-border px-4 font-medium transition-colors hover:bg-secondary"
                                             >
-                                                {t('login')}
+                                                {t('common:actions.logIn')}
                                             </Link>
                                             <Link
                                                 to={APP_ROUTES.public.register}
@@ -273,7 +273,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
                                             className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-destructive transition-colors hover:bg-destructive/10"
                                         >
                                             <LogOut size={20} />
-                                            {t('menuSignOut')}
+                                            {t('common:actions.signOut')}
                                         </button>
                                     )}
                                 </div>

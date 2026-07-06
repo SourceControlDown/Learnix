@@ -98,13 +98,13 @@ export default function CourseDetailPage() {
                         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                     >
                         <ArrowLeft className="size-4" />
-                        {t('backToCatalog')}
+                        {t('common:actions.backToCatalog')}
                     </Link>
                 )}
                 <QueryError
                     message={t('error.title')}
                     onRetry={refetchCourse}
-                    retryLabel={t('error.retry')}
+                    retryLabel={t('common:actions.tryAgain')}
                 />
             </div>
         );
@@ -118,7 +118,7 @@ export default function CourseDetailPage() {
                     to={APP_ROUTES.public.courses}
                     className="mt-4 inline-block text-primary hover:underline"
                 >
-                    {t('backToCatalog')}
+                    {t('common:actions.backToCatalog')}
                 </Link>
             </div>
         );
@@ -154,7 +154,7 @@ export default function CourseDetailPage() {
                         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                     >
                         <ArrowLeft className="size-4" />
-                        {t('backToCatalog')}
+                        {t('common:actions.backToCatalog')}
                     </Link>
                 )}
 

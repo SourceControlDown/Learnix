@@ -90,7 +90,7 @@ export function CourseInfoForm({ course, isPending, onSubmit }: Props) {
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="mb-1 block text-sm font-medium text-foreground">
-                        {t('fieldCategory')}
+                        {t('common:general.category')}
                     </label>
                     <select
                         {...register('categoryId')}
@@ -172,7 +172,7 @@ export function CourseInfoForm({ course, isPending, onSubmit }: Props) {
                     disabled={isPending}
                     className="text-success-foreground rounded-lg bg-success px-6 py-2.5 text-sm font-medium transition-colors hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    {isPending ? t('editorUnsaved') : t('btnSave')}
+                    {isPending ? t('editorUnsaved') : t('common:actions.save')}
                 </button>
             </div>
         </form>

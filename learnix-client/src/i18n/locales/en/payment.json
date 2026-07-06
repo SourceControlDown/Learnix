@@ -19,6 +19,5 @@
   "petProjectWarningText": "This is a pet project portfolio application. There is no real payment processing. Please DO NOT enter real credit card information. You can use any fake numbers to proceed (e.g. 16 digits for card, any MM/YY for expiry).",
   "successTitle": "Payment Successful",
   "successMessage": "You have been enrolled in the course.",
-  "courseNotFound": "Course not found.",
-  "backToCatalog": "Back to catalog"
+  "courseNotFound": "Course not found."
 }

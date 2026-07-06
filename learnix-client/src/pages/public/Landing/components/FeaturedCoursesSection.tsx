@@ -42,7 +42,7 @@ export function FeaturedCoursesSection({
                 <QueryError
                     message={t('featuredCourses.error')}
                     onRetry={onRetry}
-                    retryLabel={t('featuredCourses.retry')}
+                    retryLabel={t('common:actions.tryAgain')}
                 />
             );
         }

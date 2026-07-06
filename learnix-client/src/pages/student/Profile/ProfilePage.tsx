@@ -126,7 +126,7 @@ export default function ProfilePage() {
     return (
         <div className="mx-auto max-w-3xl p-4 sm:p-6">
             <h1 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
-                {t('pageTitle')}
+                {t('common:navigation.myProfile')}
             </h1>
 
             <div className="mt-4 space-y-6 sm:mt-6">

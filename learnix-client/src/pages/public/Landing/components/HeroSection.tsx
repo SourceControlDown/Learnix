@@ -51,7 +51,7 @@ export function HeroSection() {
                                 <div className="relative h-full w-8 bg-white/20" />
                             </div>
                             <span className="relative z-10 flex items-center gap-2">
-                                {t('hero.cta.primary')}
+                                {t('common:actions.browseCourses')}
                                 <svg
                                     className="size-4 transition-transform group-hover:translate-x-1"
                                     fill="none"

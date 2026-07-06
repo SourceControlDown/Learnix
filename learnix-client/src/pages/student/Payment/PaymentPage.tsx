@@ -94,7 +94,7 @@ export default function PaymentPage() {
                     to={APP_ROUTES.public.courses}
                     className="mt-4 inline-block text-primary hover:underline"
                 >
-                    {t('backToCatalog')}
+                    {t('common:actions.backToCatalog')}
                 </Link>
             </div>
         );
@@ -110,7 +110,9 @@ export default function PaymentPage() {
                 Back to course
             </Link>
 
-            <h1 className="mb-8 font-heading text-3xl font-bold">{t('title')}</h1>
+            <h1 className="mb-8 font-heading text-3xl font-bold">
+                {t('common:navigation.myLearning')}
+            </h1>
 
             <div className="grid gap-8 md:grid-cols-[1fr_350px]">
                 {/* Left col: Form */}

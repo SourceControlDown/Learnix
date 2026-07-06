@@ -1,11 +1,9 @@
 {
-  "pageTitle": "Messages",
   "instructorPageTitle": "Student Messages",
   "noConversations": "No conversations yet.",
   "noConversationsStudent": "Go to a course and start a conversation with your instructor.",
   "noMessages": "No messages yet. Say hello!",
   "typeMessage": "Type a message...",
-  "send": "Send",
   "unread": "unread",
   "selectConversation": "Select a conversation to start messaging.",
   "loading": "Loading messages...",

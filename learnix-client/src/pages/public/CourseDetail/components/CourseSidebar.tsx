@@ -127,7 +127,7 @@ export function CourseSidebar({
                                 : t('wishlist.saving')
                             : inWishlist
                               ? t('wishlist.saved')
-                              : t('wishlist.save')}
+                              : t('common:actions.save')}
                     </button>
                 )}
 

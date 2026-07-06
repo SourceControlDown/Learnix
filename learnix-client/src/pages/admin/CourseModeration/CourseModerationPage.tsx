@@ -130,23 +130,23 @@ export default function CourseModerationPage() {
         if (!pending) return null;
         if (pending.type === 'publish')
             return {
-                title: t('btnPublish'),
+                title: t('common:actions.publish'),
                 description: t('confirmPublish', { title: pending.course.title }),
-                confirmLabel: t('btnPublish'),
+                confirmLabel: t('common:actions.publish'),
                 variant: 'default',
             };
         if (pending.type === 'unpublish')
             return {
-                title: t('btnUnpublish'),
+                title: t('common:actions.unpublish'),
                 description: t('confirmUnpublish', { title: pending.course.title }),
-                confirmLabel: t('btnUnpublish'),
+                confirmLabel: t('common:actions.unpublish'),
                 variant: 'warning',
             };
         if (pending.type === 'delete')
             return {
-                title: t('btnDeleteCourse'),
+                title: t('common:actions.delete'),
                 description: t('confirmDeleteCourse', { title: pending.course.title }),
-                confirmLabel: t('btnDeleteCourse'),
+                confirmLabel: t('common:actions.delete'),
                 variant: 'destructive',
             };
         if (pending.type === 'recover')
@@ -199,10 +199,10 @@ export default function CourseModerationPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-secondary/50 text-xs uppercase tracking-wider hover:bg-secondary/50">
-                            <TableHead>{t('colCourse')}</TableHead>
-                            <TableHead>{t('colCourseStatus')}</TableHead>
+                            <TableHead>{t('common:general.course')}</TableHead>
+                            <TableHead>{t('common:status.status')}</TableHead>
                             <TableHead>{t('colEnrollments')}</TableHead>
-                            <TableHead>{t('colPrice')}</TableHead>
+                            <TableHead>{t('common:general.price')}</TableHead>
                             <TableHead className="text-right">{t('colActions')}</TableHead>
                         </TableRow>
                     </TableHeader>

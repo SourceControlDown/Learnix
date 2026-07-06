@@ -141,7 +141,7 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
                             className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
                         >
                             <BookOpen size={14} className="text-muted-foreground" />
-                            {t('menuMyLearning')}
+                            {t('common:navigation.myLearning')}
                         </Link>
                         <div className="my-1 border-t border-border" />
                         <button
@@ -150,7 +150,7 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
                             className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                         >
                             <LogOut size={14} />
-                            {t('menuSignOut')}
+                            {t('common:actions.signOut')}
                         </button>
                     </div>
                 </div>
@@ -166,7 +166,11 @@ export function Header() {
     const location = useLocation();
 
     const navItems = [
-        { to: APP_ROUTES.public.courses, label: t('navCourses'), icon: <Compass size={20} /> },
+        {
+            to: APP_ROUTES.public.courses,
+            label: t('common:navigation.courses'),
+            icon: <Compass size={20} />,
+        },
         ...(user?.roles.includes('Instructor')
             ? [
                   {
@@ -260,7 +264,7 @@ export function Header() {
                                 state={{ from: location }}
                                 className="hidden text-sm text-foreground hover:text-primary sm:block"
                             >
-                                {t('login')}
+                                {t('common:actions.logIn')}
                             </Link>
                             <Link
                                 to={APP_ROUTES.public.register}

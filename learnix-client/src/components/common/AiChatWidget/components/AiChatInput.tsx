@@ -54,7 +54,7 @@ export function AiChatInput({ onSend, disabled = false }: AiChatInputProps) {
                 <button
                     onClick={handleSend}
                     disabled={disabled || !value.trim()}
-                    aria-label={t('send')}
+                    aria-label={t('common:actions.send')}
                     className={cn(
                         'shrink-0 rounded-md p-1 transition-colors',
                         'text-muted-foreground hover:text-primary',

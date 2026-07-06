@@ -151,10 +151,10 @@ export default function CoursePlayerPage() {
                         <Link
                             to={APP_ROUTES.student.learnLesson(courseId!, prevLesson.lessonId)}
                             className="inline-flex items-center gap-1.5 rounded-lg p-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:px-4"
-                            title={t('actions.previousLesson')}
+                            title={t('common:actions.previous')}
                         >
                             <ChevronLeft className="size-5" />
-                            <span className="hidden sm:inline">{t('actions.previousLesson')}</span>
+                            <span className="hidden sm:inline">{t('common:actions.previous')}</span>
                         </Link>
                     )}
                 </div>
@@ -175,7 +175,7 @@ export default function CoursePlayerPage() {
                         >
                             {currentLesson.isCompleted && <CheckCircle2 className="size-5" />}
                             {currentLesson.isCompleted
-                                ? t('actions.completed')
+                                ? t('common:status.completed')
                                 : markComplete.isPending
                                   ? 'Saving...'
                                   : t('actions.markComplete')}
@@ -187,7 +187,7 @@ export default function CoursePlayerPage() {
                         currentLesson.isCompleted && (
                             <span className="inline-flex items-center justify-center gap-2 rounded-lg bg-success/15 px-6 py-3 text-sm font-medium text-success">
                                 <CheckCircle2 className="size-5" />
-                                {t('actions.completed')}
+                                {t('common:status.completed')}
                             </span>
                         )}
                 </div>
@@ -198,9 +198,9 @@ export default function CoursePlayerPage() {
                         <Link
                             to={APP_ROUTES.student.learnLesson(courseId!, nextLesson.lessonId)}
                             className="inline-flex items-center gap-1.5 rounded-lg p-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:px-4"
-                            title={t('actions.nextLesson')}
+                            title={t('common:actions.next')}
                         >
-                            <span className="hidden sm:inline">{t('actions.nextLesson')}</span>
+                            <span className="hidden sm:inline">{t('common:actions.next')}</span>
                             <ChevronRight className="size-5" />
                         </Link>
                     ) : progress?.completedLessons === progress?.totalLessons ? (

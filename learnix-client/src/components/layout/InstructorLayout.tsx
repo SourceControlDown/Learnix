@@ -29,7 +29,7 @@ export function InstructorLayout() {
     const navItems = [
         {
             to: APP_ROUTES.instructor.dashboard,
-            label: t('navDashboard'),
+            label: t('common:navigation.dashboard'),
             icon: <LayoutDashboard size={16} />,
             end: true,
         },
@@ -46,7 +46,7 @@ export function InstructorLayout() {
         },
         {
             to: APP_ROUTES.instructor.messages,
-            label: t('navMessages'),
+            label: t('common:navigation.messages'),
             icon: <MessageSquare size={16} />,
             badge:
                 unreadCount > 0 ? (
@@ -86,9 +86,9 @@ export function InstructorLayout() {
             logoNode={InstructorLogo}
             logoText="Learnix"
             navItems={navItems}
-            profileLabel={t('navProfile')}
-            backToLabel={t('navBackToCatalog')}
-            signOutLabel={t('navSignOut')}
+            profileLabel={t('common:navigation.myProfile')}
+            backToLabel={t('common:actions.backToCatalog')}
+            signOutLabel={t('common:actions.signOut')}
             onSignOut={handleSignOut}
         >
             <AiChatWidget />

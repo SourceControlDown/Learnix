@@ -1,21 +1,16 @@
 {
-  "pageTitle": "Мій профіль",
   "sections": {
     "personal": "Особиста інформація",
     "avatar": "Фото профілю",
     "preferences": "Навчальні переваги"
   },
   "fields": {
-    "firstName": "Ім'я",
-    "lastName": "Прізвище",
-    "email": "Email",
     "bio": "Про себе",
     "bioPlaceholder": "Розкажіть іншим трохи про себе..."
   },
   "avatar": {
     "upload": "Завантажити фото",
     "change": "Змінити фото",
-    "remove": "Видалити",
     "uploading": "Завантаження...",
     "hint": "JPG або PNG, макс. 5 МБ",
     "memberSince": "З нами від",
@@ -45,8 +40,7 @@
   },
   "actions": {
     "save": "Зберегти зміни",
-    "saving": "Збереження...",
-    "cancel": "Скасувати"
+    "saving": "Збереження..."
   },
   "messages": {
     "saveSuccess": "Профіль оновлено успішно",
@@ -58,7 +52,6 @@
     "viewAll": "Переглянути всі досягнення →"
   },
   "certificatesNav": {
-    "title": "Сертифікати",
     "desc": "Завантажуйте сертифікати про проходження курсів"
   },
   "becomeInstructorNav": {

@@ -84,7 +84,7 @@ export function AiChatPanel({ isOpen, onClose, isExpanded, onToggleExpand }: AiC
                         </div>
                         <div>
                             <p className="font-heading text-base font-semibold leading-none text-foreground">
-                                {t('title')}
+                                {t('common:navigation.myLearning')}
                             </p>
                             <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                                 <span className="size-2 rounded-full bg-success shadow-[0_0_5px_rgba(var(--success),0.8)]" />

@@ -68,7 +68,7 @@ export default function MessagesPage() {
         <>
             <div className="shrink-0 border-b border-border px-4 py-3">
                 <h1 className="font-heading text-lg font-semibold text-foreground">
-                    {t('pageTitle')}
+                    {t('common:navigation.myProfile')}
                 </h1>
                 <div className="pt-3">
                     <input

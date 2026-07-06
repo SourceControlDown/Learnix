@@ -72,7 +72,7 @@ export function EnrolledCourseCard({ enrollment, className }: EnrolledCourseCard
                         isCompleted ? 'bg-success' : 'bg-primary',
                     )}
                 >
-                    {isCompleted ? t('statusCompleted') : t('statusActive')}
+                    {isCompleted ? t('common:status.completed') : t('statusActive')}
                 </span>
             </div>
 
@@ -87,7 +87,7 @@ export function EnrolledCourseCard({ enrollment, className }: EnrolledCourseCard
                     </p>
                     {isCompleted && enrollment.completedAt && (
                         <p>
-                            {t('completedOn')}{' '}
+                            {t('common:status.completed')}{' '}
                             {new Date(enrollment.completedAt).toLocaleDateString()}
                         </p>
                     )}

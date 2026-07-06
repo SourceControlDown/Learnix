@@ -1,5 +1,56 @@
 {
   "errorBoundaryTitle": "Щось пішло не так",
   "errorBoundarySubtitle": "Сталася неочікувана помилка. Будь ласка, оновіть сторінку.",
-  "errorBoundaryRefresh": "Оновити сторінку"
+  "errorBoundaryRefresh": "Оновити сторінку",
+  "actions": {
+    "cancel": "Скасувати",
+    "save": "Зберегти",
+    "delete": "Видалити",
+    "edit": "Редагувати",
+    "remove": "Вилучити",
+    "send": "Надіслати",
+    "publish": "Опублікувати",
+    "unpublish": "Зняти з публікації",
+    "continue": "Продовжити",
+    "tryAgain": "Спробувати ще раз",
+    "backToCatalog": "Назад до каталогу",
+    "previous": "Попередня",
+    "next": "Наступна",
+    "logIn": "Увійти",
+    "signOut": "Вийти",
+    "browseCourses": "Переглядати курси"
+  },
+  "status": {
+    "status": "Статус",
+    "completed": "Завершено",
+    "failed": "Не вдалося",
+    "published": "Опубліковано",
+    "draft": "Чернетка",
+    "archived": "В архіві",
+    "correct": "Правильно",
+    "passed": "Складено"
+  },
+  "navigation": {
+    "courses": "Курси",
+    "dashboard": "Панель управління",
+    "myProfile": "Мій профіль",
+    "myLearning": "Моє навчання",
+    "wishlist": "Список бажань",
+    "notifications": "Сповіщення",
+    "messages": "Повідомлення",
+    "certificates": "Сертифікати",
+    "allCourses": "Всі курси"
+  },
+  "general": {
+    "course": "Курс",
+    "category": "Категорія",
+    "date": "Дата",
+    "price": "Ціна",
+    "email": "Email",
+    "firstName": "Ім'я",
+    "lastName": "Прізвище",
+    "video": "Відео",
+    "article": "Стаття",
+    "test": "ТЕСТ"
+  }
 }

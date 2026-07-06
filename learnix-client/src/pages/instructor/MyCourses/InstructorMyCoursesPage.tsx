@@ -88,9 +88,9 @@ export default function InstructorMyCoursesPage() {
                   variant: 'warning' as const,
               }
             : {
-                  title: t('btnDelete'),
+                  title: t('common:actions.delete'),
                   description: t('confirmDelete', { title: pending.course.title }),
-                  confirmLabel: t('btnDelete'),
+                  confirmLabel: t('common:actions.delete'),
                   variant: 'destructive' as const,
               }
         : null;
@@ -126,8 +126,8 @@ export default function InstructorMyCoursesPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-secondary/50 hover:bg-secondary/50">
-                            <TableHead className="w-1/2">{t('colCourse')}</TableHead>
-                            <TableHead>{t('colStatus')}</TableHead>
+                            <TableHead className="w-1/2">{t('common:general.course')}</TableHead>
+                            <TableHead>{t('common:status.status')}</TableHead>
                             <TableHead>{t('colStudents')}</TableHead>
                             <TableHead className="text-right">{t('colActions')}</TableHead>
                         </TableRow>
@@ -215,8 +215,8 @@ export default function InstructorMyCoursesPage() {
                         page={currentPage}
                         totalPages={totalPages}
                         onChange={(p) => setSkip((p - 1) * pageSize)}
-                        prevLabel={t('paginationPrev')}
-                        nextLabel={t('paginationNext')}
+                        prevLabel={t('common:actions.previous')}
+                        nextLabel={t('common:actions.next')}
                     />
                 </div>
             </div>

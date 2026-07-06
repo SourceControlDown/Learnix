@@ -93,7 +93,7 @@ export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel, onDirty
                     onClick={onCancel}
                     className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-secondary"
                 >
-                    {t('btnCancel')}
+                    {t('common:actions.cancel')}
                 </button>
                 <button
                     type="submit"

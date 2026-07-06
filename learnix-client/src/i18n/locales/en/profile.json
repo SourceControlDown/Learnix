@@ -1,21 +1,16 @@
 {
-  "pageTitle": "My Profile",
   "sections": {
     "personal": "Personal Information",
     "avatar": "Profile Photo",
     "preferences": "Learning Preferences"
   },
   "fields": {
-    "firstName": "First Name",
-    "lastName": "Last Name",
-    "email": "Email",
     "bio": "Bio",
     "bioPlaceholder": "Tell others a bit about yourself..."
   },
   "avatar": {
     "upload": "Upload Photo",
     "change": "Change Photo",
-    "remove": "Remove",
     "uploading": "Uploading...",
     "hint": "JPG or PNG, max 5 MB",
     "memberSince": "Member since",
@@ -45,8 +40,7 @@
   },
   "actions": {
     "save": "Save Changes",
-    "saving": "Saving...",
-    "cancel": "Cancel"
+    "saving": "Saving..."
   },
   "messages": {
     "saveSuccess": "Profile updated successfully",
@@ -58,7 +52,6 @@
     "viewAll": "View all achievements →"
   },
   "certificatesNav": {
-    "title": "Certificates",
     "desc": "Download your course completion certificates"
   },
   "becomeInstructorNav": {

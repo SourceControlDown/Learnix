@@ -193,7 +193,7 @@ export default function LoginPage() {
                         disabled={isSubmitting}
                         className="mt-2 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        {isSubmitting ? t('login.submitting') : t('login.submit')}
+                        {isSubmitting ? t('login.submitting') : t('common:actions.logIn')}
                     </button>
                 </form>
 

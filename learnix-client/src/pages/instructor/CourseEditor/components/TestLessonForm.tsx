@@ -178,7 +178,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
                     onClick={onCancel}
                     className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-secondary"
                 >
-                    {t('btnCancel')}
+                    {t('common:actions.cancel')}
                 </button>
                 <button
                     type="submit"

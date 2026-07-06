@@ -145,7 +145,7 @@ export default function RegisterPage() {
                         <FormInput
                             id="firstName"
                             autoComplete="given-name"
-                            label={t('register.firstName.label')}
+                            label={t('common:general.firstName')}
                             placeholder={t('register.firstName.placeholder')}
                             error={errors.firstName?.message}
                             className="border-border px-3.5 py-2.5 focus:border-primary focus:ring-primary/10"
@@ -155,7 +155,7 @@ export default function RegisterPage() {
                         <FormInput
                             id="lastName"
                             autoComplete="family-name"
-                            label={t('register.lastName.label')}
+                            label={t('common:general.lastName')}
                             placeholder={t('register.lastName.placeholder')}
                             error={errors.lastName?.message}
                             className="border-border px-3.5 py-2.5 focus:border-primary focus:ring-primary/10"
@@ -253,7 +253,7 @@ export default function RegisterPage() {
                         state={{ from: (location.state as LocationStateWithFrom | null)?.from }}
                         className="font-medium text-primary hover:underline"
                     >
-                        {t('register.login')}
+                        {t('common:actions.logIn')}
                     </Link>
                 </p>
             </div>

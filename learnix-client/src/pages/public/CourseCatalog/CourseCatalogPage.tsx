@@ -89,7 +89,7 @@ export default function CourseCatalogPage() {
                     {/* Page title */}
                     <div className="mb-6 flex flex-col items-center justify-between gap-2 text-center md:flex-row md:items-end md:justify-start md:gap-4 md:text-left">
                         <h1 className="font-heading text-3xl font-bold md:text-4xl">
-                            {t('pageTitle')}
+                            {t('common:navigation.myProfile')}
                         </h1>
                         <p className="text-muted-foreground md:pb-1">
                             {debouncedSearch
@@ -191,7 +191,7 @@ export default function CourseCatalogPage() {
                                 <QueryError
                                     message={t('error.title')}
                                     onRetry={refetch}
-                                    retryLabel={t('error.retry')}
+                                    retryLabel={t('common:actions.tryAgain')}
                                 />
                             ) : (
                                 <div

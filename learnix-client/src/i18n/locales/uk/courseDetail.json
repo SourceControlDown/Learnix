@@ -7,16 +7,16 @@
     "lessonCount_one": "{{count}} урок",
     "lessonCount_few": "{{count}} уроки",
     "lessonCount_many": "{{count}} уроків",
-    "lessonTypes": { "Video": "Відео", "Post": "Стаття", "Test": "Тест" },
+    "lessonTypes": {
+      "Test": "Тест"
+    },
     "empty": "Зміст курсу ще не додано"
   },
   "error": {
-    "title": "Не вдалося завантажити курс",
-    "retry": "Спробувати знову"
+    "title": "Не вдалося завантажити курс"
   },
   "notFound": "Курс не знайдено.",
   "back": "Назад",
-  "backToCatalog": "Назад до каталогу",
   "enroll": {
     "free": "Записатись безкоштовно",
     "paid": "Записатись — ${{price}}",
@@ -47,10 +47,13 @@
     "showMore": "Показати більше",
     "showLess": "Показати менше"
   },
-  "instructor": { "label": "Інструктор" },
-  "price": { "free": "Безкоштовно" },
+  "instructor": {
+    "label": "Інструктор"
+  },
+  "price": {
+    "free": "Безкоштовно"
+  },
   "wishlist": {
-    "save": "Зберегти",
     "saved": "Збережено",
     "saving": "Збереження...",
     "removing": "Видалення..."

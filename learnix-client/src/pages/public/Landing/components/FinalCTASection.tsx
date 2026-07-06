@@ -42,7 +42,7 @@ export function FinalCTASection() {
                                         : 'border border-background/30 text-background hover:bg-background/10',
                                 )}
                             >
-                                {t('finalCta.cta.secondary')}
+                                {t('common:actions.browseCourses')}
                             </Link>
                         </div>
                         <p className="mt-6 text-sm text-background/50">

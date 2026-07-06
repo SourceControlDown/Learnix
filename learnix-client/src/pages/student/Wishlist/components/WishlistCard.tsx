@@ -88,7 +88,7 @@ export function WishlistCard({ course, className }: WishlistCardProps) {
                     onClick={handleRemove}
                     disabled={removeMutation.isPending}
                     className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-background/80 backdrop-blur transition-colors hover:bg-destructive hover:text-white disabled:opacity-50"
-                    title={t('remove')}
+                    title={t('common:actions.remove')}
                 >
                     <HeartOff className="size-4" />
                 </button>

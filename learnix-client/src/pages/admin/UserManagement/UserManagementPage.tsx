@@ -203,9 +203,9 @@ export default function UserManagementPage() {
             };
         if (pending.type === 'delete')
             return {
-                title: t('btnDelete'),
+                title: t('common:actions.delete'),
                 description: t('confirmDelete', { name }),
-                confirmLabel: t('btnDelete'),
+                confirmLabel: t('common:actions.delete'),
                 variant: 'destructive',
             };
         if (pending.type === 'recover')
@@ -262,7 +262,7 @@ export default function UserManagementPage() {
                         <TableRow className="bg-secondary/50 text-xs uppercase tracking-wider hover:bg-secondary/50">
                             <TableHead>{t('colUser')}</TableHead>
                             <TableHead>{t('colRoles')}</TableHead>
-                            <TableHead>{t('colStatus')}</TableHead>
+                            <TableHead>{t('common:status.status')}</TableHead>
                             <TableHead>{t('colJoined')}</TableHead>
                             <TableHead className="text-right">{t('colActions')}</TableHead>
                         </TableRow>

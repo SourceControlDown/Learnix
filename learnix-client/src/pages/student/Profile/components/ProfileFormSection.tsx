@@ -33,7 +33,7 @@ export function ProfileFormSection({
         <div className="flex-1 space-y-5 sm:space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
                 <FormInput
-                    label={t('fields.firstName')}
+                    label={t('common:general.firstName')}
                     error={form.formState.errors.firstName?.message}
                     className={cn(
                         inputStyles,
@@ -43,7 +43,7 @@ export function ProfileFormSection({
                 />
 
                 <FormInput
-                    label={t('fields.lastName')}
+                    label={t('common:general.lastName')}
                     error={form.formState.errors.lastName?.message}
                     className={cn(
                         inputStyles,
@@ -55,7 +55,7 @@ export function ProfileFormSection({
 
             <div>
                 <label className="block text-sm font-medium text-foreground">
-                    {t('fields.email')}
+                    {t('common:general.email')}
                 </label>
                 <div className="relative mt-1">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
