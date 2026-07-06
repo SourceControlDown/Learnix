@@ -89,13 +89,13 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
-            <button
-                type="button"
-                onClick={() => setOpen((prev) => !prev)}
+            <Link
+                to={APP_ROUTES.student.profile}
+                onClick={() => setOpen(false)}
                 className="hidden items-center transition-opacity hover:opacity-80 sm:flex"
             >
                 {avatarContent}
-            </button>
+            </Link>
 
             <Link
                 to={APP_ROUTES.student.profile}
@@ -265,7 +265,7 @@ export function Header() {
                             <Link
                                 to={APP_ROUTES.public.register}
                                 state={{ from: location }}
-                                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:px-4 sm:py-2 sm:text-sm"
+                                className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:px-4 sm:py-2 sm:text-sm"
                             >
                                 {t('getStarted')}
                             </Link>
