@@ -56,11 +56,34 @@ env:
   NODE_VERSION: '20'
 
 jobs:
+  # 0. Detect changes to run jobs conditionally
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'Learnix.Backend/**'
+              - 'infrastructure/**'
+              - '.github/workflows/deploy.yml'
+            frontend:
+              - 'learnix-client/**'
+              - '.github/workflows/deploy.yml'
+
   # 1. Build & push API Docker image to ACR or Docker Hub
   build-api:
     name: Build API → ACR or Docker Hub
     runs-on: ubuntu-latest
     environment: Production
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
     outputs:
       image-tag: ${{ steps.meta.outputs.version }}
 
@@ -110,7 +133,8 @@ jobs:
     name: Provision, Migrate & Deploy API
     runs-on: ubuntu-latest
     environment: Production
-    needs: [build-api]
+    needs: [changes, build-api]
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
 
     steps:
     - uses: actions/checkout@v4
@@ -247,7 +271,19 @@ jobs:
     name: Deploy Frontend → Static Web Apps
     runs-on: ubuntu-latest
     environment: Production
-    needs: deploy-backend
+    needs: [changes, deploy-backend]
+    # Frontend deployment logic:
+    # 1. We must use `always()`, otherwise GitHub skips this job automatically if `deploy-backend` was skipped.
+    # 2. The frontend must have changes (`frontend == 'true'`), otherwise we do not build it.
+    # 3. CRITICAL: If the backend is being deployed, it MUST succeed (`success`). If the backend fails (`failure`), the frontend is not deployed.
+    #    The frontend is only deployed if the backend is successful (`success`) OR if the backend was completely skipped due to lack of changes (`skipped` + `backend != 'true'`).
+    if: |
+      always() &&
+      (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') &&
+      (
+        needs.deploy-backend.result == 'success' || 
+        (needs.deploy-backend.result == 'skipped' && needs.changes.outputs.backend != 'true' && github.event_name != 'workflow_dispatch')
+      )
 
     steps:
     - uses: actions/checkout@v4
@@ -283,7 +319,13 @@ jobs:
     name: Update README with Live URL
     runs-on: ubuntu-latest
     environment: Production
-    needs: deploy-frontend
+    needs: [changes, deploy-frontend]
+    if: |
+      always() &&
+      (needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch') &&
+      needs.deploy-frontend.result == 'success'
+    permissions:
+      contents: write
 
     steps:
     - uses: actions/checkout@v4
