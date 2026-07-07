@@ -3,13 +3,13 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Heart, LogOut, Menu, MessageSquare, Moon, Sun, User, X } from 'lucide-react';
+import { BookOpen, Heart, LogOut, Menu, MessageSquare, User, X } from 'lucide-react';
 import { authApi } from '@/api/auth.api';
 import { LanguageSwitcher } from '@/components/common/ui/LanguageSwitcher';
 import { Logo } from '@/components/common/ui/Logo';
+import { ThemeSwitcher } from '@/components/common/ui/ThemeSwitcher';
 import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
-import { useThemeStore } from '@/store/theme.store';
 import { cn } from '@/utils/cn';
 
 interface NavItem {
@@ -27,7 +27,6 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
     const user = useAuthStore((s) => s.user);
     const { logout } = useAuthStore();
-    const { theme, toggleTheme } = useThemeStore();
     const location = useLocation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -234,15 +233,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
                                 <div className="my-6 border-t border-border" />
 
                                 <div className="space-y-1">
-                                    <button
-                                        type="button"
-                                        onClick={toggleTheme}
-                                        className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground"
-                                    >
-                                        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                                        {t('menuTheme')}
-                                    </button>
-
+                                    <ThemeSwitcher variant="mobileMenu" />
                                     <LanguageSwitcher variant="mobileMenu" />
                                 </div>
 

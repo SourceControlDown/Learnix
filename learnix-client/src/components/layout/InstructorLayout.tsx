@@ -81,7 +81,7 @@ export function InstructorLayout() {
 
     return (
         <DashboardLayout
-            roleLabel="Instructor"
+            roleLabel={t('common:roles.instructor')}
             themeColor="primary"
             logoNode={InstructorLogo}
             logoText="Learnix"

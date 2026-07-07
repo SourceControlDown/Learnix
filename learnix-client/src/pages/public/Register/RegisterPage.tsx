@@ -1,15 +1,16 @@
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { GoogleLogin } from '@react-oauth/google';
 import { useMutation } from '@tanstack/react-query';
 import { CheckCircle2, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 import { type RegisterRequest, authApi } from '@/api/auth.api';
 import { AuthCard } from '@/components/common/auth/AuthCard';
+import { AuthDivider } from '@/components/common/auth/AuthDivider';
 import { AuthFooter } from '@/components/common/auth/AuthFooter';
 import { AuthHeader } from '@/components/common/auth/AuthHeader';
+import { GoogleAuthButton } from '@/components/common/auth/GoogleAuthButton';
 import { FormErrorAlert } from '@/components/common/form/FormErrorAlert';
 import { FormInput } from '@/components/common/form/FormInput';
 import { PasswordInput } from '@/components/common/form/PasswordInput';
@@ -61,7 +62,6 @@ function PasswordRule({ met, label }: PasswordRuleProps) {
  */
 export default function RegisterPage() {
     const { t } = useTranslation('auth');
-    const navigate = useNavigate();
     const location = useLocation();
     const setAccessToken = useAuthStore((s) => s.setAccessToken);
     const setUser = useAuthStore((s) => s.setUser);
@@ -95,13 +95,12 @@ export default function RegisterPage() {
         try {
             const { confirmPassword: _, ...payload } = data;
             const response = await mutateAsync(payload);
-            navigate(APP_ROUTES.public.verifyEmail, { state: { email: data.email } });
 
-            setTimeout(() => {
-                setAccessToken(response.accessToken);
-                const user = parseAccessToken(response.accessToken);
-                if (user) setUser({ ...user, avatarUrl: response.avatarUrl });
-            }, 0);
+            // Set auth state immediately. RequireGuest will detect the unverified user
+            // and automatically redirect them to /verify-email.
+            setAccessToken(response.accessToken);
+            const user = parseAccessToken(response.accessToken);
+            if (user) setUser({ ...user, avatarUrl: response.avatarUrl });
         } catch (err) {
             handleFormError(err, setError, t('register.errors.fallback'), REGISTER_FIELD_MAP);
         }
@@ -111,7 +110,7 @@ export default function RegisterPage() {
         <AuthCard className="max-w-[480px]">
             <AuthHeader title={t('register.title')} subtitle={t('register.subtitle')} />
 
-            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-1">
                 <FormErrorAlert message={errors.root?.message} />
 
                 <div className="grid grid-cols-2 gap-4">
@@ -199,26 +198,13 @@ export default function RegisterPage() {
                 </Button>
             </form>
 
-            <div className="my-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs text-muted-foreground">{t('register.divider')}</span>
-                <div className="h-px flex-1 bg-border" />
-            </div>
+            <AuthDivider text={t('register.divider')} />
 
-            <div className="mx-auto flex w-fit justify-center">
-                <GoogleLogin
-                    onSuccess={(response) => {
-                        if (response.credential) {
-                            onGoogleCredential(response.credential);
-                        }
-                    }}
-                    onError={() => toast.error(t('register.googleError'))}
-                    theme="outline"
-                    size="large"
-                    shape="rectangular"
-                    text="signup_with"
-                />
-            </div>
+            <GoogleAuthButton
+                text={t('login.google')}
+                onSuccess={onGoogleCredential}
+                onError={() => toast.error(t('register.googleError'))}
+            />
 
             <AuthFooter
                 text={t('register.hasAccount')}

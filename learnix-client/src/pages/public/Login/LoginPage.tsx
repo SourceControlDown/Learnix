@@ -1,17 +1,19 @@
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { GoogleLogin } from '@react-oauth/google';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { type LoginRequest, authApi } from '@/api/auth.api';
 import { AuthCard } from '@/components/common/auth/AuthCard';
+import { AuthDivider } from '@/components/common/auth/AuthDivider';
 import { AuthFooter } from '@/components/common/auth/AuthFooter';
 import { AuthHeader } from '@/components/common/auth/AuthHeader';
+import { GoogleAuthButton } from '@/components/common/auth/GoogleAuthButton';
 import { FormErrorAlert } from '@/components/common/form/FormErrorAlert';
 import { FormInput } from '@/components/common/form/FormInput';
 import { PasswordInput } from '@/components/common/form/PasswordInput';
+import { TextLink } from '@/components/common/ui/TextLink';
 import { Button } from '@/components/ui/button';
 import { AUTH_LIMITS } from '@/const/auth.constants';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
@@ -80,7 +82,7 @@ export default function LoginPage() {
         <AuthCard>
             <AuthHeader title={t('login.title')} subtitle={t('login.subtitle')} />
 
-            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-1">
                 <FormErrorAlert message={errors.root?.message} />
 
                 <FormInput
@@ -95,52 +97,38 @@ export default function LoginPage() {
                     {...register('email', { onChange: () => clearErrors('root') })}
                 />
 
-                <div>
-                    <div className="mb-1.5 flex items-center justify-end">
-                        <Link
-                            to={APP_ROUTES.public.forgotPassword}
-                            className="text-xs text-primary hover:underline"
-                        >
+                <PasswordInput
+                    id="password"
+                    autoComplete="current-password"
+                    variant="auth"
+                    label={t('login.password.label')}
+                    labelRightAction={
+                        <TextLink to={APP_ROUTES.public.forgotPassword} className="text-sm">
                             {t('login.forgotPassword')}
-                        </Link>
-                    </div>
-                    <PasswordInput
-                        id="password"
-                        autoComplete="current-password"
-                        variant="auth"
-                        label={t('login.password.label')}
-                        placeholder={t('login.password.placeholder')}
-                        error={errors.password}
-                        maxLength={AUTH_LIMITS.PASSWORD_MAX}
-                        {...register('password', { onChange: () => clearErrors('root') })}
-                    />
-                </div>
+                        </TextLink>
+                    }
+                    placeholder={t('login.password.placeholder')}
+                    error={errors.password}
+                    maxLength={AUTH_LIMITS.PASSWORD_MAX}
+                    {...register('password', { onChange: () => clearErrors('root') })}
+                />
 
-                <Button type="submit" disabled={isSubmitting} className="mt-2 w-full">
+                <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="mt-4 w-full bg-primary transition-all hover:scale-[1.01] hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
+                >
                     {isSubmitting ? t('login.submitting') : t('common:actions.logIn')}
                 </Button>
             </form>
 
-            <div className="my-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs text-muted-foreground">{t('login.divider')}</span>
-                <div className="h-px flex-1 bg-border" />
-            </div>
+            <AuthDivider text={t('login.divider')} />
 
-            <div className="mx-auto flex w-fit justify-center">
-                <GoogleLogin
-                    onSuccess={(response) => {
-                        if (response.credential) {
-                            onGoogleCredential(response.credential);
-                        }
-                    }}
-                    onError={() => toast.error(t('login.googleError'))}
-                    theme="outline"
-                    size="large"
-                    shape="rectangular"
-                    text="continue_with"
-                />
-            </div>
+            <GoogleAuthButton
+                text={t('login.google')}
+                onSuccess={onGoogleCredential}
+                onError={() => toast.error(t('login.googleError'))}
+            />
 
             <AuthFooter
                 text={t('login.noAccount')}

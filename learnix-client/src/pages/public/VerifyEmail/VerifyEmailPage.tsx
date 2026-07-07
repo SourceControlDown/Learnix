@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { ArrowRight, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { authApi } from '@/api/auth.api';
+import { FormInput } from '@/components/common/form/FormInput';
 import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/utils/cn';
@@ -21,6 +22,7 @@ export default function VerifyEmailPage() {
     const location = useLocation();
     const setAccessToken = useAuthStore((s) => s.setAccessToken);
     const setUser = useAuthStore((s) => s.setUser);
+    const user = useAuthStore((s) => s.user);
 
     const from = (location.state as { from?: Location })?.from?.pathname;
 
@@ -140,12 +142,11 @@ export default function VerifyEmailPage() {
                         {t('verify.enterEmailTitle', 'Verify your email')}
                     </h1>
                     <div className="space-y-4">
-                        <input
+                        <FormInput
                             type="email"
                             placeholder={t('verify.emailPlaceholder', 'Email address')}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full rounded-lg border border-border bg-background px-4 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
                         />
                         <button
                             onClick={() => {
@@ -240,14 +241,16 @@ export default function VerifyEmailPage() {
                     </button>
                 </div>
 
-                <div className="mt-6 border-t border-border pt-6">
-                    <Link
-                        to={APP_ROUTES.public.login}
-                        className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                        {t('verify.backToLogin', 'Back to log in')}
-                    </Link>
-                </div>
+                {!user && (
+                    <div className="mt-6 border-t border-border pt-6">
+                        <Link
+                            to={APP_ROUTES.public.login}
+                            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                            {t('verify.backToLogin', 'Back to log in')}
+                        </Link>
+                    </div>
+                )}
             </div>
         </div>
     );

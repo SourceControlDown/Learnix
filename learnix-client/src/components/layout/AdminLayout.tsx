@@ -82,7 +82,7 @@ export function AdminLayout() {
 
     return (
         <DashboardLayout
-            roleLabel="Admin"
+            roleLabel={t('common:roles.admin')}
             themeColor="destructive"
             logoNode={AdminLogo}
             logoText="Learnix Admin"

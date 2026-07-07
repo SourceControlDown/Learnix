@@ -7,7 +7,7 @@ import { AUTH_LIMITS } from '@/const/auth.constants';
  */
 export const loginSchema = z.object({
     email: z.string().trim().min(1).email().max(AUTH_LIMITS.EMAIL_MAX),
-    password: z.string().min(1).max(AUTH_LIMITS.PASSWORD_MAX),
+    password: z.string().min(1, { message: "Пароль є обов'язковим" }).max(AUTH_LIMITS.PASSWORD_MAX),
 });
 
 export const registerSchema = z

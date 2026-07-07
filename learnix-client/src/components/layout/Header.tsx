@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Compass, GraduationCap, LogOut, Moon, Shield, Sun, User } from 'lucide-react';
+import { BookOpen, Compass, GraduationCap, LogOut, Shield, User } from 'lucide-react';
 import { authApi } from '@/api/auth.api';
 import { LanguageSwitcher } from '@/components/common/ui/LanguageSwitcher';
 import { Logo } from '@/components/common/ui/Logo';
+import { ThemeSwitcher } from '@/components/common/ui/ThemeSwitcher';
 import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
-import { useThemeStore } from '@/store/theme.store';
 import { cn } from '@/utils/cn';
 import { MessagesButton } from './MessagesButton';
 import { MobileMenu } from './MobileMenu';
@@ -162,7 +162,6 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
 export function Header() {
     const { t } = useTranslation('header');
     const user = useAuthStore((s) => s.user);
-    const { theme, toggleTheme } = useThemeStore();
     const location = useLocation();
 
     const navItems = [
@@ -230,18 +229,7 @@ export function Header() {
                     <div className="hidden sm:block">
                         <LanguageSwitcher />
                     </div>
-                    <button
-                        type="button"
-                        onClick={toggleTheme}
-                        aria-label="Toggle theme"
-                        className="hidden size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:grid"
-                    >
-                        {theme === 'dark' ? (
-                            <Sun className="size-4" />
-                        ) : (
-                            <Moon className="size-4" />
-                        )}
-                    </button>
+                    <ThemeSwitcher className="hidden sm:grid" />
                     {user ? (
                         <>
                             <div className="hidden sm:block">

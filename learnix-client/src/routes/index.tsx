@@ -162,7 +162,7 @@ const router = createBrowserRouter([
             { path: 'courses/new', element: wrap(<CourseEditorPage />) },
             { path: APP_ROUTES.instructor.editCoursePattern, element: wrap(<CourseEditorPage />) },
             { path: 'earnings', element: wrap(<InstructorEarningsPage />) },
-            { path: 'messages', element: wrap(<MessagesPage />) },
+            { path: 'messages', element: wrap(<MessagesPage displayTitle={false} />) },
         ],
     },
     {
@@ -175,7 +175,7 @@ const router = createBrowserRouter([
             { path: 'applications', element: wrap(<InstructorApplicationsPage />) },
             { path: 'payments', element: wrap(<PaymentHistoryPage />) },
             { path: 'categories', element: wrap(<CategoryManagementPage />) },
-            { path: 'messages', element: wrap(<MessagesPage />) },
+            { path: 'messages', element: wrap(<MessagesPage displayTitle={false} />) },
         ],
     },
     {

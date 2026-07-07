@@ -2,10 +2,10 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { ArrowLeft, LogOut, Menu, Moon, Sun, User, X } from 'lucide-react';
+import { ArrowLeft, LogOut, Menu, User, X } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/common/ui/LanguageSwitcher';
+import { ThemeSwitcher } from '@/components/common/ui/ThemeSwitcher';
 import { APP_ROUTES } from '@/routes/paths';
-import { useThemeStore } from '@/store/theme.store';
 import { cn } from '@/utils/cn';
 
 export interface DashboardNavItem {
@@ -41,7 +41,6 @@ export function DashboardLayout({
     onSignOut,
     children,
 }: DashboardLayoutProps) {
-    const { theme, toggleTheme } = useThemeStore();
     const location = useLocation();
     const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -154,14 +153,7 @@ export function DashboardLayout({
                         </nav>
                         <div className="mt-4 flex items-center justify-between px-2">
                             <LanguageSwitcher />
-                            <button
-                                type="button"
-                                onClick={toggleTheme}
-                                aria-label="Toggle theme"
-                                className="grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                            >
-                                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                            </button>
+                            <ThemeSwitcher />
                         </div>
                     </div>
                 </aside>

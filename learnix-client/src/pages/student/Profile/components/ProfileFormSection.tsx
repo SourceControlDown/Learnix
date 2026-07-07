@@ -47,17 +47,18 @@ export function ProfileFormSection({
                     {t('common:general.email')}
                 </label>
                 <div className="relative mt-1">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <Mail className="size-4 text-muted-foreground" />
-                    </div>
-                    <input
+                    <FormInput
                         value={user?.email ?? ''}
                         readOnly
+                        variant="muted"
                         className={cn(
-                            'w-full cursor-not-allowed rounded-lg border bg-muted/30 py-2.5 pl-9 pr-9 text-sm text-muted-foreground transition-colors',
+                            'cursor-not-allowed pl-9 pr-9',
                             user?.emailVerified ? 'border-success/50' : 'border-border',
                         )}
                     />
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <Mail className="size-4 text-muted-foreground" />
+                    </div>
                     {user?.emailVerified && (
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                             <div className="flex size-5 items-center justify-center rounded-full bg-success/20">

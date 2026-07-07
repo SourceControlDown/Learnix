@@ -9,7 +9,7 @@ interface AuthHeaderProps {
 
 export function AuthHeader({ title, subtitle }: AuthHeaderProps) {
     return (
-        <div className="mb-8 text-center">
+        <div className="mb-10 text-center">
             <Link
                 to={APP_ROUTES.public.home}
                 className="mb-6 inline-flex items-center gap-2 font-heading font-bold"
@@ -22,7 +22,7 @@ export function AuthHeader({ title, subtitle }: AuthHeaderProps) {
 
             <h1 className="font-heading text-2xl font-bold text-foreground">{title}</h1>
 
-            {subtitle && <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>}
+            {subtitle && <p className="mt-2 text-sm text-foreground/80">{subtitle}</p>}
         </div>
     );
 }

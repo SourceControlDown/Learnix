@@ -42,6 +42,11 @@
     "correct": "Correct",
     "passed": "Passed"
   },
+  "roles": {
+    "admin": "Admin",
+    "instructor": "Instructor",
+    "student": "Student"
+  },
   "navigation": {
     "courses": "Courses",
     "dashboard": "Dashboard",

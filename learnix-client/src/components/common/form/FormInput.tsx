@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import type { FieldError } from 'react-hook-form';
 import { type VariantProps, cva } from 'class-variance-authority';
+import { AlertCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { getFieldErrors } from '@/utils/errors';
 
@@ -14,7 +15,7 @@ const formInputVariants = cva(
                 muted: 'border-transparent bg-muted/30 px-3 py-2.5 hover:border-primary/50 focus:border-primary focus:bg-background focus:ring-primary',
             },
             hasError: {
-                true: 'border-destructive focus:ring-destructive/10',
+                true: 'border-destructive focus:border-destructive focus:ring-destructive/10',
                 false: '',
             },
         },
@@ -27,7 +28,8 @@ const formInputVariants = cva(
 
 interface FormInputProps
     extends React.InputHTMLAttributes<HTMLInputElement>, VariantProps<typeof formInputVariants> {
-    label: string;
+    label?: React.ReactNode;
+    labelRightAction?: React.ReactNode;
     error?: string | FieldError;
     containerClassName?: string;
 }
@@ -37,25 +39,47 @@ interface FormInputProps
  * - ADR-FRONT-FORMS-001: React Hook Form & Lightweight Wrappers
  */
 export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
-    ({ label, error, variant, className, containerClassName, id, ...props }, ref) => {
+    (
+        { label, labelRightAction, error, variant, className, containerClassName, id, ...props },
+        ref,
+    ) => {
         const errorMessages = getFieldErrors(error);
         const hasError = errorMessages.length > 0;
 
         return (
             <div className={cn('space-y-1', containerClassName)}>
-                <label htmlFor={id} className="text-sm font-medium text-foreground">
-                    {label}
-                </label>
-                <input
-                    id={id}
-                    ref={ref}
-                    className={cn(formInputVariants({ variant, hasError, className }))}
-                    {...props}
-                />
-                {errorMessages.length > 0 && (
-                    <div className="mt-1 space-y-1">
+                {(label || labelRightAction) && (
+                    <div className="flex items-center justify-between">
+                        {label ? (
+                            <label htmlFor={id} className="text-sm font-medium text-foreground">
+                                {label}
+                            </label>
+                        ) : (
+                            <span />
+                        )}
+                        {labelRightAction}
+                    </div>
+                )}
+                <div className="relative">
+                    <input
+                        id={id}
+                        ref={ref}
+                        className={cn(
+                            formInputVariants({ variant, hasError, className }),
+                            hasError && 'pr-10',
+                        )}
+                        {...props}
+                    />
+                    {hasError && (
+                        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-destructive">
+                            <AlertCircle size={18} />
+                        </div>
+                    )}
+                </div>
+                {(errorMessages.length > 0 || variant === 'auth') && (
+                    <div className={cn('mt-1 space-y-1', variant === 'auth' && 'min-h-[20px]')}>
                         {errorMessages.map((msg, idx) => (
-                            <p key={idx} className="text-sm text-destructive">
+                            <p key={idx} className="text-[13px] leading-tight text-destructive">
                                 {msg}
                             </p>
                         ))}

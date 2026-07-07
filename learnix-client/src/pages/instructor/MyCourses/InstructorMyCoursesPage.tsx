@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { ConfirmDialog } from '@/components/common/ui/ConfirmDialog';
 import { Pagination } from '@/components/common/ui/Pagination';
+import { SearchInput } from '@/components/common/ui/SearchInput';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -112,12 +113,12 @@ export default function InstructorMyCoursesPage() {
 
             {/* Search */}
             <div className="mb-4">
-                <input
-                    type="text"
+                <SearchInput
                     placeholder={t('myCoursesSearch')}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full max-w-sm rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    onClear={() => setSearch('')}
+                    containerClassName="max-w-sm"
                 />
             </div>
 

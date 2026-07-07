@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import { CourseCard } from '@/components/common/course/CourseCard';
 import { QueryError } from '@/components/common/system/QueryError';
 import { Pagination } from '@/components/common/ui/Pagination';
+import { SearchInput } from '@/components/common/ui/SearchInput';
 import { PAGINATION } from '@/const/ui.constants';
 import { useCatalogCourses } from '@/hooks/course/useCatalogCourses';
 import { useCategories } from '@/hooks/course/useCategories';
@@ -133,25 +134,14 @@ export default function CourseCatalogPage() {
                         <div>
                             {/* Search + Sort row */}
                             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                                <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                                    <input
-                                        type="text"
-                                        value={searchInput}
-                                        onChange={(e) => setSearchInput(e.target.value)}
-                                        placeholder={t('searchPlaceholder')}
-                                        className="w-full rounded-lg border border-input bg-card px-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                                    />
-                                    {searchInput && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setSearchInput('')}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                        >
-                                            <X className="size-4" />
-                                        </button>
-                                    )}
-                                </div>
+                                <SearchInput
+                                    containerClassName="flex-1"
+                                    value={searchInput}
+                                    onChange={(e) => setSearchInput(e.target.value)}
+                                    onClear={() => setSearchInput('')}
+                                    placeholder={t('searchPlaceholder')}
+                                    className="bg-card py-2.5"
+                                />
                                 <SortDropdown value={sortBy} onChange={setSortBy} />
                             </div>
 
