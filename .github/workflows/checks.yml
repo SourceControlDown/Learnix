@@ -58,7 +58,12 @@ jobs:
 
     # 7. Execute unit tests and collect code coverage
     - name: Test
-      run: dotnet test Learnix.Backend.slnx --no-build --configuration Release --collect:"XPlat Code Coverage" --DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+      run: |
+        dotnet test Learnix.Backend.slnx \
+          --no-build \
+          --configuration Release \
+          --collect:"XPlat Code Coverage" \
+          --settings coverage.runsettings
 
     # 8. Upload coverage results to SonarCloud
     - name: End SonarScanner
