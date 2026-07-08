@@ -1,5 +1,6 @@
 import React, { forwardRef, useState } from 'react';
 import type { FieldError } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -11,7 +12,7 @@ const passwordInputVariants = cva(
         variants: {
             variant: {
                 default: 'border-input py-2 pl-3 focus:ring-ring',
-                auth: 'border-border py-2.5 pl-3.5 focus:border-primary focus:ring-primary/10',
+                auth: 'border-border py-2.5 pl-3.5 placeholder:text-muted-foreground/50 focus:border-primary focus:ring-primary/10',
             },
             hasError: {
                 true: 'border-destructive focus:border-destructive focus:ring-destructive/10',
@@ -33,13 +34,25 @@ interface PasswordInputProps
     labelRightAction?: React.ReactNode;
     error?: string | FieldError;
     containerClassName?: string;
+    hideErrorText?: boolean;
 }
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     (
-        { label, labelRightAction, error, variant, className, containerClassName, id, ...props },
+        {
+            label,
+            labelRightAction,
+            error,
+            hideErrorText,
+            variant,
+            className,
+            containerClassName,
+            id,
+            ...props
+        },
         ref,
     ) => {
+        const { t } = useTranslation('zod');
         const [showPassword, setShowPassword] = useState(false);
         const errorMessages = getFieldErrors(error);
         const hasError = errorMessages.length > 0;
@@ -70,7 +83,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
                         {...props}
                     />
                     {hasError && (
-                        <div className="pointer-events-none absolute right-10 top-1/2 -translate-y-1/2 text-destructive">
+                        <div className="pointer-events-none absolute right-12 top-1/2 -translate-y-1/2 text-destructive">
                             <AlertCircle size={18} />
                         </div>
                     )}
@@ -82,11 +95,11 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                 </div>
-                {(errorMessages.length > 0 || variant === 'auth') && (
+                {!hideErrorText && (errorMessages.length > 0 || variant === 'auth') && (
                     <div className={cn('mt-1 space-y-1', variant === 'auth' && 'min-h-[20px]')}>
                         {errorMessages.map((msg, idx) => (
                             <p key={idx} className="text-[13px] leading-tight text-destructive">
-                                {msg}
+                                {t(msg)}
                             </p>
                         ))}
                     </div>

@@ -10,7 +10,7 @@ import { AuthFooter } from '@/components/common/auth/AuthFooter';
 import { AuthHeader } from '@/components/common/auth/AuthHeader';
 import { FormErrorAlert } from '@/components/common/form/FormErrorAlert';
 import { FormInput } from '@/components/common/form/FormInput';
-import { Button } from '@/components/ui/button';
+import { AsyncButton } from '@/components/ui/async-button';
 import { AUTH_LIMITS } from '@/const/auth.constants';
 import { APP_ROUTES } from '@/routes/paths';
 import { type ForgotPasswordFormData, forgotPasswordSchema } from '@/schemas/auth.schema';
@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
         handleSubmit,
         setError,
         clearErrors,
-        formState: { errors, isSubmitting },
+        formState: { errors, isSubmitting, isSubmitSuccessful },
     } = useForm<ForgotPasswordFormData>({
         resolver: zodResolver(forgotPasswordSchema),
         defaultValues: {
@@ -99,9 +99,16 @@ export default function ForgotPasswordPage() {
                         {...register('email', { onChange: () => clearErrors('root') })}
                     />
 
-                    <Button type="submit" disabled={isSubmitting} className="mt-2 w-full">
-                        {isSubmitting ? t('common:actions.sending') : t('forgotPassword.submit')}
-                    </Button>
+                    <AsyncButton
+                        type="submit"
+                        disabled={isSubmitting}
+                        isLoading={isSubmitting}
+                        isSuccess={isSubmitSuccessful}
+                        loadingText={t('common:actions.sending')}
+                        className="mt-2 w-full"
+                    >
+                        {t('forgotPassword.submit')}
+                    </AsyncButton>
                 </form>
             ) : null}
 

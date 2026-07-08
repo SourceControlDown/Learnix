@@ -5,8 +5,8 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { BookOpen, Heart, LogOut, Menu, MessageSquare, User, X } from 'lucide-react';
 import { authApi } from '@/api/auth.api';
+import { BrandLogo } from '@/components/common/ui/BrandLogo';
 import { LanguageSwitcher } from '@/components/common/ui/LanguageSwitcher';
-import { Logo } from '@/components/common/ui/Logo';
 import { ThemeSwitcher } from '@/components/common/ui/ThemeSwitcher';
 import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
@@ -99,18 +99,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
                             )}
                         >
                             <div className="flex h-16 items-center justify-between border-b border-border px-4 sm:px-6">
-                                <Link
-                                    to={APP_ROUTES.public.home}
-                                    onClick={() => setIsOpen(false)}
-                                    className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
-                                >
-                                    <div className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                                        <Logo className="size-6" />
-                                    </div>
-                                    <span className="font-heading text-lg font-bold tracking-tight">
-                                        Learnix
-                                    </span>
-                                </Link>
+                                <BrandLogo onClick={() => setIsOpen(false)} />
                                 <button
                                     type="button"
                                     onClick={() => setIsOpen(false)}

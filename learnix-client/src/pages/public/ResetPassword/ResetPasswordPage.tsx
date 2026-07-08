@@ -10,7 +10,7 @@ import { AuthFooter } from '@/components/common/auth/AuthFooter';
 import { AuthHeader } from '@/components/common/auth/AuthHeader';
 import { FormErrorAlert } from '@/components/common/form/FormErrorAlert';
 import { PasswordInput } from '@/components/common/form/PasswordInput';
-import { Button } from '@/components/ui/button';
+import { AsyncButton } from '@/components/ui/async-button';
 import { AUTH_LIMITS } from '@/const/auth.constants';
 import { APP_ROUTES } from '@/routes/paths';
 import { type ResetPasswordFormData, resetPasswordSchema } from '@/schemas/auth.schema';
@@ -41,7 +41,7 @@ export default function ResetPasswordPage() {
         handleSubmit,
         setError,
         clearErrors,
-        formState: { errors, isSubmitting },
+        formState: { errors, isSubmitting, isSubmitSuccessful },
     } = useForm<ResetPasswordFormData>({
         resolver: zodResolver(resetPasswordSchema),
     });
@@ -119,9 +119,16 @@ export default function ResetPasswordPage() {
                     {...register('confirmPassword', { onChange: () => clearErrors('root') })}
                 />
 
-                <Button type="submit" disabled={isSubmitting} className="mt-4 w-full">
-                    {isSubmitting ? t('resetPassword.submitting') : t('resetPassword.submit')}
-                </Button>
+                <AsyncButton
+                    type="submit"
+                    disabled={isSubmitting}
+                    isLoading={isSubmitting}
+                    isSuccess={isSubmitSuccessful}
+                    loadingText={t('resetPassword.submitting')}
+                    className="mt-4 w-full"
+                >
+                    {t('resetPassword.submit')}
+                </AsyncButton>
             </form>
 
             <AuthFooter

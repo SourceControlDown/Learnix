@@ -10,7 +10,7 @@ interface AuthFooterProps {
 export function AuthFooter({ text, linkText, linkTo, linkState }: AuthFooterProps) {
     if (text) {
         return (
-            <p className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="mt-5 text-center text-sm text-muted-foreground">
                 {text}{' '}
                 <TextLink to={linkTo} state={linkState}>
                     {linkText}
@@ -20,7 +20,7 @@ export function AuthFooter({ text, linkText, linkTo, linkState }: AuthFooterProp
     }
 
     return (
-        <div className="mt-6 text-center">
+        <div className="mt-5 text-center">
             <TextLink to={linkTo} state={linkState} className="text-sm">
                 {linkText}
             </TextLink>

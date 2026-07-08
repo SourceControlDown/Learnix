@@ -40,7 +40,7 @@ const safeComponents: Components = {
                     style={vscDarkPlus as { [key: string]: CSSProperties }}
                     language={match[1]}
                     PreTag="div"
-                    className="!my-2 max-w-full rounded-md"
+                    className="not-prose !my-2 max-w-full rounded-md"
                     wrapLines={true}
                     wrapLongLines={true}
                     customStyle={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
@@ -67,7 +67,7 @@ interface MarkdownRendererProps {
 
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
     return (
-        <div className={cn('prose prose-neutral dark:prose-invert max-w-none', className)}>
+        <div className={cn('prose prose-neutral max-w-none dark:prose-invert', className)}>
             <Markdown components={safeComponents}>{content}</Markdown>
         </div>
     );

@@ -6,7 +6,7 @@ import { authApi } from '@/api/auth.api';
 import { messagesApi } from '@/api/messages.api';
 import { queryKeys } from '@/api/queryKeys';
 import { AiChatWidget } from '@/components/common/AiChatWidget/AiChatWidget';
-import { Logo } from '@/components/common/ui/Logo';
+import { BrandLogo } from '@/components/common/ui/BrandLogo';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useNotificationsHub } from '@/hooks/realtime/useNotificationsHub';
 import { APP_ROUTES } from '@/routes/paths';
@@ -73,18 +73,13 @@ export function InstructorLayout() {
         navigate(APP_ROUTES.public.login);
     }
 
-    const InstructorLogo = (
-        <div className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Logo className="size-5" />
-        </div>
-    );
+    const InstructorLogo = <BrandLogo iconClassName="size-5" />;
 
     return (
         <DashboardLayout
             roleLabel={t('common:roles.instructor')}
             themeColor="primary"
-            logoNode={InstructorLogo}
-            logoText="Learnix"
+            brandNode={InstructorLogo}
             navItems={navItems}
             profileLabel={t('common:navigation.myProfile')}
             backToLabel={t('common:actions.backToCatalog')}

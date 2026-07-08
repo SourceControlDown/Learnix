@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import type { FieldError } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { AlertCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -11,7 +12,7 @@ const formInputVariants = cva(
         variants: {
             variant: {
                 default: 'border-input px-3 py-2 focus:ring-ring',
-                auth: 'border-border px-3.5 py-2.5 focus:border-primary focus:ring-primary/10',
+                auth: 'border-border px-3.5 py-2.5 placeholder:text-muted-foreground/50 focus:border-primary focus:ring-primary/10',
                 muted: 'border-transparent bg-muted/30 px-3 py-2.5 hover:border-primary/50 focus:border-primary focus:bg-background focus:ring-primary',
             },
             hasError: {
@@ -43,6 +44,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
         { label, labelRightAction, error, variant, className, containerClassName, id, ...props },
         ref,
     ) => {
+        const { t } = useTranslation('zod');
         const errorMessages = getFieldErrors(error);
         const hasError = errorMessages.length > 0;
 
@@ -80,7 +82,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
                     <div className={cn('mt-1 space-y-1', variant === 'auth' && 'min-h-[20px]')}>
                         {errorMessages.map((msg, idx) => (
                             <p key={idx} className="text-[13px] leading-tight text-destructive">
-                                {msg}
+                                {t(msg)}
                             </p>
                         ))}
                     </div>

@@ -14,7 +14,7 @@ import { GoogleAuthButton } from '@/components/common/auth/GoogleAuthButton';
 import { FormErrorAlert } from '@/components/common/form/FormErrorAlert';
 import { FormInput } from '@/components/common/form/FormInput';
 import { PasswordInput } from '@/components/common/form/PasswordInput';
-import { Button } from '@/components/ui/button';
+import { AsyncButton } from '@/components/ui/async-button';
 import { AUTH_LIMITS } from '@/const/auth.constants';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
 import { APP_ROUTES } from '@/routes/paths';
@@ -35,16 +35,18 @@ const REGISTER_FIELD_MAP: ApiFieldMap<RegisterRequest, RegisterFormData> = {
 type PasswordRuleProps = {
     met: boolean;
     label: string;
+    isSubmitted: boolean;
 };
 
-function PasswordRule({ met, label }: PasswordRuleProps) {
+function PasswordRule({ met, label, isSubmitted }: PasswordRuleProps) {
+    const textColor = met
+        ? 'text-success'
+        : isSubmitted
+          ? 'text-destructive'
+          : 'text-muted-foreground';
+
     return (
-        <li
-            className={cn(
-                'flex items-center gap-1.5 text-xs',
-                met ? 'text-success' : 'text-muted-foreground',
-            )}
-        >
+        <li className={cn('flex items-center gap-1.5 text-xs', textColor)}>
             {met ? (
                 <CheckCircle2 className="size-3.5 shrink-0" />
             ) : (
@@ -71,7 +73,7 @@ export default function RegisterPage() {
         handleSubmit,
         control,
         setError,
-        formState: { errors, isSubmitting },
+        formState: { errors, isSubmitting, isSubmitSuccessful, isSubmitted },
     } = useForm<RegisterFormData>({
         resolver: zodResolver(registerSchema),
     });
@@ -149,7 +151,7 @@ export default function RegisterPage() {
                     {...register('email')}
                 />
 
-                <div>
+                <div className="pb-4">
                     <PasswordInput
                         id="password"
                         autoComplete="new-password"
@@ -157,29 +159,32 @@ export default function RegisterPage() {
                         label={t('register.password.label')}
                         placeholder={t('register.password.placeholder')}
                         error={errors.password}
+                        hideErrorText={true}
                         maxLength={AUTH_LIMITS.PASSWORD_MAX}
                         {...register('password')}
                     />
-                    {passwordValue && (
-                        <ul className="mt-2 space-y-1 pl-0.5">
-                            <PasswordRule
-                                met={passwordRules.minLength}
-                                label={t('register.password.requirements.minLength')}
-                            />
-                            <PasswordRule
-                                met={passwordRules.uppercase}
-                                label={t('register.password.requirements.uppercase')}
-                            />
-                            <PasswordRule
-                                met={passwordRules.lowercase}
-                                label={t('register.password.requirements.lowercase')}
-                            />
-                            <PasswordRule
-                                met={passwordRules.digit}
-                                label={t('register.password.requirements.digit')}
-                            />
-                        </ul>
-                    )}
+                    <ul className="mt-3 space-y-1.5 pl-1">
+                        <PasswordRule
+                            met={passwordRules.minLength}
+                            label={t('register.password.requirements.minLength')}
+                            isSubmitted={isSubmitted}
+                        />
+                        <PasswordRule
+                            met={passwordRules.uppercase}
+                            label={t('register.password.requirements.uppercase')}
+                            isSubmitted={isSubmitted}
+                        />
+                        <PasswordRule
+                            met={passwordRules.lowercase}
+                            label={t('register.password.requirements.lowercase')}
+                            isSubmitted={isSubmitted}
+                        />
+                        <PasswordRule
+                            met={passwordRules.digit}
+                            label={t('register.password.requirements.digit')}
+                            isSubmitted={isSubmitted}
+                        />
+                    </ul>
                 </div>
 
                 <PasswordInput
@@ -193,9 +198,16 @@ export default function RegisterPage() {
                     {...register('confirmPassword')}
                 />
 
-                <Button type="submit" disabled={isSubmitting} className="mt-2 w-full">
-                    {isSubmitting ? t('register.submitting') : t('register.submit')}
-                </Button>
+                <AsyncButton
+                    type="submit"
+                    disabled={isSubmitting}
+                    isLoading={isSubmitting}
+                    isSuccess={isSubmitSuccessful}
+                    loadingText={t('register.submitting')}
+                    className="mt-2 w-full"
+                >
+                    {t('register.submit')}
+                </AsyncButton>
             </form>
 
             <AuthDivider text={t('register.divider')} />

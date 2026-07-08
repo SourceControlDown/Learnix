@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { ArrowRight, Loader2, Mail } from 'lucide-react';
+import { ArrowRight, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { authApi } from '@/api/auth.api';
+import { AuthCard } from '@/components/common/auth/AuthCard';
+import { AuthFooter } from '@/components/common/auth/AuthFooter';
 import { FormInput } from '@/components/common/form/FormInput';
+import { AsyncButton } from '@/components/ui/async-button';
 import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/utils/cn';
@@ -37,7 +40,11 @@ export default function VerifyEmailPage() {
         return () => clearTimeout(timer);
     }, [resendCooldown]);
 
-    const { mutate: verify, isPending: isVerifying } = useMutation({
+    const {
+        mutate: verify,
+        isPending: isVerifying,
+        isSuccess: isVerifySuccess,
+    } = useMutation({
         mutationFn: (tokenOverride?: string | void) =>
             authApi.verifyEmail({
                 email,
@@ -59,7 +66,11 @@ export default function VerifyEmailPage() {
         },
     });
 
-    const { mutate: resendEmail, isPending: isResending } = useMutation({
+    const {
+        mutate: resendEmail,
+        isPending: isResending,
+        isSuccess: isResendSuccess,
+    } = useMutation({
         mutationFn: () => authApi.resendConfirmation({ email }),
         onSuccess: () => {
             setResendCooldown(60);
@@ -136,8 +147,8 @@ export default function VerifyEmailPage() {
 
     if (!email) {
         return (
-            <div className="flex min-h-[calc(100vh-2rem)] flex-col items-center justify-center px-4 pb-20 sm:pb-28">
-                <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-[0_4px_20px_rgba(59,130,246,0.05)]">
+            <div className="flex w-full flex-1 items-center justify-center px-4 py-12 md:py-24">
+                <AuthCard className="max-w-[420px]">
                     <h1 className="mb-4 text-center font-heading text-2xl font-bold text-foreground">
                         {t('verify.enterEmailTitle', 'Verify your email')}
                     </h1>
@@ -148,24 +159,26 @@ export default function VerifyEmailPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                         />
-                        <button
+                        <AsyncButton
                             onClick={() => {
                                 if (!email) return;
                                 resendEmail();
                             }}
-                            className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                            isLoading={isResending}
+                            isSuccess={isResendSuccess}
+                            className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-primary/90"
                         >
                             {t('verify.continue', 'Continue')}
-                        </button>
+                        </AsyncButton>
                     </div>
-                </div>
+                </AuthCard>
             </div>
         );
     }
 
     return (
-        <div className="flex min-h-[calc(100vh-2rem)] flex-col items-center justify-center px-4 pb-20 sm:pb-28">
-            <div className="w-full max-w-[420px] rounded-2xl border border-border bg-card p-8 text-center shadow-[0_4px_20px_rgba(59,130,246,0.05)]">
+        <div className="flex w-full flex-1 items-center justify-center px-4 py-12 md:py-24">
+            <AuthCard className="max-w-[420px] text-center">
                 <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-primary/10">
                     <Mail className="size-8 text-primary" />
                 </div>
@@ -206,20 +219,16 @@ export default function VerifyEmailPage() {
                     ))}
                 </div>
 
-                <button
+                <AsyncButton
                     onClick={() => verify()}
                     disabled={code.some((d) => !d) || isVerifying}
-                    className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    isLoading={isVerifying}
+                    isSuccess={isVerifySuccess}
+                    className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {isVerifying ? (
-                        <Loader2 className="size-5 animate-spin" />
-                    ) : (
-                        <>
-                            {t('verify.submit', 'Verify email')}
-                            <ArrowRight className="size-4" />
-                        </>
-                    )}
-                </button>
+                    {t('verify.submit', 'Verify email')}
+                    <ArrowRight className="size-4" />
+                </AsyncButton>
 
                 <div className="mt-6 flex items-center justify-center gap-1.5 text-sm">
                     <span className="text-muted-foreground">
@@ -242,16 +251,12 @@ export default function VerifyEmailPage() {
                 </div>
 
                 {!user && (
-                    <div className="mt-6 border-t border-border pt-6">
-                        <Link
-                            to={APP_ROUTES.public.login}
-                            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                            {t('verify.backToLogin', 'Back to log in')}
-                        </Link>
-                    </div>
+                    <AuthFooter
+                        linkText={t('verify.backToLogin', 'Back to log in')}
+                        linkTo={APP_ROUTES.public.login}
+                    />
                 )}
-            </div>
+            </AuthCard>
         </div>
     );
 }

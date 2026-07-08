@@ -16,7 +16,7 @@
     "not_multiple_of": "Число повинно бути кратним {{multipleOf}}",
     "not_finite": "Число повинно бути скінченним",
     "invalid_string": {
-      "email": "Невірна електронна адреса",
+      "email": "Введіть коректну пошту",
       "url": "Невірна URL-адреса",
       "uuid": "Невірне введення {{validation}}",
       "cuid": "Невірне введення {{validation}}",
@@ -115,6 +115,8 @@
     "password_digit": "Має містити хоча б одну цифру",
     "card_digits_only": "Номер картки може містити лише цифри",
     "cvv_digits_only": "CVV може містити лише цифри",
-    "expiry_format": "Термін дії має бути у форматі MM/YY"
+    "expiry_format": "Термін дії має бути у форматі MM/YY",
+    "required_field": "Поле є обов'язковим",
+    "confirm_password_required": "Будь ласка, підтвердіть пароль"
   }
 }

@@ -14,7 +14,7 @@ import { FormErrorAlert } from '@/components/common/form/FormErrorAlert';
 import { FormInput } from '@/components/common/form/FormInput';
 import { PasswordInput } from '@/components/common/form/PasswordInput';
 import { TextLink } from '@/components/common/ui/TextLink';
-import { Button } from '@/components/ui/button';
+import { AsyncButton } from '@/components/ui/async-button';
 import { AUTH_LIMITS } from '@/const/auth.constants';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
 import { APP_ROUTES } from '@/routes/paths';
@@ -45,7 +45,7 @@ export default function LoginPage() {
         setError,
         resetField,
         clearErrors,
-        formState: { errors, isSubmitting },
+        formState: { errors, isSubmitting, isSubmitSuccessful },
     } = useForm<LoginFormData>({
         resolver: zodResolver(loginSchema),
     });
@@ -113,13 +113,16 @@ export default function LoginPage() {
                     {...register('password', { onChange: () => clearErrors('root') })}
                 />
 
-                <Button
+                <AsyncButton
                     type="submit"
                     disabled={isSubmitting}
+                    isLoading={isSubmitting}
+                    isSuccess={isSubmitSuccessful}
+                    loadingText={t('login.submitting')}
                     className="mt-4 w-full bg-primary transition-all hover:scale-[1.01] hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
                 >
-                    {isSubmitting ? t('login.submitting') : t('common:actions.logIn')}
-                </Button>
+                    {t('common:actions.logIn')}
+                </AsyncButton>
             </form>
 
             <AuthDivider text={t('login.divider')} />

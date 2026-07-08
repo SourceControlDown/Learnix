@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     BookOpen,
@@ -7,6 +7,7 @@ import {
     FileCheck,
     LayoutDashboard,
     MessageSquare,
+    ShieldCheck,
     Tag,
     Users,
 } from 'lucide-react';
@@ -75,17 +76,22 @@ export function AdminLayout() {
     }
 
     const AdminLogo = (
-        <div className="grid size-8 place-items-center rounded-lg bg-destructive text-sm font-bold text-destructive-foreground">
-            A
-        </div>
+        <Link
+            to={APP_ROUTES.public.home}
+            className="flex items-center gap-2.5 font-heading font-bold text-foreground transition-opacity hover:opacity-90"
+        >
+            <div className="grid size-8 place-items-center rounded-lg bg-destructive text-destructive-foreground">
+                <ShieldCheck size={18} strokeWidth={2.5} />
+            </div>
+            <span className="tracking-tight">Learnix</span>
+        </Link>
     );
 
     return (
         <DashboardLayout
             roleLabel={t('common:roles.admin')}
             themeColor="destructive"
-            logoNode={AdminLogo}
-            logoText="Learnix Admin"
+            brandNode={AdminLogo}
             navItems={navItems}
             profileLabel={t('common:navigation.myProfile')}
             backToLabel={t('navBackToSite')}

@@ -16,6 +16,7 @@ public static class AiChatConstants
         "1. The database contains courses with English titles and descriptions. If a user asks a question in another language, you MUST translate their search keywords into English BEFORE calling the search_courses tool.\n" +
         "2. When you mention a course, you MUST format its title as a markdown link using its ID, like this: [Course Title](/courses/{CourseId}).\n" +
         "Formatting rules:\n" +
+        "- Use bulleted lists (- ) or numbered lists (1. ) to structure complex information and improve readability.\n" +
         "- Use **bold** for emphasis and key terms.\n" +
         "- Use `inline code` for technical terms, class names, or variables.\n" +
         "- Use > blockquotes for side notes, warnings, or secondary information.\n" +

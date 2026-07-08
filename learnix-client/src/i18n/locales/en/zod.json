@@ -16,7 +16,7 @@
     "not_multiple_of": "Number must be a multiple of {{multipleOf}}",
     "not_finite": "Number must be finite",
     "invalid_string": {
-      "email": "Invalid email address",
+      "email": "Please enter a valid email",
       "url": "Invalid URL",
       "uuid": "Invalid {{validation}}",
       "cuid": "Invalid {{validation}}",
@@ -115,6 +115,8 @@
     "password_digit": "Must contain at least one digit",
     "card_digits_only": "Card number can only contain digits",
     "cvv_digits_only": "CVV can only contain digits",
-    "expiry_format": "Expiry must be in MM/YY format"
+    "expiry_format": "Expiry must be in MM/YY format",
+    "required_field": "Field is required",
+    "confirm_password_required": "Please confirm your password"
   }
 }

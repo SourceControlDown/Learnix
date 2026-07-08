@@ -6,7 +6,7 @@ import {
     TwitterIcon,
     YouTubeIcon,
 } from '@/components/common/icons/SocialIcons';
-import { Logo } from '@/components/common/ui/Logo';
+import { BrandLogo } from '@/components/common/ui/BrandLogo';
 import { EXTERNAL_LINKS } from '@/const/links.constants';
 import { APP_ROUTES } from '@/routes/paths';
 
@@ -78,17 +78,7 @@ export function Footer() {
             <div className="mx-auto max-w-7xl px-6">
                 <div className="flex flex-col gap-10 border-b border-border pb-12 md:flex-row md:justify-between">
                     <div className="max-w-xs md:w-2/5">
-                        <Link
-                            to={APP_ROUTES.public.home}
-                            className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
-                        >
-                            <div className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                                <Logo className="size-6" />
-                            </div>
-                            <span className="font-heading text-lg font-bold tracking-tight">
-                                Learnix
-                            </span>
-                        </Link>
+                        <BrandLogo />
                         <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
                             {t('footer.description')}
                         </p>
