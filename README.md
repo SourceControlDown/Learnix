@@ -18,7 +18,7 @@
 
 **A production-grade, full-stack Learning Management System (LMS) demonstrating modern architectural patterns and clean code practices.**
 
-🚀 **Live Demo:** <!-- LIVE_DEMO_START -->*(Deployment pending...)*<!-- LIVE_DEMO_END -->
+🚀 **Live Demo:** <!-- LIVE_DEMO_START -->[https://yellow-rock-00b2edd03.7.azurestaticapps.net](https://yellow-rock-00b2edd03.7.azurestaticapps.net)<!-- LIVE_DEMO_END -->
 
 </div>
 
