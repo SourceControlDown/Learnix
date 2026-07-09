@@ -32,25 +32,37 @@ public sealed class Question
     private bool EvaluateTextAnswer(string given)
     {
         if (TextAnswer is null) return false;
-        var correct = TextAnswer.CorrectAnswer;
+
+        given = given.Trim();
+        var correct = TextAnswer.CorrectAnswer.Trim();
+
         if (TextAnswer.IgnoreCase)
         {
-            given = given.Trim().ToLowerInvariant();
-            correct = correct.Trim().ToLowerInvariant();
+            given = given.ToLowerInvariant();
+            correct = correct.ToLowerInvariant();
         }
+
         if (given == correct) return true;
         if (TextAnswer.AllowFuzzy) return IsFuzzyMatch(given, correct);
         return false;
     }
 
-    private static bool IsFuzzyMatch(string a, string b)
+    private static bool IsFuzzyMatch(string given, string correct)
     {
-        // Simple Levenshtein threshold — 1 edit for short answers, 2 for longer
-#pragma warning disable S3358
-        int threshold = b.Length > 2 ? 0 : (b.Length <= 5 ? 1 : 2);
-#pragma warning restore S3358
-        return LevenshteinDistance(a, b) <= threshold;
+        var threshold = FuzzyThresholdFor(correct.Length);
+        return threshold > 0 && LevenshteinDistance(given, correct) <= threshold;
     }
+
+    /// <summary>
+    /// Levenshtein tolerance for a fuzzy text answer, by the length of the expected answer.
+    /// Answers of two characters or fewer get none: a single edit turns "C#" into "C" or "C++".
+    /// </summary>
+    private static int FuzzyThresholdFor(int correctLength) => correctLength switch
+    {
+        <= 2 => 0,
+        <= 5 => 1,
+        _ => 2
+    };
 
     private static int LevenshteinDistance(string a, string b)
     {

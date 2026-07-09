@@ -45,6 +45,5 @@ public class CourseConversation : BaseEntity
     }
 
     public void MarkReadByStudent() => StudentUnreadCount = 0;
-
     public void MarkReadByInstructor() => InstructorUnreadCount = 0;
 }

@@ -21,7 +21,7 @@ public class VideoLesson : Lesson
         DurationSeconds = durationSeconds;
 
         if (!string.IsNullOrWhiteSpace(videoBlobPath))
-            RaiseDomainEvent(new LessonVideoAttachedDomainEvent(Id, videoBlobPath));
+            RaiseDomainEvent(new LessonVideoSetDomainEvent(Id, videoBlobPath));
     }
 
     public string VideoBlobPath { get; private set; } = null!;
@@ -49,7 +49,7 @@ public class VideoLesson : Lesson
         RaiseDomainEvent(new LessonVideoReleasedDomainEvent(Id, oldPath));
 
         if (!string.IsNullOrWhiteSpace(VideoBlobPath))
-            RaiseDomainEvent(new LessonVideoAttachedDomainEvent(Id, newBlobPath));
+            RaiseDomainEvent(new LessonVideoSetDomainEvent(Id, newBlobPath));
     }
 
     public void UpdateMetadata(string title, string? description, int? durationSeconds)
