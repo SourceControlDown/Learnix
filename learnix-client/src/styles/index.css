@@ -31,6 +31,9 @@
         /* Chat bubble tokens — separate from primary to avoid glare on large surfaces */
         --chat-user-bubble: 217 91% 60%;
         --chat-user-bubble-foreground: 0 0% 100%;
+        /* Inline links — must not follow --primary, which flips to near-white in dark.
+           Darker than --brand so body-size text clears WCAG AA on white (5.2:1). */
+        --link: 221 83% 53%;
     }
 
     .dark {
@@ -60,6 +63,8 @@
         /* Chat bubble tokens — muted blue instead of near-white primary to reduce eye strain */
         --chat-user-bubble: 217 55% 52%;
         --chat-user-bubble-foreground: 210 40% 96%;
+        /* Lighter than --brand, which only reaches 4.9:1 on --card here. This clears 7:1. */
+        --link: 213 94% 68%;
     }
 
     * {

@@ -94,7 +94,7 @@ export default function FaqPage() {
                                 }>
                             ).map((link, index) => (
                                 <span key={index}>
-                                    <a href={link.anchor} className="text-primary hover:underline">
+                                    <a href={link.anchor} className="text-link hover:underline">
                                         {link.label}
                                     </a>
                                     {index <

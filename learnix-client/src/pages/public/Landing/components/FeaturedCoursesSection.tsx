@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
 import { CourseCard } from '@/components/common/course/CourseCard';
 import { QueryError } from '@/components/common/system/QueryError';
+import { TextLink } from '@/components/common/ui/TextLink';
 import { APP_ROUTES } from '@/routes/paths';
 import type { CourseSummaryDto } from '@/types/course.types';
 
@@ -77,25 +77,22 @@ export function FeaturedCoursesSection({
                             {t('featuredCourses.subtitle')}
                         </p>
                     </div>
-                    <Link
-                        to={APP_ROUTES.public.courses}
-                        className="text-sm font-medium text-primary hover:underline"
-                    >
+                    <TextLink to={APP_ROUTES.public.courses} className="text-sm">
                         {t('featuredCourses.viewAll')}
-                    </Link>
+                    </TextLink>
                 </div>
 
                 {renderContent()}
 
                 <div className="mt-10 text-center">
-                    <Link
+                    <TextLink
                         to={APP_ROUTES.public.courses}
-                        className="inline-flex items-center gap-2 font-medium text-primary hover:underline"
+                        className="inline-flex items-center gap-2"
                     >
                         {totalCount !== undefined
                             ? t('featuredCourses.viewMore', { count: totalCount })
                             : t('featuredCourses.viewAll')}
-                    </Link>
+                    </TextLink>
                 </div>
             </div>
         </section>

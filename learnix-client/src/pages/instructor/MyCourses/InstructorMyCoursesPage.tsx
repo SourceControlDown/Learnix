@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import { ConfirmDialog } from '@/components/common/ui/ConfirmDialog';
 import { Pagination } from '@/components/common/ui/Pagination';
 import { SearchInput } from '@/components/common/ui/SearchInput';
+import { TextLink } from '@/components/common/ui/TextLink';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -160,12 +161,12 @@ export default function InstructorMyCoursesPage() {
                                             : t('myCoursesEmptyDefault')}
                                     </p>
                                     {!debouncedSearch && (
-                                        <Link
+                                        <TextLink
                                             to={APP_ROUTES.instructor.newCourse}
-                                            className="mt-3 inline-block text-sm text-primary hover:underline"
+                                            className="mt-3 inline-block text-sm"
                                         >
                                             {t('dashboardEmptyCta')}
-                                        </Link>
+                                        </TextLink>
                                     )}
                                 </TableCell>
                             </TableRow>

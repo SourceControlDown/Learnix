@@ -1,13 +1,15 @@
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, CreditCard, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, CreditCard, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { paymentsApi } from '@/api/payments.api';
 import { queryKeys } from '@/api/queryKeys';
 import { FormInput } from '@/components/common/form/FormInput';
+import { BackLink } from '@/components/common/ui/BackLink';
+import { TextLink } from '@/components/common/ui/TextLink';
 import { PAYMENT_LIMITS } from '@/const/payment.constants';
 import { useCourseDetail } from '@/hooks/course/useCourseDetail';
 import { APP_ROUTES } from '@/routes/paths';
@@ -91,29 +93,22 @@ export default function PaymentPage() {
         return (
             <div className="mx-auto max-w-4xl px-6 py-20 text-center">
                 <p className="text-muted-foreground">{t('courseNotFound')}</p>
-                <Link
-                    to={APP_ROUTES.public.courses}
-                    className="mt-4 inline-block text-primary hover:underline"
-                >
+                <TextLink to={APP_ROUTES.public.courses} className="mt-4 inline-block">
                     {t('common:actions.backToCatalog')}
-                </Link>
+                </TextLink>
             </div>
         );
     }
 
     return (
         <div className="mx-auto max-w-4xl px-6 py-12">
-            <Link
-                to={APP_ROUTES.public.courseDetail(courseId!)}
-                className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-            >
-                <ArrowLeft className="size-4" />
-                Back to course
-            </Link>
+            <BackLink
+                fallbackTo={APP_ROUTES.public.courseDetail(courseId!)}
+                fallbackLabel={t('common:actions.backToCourse')}
+                className="mb-6"
+            />
 
-            <h1 className="mb-8 font-heading text-3xl font-bold">
-                {t('common:navigation.myLearning')}
-            </h1>
+            <h1 className="mb-8 font-heading text-3xl font-bold">{t('title')}</h1>
 
             <div className="grid gap-8 md:grid-cols-[1fr_350px]">
                 {/* Left col: Form */}

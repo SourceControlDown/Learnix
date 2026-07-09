@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { BookOpen, PlusCircle, Users } from 'lucide-react';
+import { TextLink } from '@/components/common/ui/TextLink';
 import { PAGINATION } from '@/const/ui.constants';
 import { CourseStatus } from '@/enums/course.enums';
 import { useMyCoursesQuery } from '@/hooks/instructor/useMyCoursesQuery';
@@ -104,12 +105,9 @@ export default function InstructorDashboardPage() {
                         {t('recentCoursesTitle')}
                     </h3>
                     {totalCourses > 0 && (
-                        <Link
-                            to={APP_ROUTES.instructor.courses}
-                            className="text-sm text-primary hover:underline"
-                        >
+                        <TextLink to={APP_ROUTES.instructor.courses} className="text-sm">
                             {t('recentCoursesViewAll')}
-                        </Link>
+                        </TextLink>
                     )}
                 </div>
 
@@ -120,12 +118,12 @@ export default function InstructorDashboardPage() {
                 ) : recentCourses.length === 0 ? (
                     <div className="py-12 text-center">
                         <p className="text-sm text-muted-foreground">{t('dashboardEmpty')}</p>
-                        <Link
+                        <TextLink
                             to={APP_ROUTES.instructor.newCourse}
-                            className="mt-3 inline-block text-sm text-primary hover:underline"
+                            className="mt-3 inline-block text-sm"
                         >
                             {t('dashboardEmptyCta')}
-                        </Link>
+                        </TextLink>
                     </div>
                 ) : (
                     <ul className="divide-y divide-border">

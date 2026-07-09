@@ -5,6 +5,7 @@ import { Award, CheckCircle2, MessageSquare, Trophy, XCircle } from 'lucide-reac
 import { messagesApi } from '@/api/messages.api';
 import { notificationsApi } from '@/api/notifications.api';
 import { queryKeys } from '@/api/queryKeys';
+import { APP_ROUTES } from '@/routes/paths';
 import type { ConversationSummary } from '@/types/message.types';
 import type { NotificationDto, NotificationEventType } from '@/types/notification.types';
 import { cn } from '@/utils/cn';
@@ -18,10 +19,10 @@ const TYPE_ICON: Record<NotificationEventType, React.ReactNode> = {
 };
 
 const TYPE_ROUTE: Record<NotificationEventType, string> = {
-    AchievementEarned: '/achievements',
-    CertificateReady: '/certificates',
-    InstructorApproved: '/become-instructor',
-    InstructorRejected: '/become-instructor',
+    AchievementEarned: APP_ROUTES.student.achievements,
+    CertificateReady: APP_ROUTES.student.certificates,
+    InstructorApproved: APP_ROUTES.public.becomeInstructor,
+    InstructorRejected: APP_ROUTES.public.becomeInstructor,
 };
 
 type NotificationItemProps = {
@@ -68,11 +69,10 @@ type ConversationItemProps = {
 
 function ConversationItem({ conversation }: ConversationItemProps) {
     const navigate = useNavigate();
-    const messagesPath = '/messages';
 
     return (
         <button
-            onClick={() => navigate(messagesPath)}
+            onClick={() => navigate(APP_ROUTES.student.messages)}
             className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
         >
             <div className="mt-0.5 shrink-0">

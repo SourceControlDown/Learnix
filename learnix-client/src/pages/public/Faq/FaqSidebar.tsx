@@ -34,7 +34,7 @@ export function FaqSidebar() {
             <div className="mt-8 hidden rounded-xl border border-border bg-card p-4 md:block">
                 <p className="text-sm font-medium">{topics.supportTitle}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{topics.supportSubtitle}</p>
-                <a href="#" className="mt-3 inline-block text-sm text-primary hover:underline">
+                <a href="#" className="mt-3 inline-block text-sm text-link hover:underline">
                     {topics.supportCta}
                 </a>
             </div>

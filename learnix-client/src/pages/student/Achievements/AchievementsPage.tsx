@@ -5,9 +5,11 @@ import { BookOpen, Globe, GraduationCap } from 'lucide-react';
 import { notificationsApi } from '@/api/notifications.api';
 import { queryKeys } from '@/api/queryKeys';
 import { AchievementBadge } from '@/components/common/course/AchievementBadge';
+import { BackLink } from '@/components/common/ui/BackLink';
 import { ALL_ACHIEVEMENT_CODES } from '@/const/achievements.constants';
 import { useMarkAchievementSeen } from '@/hooks/user/useMarkAchievementSeen';
 import { useMyAchievements } from '@/hooks/user/useMyAchievements';
+import { APP_ROUTES } from '@/routes/paths';
 
 export default function AchievementsPage() {
     const { t } = useTranslation('achievements');
@@ -54,6 +56,12 @@ export default function AchievementsPage() {
 
     return (
         <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+            <BackLink
+                fallbackTo={APP_ROUTES.student.profile}
+                fallbackLabel={t('common:actions.backToProfile')}
+                className="mb-6"
+            />
+
             <div>
                 <h1 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
                     {t('page.title')}

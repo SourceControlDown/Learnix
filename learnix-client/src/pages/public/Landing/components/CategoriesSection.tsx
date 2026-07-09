@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BookOpen } from 'lucide-react';
 import { QueryError } from '@/components/common/system/QueryError';
+import { TextLink } from '@/components/common/ui/TextLink';
 import { APP_ROUTES } from '@/routes/paths';
 import { fadeUpVariant, staggerContainer, viewportConfig } from '@/utils/animations';
 import { cn } from '@/utils/cn';
@@ -136,12 +137,9 @@ export function CategoriesSection({
                             {t('categories.heading')}
                         </h2>
                     </div>
-                    <Link
-                        to={APP_ROUTES.public.courses}
-                        className="hidden text-sm text-primary hover:underline md:inline"
-                    >
+                    <TextLink to={APP_ROUTES.public.courses} className="hidden text-sm md:inline">
                         {t('categories.viewAll')}
-                    </Link>
+                    </TextLink>
                 </div>
 
                 {renderContent()}

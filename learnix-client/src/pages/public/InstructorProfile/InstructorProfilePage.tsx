@@ -1,19 +1,34 @@
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, User } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { User } from 'lucide-react';
 import { CourseCard } from '@/components/common/course/CourseCard';
+import { QueryError } from '@/components/common/system/QueryError';
+import { BackLink } from '@/components/common/ui/BackLink';
+import { TextLink } from '@/components/common/ui/TextLink';
 import { useInstructorCourses } from '@/hooks/instructor/useInstructorCourses';
 import { useUserProfile } from '@/hooks/user/useUserProfile';
 import { APP_ROUTES } from '@/routes/paths';
+import { isNotFoundError } from '@/utils/errors';
 
 export default function InstructorProfilePage() {
     const { t } = useTranslation('instructorProfile');
     const { instructorId } = useParams<{ instructorId: string }>();
 
-    const { data: profile, isLoading: profileLoading } = useUserProfile(instructorId!);
-    const { data: coursesData, isLoading: coursesLoading } = useInstructorCourses(instructorId!);
+    const {
+        data: profile,
+        isLoading: profileLoading,
+        error: profileError,
+        refetch: refetchProfile,
+    } = useUserProfile(instructorId!);
+    const {
+        data: coursesData,
+        isLoading: coursesLoading,
+        isError: coursesFailed,
+        refetch: refetchCourses,
+    } = useInstructorCourses(instructorId!);
 
     const isLoading = profileLoading || coursesLoading;
+    const profileMissing = isNotFoundError(profileError);
     const courses = coursesData?.items ?? [];
 
     if (isLoading) {
@@ -37,16 +52,30 @@ export default function InstructorProfilePage() {
         );
     }
 
-    if (!profile) {
+    if (profileMissing) {
         return (
             <div className="mx-auto max-w-5xl px-6 py-20 text-center">
                 <p className="text-muted-foreground">{t('notFound')}</p>
-                <Link
-                    to={APP_ROUTES.public.courses}
-                    className="mt-4 inline-block text-primary hover:underline"
-                >
+                <TextLink to={APP_ROUTES.public.courses} className="mt-4 inline-block">
                     {t('common:actions.backToCatalog')}
-                </Link>
+                </TextLink>
+            </div>
+        );
+    }
+
+    if (!profile) {
+        return (
+            <div className="mx-auto max-w-5xl px-6 py-12">
+                <BackLink
+                    fallbackTo={APP_ROUTES.public.courses}
+                    fallbackLabel={t('common:actions.backToCatalog')}
+                    className="mb-8"
+                />
+                <QueryError
+                    message={t('error')}
+                    onRetry={refetchProfile}
+                    retryLabel={t('common:actions.tryAgain')}
+                />
             </div>
         );
     }
@@ -55,13 +84,11 @@ export default function InstructorProfilePage() {
 
     return (
         <div className="mx-auto max-w-5xl px-6 py-12">
-            <Link
-                to={APP_ROUTES.public.courses}
-                className="mb-8 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-            >
-                <ArrowLeft className="size-4" />
-                {t('common:actions.backToCatalog')}
-            </Link>
+            <BackLink
+                fallbackTo={APP_ROUTES.public.courses}
+                fallbackLabel={t('common:actions.backToCatalog')}
+                className="mb-8"
+            />
 
             {/* Profile header */}
             <div className="mb-10 flex items-start gap-6">
@@ -85,9 +112,11 @@ export default function InstructorProfilePage() {
                             {profile.bio}
                         </p>
                     )}
-                    <p className="mt-2 text-sm text-muted-foreground">
-                        {courses.length} {courses.length === 1 ? 'course' : 'courses'}
-                    </p>
+                    {!coursesFailed && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            {t('coursesCount', { count: courses.length })}
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -97,7 +126,13 @@ export default function InstructorProfilePage() {
                     {t('coursesHeading')}
                 </h2>
 
-                {courses.length === 0 ? (
+                {coursesFailed ? (
+                    <QueryError
+                        message={t('coursesError')}
+                        onRetry={refetchCourses}
+                        retryLabel={t('common:actions.tryAgain')}
+                    />
+                ) : courses.length === 0 ? (
                     <p className="text-sm text-muted-foreground">{t('noCourses')}</p>
                 ) : (
                     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { TextLink } from '@/components/common/ui/TextLink';
 import { APP_ROUTES } from '@/routes/paths';
 
 export function FaqSection() {
@@ -19,7 +19,7 @@ export function FaqSection() {
                     </h2>
                     <p className="mt-3 text-muted-foreground">
                         {t('faq.subtitle')}{' '}
-                        <a href="#" className="text-primary hover:underline">
+                        <a href="#" className="text-link hover:underline">
                             {t('faq.contactLabel')}
                         </a>
                     </p>
@@ -48,12 +48,7 @@ export function FaqSection() {
                 </div>
 
                 <div className="mt-8 text-center">
-                    <Link
-                        to={APP_ROUTES.public.faq}
-                        className="font-medium text-primary hover:underline"
-                    >
-                        {t('faq.viewAll')}
-                    </Link>
+                    <TextLink to={APP_ROUTES.public.faq}>{t('faq.viewAll')}</TextLink>
                 </div>
             </div>
         </section>

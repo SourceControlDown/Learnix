@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { AlertCircle } from 'lucide-react';
 import { queryKeys } from '@/api/queryKeys';
+import { QueryError } from '@/components/common/system/QueryError';
 import { ConfirmDialog } from '@/components/common/ui/ConfirmDialog';
 import { useMyTestAttempts } from '@/hooks/lesson/useMyTestAttempts';
 import { useStartTestAttempt } from '@/hooks/lesson/useStartTestAttempt';
@@ -24,7 +24,12 @@ export default function TestLessonPage() {
     const queryClient = useQueryClient();
     const { t } = useTranslation('testLesson');
 
-    const { data: test, isLoading, isError } = useTestLesson(courseId!, lessonId!);
+    const {
+        data: test,
+        isLoading,
+        isError,
+        refetch: refetchTest,
+    } = useTestLesson(courseId!, lessonId!);
     const { data: attempts = [] } = useMyTestAttempts(courseId!, lessonId!);
     const startAttempt = useStartTestAttempt(courseId!, lessonId!);
     const submit = useSubmitTestAttempt(courseId!, lessonId!);
@@ -315,10 +320,11 @@ export default function TestLessonPage() {
 
                 {/* Error */}
                 {isError && (
-                    <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-destructive">
-                        <AlertCircle className="size-5 shrink-0" />
-                        <p>{t('error')}</p>
-                    </div>
+                    <QueryError
+                        message={t('error')}
+                        onRetry={refetchTest}
+                        retryLabel={t('common:actions.tryAgain')}
+                    />
                 )}
 
                 {/* Content */}
