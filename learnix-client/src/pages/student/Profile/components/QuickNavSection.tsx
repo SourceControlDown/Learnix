@@ -4,10 +4,11 @@ import { Award, ChevronRight, GraduationCap } from 'lucide-react';
 import { APP_ROUTES } from '@/routes/paths';
 
 interface QuickNavSectionProps {
-    isStudent: boolean;
+    /** False for instructors and admins — neither can submit an application. */
+    canBecomeInstructor: boolean;
 }
 
-export function QuickNavSection({ isStudent }: QuickNavSectionProps) {
+export function QuickNavSection({ canBecomeInstructor }: QuickNavSectionProps) {
     const { t } = useTranslation('profile');
 
     return (
@@ -28,7 +29,7 @@ export function QuickNavSection({ isStudent }: QuickNavSectionProps) {
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </Link>
 
-            {isStudent && (
+            {canBecomeInstructor && (
                 <Link
                     to={APP_ROUTES.public.becomeInstructor}
                     className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary sm:p-5"

@@ -1,11 +1,22 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useMyEnrollments } from '@/hooks/student/useMyEnrollments';
 import { APP_ROUTES } from '@/routes/paths';
+import { useAuthStore } from '@/store/auth.store';
 import { fadeUpVariant, staggerContainer, viewportConfig } from '@/utils/animations';
+import { isInstructorOrAdmin } from '@/utils/roles';
 
 export function HeroSection() {
     const { t } = useTranslation('landing');
+    const user = useAuthStore((s) => s.user);
+    const { data: enrollments } = useMyEnrollments();
+
+    // Sending someone with no courses to an empty "My learning" would be worse than the catalog.
+    const isLearning = (enrollments?.items.length ?? 0) > 0;
+    const primaryCta = isLearning
+        ? { to: APP_ROUTES.student.myLearning, label: t('common:actions.continueLearning') }
+        : { to: APP_ROUTES.public.courses, label: t('common:actions.browseCourses') };
 
     return (
         <section className="relative overflow-hidden bg-background pb-32 pt-24">
@@ -44,14 +55,14 @@ export function HeroSection() {
                     </p>
                     <div className="mt-10 flex flex-col flex-wrap justify-center gap-4 sm:flex-row md:justify-start">
                         <Link
-                            to={APP_ROUTES.public.courses}
+                            to={primaryCta.to}
                             className="group relative inline-flex h-14 items-center justify-center overflow-hidden rounded-full bg-primary px-8 font-medium text-primary-foreground shadow-[0_0_40px_-10px_rgba(var(--primary),0.8)] transition-all hover:scale-[1.02] hover:shadow-[0_0_60px_-15px_rgba(var(--primary),0.8)] active:scale-[0.98]"
                         >
                             <div className="absolute inset-0 flex size-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
                                 <div className="relative h-full w-8 bg-white/20" />
                             </div>
                             <span className="relative z-10 flex items-center gap-2">
-                                {t('common:actions.browseCourses')}
+                                {primaryCta.label}
                                 <svg
                                     className="size-4 transition-transform group-hover:translate-x-1"
                                     fill="none"
@@ -67,12 +78,14 @@ export function HeroSection() {
                                 </svg>
                             </span>
                         </Link>
-                        <Link
-                            to={APP_ROUTES.public.becomeInstructor}
-                            className="inline-flex h-14 items-center justify-center rounded-full border border-white/10 bg-white/5 px-8 font-medium text-foreground backdrop-blur-md transition-all hover:bg-white/10 hover:shadow-lg active:scale-[0.98]"
-                        >
-                            {t('hero.cta.secondary')}
-                        </Link>
+                        {!isInstructorOrAdmin(user) && (
+                            <Link
+                                to={APP_ROUTES.public.becomeInstructor}
+                                className="inline-flex h-14 items-center justify-center rounded-full border border-white/10 bg-white/5 px-8 font-medium text-foreground backdrop-blur-md transition-all hover:bg-white/10 hover:shadow-lg active:scale-[0.98]"
+                            >
+                                {t('hero.cta.secondary')}
+                            </Link>
+                        )}
                     </div>
 
                     <div className="mt-12 flex flex-col items-center gap-5 sm:flex-row md:justify-start">

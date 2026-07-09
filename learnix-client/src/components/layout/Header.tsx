@@ -7,6 +7,7 @@ import { authApi } from '@/api/auth.api';
 import { BrandLogo } from '@/components/common/ui/BrandLogo';
 import { LanguageSwitcher } from '@/components/common/ui/LanguageSwitcher';
 import { ThemeSwitcher } from '@/components/common/ui/ThemeSwitcher';
+import { UserRole } from '@/enums/user.enums';
 import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/utils/cn';
@@ -170,7 +171,7 @@ export function Header() {
             label: t('common:navigation.courses'),
             icon: <Compass size={20} />,
         },
-        ...(user?.roles.includes('Instructor')
+        ...(user?.roles.includes(UserRole.Instructor)
             ? [
                   {
                       to: APP_ROUTES.instructor.dashboard,
@@ -179,7 +180,7 @@ export function Header() {
                   },
               ]
             : []),
-        ...(user?.roles.includes('Admin')
+        ...(user?.roles.includes(UserRole.Admin)
             ? [
                   {
                       to: APP_ROUTES.admin.dashboard,
@@ -190,6 +191,20 @@ export function Header() {
             : []),
     ];
 
+    // Desktop only: on mobile "My Learning" already has its own entry in the drawer's user
+    // section, and the avatar dropdown that holds it on desktop only opens on hover.
+    const desktopNavItems = user
+        ? [
+              navItems[0],
+              {
+                  to: APP_ROUTES.student.myLearning,
+                  label: t('common:navigation.myLearning'),
+                  icon: <BookOpen size={20} />,
+              },
+              ...navItems.slice(1),
+          ]
+        : navItems;
+
     return (
         <header className="sticky top-0 z-40 border-b border-border bg-card/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/60">
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
@@ -199,7 +214,7 @@ export function Header() {
                     </div>
                     <BrandLogo />
                     <nav className="hidden items-center gap-7 text-sm sm:flex">
-                        {navItems.map((item) => (
+                        {desktopNavItems.map((item) => (
                             <NavLink
                                 key={item.to}
                                 to={item.to}
