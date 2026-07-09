@@ -34,6 +34,11 @@
       "Bash(git branch *)",
       "Bash(cd * && npm run format *)",
       "Bash(cd * && npx tsc --noEmit *)",
+      "Bash(cd * && npm run lint *)",
+      "Bash(cd * && npm run type-check *)",
+      "Bash(npm --prefix learnix-client run format)",
+      "Bash(npm --prefix learnix-client run lint)",
+      "Bash(npm --prefix learnix-client run type-check)",
       "PowerShell(dotnet build *)",
       "PowerShell(cd *; dotnet build *)",
       "PowerShell(dotnet test *)",
@@ -46,7 +51,10 @@
       "PowerShell(git log *)",
       "PowerShell(git branch *)",
       "PowerShell(cd * && npm run format *)",
-      "PowerShell(cd * && npx tsc --noEmit *)"
+      "PowerShell(cd * && npx tsc --noEmit *)",
+      "PowerShell(npm --prefix learnix-client run format)",
+      "PowerShell(npm --prefix learnix-client run lint)",
+      "PowerShell(npm --prefix learnix-client run type-check)"
     ],
     "deny": [
       "Read(.env)",
