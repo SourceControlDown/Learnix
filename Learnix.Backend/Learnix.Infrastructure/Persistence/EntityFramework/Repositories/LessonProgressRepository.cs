@@ -1,5 +1,7 @@
 using Ardalis.Specification.EntityFrameworkCore;
 using Learnix.Application.LessonProgress.Abstractions;
+using Learnix.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using LessonProgressEntity = Learnix.Domain.Entities.LessonProgress;
 
 namespace Learnix.Infrastructure.Persistence.EntityFramework.Repositories;
@@ -7,4 +9,38 @@ namespace Learnix.Infrastructure.Persistence.EntityFramework.Repositories;
 internal sealed class LessonProgressRepository(ApplicationDbContext context)
     : RepositoryBase<LessonProgressEntity>(context), ILessonProgressRepository
 {
+    public async Task<IReadOnlyDictionary<Guid, CourseProgressCounts>> GetProgressCountsAsync(
+        Guid studentId,
+        IReadOnlyCollection<Guid> courseIds,
+        CancellationToken ct = default)
+    {
+        if (courseIds.Count == 0)
+            return new Dictionary<Guid, CourseProgressCounts>();
+
+        var ids = courseIds.Distinct().ToArray();
+
+        var totals = await (
+            from lesson in context.Set<Lesson>()
+            join section in context.Set<Section>() on lesson.SectionId equals section.Id
+            where ids.Contains(section.CourseId) && !lesson.IsHidden
+            group lesson by section.CourseId into grouped
+            select new { CourseId = grouped.Key, Count = grouped.Count() }
+        ).ToDictionaryAsync(x => x.CourseId, x => x.Count, ct);
+
+        var completed = await (
+            from lp in context.Set<LessonProgressEntity>()
+            join lesson in context.Set<Lesson>() on lp.LessonId equals lesson.Id
+            join section in context.Set<Section>() on lesson.SectionId equals section.Id
+            where lp.StudentId == studentId && ids.Contains(section.CourseId)
+                  && lp.IsCompleted && !lesson.IsHidden
+            group lp by section.CourseId into grouped
+            select new { CourseId = grouped.Key, Count = grouped.Count() }
+        ).ToDictionaryAsync(x => x.CourseId, x => x.Count, ct);
+
+        return ids.ToDictionary(
+            id => id,
+            id => new CourseProgressCounts(
+                completed.GetValueOrDefault(id),
+                totals.GetValueOrDefault(id)));
+    }
 }

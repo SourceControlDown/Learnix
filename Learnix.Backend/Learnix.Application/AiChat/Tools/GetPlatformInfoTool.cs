@@ -58,7 +58,10 @@ public sealed class GetPlatformInfoTool : IChatTool
                 "Question types:\n" +
                 "- Single choice — pick one correct answer from options.\n" +
                 "- Multiple choice — pick one or more correct answers.\n" +
-                "- Text input — type a written answer (supports exact match, case-insensitive match, or fuzzy match allowing 1 character error).\n" +
+                "- Text input — type a written answer. The instructor picks how it is checked: exact match, " +
+                "case-insensitive match, or fuzzy match that forgives typos. Fuzzy tolerance depends on how long " +
+                "the expected answer is: none for answers of 1-2 characters, one typo for 3-5 characters, " +
+                "two typos for longer answers. Surrounding whitespace is always ignored.\n" +
                 "After submission: score is shown as a percentage, and correct answers are revealed.\n" +
                 "Retry policy (set per test by the instructor):\n" +
                 "- Unlimited — retake anytime.\n" +
