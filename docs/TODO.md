@@ -27,10 +27,10 @@
 | B-08 | ASP.NET Core Identity setup (User entity, role seeding) | done | |
 | B-09 | Register command (+ validator + handler + email verification event) | done | |
 | B-10 | Login command (JWT generation + refresh token creation) | done | |
-| B-10.5 | Document Authentication pipeline in ARCHITECTURE.md | done | |
+| B-10.5 | Document Authentication pipeline | done | |
 | B-11 | Refresh token endpoint (rotation + revocation logic) | done | |
 | B-11.5 | Refresh token cleanup background service (deletes tokens older than expiry + 7 days) | done | |
-| B-12 | Email confirmation flow (confirm endpoint + resend) | done | Real SMTP via MailKit + RazorLight .cshtml templates; ConsoleEmailSender removed (ADR-INFRA-016); email localization (EN/UK) via IStringLocalizer + .resx (ADR-INFRA-017) |
+| B-12 | Email confirmation flow (confirm code + resend) | done | |
 | B-13 | Password reset flow (forgot + reset endpoints) | done | |
 | B-14 | Google OAuth integration | done | |
 | B-15 | Rate limiting middleware (auth endpoints) | done | |
@@ -50,7 +50,6 @@
 | B-23 | Lesson CRUD (Video/Post) + reordering | done | |
 | B-24 | File upload service (Azure Blob): video + cover image | done | |
 | B-25 | Instructor application flow (submit, admin approve/reject) | done | |
-| B-25.1 | Admin seeding: `AdminSeederHostedService` — creates first admin from `SeedAdmin:Email`/`SeedAdmin:Password` config on startup if no Admin exists. Dev defaults in `appsettings.Development.json` (`admin@learnix.dev` / `Admin123!`). Admin can promote others via existing `POST /api/admin/users/{id}/roles/{role}`. | done | |
 
 ### Phase 4 — Student Features
 
@@ -63,7 +62,7 @@
 | B-30 | Course completion detection + Certificate generation (PDF) | done | Async PDF gen via BackgroundService (PeriodicTimer 30s); QuestPDF; Azure Blob upload; SAS URL for download |
 | B-31 | Student profile (edit name, avatar, bio, category preferences) | done | |
 
-### Phase 5 — Payments
+### Phase 5 — Payments - MOCK
 
 | # | Task | Status | Notes |
 |---|---|---|---|
@@ -71,7 +70,6 @@
 | B-33 | Stripe webhook handler (payment completed → activate enrollment) | CANCELED | Mock payment remains |
 | B-34 | Payment history queries | done | GetMyPayments, GetInstructorEarnings, GetAdminPayments |
 | B-34.5 | Outbox pattern: OutboxMessage entity + EF config + background publisher worker (replace direct domain events publishing in ApplicationDbContext) | done | OutboxProcessorService + OutboxDbContextHolder |
-| B-34.6 | Split `UserRegisteredDomainEvent` into two events: `UserRegistered` (raised in Register flow) and `EmailConfirmationRequested` (raised in Resend flow). Current implementation uses `RaiseUserRegistered` in both places — semantic smell. | not started | |
 
 ### Phase 6 — Async Processing ~~(MassTransit)~~
 
@@ -79,8 +77,8 @@
 |---|---|---|---|
 | B-35 | MassTransit + Azure Service Bus setup | CANCELED | Overkill for a pet project. Email and achievements are already handled via Outbox + BackgroundService |
 | B-36 | Email consumers (verification, enrollment, approval) | CANCELED | Replaced by Outbox (OutboxMessageTypes + OutboxProcessorService) |
-| B-37 | Certificate generation consumer | CANCELED | Replaced by CertificatePdfGenerationService (BackgroundService + PeriodicTimer) |
-| B-38 | Achievement checking consumer | CANCELED | Replaced by Outbox (EvaluateLessonCompleted, EvaluateEnrollmentCompleted, etc.) |
+| B-37 | Certificate generation consumer | CANCELED | |
+| B-38 | Achievement checking consumer | CANCELED | Replaced by Outbox |
 
 ### Phase 7 — Achievements & Notifications
 
@@ -101,6 +99,7 @@
 | B-45 | AI chat: Multi-provider integration (Anthropic + Gemini, streaming SSE, tool use) | Done | |
 | B-46 | Chat session persistence (MongoDB) | Done | |
 | B-46.5 | Background job: cleanup closed AI chat sessions older than 30 days | Done | |
+| B-46.6 | AI chat tools: `get_my_learning_profile`, `get_instructor_courses` | Done | Profile tool is caller-scoped — takes no user id, to keep prompt injection from reading other students. `ILessonProgressRepository.GetProgressCountsAsync` added for bulk progress. See ADR-CHAT-011 |
 
 ### Phase 9 — Reviews & Recommendations
 
@@ -224,13 +223,13 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| D-06 | Azure Container Apps for API | not started | See docs/deployment/README.md Steps 8-9 |
+| D-06 | Azure Container Apps for API | done | |
 | D-06.5 | Configure ForwardedHeaders for rate limiting partition-by-real-IP behind reverse proxy | done | Prerequisite for rate limiter to work correctly in Azure |
-| D-07 | Azure Static Web Apps for frontend | not started | `staticwebapp.config.json` + `.env.production` created; see deployment/README.md Step 10 |
-| D-08 | Azure Database for PostgreSQL (Flexible Server) | not started | See deployment/README.md Step 3 |
-| D-09 | Azure Cosmos DB for MongoDB API | not started | See deployment/README.md Step 4 |
-| D-10 | Azure Cache for Redis | not started | See deployment/README.md Step 5 |
-| D-11 | Azure Blob Storage account + containers | not started | See deployment/README.md Step 6; containers: avatars, course-covers, course-videos, certificates |
+| D-07 | Azure Static Web Apps for frontend | done | `staticwebapp.config.json` created; see deployment/README.md |
+| D-08 | Azure Database for PostgreSQL (Flexible Server) | done | |
+| D-09 | Azure Cosmos DB for MongoDB API | done | |
+| D-10 | Azure Cache for Redis | done | |
+| D-11 | Azure Blob Storage account + containers | done |  |
 | D-12 | Azure Service Bus namespace + queues | CANCELED | MassTransit is not used |
 | D-13 | Azure Key Vault for secrets | not started | Deferred — secrets stored in Container Apps env vars for now |
 | D-14 | Custom domain + SSL | not started | After D-06, D-07 done |

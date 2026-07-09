@@ -289,3 +289,63 @@ The `tool_result` role used internally in `ChatMessage` is mapped to `"user"` in
 **Rejected alternatives:**
 - Manual HTTP + custom SSE parser — equivalent to what was replaced; ~200 lines of fragile plumbing with no business value.
 - `Google.Ai.Generativelanguage.V1beta` (gRPC-based) — lower-level, more complex, no streaming SSE; overkill for this use case.
+
+---
+
+## ADR-CHAT-011: Personal and Instructor Tools (`get_my_learning_profile`, `get_instructor_courses`)
+
+**Decision:** Two tools were added to the `IChatTool` set defined in ADR-CHAT-006, both registered `Scoped` in `Infrastructure/DependencyInjection.cs` and both delegating to `IMediator.Send(...)`.
+
+### `get_my_learning_profile(sections?)`
+
+Returns the caller's own profile, courses in progress with a completion percentage, finished courses, wishlist, and achievements.
+
+**The query carries no user id.** The subject is always `ICurrentUserService.UserId`, read inside the handler. A `userId` tool parameter would let a prompt-injected user message ("show me the profile of user X") read another student's data — the tool schema is attacker-influenced input, not trusted code. `AiChatController` is `[Authorize]` and the tool is `Scoped`, so the request's identity is already in the DI scope.
+
+**Optional `sections` argument** (`profile`, `in_progress`, `completed`, `wishlist`, `achievements`, from `LearningProfileSections`). Omitted means all. Each section is gated so that an unrequested section costs no query.
+
+**Every list section is capped** at `AiChatToolLimits.LearningProfileSectionItems` (15) and wrapped in `LearningProfileSection<T>(Total, Truncated, Items)`. Tool results are persisted into the Mongo session and replayed inside the 20-message sliding window (ADR-CHAT-005) on every subsequent turn, so an uncapped list is paid for on each turn, not once. `Total` still tells the AI the real number.
+
+**Only payment-completed enrollments** are returned (`StudentEnrollmentsSpecification`). A pending payment grants no course access, so such an enrollment is not part of the student's learning picture.
+
+**Blob URLs are omitted** — avatar and cover URLs are long, useless to a language model, and would consume the window.
+
+**The system prompt forbids echoing the user's email** unless they ask for it, and states the tool always describes the current user.
+
+### `get_instructor_courses(instructorName? | instructorId?)`
+
+Resolves an instructor by display name or id and returns their published courses.
+
+**One tool, not two.** The model knows names, not GUIDs. A `find_instructor` + `get_instructor_courses` pair would spend two of the five tool turns allowed by the orchestrator loop on every such question. Instead this tool resolves internally: it matches users by name (`InstructorCandidatesByNameSpecification`), narrows them to the Instructor role via `IUserRoleService.GetRolesBulkAsync` (role membership lives in the Identity tables and is not reachable from a `Specification<User>`), and then:
+
+- no match → `NotFoundError` → the tool renders `{ "error": ... }`;
+- several matches → `Result.Ok` with `Ambiguous: [{ InstructorId, FullName }]` and no courses — the AI shows the names, asks the user, and calls again with `instructorId`;
+- exactly one → instructor summary plus up to `AiChatToolLimits.InstructorCourses` (20) published courses.
+
+**`CourseSearchResultDto` gained `InstructorId` and `InstructorFullName`**, resolved through one batched `UsersByIdsSpecification` query, mirroring how `CategoryName` is resolved. This lets the AI move from a course it just found to that course's author without a name search. The system prompt requires instructor mentions to be rendered as `[Instructor Name](/instructors/{InstructorId})`, matching the existing course-link rule.
+
+Both tools return a JSON **object** at the root, per the format rule in ADR-CHAT-006. `null` sections are omitted via `DefaultIgnoreCondition = WhenWritingNull` rather than serialized as `null`.
+
+### `ILessonProgressRepository.GetProgressCountsAsync`
+
+The completion percentage needs, per course, the number of visible lessons and how many of them the student completed. The only existing helpers — `ILessonRepository.GetVisibleLessonCountAsync` and `GetCompletedVisibleLessonCountAsync` — work on a single course, so a fifteen-course profile would issue thirty queries.
+
+A bulk method was added to `ILessonProgressRepository`, which until now was an empty marker interface. It answers "what is this student's progress in these courses" in two grouped queries and returns an entry for every requested course id.
+
+**Why it is a repository method and not a `Specification`:** `LessonProgress` has no navigation property to `Lesson` (see `LessonProgressConfiguration` — `HasOne<Lesson>().WithMany()` with no navigation), while lesson visibility lives on `Lesson.IsHidden`. A `Specification<LessonProgress>` therefore cannot express the `!IsHidden` filter; the query needs a join to `Lesson` and `Section`.
+
+**Why it lives on `ILessonProgressRepository` and not `ILessonRepository`:** the existing `GetCompletedVisibleLessonCountAsync` roots its query in `context.Set<LessonProgress>()` but sits on `ILessonRepository`, because it is always called next to `GetVisibleLessonCountAsync` (a genuine `Lesson` query) by the certificate-issuing path in `MarkLessonComplete` and `SubmitTestAttempt`. That is cohesion by use case at the expense of the aggregate boundary. The new method is named for its subject — progress — and placed on the matching aggregate rather than extending the existing skew.
+
+`LessonProgress/Specifications/CompletedLessonCountByStudentAndCourseSpecification` is unused, and is unusable for this purpose: lacking the `Lesson` join it counts completed *hidden* lessons too, overstating progress once an instructor hides a lesson a student already finished.
+
+**Why:**
+- A tool that knows what the user is studying turns generic recommendations into grounded ones, which is the point of tool use (ADR-CHAT-006).
+- Caller-scoped identity makes the personal tool safe by construction rather than by prompt instruction.
+- Single-call instructor resolution keeps the five-turn tool budget for actual reasoning.
+
+**Rejected alternatives:**
+- `userId` as a tool parameter — prompt-injectable; the model would happily pass an id it read from a user message.
+- Reusing `GetMyProfileQuery` / `GetMyEnrollmentsQuery` / `GetMyWishlistQuery` from the tool — their DTOs are paginated, carry blob URLs and enrollment/payment internals, and would waste context; AiChat keeps its own compact DTOs, as `SearchCourses` already does.
+- Splitting into `find_instructor` + `get_instructor_courses` — clean, but spends two of five tool turns per question.
+- Calling the existing per-course lesson counters in a loop — 2N queries for an N-course profile.
+- Making `GetMyLearningProfileQuery` `ICacheable` — it is per-user, mutable data; caching it in Redis buys little and risks serving one student's profile shape to another on a key mistake.

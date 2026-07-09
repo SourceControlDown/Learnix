@@ -23,11 +23,43 @@
 
 ## ADR-BLOB-002: Relative Paths in the Database
 
-**Decision:** The database does NOT store absolute URLs for blob assets. Instead, it stores a relative path in the format `{containerName}/{blobName}` (e.g., `avatars/users/123/abcd.jpg`).
+**Decision:** The database does NOT store absolute URLs for blob assets. Instead, it stores a relative path in the format `{containerName}/{blobName}` (e.g., `avatars/9f2c4a1b8e7d40f3a5c6b2d1e0f34567`).
 
-**Why:**
+The **container prefix is mandatory**: `AzureBlobStorageService.ParseBlobPath()` splits on the first `/` and throws `ArgumentException` without it, so `DeleteAsync`, `GenerateReadUrl` and `GetPublicUrl` all depend on it. This is what lets a domain event carry nothing but the path — the container is derivable from the value itself.
+
+The `{blobName}` segment is opaque to the application and its shape depends on which code produced it. The path is flat in every case — there is no per-user or per-entity nesting:
+
+| Producer | `{blobName}` | Example |
+|---|---|---|
+| `CommitUploadAsync` (all user uploads) | bare GUID, `N` format, no extension | `avatars/9f2c4a1b8e7d40f3a5c6b2d1e0f34567` |
+| `CourseSeeder` (demo data) | `{Guid}-cover.webp` | `course-covers/3f1a…-cover.webp` |
+| `GenerateCertificate` (server-side) | `{certificateCode}.pdf` | `certificates/ABC123.pdf` |
+
+**Why not an absolute URL:**
 - Avoids vendor lock-in and prevents database updates if the storage account name, domain, or environment (Dev vs Prod) changes.
 - The application layer can dynamically construct the necessary URL (public or private) based on the context.
+
+**Why the container is part of the stored value, rather than a parameter passed at call time:**
+
+The obvious alternative is to store the bare `{blobName}` and let every caller supply the container, e.g. `DeleteAsync(user.AvatarBlobPath, UploadTarget.Avatar)`. Every read site knows its target statically, so this would compile. It was rejected for two reasons.
+
+1. **It would push blob-storage knowledge into the Domain.**
+   A stored path is self-describing, so a domain event only ever needs to carry a string:
+   ```csharp
+   RaiseDomainEvent(new UserAvatarRemovedDomainEvent(Id, AvatarBlobPath));
+   ```
+   The Outbox message it produces is equally opaque — `DeleteBlobPayload(string BlobPath)` — and one `DeleteBlob` message type serves avatars, course covers, category images and lesson videos alike. The background worker resolves the container by parsing the path; it has no entity, no type, no context, and needs none.
+
+   Drop the container from the path, and that knowledge must reappear somewhere. Either the domain event carries an `ImageType` / `UploadTarget` enum — which teaches `Learnix.Domain` that blob storage is partitioned into containers, a pure infrastructure concern — or every `*Removed` event needs its own Outbox payload and handler to re-attach the container. Today `Learnix.Domain` contains **zero** references to any container name. That is the property being protected.
+
+2. **A stored path is an address, not a copy of configuration.**
+   `BlobStorageOptions.AvatarContainer` answers "where do *new* avatars go?". `User.AvatarBlobPath` answers "where does *this* avatar actually live?". They coincide right up until someone changes the config — at which point the stored addresses remain correct and the derived ones silently become wrong.
+
+**Rejected alternative:** bare `{blobName}` + container supplied per call site. See above.
+
+> [!WARNING]
+> **Container names in `appsettings.json` must be treated as immutable once deployed.**
+> They are consumed by `BlobStorageOptions` only when *writing* a new blob. Existing rows keep the container they were stored with, which is correct — the files are physically there. But nothing in the code enforces or checks this: rename `BlobStorage:AvatarContainer` and the application starts up cleanly, new uploads land in the new container, and every previously stored asset keeps resolving to the old one. Renaming a container therefore requires physically moving the blobs **and** a data migration rewriting the prefix in every blob-path column (`Users.AvatarBlobPath`, `Courses.CoverBlobPath`, `Categories.ImageBlobPath`, `VideoLessons.VideoBlobPath`, `Certificates.FileUrl`).
 
 **Implementation Details:**
 - To build a public URL, the backend uses a pattern like: `!string.IsNullOrWhiteSpace(c.CoverBlobPath) ? blobStorage.GetPublicUrl(c.CoverBlobPath) : null`
