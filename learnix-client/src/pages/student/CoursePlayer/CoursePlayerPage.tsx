@@ -2,10 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { CheckCircle2, ChevronLeft, ChevronRight, Menu, MessageSquare, X } from 'lucide-react';
+import {
+    CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
+    Menu,
+    MessageSquare,
+    Sparkles,
+} from 'lucide-react';
 import { messagesApi } from '@/api/messages.api';
 import { CourseCertificateButton } from '@/components/common/course/CourseCertificateButton';
-import { ConversationView } from '@/components/common/messaging/ConversationView';
 import { BrandLogo } from '@/components/common/ui/BrandLogo';
 import { LanguageSwitcher } from '@/components/common/ui/LanguageSwitcher';
 import { ThemeSwitcher } from '@/components/common/ui/ThemeSwitcher';
@@ -14,26 +20,42 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { useCourseDetail } from '@/hooks/course/useCourseDetail';
 import { useCourseProgress } from '@/hooks/lesson/useCourseProgress';
 import { useMarkLessonComplete } from '@/hooks/lesson/useMarkLessonComplete';
+import { useAiChat } from '@/hooks/realtime/useAiChat';
+import { useMediaQuery } from '@/hooks/shared/useMediaQuery';
 import { APP_ROUTES } from '@/routes/paths';
 import type { ConversationSummary } from '@/types/message.types';
 import { cn } from '@/utils/cn';
+import { AssistantPanel, type AssistantTab } from './components/AssistantPanel';
 import { CourseCertificateDropdown } from './components/CourseCertificateDropdown';
 import { CourseSidebar } from './components/CourseSidebar';
 import { PostLessonView } from './components/PostLessonView';
 import { TestLessonPreview } from './components/TestLessonPreview';
 import { VideoLessonView } from './components/VideoLessonView';
 
+// react-resizable-panels builds its initial layout by summing every panel's `defaultSize`
+// and only normalises panels that leave it undefined — so each configuration must total 100.
+const SIDEBAR_SIZE = '20';
+const MAIN_SIZE = '80';
+const ASSISTANT_SIZE = '28';
+const MAIN_SIZE_WITH_ASSISTANT = '52';
+
 export default function CoursePlayerPage() {
     const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
     const navigate = useNavigate();
     const { t } = useTranslation('lessonPlayer');
-
     const { data: course } = useCourseDetail(courseId!);
     const { data: progress, isLoading } = useCourseProgress(courseId!);
     const markComplete = useMarkLessonComplete(courseId!);
+    const isDesktop = useMediaQuery('(min-width: 1024px)');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [assistantTab, setAssistantTab] = useState<AssistantTab | null>(null);
+    const [hasOpenedAiChat, setHasOpenedAiChat] = useState(false);
     const [activeChat, setActiveChat] = useState<ConversationSummary | null>(null);
     const [prevLessonId, setPrevLessonId] = useState(lessonId);
+
+    // Owned here rather than inside the panel, so closing the panel does not
+    // abort an in-flight stream or discard the message list.
+    const aiChat = useAiChat(hasOpenedAiChat);
 
     if (lessonId !== prevLessonId) {
         setPrevLessonId(lessonId);
@@ -76,7 +98,7 @@ export default function CoursePlayerPage() {
         markComplete.mutate(lessonId, {
             onSuccess: () => {
                 if (nextLesson) {
-                    navigate(`/courses/${courseId}/learn/${nextLesson.lessonId}`);
+                    navigate(APP_ROUTES.student.learnLesson(courseId!, nextLesson.lessonId));
                 }
             },
         });
@@ -91,9 +113,41 @@ export default function CoursePlayerPage() {
     // Called only when the video reaches its true end: navigate to the next lesson.
     const handleVideoFullyEnded = () => {
         if (nextLesson) {
-            navigate(`/courses/${courseId}/learn/${nextLesson.lessonId}`);
+            navigate(APP_ROUTES.student.learnLesson(courseId!, nextLesson.lessonId));
         }
     };
+
+    // The tab strip only ever switches. The header buttons double as an open/close toggle,
+    // the way an activity bar does — clicking the tab you are already on dismisses the panel.
+    const selectAssistantTab = (tab: AssistantTab) => {
+        setAssistantTab(tab);
+
+        if (tab === 'ai') {
+            setHasOpenedAiChat(true);
+        } else if (!activeChat && !startChat.isPending) {
+            startChat.mutate();
+        }
+    };
+
+    const toggleAssistant = (tab: AssistantTab) => {
+        if (assistantTab === tab) {
+            setAssistantTab(null);
+            return;
+        }
+        selectAssistantTab(tab);
+    };
+
+    const assistantElement = assistantTab && (
+        <AssistantPanel
+            activeTab={assistantTab}
+            onTabChange={selectAssistantTab}
+            onClose={() => setAssistantTab(null)}
+            chat={aiChat}
+            conversation={activeChat}
+            isConversationLoading={startChat.isPending}
+            isFullScreen={!isDesktop}
+        />
+    );
 
     const sidebarElement = (
         <CourseSidebar
@@ -260,57 +314,46 @@ export default function CoursePlayerPage() {
                     )}
                     <button
                         type="button"
-                        onClick={() => startChat.mutate()}
-                        disabled={startChat.isPending}
-                        title={t('header.messageInstructor')}
-                        className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
-                    >
-                        {startChat.isPending ? (
-                            <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                        ) : (
-                            <MessageSquare className="size-4" />
+                        onClick={() => toggleAssistant('ai')}
+                        aria-pressed={assistantTab === 'ai'}
+                        title={t('header.aiAssistant')}
+                        className={cn(
+                            'grid size-8 place-items-center rounded-lg transition-colors hover:bg-secondary hover:text-foreground',
+                            assistantTab === 'ai'
+                                ? 'bg-secondary text-primary'
+                                : 'text-muted-foreground',
                         )}
+                    >
+                        <Sparkles className="size-4" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => toggleAssistant('instructor')}
+                        aria-pressed={assistantTab === 'instructor'}
+                        title={t('header.messageInstructor')}
+                        className={cn(
+                            'grid size-8 place-items-center rounded-lg transition-colors hover:bg-secondary hover:text-foreground',
+                            assistantTab === 'instructor'
+                                ? 'bg-secondary text-primary'
+                                : 'text-muted-foreground',
+                        )}
+                    >
+                        <MessageSquare className="size-4" />
                     </button>
                     <div className="hidden items-center gap-1 lg:flex">
-                        <LanguageSwitcher />
                         <ThemeSwitcher />
+                        <LanguageSwitcher />
                     </div>
                 </div>
             </header>
 
             {/* Content */}
             <div className="relative flex min-h-0 flex-1 overflow-hidden">
-                {/* MOBILE LAYOUT */}
-                <div className="flex size-full flex-col overflow-hidden lg:hidden">
-                    {/* Mobile sidebar overlay */}
-                    {isSidebarOpen && (
-                        <div
-                            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
-                            onClick={() => setIsSidebarOpen(false)}
-                        />
-                    )}
-
-                    {/* Mobile sidebar drawer */}
-                    <div
-                        className={cn(
-                            'fixed inset-y-0 left-0 z-50 flex w-72 transform flex-col bg-card shadow-2xl transition-transform duration-300',
-                            isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
-                        )}
-                    >
-                        {sidebarElement}
-                    </div>
-
-                    {/* Mobile main content */}
-                    <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
-                        {mainElement}
-                    </div>
-                </div>
-
-                {/* DESKTOP LAYOUT (Resizable) */}
-                <div className="hidden size-full overflow-hidden lg:flex">
+                {isDesktop ? (
                     <ResizablePanelGroup direction="horizontal" className="size-full">
                         <ResizablePanel
-                            defaultSize="20"
+                            id="course-sidebar"
+                            defaultSize={SIDEBAR_SIZE}
                             minSize="15"
                             maxSize="30"
                             className="flex min-w-0 flex-col overflow-hidden bg-card"
@@ -321,42 +364,59 @@ export default function CoursePlayerPage() {
                         <ResizableHandle withHandle />
 
                         <ResizablePanel
-                            defaultSize="80"
+                            id="lesson-main"
+                            defaultSize={assistantTab ? MAIN_SIZE_WITH_ASSISTANT : MAIN_SIZE}
                             className="flex min-w-0 flex-col overflow-hidden bg-background"
                         >
                             {mainElement}
                         </ResizablePanel>
+
+                        {assistantElement && (
+                            <>
+                                <ResizableHandle withHandle />
+                                <ResizablePanel
+                                    id="assistant"
+                                    defaultSize={ASSISTANT_SIZE}
+                                    minSize="22"
+                                    maxSize="45"
+                                    className="flex min-w-0 flex-col overflow-hidden bg-card"
+                                >
+                                    {assistantElement}
+                                </ResizablePanel>
+                            </>
+                        )}
                     </ResizablePanelGroup>
-                </div>
-            </div>
-            {/* Chat Slide-over Overlay */}
-            {activeChat && (
-                <>
-                    {/* Backdrop */}
-                    <div
-                        className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm"
-                        onClick={() => setActiveChat(null)}
-                    />
-
-                    {/* Drawer Panel */}
-                    <div className="fixed inset-y-0 right-0 z-[70] flex w-full max-w-md translate-x-0 transform flex-col bg-card shadow-2xl transition-transform duration-300">
-                        <div className="relative flex h-full flex-col">
-                            {/* Desktop Close Button (Mobile uses the back button in ConversationView) */}
-                            <button
-                                onClick={() => setActiveChat(null)}
-                                className="absolute right-4 top-3 z-10 hidden rounded-md p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground md:block"
-                            >
-                                <X className="size-5" />
-                                <span className="sr-only">Close chat</span>
-                            </button>
-
-                            <ConversationView
-                                conversation={activeChat}
-                                onBack={() => setActiveChat(null)}
+                ) : (
+                    <div className="flex size-full flex-col overflow-hidden">
+                        {/* Mobile sidebar overlay */}
+                        {isSidebarOpen && (
+                            <div
+                                className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
+                                onClick={() => setIsSidebarOpen(false)}
                             />
+                        )}
+
+                        {/* Mobile sidebar drawer */}
+                        <div
+                            className={cn(
+                                'fixed inset-y-0 left-0 z-50 flex w-72 transform flex-col bg-card shadow-2xl transition-transform duration-300',
+                                isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+                            )}
+                        >
+                            {sidebarElement}
+                        </div>
+
+                        {/* Mobile main content */}
+                        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
+                            {mainElement}
                         </div>
                     </div>
-                </>
+                )}
+            </div>
+
+            {/* Mobile: the assistant takes over the screen — there is no room to dock it */}
+            {!isDesktop && assistantElement && (
+                <div className="fixed inset-0 z-[70] flex flex-col">{assistantElement}</div>
             )}
         </div>
     );

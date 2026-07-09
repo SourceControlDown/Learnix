@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
@@ -14,9 +15,18 @@ import type { ConversationSummary } from '@/types/message.types';
 interface ConversationViewProps {
     conversation: ConversationSummary;
     onBack?: () => void;
+    /** Turns the other participant's name into a link to their profile. */
+    profileHref?: string;
+    /** Rendered at the right edge of the header — e.g. a close button. */
+    headerActions?: ReactNode;
 }
 
-export function ConversationView({ conversation, onBack }: ConversationViewProps) {
+export function ConversationView({
+    conversation,
+    onBack,
+    profileHref,
+    headerActions,
+}: ConversationViewProps) {
     const { t } = useTranslation('messages');
     const user = useAuthStore((s) => s.user);
     const queryClient = useQueryClient();
@@ -85,13 +95,26 @@ export function ConversationView({ conversation, onBack }: ConversationViewProps
                     </button>
                 )}
                 <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-foreground">
-                        {conversation.otherUserName}
-                    </p>
+                    {profileHref ? (
+                        <Link
+                            to={profileHref}
+                            className="block truncate font-semibold text-foreground transition-colors hover:text-primary"
+                        >
+                            {conversation.otherUserName}
+                        </Link>
+                    ) : (
+                        <p className="truncate font-semibold text-foreground">
+                            {conversation.otherUserName}
+                        </p>
+                    )}
                     <p className="truncate text-sm text-muted-foreground">
                         {conversation.courseName}
                     </p>
                 </div>
+
+                {headerActions && (
+                    <div className="flex shrink-0 items-center gap-1.5">{headerActions}</div>
+                )}
             </div>
 
             <div className="flex-1 overflow-y-auto">

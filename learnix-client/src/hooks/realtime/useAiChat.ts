@@ -9,6 +9,12 @@ import type { LocalChatMessage } from '@/types/aiChat.types';
 let msgCounter = 0;
 const nextId = () => `msg-${Date.now()}-${++msgCounter}`;
 
+export type AiChatController = ReturnType<typeof useAiChat>;
+
+/**
+ * Owns the AI chat session. Call it from the component that outlives the chat surface,
+ * so an in-flight stream and the message list survive the panel being closed.
+ */
 export function useAiChat(isOpen: boolean) {
     const { t } = useTranslation('aiChat');
     const [messages, setMessages] = useState<LocalChatMessage[]>([]);
