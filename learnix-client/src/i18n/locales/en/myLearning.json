@@ -1,7 +1,7 @@
 {
-  "emptyTitle": "No courses yet",
-  "emptyDescription": "Enroll in a course to start learning.",
-  "statusActive": "In Progress",
-  "statusSuspended": "Suspended",
-  "enrolledOn": "Enrolled"
+    "emptyTitle": "No courses yet",
+    "emptyDescription": "Enroll in a course to start learning.",
+    "statusActive": "In Progress",
+    "statusSuspended": "Suspended",
+    "enrolledOn": "Enrolled"
 }

@@ -1,7 +1,7 @@
 {
-  "emptyTitle": "Курсів поки немає",
-  "emptyDescription": "Запишіться на курс, щоб почати навчання.",
-  "statusActive": "В процесі",
-  "statusSuspended": "Призупинено",
-  "enrolledOn": "Записаний"
+    "emptyTitle": "Курсів поки немає",
+    "emptyDescription": "Запишіться на курс, щоб почати навчання.",
+    "statusActive": "В процесі",
+    "statusSuspended": "Призупинено",
+    "enrolledOn": "Записаний"
 }

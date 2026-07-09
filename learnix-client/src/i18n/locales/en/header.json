@@ -1,12 +1,12 @@
 {
-  "navInstructorPanel": "Instructor Panel",
-  "navAdminPanel": "Admin Panel",
-  "getStarted": "Get started",
-  "menuProfile": "Profile",
-  "menuTheme": "Theme",
-  "menuLanguage": "Language",
-  "emailNotVerifiedAlert": "Please verify your email address to unlock all features.",
-  "resendEmail": "Resend link",
-  "resendCooldown": "Wait {{seconds}}s",
-  "resendSuccess": "Verification email sent!"
+    "navInstructorPanel": "Instructor Panel",
+    "navAdminPanel": "Admin Panel",
+    "getStarted": "Get started",
+    "menuProfile": "Profile",
+    "menuTheme": "Theme",
+    "menuLanguage": "Language",
+    "emailNotVerifiedAlert": "Please verify your email address to unlock all features.",
+    "resendEmail": "Resend link",
+    "resendCooldown": "Wait {{seconds}}s",
+    "resendSuccess": "Verification email sent!"
 }
