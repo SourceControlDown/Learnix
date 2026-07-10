@@ -327,6 +327,7 @@ public static class DependencyInjection
         services.AddScoped<IChatTool, GetCategoriesTool>();
         services.AddScoped<IChatTool, GetInstructorCoursesTool>();
         services.AddScoped<IChatTool, GetMyLearningProfileTool>();
+        services.AddScoped<IChatTool, GetCurrentLessonTool>();
         services.AddSingleton<IChatTool, GetPlatformInfoTool>();
         services.AddScoped<ChatScopeAuthorizer>();
         services.AddScoped<ChatStreamOrchestrator>();

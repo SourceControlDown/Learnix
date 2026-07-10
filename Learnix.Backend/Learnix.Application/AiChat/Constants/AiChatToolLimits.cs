@@ -11,4 +11,5 @@ public static class AiChatToolLimits
     public const int InstructorCandidates = 10;
     public const int InstructorNameMaxLength = 100;
     public const int CourseDescriptionPreviewLength = 200;
+    public const int LessonContentMaxLength = 8000;
 }
