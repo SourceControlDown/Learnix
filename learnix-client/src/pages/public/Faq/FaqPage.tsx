@@ -1,8 +1,8 @@
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { Mail, Search } from 'lucide-react';
-import { FormInput } from '@/components/common/form/FormInput';
+import { Mail } from 'lucide-react';
 import { ProjectNoticeBanner } from '@/components/common/ui/ProjectNoticeBanner';
+import { SearchInput } from '@/components/common/ui/SearchInput';
 import { EXTERNAL_LINKS } from '@/const/links.constants';
 import { usePublicConfig } from '@/hooks/shared/usePublicConfig';
 import { FaqCategory } from './FaqCategory';
@@ -51,12 +51,10 @@ export default function FaqPage() {
                         </h1>
                         <p className="mt-3 text-lg text-muted-foreground">{t('hero.subtitle')}</p>
 
-                        <div className="relative mx-auto mt-8 max-w-xl">
-                            <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
-                            <FormInput
-                                type="text"
+                        <div className="mx-auto mt-8 max-w-xl">
+                            <SearchInput
                                 placeholder={t('hero.searchPlaceholder')}
-                                className="w-full rounded-xl border border-input bg-card py-4 pl-12 pr-4 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                className="rounded-xl py-4 pl-11 text-base"
                             />
                         </div>
 

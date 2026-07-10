@@ -100,7 +100,8 @@ export default function ResetPasswordPage() {
                 <PasswordInput
                     id="password"
                     autoComplete="new-password"
-                    variant="auth"
+                    variant="card"
+                    reserveErrorSpace
                     label={t('resetPassword.password.label')}
                     placeholder={t('resetPassword.password.placeholder')}
                     error={errors.password}
@@ -111,7 +112,8 @@ export default function ResetPasswordPage() {
                 <PasswordInput
                     id="confirmPassword"
                     autoComplete="new-password"
-                    variant="auth"
+                    variant="card"
+                    reserveErrorSpace
                     label={t('resetPassword.confirmPassword.label')}
                     placeholder={t('resetPassword.confirmPassword.placeholder')}
                     error={errors.confirmPassword}

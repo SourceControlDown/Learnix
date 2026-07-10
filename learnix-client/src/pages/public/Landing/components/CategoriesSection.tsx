@@ -1,13 +1,35 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 import { BookOpen } from 'lucide-react';
 import { QueryError } from '@/components/common/system/QueryError';
 import { TextLink } from '@/components/common/ui/TextLink';
 import { APP_ROUTES } from '@/routes/paths';
-import { fadeUpVariant, staggerContainer, viewportConfig } from '@/utils/animations';
+import { viewportConfig } from '@/utils/animations';
 import { cn } from '@/utils/cn';
 import type { LandingCategory } from '@/utils/mocks/landing.mock';
+
+// Faster than the shared fadeUpVariant/staggerContainer — with 8 tiles in this grid,
+// the default timing made the last cards visibly lag in on load.
+const categoryFadeUpVariant: Variants = {
+    initial: { opacity: 0, y: 16 },
+    animate: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1.0] },
+    },
+};
+
+const categoryStaggerContainer: Variants = {
+    initial: {},
+    animate: {
+        transition: {
+            staggerChildren: 0.05,
+            delayChildren: 0.05,
+        },
+    },
+};
 
 interface CategoriesSectionProps {
     categories: LandingCategory[];
@@ -59,14 +81,14 @@ export function CategoriesSection({
 
         return (
             <motion.div
-                variants={staggerContainer}
+                variants={categoryStaggerContainer}
                 initial="initial"
                 whileInView="animate"
                 viewport={viewportConfig}
                 className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4"
             >
                 {categories.map((cat) => (
-                    <motion.div variants={fadeUpVariant} key={cat.id}>
+                    <motion.div variants={categoryFadeUpVariant} key={cat.id}>
                         <Link
                             to={`/courses?categoryId=${cat.id}`}
                             className="group relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-card/80 to-card/40 p-3 text-center backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_10px_40px_-10px_rgba(var(--primary),0.3)] sm:flex-row sm:items-start sm:gap-4 sm:p-4 sm:text-left"

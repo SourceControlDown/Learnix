@@ -181,7 +181,7 @@ export function HeroSection() {
                                 </p>
                                 <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-secondary/50 shadow-inner">
                                     <div
-                                        className="relative h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                                        className="relative h-full rounded-full bg-gradient-to-r from-brand to-accent"
                                         style={{ width: '68%' }}
                                     >
                                         <div className="absolute inset-0 animate-[progress_1s_linear_infinite] bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem]" />

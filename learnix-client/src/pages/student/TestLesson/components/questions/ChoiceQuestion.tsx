@@ -67,7 +67,7 @@ export function ChoiceQuestion({
                                     disabled={readonly}
                                     checked={isSelected}
                                     onChange={() => onOptionToggle(option.order)}
-                                    className="accent-primary"
+                                    className="size-4 accent-field-accent"
                                 />
                                 <span>{option.text}</span>
                                 {hasResult && isCorrectOption && (

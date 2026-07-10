@@ -38,6 +38,22 @@
         /* Inline links — must not follow --primary, which flips to near-white in dark.
            Darker than --brand so body-size text clears WCAG AA on white (5.2:1). */
         --link: 221 83% 53%;
+        /* Form-field tokens — the single source of truth for every input, select,
+           textarea, checkbox and radio. Deliberately independent of --primary/--brand:
+           restyle (or rebrand) all controls by editing these values.
+
+           Two surfaces: the `default` fill is for controls that sit on the page
+           background; the `card` fill is for controls inside a card (auth forms, the
+           messages search, instructor forms) and is tuned to stand apart from the card
+           behind it. Light theme: blue focus/accent, black text. */
+        --field: 0 0% 100%;
+        --field-hover: 210 40% 96%;
+        --field-card: 210 40% 96%;
+        --field-card-hover: 210 40% 93%;
+        --field-border: 214 32% 91%;
+        --field-border-focus: 217 91% 60%;
+        --field-border-error: 0 72% 51%;
+        --field-accent: 217 91% 60%;
     }
 
     .dark {
@@ -75,6 +91,18 @@
         --chat-user-bubble-foreground: 210 40% 96%;
         /* Lighter than --brand, which only reaches 4.9:1 on --card here. This clears 7:1. */
         --link: 213 94% 68%;
+        /* Form-field tokens (see :root). Dark theme: the `default` fill sits a touch ABOVE
+           the page (soft grey, raised); the `card` fill sits BELOW the card (11%) so an input
+           inside a card reads as a recessed well. Borders are neutral grey and turn near-white
+           on focus; the checkbox/radio accent is near-white too — no blue in the dark UI. */
+        --field: 222 47% 13%;
+        --field-hover: 222 47% 16%;
+        --field-card: 222 47% 7%;
+        --field-card-hover: 222 47% 9%;
+        --field-border: 217 33% 20%;
+        --field-border-focus: 210 40% 98%;
+        --field-border-error: 0 63% 55%;
+        --field-accent: 210 40% 98%;
     }
 
     * {
