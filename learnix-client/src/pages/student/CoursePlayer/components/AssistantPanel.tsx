@@ -17,6 +17,8 @@ interface AssistantPanelProps {
     chat: AiChatController;
     conversation: ConversationSummary | null;
     isConversationLoading: boolean;
+    /** Shown above the composer so the student knows which lesson the tutor can read. */
+    lessonTitle?: string;
     /** Mobile sheet — it covers the page header, so the panel has to carry its own tabs. */
     isFullScreen?: boolean;
 }
@@ -38,6 +40,7 @@ export function AssistantPanel({
     chat,
     conversation,
     isConversationLoading,
+    lessonTitle,
     isFullScreen = false,
 }: AssistantPanelProps) {
     const { t } = useTranslation('lessonPlayer');
@@ -90,6 +93,7 @@ export function AssistantPanel({
                     isWide={isFullScreen}
                     header={isFullScreen ? undefined : aiTitle}
                     actions={isFullScreen ? undefined : closeButton}
+                    lessonTitle={lessonTitle}
                 />
             </div>
 

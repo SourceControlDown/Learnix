@@ -32,6 +32,8 @@ export function AiChatMessages({
                 return t('searching');
             case 'get_platform_info':
                 return t('lookingUpInfo');
+            case 'get_current_lesson':
+                return t('readingLesson');
             default:
                 return t('thinking');
         }

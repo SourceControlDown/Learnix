@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BookOpen } from 'lucide-react';
 import { ChatComposer } from '@/components/common/chat/ChatComposer';
 import { CHAT_LIMITS } from '@/const/ui.constants';
 import type { AiChatController } from '@/hooks/realtime/useAiChat';
@@ -16,6 +17,8 @@ interface AiChatConversationProps {
     /** Right side of the toolbar, after the "new conversation" button. */
     actions?: ReactNode;
     toolbarClassName?: string;
+    /** Title of the lesson the tutor can read. Omit for the platform assistant. */
+    lessonTitle?: string;
 }
 
 /**
@@ -29,6 +32,7 @@ export function AiChatConversation({
     header,
     actions,
     toolbarClassName,
+    lessonTitle,
 }: AiChatConversationProps) {
     const { t } = useTranslation('aiChat');
     const {
@@ -75,6 +79,15 @@ export function AiChatConversation({
                     isWide && 'mx-auto w-full max-w-3xl border-t-0 p-4 pb-6',
                 )}
             >
+                {lessonTitle && (
+                    <p className="mb-2 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                        <BookOpen className="size-3.5 shrink-0" aria-hidden />
+                        <span className="truncate">
+                            {t('lessonContext', { title: lessonTitle })}
+                        </span>
+                    </p>
+                )}
+
                 <ChatComposer
                     onSend={sendMessage}
                     placeholder={t('placeholder')}

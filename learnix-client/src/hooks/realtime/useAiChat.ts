@@ -1,21 +1,28 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { aiChatApi, streamAiMessage } from '@/api/aiChat.api';
 import { queryKeys } from '@/api/queryKeys';
-import type { LocalChatMessage } from '@/types/aiChat.types';
+import type { ChatScope, LocalChatMessage } from '@/types/aiChat.types';
 
 let msgCounter = 0;
 const nextId = () => `msg-${Date.now()}-${++msgCounter}`;
 
 export type AiChatController = ReturnType<typeof useAiChat>;
 
+const keyOf = (scope: ChatScope) =>
+    scope.kind === 'platform' ? 'platform' : `course:${scope.courseId}`;
+
 /**
- * Owns the AI chat session. Call it from the component that outlives the chat surface,
+ * Owns one AI chat session. Call it from the component that outlives the chat surface,
  * so an in-flight stream and the message list survive the panel being closed.
+ *
+ * @param scope which conversation — the platform assistant or a course tutor.
+ *   Pass a stable reference (a module constant or `useMemo`); it feeds a query key and a callback.
+ * @param lessonId the lesson the student has open, sent alongside each message of a course tutor.
  */
-export function useAiChat(isOpen: boolean) {
+export function useAiChat(isOpen: boolean, scope: ChatScope, lessonId?: string) {
     const { t } = useTranslation('aiChat');
     const [messages, setMessages] = useState<LocalChatMessage[]>([]);
     const [streamingContent, setStreamingContent] = useState('');
@@ -26,9 +33,32 @@ export function useAiChat(isOpen: boolean) {
     const abortRef = useRef<AbortController | null>(null);
     const queryClient = useQueryClient();
 
+    const scopeKey = keyOf(scope);
+    const [prevScopeKey, setPrevScopeKey] = useState(scopeKey);
+
+    // The player keeps this hook mounted across courses, so the scope can change underneath it.
+    // Another course is another conversation: drop what belongs to the previous one.
+    if (scopeKey !== prevScopeKey) {
+        setPrevScopeKey(scopeKey);
+        setMessages([]);
+        setStreamingContent('');
+        setIsStreaming(false);
+        setActiveToolName(null);
+        setSessionLoaded(false);
+    }
+
+    // Leaving a scope (or the page) must not leave a stream writing into the next one.
+    useEffect(
+        () => () => {
+            abortRef.current?.abort();
+            streamingRef.current = '';
+        },
+        [scopeKey],
+    );
+
     const { data: session, isLoading: isSessionLoading } = useQuery({
-        queryKey: queryKeys.aiChat.session(),
-        queryFn: aiChatApi.getSession,
+        queryKey: queryKeys.aiChat.session(scope),
+        queryFn: () => aiChatApi.getSession(scope),
         enabled: isOpen && !sessionLoaded,
         staleTime: Infinity,
     });
@@ -46,7 +76,7 @@ export function useAiChat(isOpen: boolean) {
     }
 
     const { mutate: clearSession, isPending: isClearing } = useMutation({
-        mutationFn: aiChatApi.clearSession,
+        mutationFn: () => aiChatApi.clearSession(scope),
         onSuccess: () => {
             abortRef.current?.abort();
             streamingRef.current = '';
@@ -55,7 +85,7 @@ export function useAiChat(isOpen: boolean) {
             setIsStreaming(false);
             setActiveToolName(null);
             setSessionLoaded(false);
-            queryClient.removeQueries({ queryKey: queryKeys.aiChat.session() });
+            queryClient.removeQueries({ queryKey: queryKeys.aiChat.session(scope) });
         },
         onError: () => toast.error(t('error')),
     });
@@ -74,7 +104,12 @@ export function useAiChat(isOpen: boolean) {
             setStreamingContent('');
 
             try {
-                for await (const event of streamAiMessage(text, controller.signal)) {
+                for await (const event of streamAiMessage(
+                    scope,
+                    text,
+                    lessonId,
+                    controller.signal,
+                )) {
                     if (controller.signal.aborted) break;
 
                     if (event.type === 'text_delta') {
@@ -117,7 +152,7 @@ export function useAiChat(isOpen: boolean) {
                 setActiveToolName(null);
             }
         },
-        [isStreaming, t],
+        [isStreaming, t, scope, lessonId],
     );
 
     return {

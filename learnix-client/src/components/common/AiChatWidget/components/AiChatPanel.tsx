@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import { useAiChat } from '@/hooks/realtime/useAiChat';
 import { useMediaQuery } from '@/hooks/shared/useMediaQuery';
+import type { ChatScope } from '@/types/aiChat.types';
 import { cn } from '@/utils/cn';
 import { AiChatConversation } from './AiChatConversation';
 
@@ -13,9 +14,11 @@ interface AiChatPanelProps {
     onToggleExpand: () => void;
 }
 
+const PLATFORM_SCOPE: ChatScope = { kind: 'platform' };
+
 export function AiChatPanel({ isOpen, onClose, isExpanded, onToggleExpand }: AiChatPanelProps) {
     const { t } = useTranslation('aiChat');
-    const chat = useAiChat(isOpen);
+    const chat = useAiChat(isOpen, PLATFORM_SCOPE);
     const isMobile = useMediaQuery('(max-width: 639px)');
 
     useEffect(() => {

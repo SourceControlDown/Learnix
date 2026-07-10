@@ -1,25 +1,33 @@
-import type { ChatSessionDto } from '@/types/aiChat.types';
+import type { ChatScope, ChatSessionDto } from '@/types/aiChat.types';
 import { api } from './axios.instance';
 
-export const aiChatApi = {
-    getSession: () => api.get<ChatSessionDto>('/ai-chat/session').then((r) => r.data),
+/** The scope is the address of the session — the user comes from the token. */
+function scopePath(scope: ChatScope): string {
+    return scope.kind === 'platform' ? '/ai-chat/platform' : `/ai-chat/courses/${scope.courseId}`;
+}
 
-    clearSession: () => api.delete('/ai-chat/session').then((r) => r.data),
+export const aiChatApi = {
+    getSession: (scope: ChatScope) =>
+        api.get<ChatSessionDto>(`${scopePath(scope)}/session`).then((r) => r.data),
+
+    clearSession: (scope: ChatScope) =>
+        api.delete(`${scopePath(scope)}/session`).then((r) => r.data),
 };
 
 export async function* streamAiMessage(
+    scope: ChatScope,
     message: string,
+    lessonId?: string,
     signal?: AbortSignal,
 ): AsyncGenerator<{ type: string; data: unknown }> {
-    const response = await api.post(
-        '/ai-chat/messages',
-        { message },
-        {
-            responseType: 'stream',
-            adapter: 'fetch', // Use fetch adapter to support streaming in the browser
-            signal,
-        },
-    );
+    // lessonId travels beside the message, never inside it: the stored text is what the user sees again.
+    const body = scope.kind === 'course' ? { message, lessonId } : { message };
+
+    const response = await api.post(`${scopePath(scope)}/messages`, body, {
+        responseType: 'stream',
+        adapter: 'fetch', // Use fetch adapter to support streaming in the browser
+        signal,
+    });
 
     const stream = response.data as unknown as ReadableStream<Uint8Array>;
     if (!stream) {

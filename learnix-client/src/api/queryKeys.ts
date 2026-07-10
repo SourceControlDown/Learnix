@@ -1,3 +1,5 @@
+import type { ChatScope } from '@/types/aiChat.types';
+
 /**
  * Related ADRs:
  * - ADR-FRONT-API-003: React Query Structure & Defaults
@@ -80,7 +82,10 @@ export const queryKeys = {
         count: () => [...queryKeys.wishlist.all, 'count'] as const,
     },
     aiChat: {
-        session: () => ['ai-chat', 'session'] as const,
+        session: (scope: ChatScope) =>
+            scope.kind === 'platform'
+                ? (['ai-chat', 'session', 'platform'] as const)
+                : (['ai-chat', 'session', 'course', scope.courseId] as const),
     },
     admin: {
         all: ['admin'] as const,

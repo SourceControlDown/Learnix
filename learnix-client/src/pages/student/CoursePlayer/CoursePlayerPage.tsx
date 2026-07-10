@@ -23,6 +23,7 @@ import { useMarkLessonComplete } from '@/hooks/lesson/useMarkLessonComplete';
 import { useAiChat } from '@/hooks/realtime/useAiChat';
 import { useMediaQuery } from '@/hooks/shared/useMediaQuery';
 import { APP_ROUTES } from '@/routes/paths';
+import type { ChatScope } from '@/types/aiChat.types';
 import type { ConversationSummary } from '@/types/message.types';
 import { cn } from '@/utils/cn';
 import { AssistantPanel, type AssistantTab } from './components/AssistantPanel';
@@ -53,9 +54,14 @@ export default function CoursePlayerPage() {
     const [activeChat, setActiveChat] = useState<ConversationSummary | null>(null);
     const [prevLessonId, setPrevLessonId] = useState(lessonId);
 
+    const chatScope = useMemo<ChatScope>(
+        () => ({ kind: 'course', courseId: courseId! }),
+        [courseId],
+    );
+
     // Owned here rather than inside the panel, so closing the panel does not
     // abort an in-flight stream or discard the message list.
-    const aiChat = useAiChat(hasOpenedAiChat);
+    const aiChat = useAiChat(hasOpenedAiChat, chatScope, lessonId);
 
     if (lessonId !== prevLessonId) {
         setPrevLessonId(lessonId);
@@ -145,6 +151,7 @@ export default function CoursePlayerPage() {
             chat={aiChat}
             conversation={activeChat}
             isConversationLoading={startChat.isPending}
+            lessonTitle={currentLesson?.title}
             isFullScreen={!isDesktop}
         />
     );
