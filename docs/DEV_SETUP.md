@@ -224,9 +224,10 @@ docker exec -it learnix-mongo mongosh "mongodb://learnix:learnix@localhost:27017
 Useful commands once inside:
 ```js
 show collections          // list collections
-db.chat_sessions.find().pretty()   // view all chat sessions
-db.chat_sessions.find({ isActive: true })
-db.chat_sessions.deleteMany({})    // clear all sessions
+db.chat_sessions.find().pretty()          // view all chat sessions
+db.chat_sessions.find({ scope: "Platform" })  // the site-wide assistant
+db.chat_sessions.find({ scope: "Course" })    // one per course the user is tutored in
+db.chat_sessions.deleteMany({})           // clear all sessions
 exit
 ```
 
