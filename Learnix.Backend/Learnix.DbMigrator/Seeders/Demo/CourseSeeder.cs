@@ -236,8 +236,8 @@ public sealed class CourseSeeder(
 
         await context.SaveChangesAsync(ct);
 
-        // Step 2 — add lessons via DbContext (Section.AddLesson is internal to the Domain assembly).
-        // The unique (SectionId, DisplayOrder) index requires stable order values.
+        // Step 2 — add lessons through the aggregate root, which assigns DisplayOrder from the
+        // section and so keeps the unique (SectionId, DisplayOrder) index satisfied.
         //
         // Notes on visibility:
         //   PostLesson.Create()  в†’ sets IsHidden = false automatically when content is non-empty.
@@ -245,13 +245,12 @@ public sealed class CourseSeeder(
         //   TestLesson.Create()  в†’ IsHidden stays true even after ReplaceQuestions(); must call SetVisibility(false).
         foreach (var (section, sectionDef) in sections)
         {
-            for (var order = 0; order < sectionDef.Lessons.Length; order++)
+            foreach (var lessonDef in sectionDef.Lessons)
             {
-                switch (sectionDef.Lessons[order])
+                switch (lessonDef)
                 {
                     case SeedPost post:
-                        context.Set<PostLesson>().Add(
-                            PostLesson.Create(section.Id, post.Title, order, post.Content));
+                        course.AddLesson(PostLesson.Create(section.Id, post.Title, post.Content));
                         break;
 
                     case SeedVideo vid:
@@ -270,18 +269,17 @@ public sealed class CourseSeeder(
                             logger.LogWarning(ex, "Failed to upload placeholder video for {Title}", vid.Title);
                         }
 
-                        var vl = VideoLesson.Create(
-                            section.Id, vid.Title, order, videoPath, vid.Description);
-                        context.Set<VideoLesson>().Add(vl);
+                        course.AddLesson(VideoLesson.Create(
+                            section.Id, vid.Title, videoPath, vid.Description));
                         break;
 
                     case SeedTest test:
                         var tl = TestLesson.Create(
-                            section.Id, test.Title, order,
+                            section.Id, test.Title,
                             test.Description, test.AttemptLimit,
                             test.CooldownMinutes, test.PassingThreshold);
                         tl.ReplaceQuestions(test.Questions);
-                        context.Set<TestLesson>().Add(tl);
+                        course.AddLesson(tl);
                         break;
                 }
             }

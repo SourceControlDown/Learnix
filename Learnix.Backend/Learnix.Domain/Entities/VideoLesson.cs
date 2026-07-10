@@ -10,11 +10,10 @@ public class VideoLesson : Lesson
     private VideoLesson(
         Guid sectionId,
         string title,
-        int order,
         string videoBlobPath,
         string? description,
         int? durationSeconds)
-        : base(sectionId, title, order, LessonType.Video)
+        : base(sectionId, title, LessonType.Video)
     {
         VideoBlobPath = videoBlobPath;
         Description = description;
@@ -31,11 +30,10 @@ public class VideoLesson : Lesson
     public static VideoLesson Create(
         Guid sectionId,
         string title,
-        int order,
         string videoBlobPath,
         string? description = null,
         int? durationSeconds = null)
-        => new(sectionId, title, order, videoBlobPath, description, durationSeconds);
+        => new(sectionId, title, videoBlobPath, description, durationSeconds);
 
     public override bool IsPublishReady() => !string.IsNullOrWhiteSpace(VideoBlobPath);
 

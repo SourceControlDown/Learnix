@@ -221,6 +221,21 @@ public class Course : SoftDeletableEntity
         section.ReorderLessons(pairs);
     }
 
+    /// <remarks>
+    /// The lesson's DisplayOrder is assigned here, from the section it targets. Callers must load
+    /// the course with that section's lessons — otherwise the section looks empty and the new
+    /// lesson collides with an existing one on the unique (SectionId, DisplayOrder) index.
+    /// </remarks>
+    public void AddLesson(Lesson lesson)
+    {
+        EnsureStructureMutable();
+
+        var section = _sections.FirstOrDefault(s => s.Id == lesson.SectionId)
+            ?? throw new DomainException($"Lesson {lesson.Id} does not belong to course {Id}.");
+
+        section.AddLesson(lesson);
+    }
+
     public void RemoveLesson(Lesson lesson)
     {
         EnsureStructureMutable();

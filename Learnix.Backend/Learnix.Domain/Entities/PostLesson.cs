@@ -6,8 +6,8 @@ public class PostLesson : Lesson
 {
     private PostLesson() { }
 
-    private PostLesson(Guid sectionId, string title, int order, string content)
-        : base(sectionId, title, order, LessonType.Post)
+    private PostLesson(Guid sectionId, string title, string content)
+        : base(sectionId, title, LessonType.Post)
     {
         Content = content;
     }
@@ -19,10 +19,9 @@ public class PostLesson : Lesson
     public static PostLesson Create(
         Guid sectionId,
         string title,
-        int order,
         string content)
     {
-        var lesson = new PostLesson(sectionId, title, order, content);
+        var lesson = new PostLesson(sectionId, title, content);
 
         if (lesson.IsPublishReady())
         {

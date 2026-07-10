@@ -12,12 +12,11 @@ public class TestLesson : Lesson
     private TestLesson(
         Guid sectionId,
         string title,
-        int order,
         string? description,
         int? attemptLimit,
         int? cooldownMinutes,
         int passingThreshold)
-        : base(sectionId, title, order, LessonType.Test)
+        : base(sectionId, title, LessonType.Test)
     {
         Description = description;
         AttemptLimit = attemptLimit;
@@ -34,12 +33,12 @@ public class TestLesson : Lesson
     public int MaxScore => _questions.Count;
 
     public static TestLesson Create(
-        Guid sectionId, string title, int order,
+        Guid sectionId, string title,
         string? description = null,
         int? attemptLimit = null,
         int? cooldownMinutes = null,
         int passingThreshold = LessonConstants.DefaultPassingThreshold)
-        => new(sectionId, title, order, description, attemptLimit, cooldownMinutes, passingThreshold);
+        => new(sectionId, title, description, attemptLimit, cooldownMinutes, passingThreshold);
 
     public void ReplaceQuestions(IReadOnlyList<QuestionBlueprint> blueprints)
     {

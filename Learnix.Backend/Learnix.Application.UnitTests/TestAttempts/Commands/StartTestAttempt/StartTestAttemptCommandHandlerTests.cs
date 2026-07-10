@@ -284,7 +284,7 @@ public class StartTestAttemptCommandHandlerTests
     private static TestLesson Test(int? attemptLimit = null, int? cooldownMinutes = null)
     {
         var lesson = TestLesson.Create(
-            Guid.NewGuid(), "Quiz", order: 0, attemptLimit: attemptLimit, cooldownMinutes: cooldownMinutes);
+            Guid.NewGuid(), "Quiz", attemptLimit: attemptLimit, cooldownMinutes: cooldownMinutes);
 
         lesson.ReplaceQuestions([
             new QuestionBlueprint(

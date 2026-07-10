@@ -10,7 +10,7 @@ public class VideoLessonTests
     private const string Video = "course-videos/v.mp4";
 
     private static VideoLesson Create(string blobPath = Video)
-        => VideoLesson.Create(Guid.NewGuid(), "Lesson", 0, blobPath);
+        => VideoLesson.Create(Guid.NewGuid(), "Lesson", blobPath);
 
     [Fact]
     public void Create_ShouldStartHiddenAndAttachTheVideo()
@@ -133,7 +133,7 @@ public class VideoLessonTests
 public class PostLessonTests
 {
     private static PostLesson Create(string content = "some content")
-        => PostLesson.Create(Guid.NewGuid(), "Lesson", 0, content);
+        => PostLesson.Create(Guid.NewGuid(), "Lesson", content);
 
     [Fact]
     public void Create_WithContent_ShouldBeVisibleImmediately()

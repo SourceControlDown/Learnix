@@ -92,14 +92,4 @@ internal sealed class LessonRepository(ApplicationDbContext context)
 
         return next?.Id ?? lessons[0].Id;
     }
-
-    public Task<int> GetMaxDisplayOrderAsync(Guid sectionId, CancellationToken ct = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task ShiftLessonsOrderAsync(Guid sectionId, Guid lessonId, int newOrder, CancellationToken ct)
-    {
-        throw new NotImplementedException();
-    }
 }

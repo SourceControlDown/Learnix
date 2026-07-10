@@ -18,7 +18,7 @@ public class CourseTests
         var course = Draft();
         course.SetCoverImage(Cover);
         var section = course.AddSection("Section 1");
-        section.AddLesson(PostLesson.Create(section.Id, "Lesson 1", 0, "content"));
+        course.AddLesson(PostLesson.Create(section.Id, "Lesson 1", "content"));
         return course;
     }
 
@@ -87,7 +87,7 @@ public class CourseTests
         var course = Draft();
         course.SetCoverImage(Cover);
         var section = course.AddSection("Section 1");
-        section.AddLesson(VideoLesson.Create(section.Id, "Lesson 1", 0, "course-videos/v.mp4"));
+        course.AddLesson(VideoLesson.Create(section.Id, "Lesson 1", "course-videos/v.mp4"));
 
         // Act
         var act = () => course.Publish();
@@ -561,7 +561,7 @@ public class CourseTests
         // Arrange
         var course = Draft();
         course.AddSection("Section 1");
-        var foreign = PostLesson.Create(Guid.NewGuid(), "Foreign", 0, "content");
+        var foreign = PostLesson.Create(Guid.NewGuid(), "Foreign", "content");
 
         // Act
         var act = () => course.RemoveLesson(foreign);
@@ -576,8 +576,8 @@ public class CourseTests
         // Arrange — the removed video must be queued for deletion, not orphaned in blob storage
         var course = Draft();
         var section = course.AddSection("Section 1");
-        var video = VideoLesson.Create(section.Id, "Lesson", 0, "course-videos/v.mp4");
-        section.AddLesson(video);
+        var video = VideoLesson.Create(section.Id, "Lesson", "course-videos/v.mp4");
+        course.AddLesson(video);
         course.ClearDomainEvents();
         video.ClearDomainEvents();
 
@@ -611,8 +611,8 @@ public class CourseTests
         // Arrange — a video lesson without a video can never be shown to students
         var course = Draft();
         var section = course.AddSection("Section 1");
-        var video = VideoLesson.Create(section.Id, "Lesson", 0, videoBlobPath: "");
-        section.AddLesson(video);
+        var video = VideoLesson.Create(section.Id, "Lesson", videoBlobPath: "");
+        course.AddLesson(video);
 
         // Act
         var act = () => course.ToggleLessonVisibility(video, isVisible: true);
@@ -642,8 +642,8 @@ public class CourseTests
         var course = Draft();
         course.AddSection("Empty");
         var section = course.AddSection("Section 2");
-        var lesson = PostLesson.Create(section.Id, "Lesson", 0, "content");
-        section.AddLesson(lesson);
+        var lesson = PostLesson.Create(section.Id, "Lesson", "content");
+        course.AddLesson(lesson);
 
         // Act & Assert
         course.HasLesson(lesson.Id).Should().BeTrue();

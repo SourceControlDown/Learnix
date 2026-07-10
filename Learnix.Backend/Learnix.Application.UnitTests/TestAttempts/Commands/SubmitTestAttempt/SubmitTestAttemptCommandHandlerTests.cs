@@ -368,7 +368,7 @@ public class SubmitTestAttemptCommandHandlerTests
     private static TestLesson TestWithThreeSingleChoiceQuestions(int passingThreshold = 70)
     {
         var lesson = TestLesson.Create(
-            Guid.NewGuid(), "Quiz", order: 0, passingThreshold: passingThreshold);
+            Guid.NewGuid(), "Quiz", passingThreshold: passingThreshold);
 
         lesson.ReplaceQuestions(Enumerable.Range(0, 3)
             .Select(i => new QuestionBlueprint(
@@ -383,7 +383,7 @@ public class SubmitTestAttemptCommandHandlerTests
 
     private static TestLesson TestWithOneChoiceAndOneTextQuestion()
     {
-        var lesson = TestLesson.Create(Guid.NewGuid(), "Quiz", order: 0);
+        var lesson = TestLesson.Create(Guid.NewGuid(), "Quiz");
 
         lesson.ReplaceQuestions([
             new QuestionBlueprint(
