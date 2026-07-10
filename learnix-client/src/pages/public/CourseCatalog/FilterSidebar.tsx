@@ -1,7 +1,6 @@
-import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { RadioOption } from '@/components/common/form/RadioOption';
 import { RatingStars } from '@/components/common/ui/RatingStars';
-import { cn } from '@/utils/cn';
 
 interface CategoryOption {
     id: string;
@@ -18,57 +17,6 @@ interface FilterSidebarProps {
     onPriceChange: (val: boolean | undefined) => void;
     onRatingChange: (val: number | undefined) => void;
     onClear: () => void;
-}
-
-interface CustomRadioProps {
-    name: string;
-    checked: boolean;
-    onClick: () => void;
-    label: ReactNode;
-    rightElement?: ReactNode;
-}
-
-function CustomRadio({ name, checked, onClick, label, rightElement }: CustomRadioProps) {
-    return (
-        <label className="group flex cursor-pointer items-center justify-between py-1.5 transition-all">
-            <div className="flex items-center gap-3">
-                <div
-                    className={cn(
-                        'relative flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-                        checked
-                            ? 'border-primary bg-primary/10'
-                            : 'border-muted-foreground/30 bg-transparent group-hover:border-primary/50',
-                    )}
-                >
-                    <input
-                        type="radio"
-                        name={name}
-                        checked={checked}
-                        onClick={onClick}
-                        readOnly
-                        className="absolute inset-0 cursor-pointer opacity-0"
-                    />
-                    <div
-                        className={cn(
-                            'size-2.5 rounded-full transition-all duration-200',
-                            checked ? 'scale-100 bg-primary' : 'scale-0 bg-transparent',
-                        )}
-                    />
-                </div>
-                <span
-                    className={cn(
-                        'text-sm transition-colors',
-                        checked
-                            ? 'font-medium text-primary'
-                            : 'text-foreground/80 group-hover:text-foreground',
-                    )}
-                >
-                    {label}
-                </span>
-            </div>
-            {rightElement}
-        </label>
-    );
 }
 
 export function FilterSidebar({
@@ -110,7 +58,7 @@ export function FilterSidebar({
                     {categories.map((cat) => {
                         const checked = cat.id === selectedCategoryId;
                         return (
-                            <CustomRadio
+                            <RadioOption
                                 key={cat.id}
                                 name="category"
                                 checked={checked}
@@ -136,7 +84,7 @@ export function FilterSidebar({
                     {PRICE_OPTIONS.map((opt) => {
                         const checked = isFree === opt.value;
                         return (
-                            <CustomRadio
+                            <RadioOption
                                 key={String(opt.value)}
                                 name="price"
                                 checked={checked}
@@ -167,7 +115,7 @@ export function FilterSidebar({
                             );
 
                         return (
-                            <CustomRadio
+                            <RadioOption
                                 key={String(opt.value)}
                                 name="rating"
                                 checked={checked}

@@ -32,7 +32,9 @@
     },
     "pagination": {
         "prev": "‹",
-        "next": "›"
+        "next": "›",
+        "perPage": "На сторінці",
+        "goToPage": "Перейти до"
     },
     "students_one": "{{count}} студент",
     "students_few": "{{count}} студенти",

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { CATALOG_PAGE_SIZES, PAGINATION } from '@/const/ui.constants';
 
 export type SortBy = 'popular' | 'newest' | 'rating';
+
+const ALLOWED_PAGE_SIZES: readonly number[] = CATALOG_PAGE_SIZES.desktop;
 
 function useDebounce<T>(value: T, delay: number): T {
     const [debounced, setDebounced] = useState(value);
@@ -23,6 +26,8 @@ export function useCatalogFilters() {
     const minRatingParam = searchParams.get('minRating');
     const minRating: number | undefined = minRatingParam ? parseFloat(minRatingParam) : undefined;
     const page = parseInt(searchParams.get('page') ?? '1', 10) || 1;
+    const sizeParam = parseInt(searchParams.get('size') ?? '', 10);
+    const pageSize = ALLOWED_PAGE_SIZES.includes(sizeParam) ? sizeParam : PAGINATION.CATALOG;
 
     // Local search input state (debounced before hitting URL/API)
     const [searchInput, setSearchInput] = useState(searchParam);
@@ -58,6 +63,16 @@ export function useCatalogFilters() {
 
     function setPage(p: number) {
         setParam('page', p === 1 ? null : String(p));
+    }
+
+    function setPageSize(size: number) {
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            if (size === PAGINATION.CATALOG) next.delete('size');
+            else next.set('size', String(size));
+            next.delete('page');
+            return next;
+        });
     }
 
     function setCategoryId(id: string) {
@@ -113,12 +128,14 @@ export function useCatalogFilters() {
         isFree,
         minRating,
         page,
+        pageSize,
         searchInput,
         debouncedSearch,
 
         // Updaters
         setSearchInput,
         setPage,
+        setPageSize,
         setCategoryId,
         setSortBy,
         setIsFree,

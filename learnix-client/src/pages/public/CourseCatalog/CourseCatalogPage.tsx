@@ -1,20 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { CourseCard } from '@/components/common/course/CourseCard';
 import { QueryError } from '@/components/common/system/QueryError';
+import { PageSizeSelect } from '@/components/common/ui/PageSizeSelect';
 import { Pagination } from '@/components/common/ui/Pagination';
 import { SearchInput } from '@/components/common/ui/SearchInput';
-import { PAGINATION } from '@/const/ui.constants';
+import { CATALOG_PAGE_SIZES } from '@/const/ui.constants';
 import { useCatalogCourses } from '@/hooks/course/useCatalogCourses';
 import { useCategories } from '@/hooks/course/useCategories';
+import { useMediaQuery } from '@/hooks/shared/useMediaQuery';
 import { cn } from '@/utils/cn';
 import { FilterSidebar } from './FilterSidebar';
 import { SortDropdown } from './SortDropdown';
 import { useCatalogFilters } from './hooks/useCatalogFilters';
-
-const PAGE_SIZE = PAGINATION.CATALOG;
 
 export default function CourseCatalogPage() {
     const { t } = useTranslation('catalog');
@@ -25,10 +25,12 @@ export default function CourseCatalogPage() {
         isFree,
         minRating,
         page,
+        pageSize,
         searchInput,
         debouncedSearch,
         setSearchInput,
         setPage,
+        setPageSize,
         setCategoryId,
         setSortBy,
         setIsFree,
@@ -37,6 +39,15 @@ export default function CourseCatalogPage() {
     } = useCatalogFilters();
 
     const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+
+    // Mobile never offers 48+ cards per page. If the URL carries a desktop-only size and the
+    // viewport is small, clamp it down to the largest mobile option.
+    const isDesktop = useMediaQuery('(min-width: 640px)');
+    const pageSizeOptions = isDesktop ? CATALOG_PAGE_SIZES.desktop : CATALOG_PAGE_SIZES.mobile;
+    useEffect(() => {
+        const max = pageSizeOptions[pageSizeOptions.length - 1];
+        if (pageSize > max) setPageSize(max);
+    }, [pageSizeOptions, pageSize, setPageSize]);
 
     const { data: categoriesData } = useCategories();
     const categories = categoriesData ?? [];
@@ -48,7 +59,7 @@ export default function CourseCatalogPage() {
         isFree,
         minRating,
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
     });
 
     const courses = data?.items ?? [];
@@ -140,7 +151,6 @@ export default function CourseCatalogPage() {
                                     onChange={(e) => setSearchInput(e.target.value)}
                                     onClear={() => setSearchInput('')}
                                     placeholder={t('searchPlaceholder')}
-                                    className="bg-card py-2.5"
                                 />
                                 <SortDropdown value={sortBy} onChange={setSortBy} />
                             </div>
@@ -214,12 +224,24 @@ export default function CourseCatalogPage() {
                                 </div>
                             )}
 
-                            <Pagination
-                                page={page}
-                                totalPages={totalPages}
-                                onChange={setPage}
-                                className="pt-10"
-                            />
+                            {/* Footer: page size (left) + pagination (right) */}
+                            {courses.length > 0 && (
+                                <div className="flex flex-col items-center gap-4 pt-10 sm:flex-row sm:justify-between">
+                                    <PageSizeSelect
+                                        value={pageSize}
+                                        onChange={setPageSize}
+                                        options={pageSizeOptions}
+                                        label={t('pagination.perPage')}
+                                    />
+                                    <Pagination
+                                        page={page}
+                                        totalPages={totalPages}
+                                        onChange={setPage}
+                                        showGoToPage={totalPages > 10}
+                                        goToLabel={t('pagination.goToPage')}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -28,6 +28,10 @@
     "error": {
         "title": "Failed to load courses"
     },
+    "pagination": {
+        "perPage": "Per page",
+        "goToPage": "Go to"
+    },
     "students_one": "{{count}} student",
     "students_other": "{{count}} students",
     "seo": {
