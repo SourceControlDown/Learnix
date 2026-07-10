@@ -10,7 +10,7 @@ export function useAddToWishlist() {
     return useMutation({
         mutationFn: (courseId: string) => wishlistApi.add(courseId),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.wishlist.mine() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.wishlist.all });
             toast.success(t('addedSuccess'));
         },
     });
@@ -22,7 +22,7 @@ export function useRemoveFromWishlist() {
     return useMutation({
         mutationFn: (courseId: string) => wishlistApi.remove(courseId),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.wishlist.mine() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.wishlist.all });
             toast.success(t('removedSuccess'));
         },
     });

@@ -1,3 +1,7 @@
+export interface WishlistCountDto {
+    count: number;
+}
+
 export interface WishlistCourseDto {
     courseId: string;
     title: string;

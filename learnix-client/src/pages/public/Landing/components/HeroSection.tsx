@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useMyEnrollments } from '@/hooks/student/useMyEnrollments';
+import { useContinueLearning } from '@/hooks/student/useContinueLearning';
 import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
 import { fadeUpVariant, staggerContainer, viewportConfig } from '@/utils/animations';
@@ -10,12 +10,18 @@ import { isInstructorOrAdmin } from '@/utils/roles';
 export function HeroSection() {
     const { t } = useTranslation('landing');
     const user = useAuthStore((s) => s.user);
-    const { data: enrollments } = useMyEnrollments();
+    const { data: continueLearning } = useContinueLearning();
 
-    // Sending someone with no courses to an empty "My learning" would be worse than the catalog.
-    const isLearning = (enrollments?.items.length ?? 0) > 0;
-    const primaryCta = isLearning
-        ? { to: APP_ROUTES.student.myLearning, label: t('common:actions.continueLearning') }
+    // Resume the course last worked on. With nothing in progress the catalog is the only useful
+    // destination — "My learning" would be an empty page.
+    const primaryCta = continueLearning
+        ? {
+              to: APP_ROUTES.student.learnLesson(
+                  continueLearning.courseId,
+                  continueLearning.lessonId,
+              ),
+              label: t('common:actions.continueLearning'),
+          }
         : { to: APP_ROUTES.public.courses, label: t('common:actions.browseCourses') };
 
     return (

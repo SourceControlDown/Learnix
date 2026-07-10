@@ -1,6 +1,6 @@
 // learnix-client/src/api/wishlist.api.ts
 import type { PaginatedResult } from '@/types/api.types';
-import type { WishlistCourseDto } from '@/types/wishlist.types';
+import type { WishlistCountDto, WishlistCourseDto } from '@/types/wishlist.types';
 import { api } from './axios.instance';
 
 export const wishlistApi = {
@@ -8,6 +8,8 @@ export const wishlistApi = {
         api
             .get<PaginatedResult<WishlistCourseDto>>('/wishlist', { params: { skip, take } })
             .then((r) => r.data),
+
+    getCount: () => api.get<WishlistCountDto>('/wishlist/count').then((r) => r.data),
 
     add: (courseId: string) => api.post<void>(`/wishlist/${courseId}`).then((r) => r.data),
 

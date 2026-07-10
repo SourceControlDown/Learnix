@@ -60,6 +60,7 @@ export const queryKeys = {
     },
     enrollments: {
         mine: () => ['enrollments', 'mine'] as const,
+        continueLearning: () => ['enrollments', 'continue'] as const,
     },
     messages: {
         all: ['messages'] as const,
@@ -74,7 +75,9 @@ export const queryKeys = {
         unreadCount: () => [...queryKeys.notifications.all, 'unread-count'] as const,
     },
     wishlist: {
-        mine: () => ['wishlist', 'mine'] as const,
+        all: ['wishlist'] as const,
+        mine: () => [...queryKeys.wishlist.all, 'mine'] as const,
+        count: () => [...queryKeys.wishlist.all, 'count'] as const,
     },
     aiChat: {
         session: () => ['ai-chat', 'session'] as const,
