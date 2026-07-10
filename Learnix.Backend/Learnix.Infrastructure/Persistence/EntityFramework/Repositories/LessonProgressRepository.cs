@@ -43,4 +43,22 @@ internal sealed class LessonProgressRepository(ApplicationDbContext context)
                 completed.GetValueOrDefault(id),
                 totals.GetValueOrDefault(id)));
     }
+
+    public async Task<IReadOnlyDictionary<Guid, DateTime>> GetLastActivityByCourseAsync(
+        Guid studentId,
+        IReadOnlyCollection<Guid> courseIds,
+        CancellationToken ct = default)
+    {
+        if (courseIds.Count == 0)
+            return new Dictionary<Guid, DateTime>();
+
+        var ids = courseIds.Distinct().ToArray();
+
+        return await (
+            from lp in context.Set<LessonProgressEntity>()
+            where lp.StudentId == studentId && ids.Contains(lp.CourseId)
+            group lp by lp.CourseId into grouped
+            select new { CourseId = grouped.Key, LastAccessedAt = grouped.Max(x => x.LastAccessedAt) }
+        ).ToDictionaryAsync(x => x.CourseId, x => x.LastAccessedAt, ct);
+    }
 }

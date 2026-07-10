@@ -34,4 +34,11 @@ public interface ILessonRepository : IRepositoryBase<Lesson>
     /// (VideoLesson / PostLesson / TestLesson) so the caller can pattern-match on it.
     /// </summary>
     Task<Lesson?> GetVisibleLessonInCourseAsync(Guid courseId, Guid lessonId, CancellationToken ct = default);
+
+    /// <summary>
+    /// The lesson a student should land on when resuming the course: the first visible lesson they have
+    /// not completed, in section then lesson order. Falls back to the first visible lesson when every
+    /// lesson is already complete. Null when the course has no visible lessons.
+    /// </summary>
+    Task<Guid?> GetResumeLessonIdAsync(Guid studentId, Guid courseId, CancellationToken ct = default);
 }

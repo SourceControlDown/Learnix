@@ -2,6 +2,7 @@ using Learnix.API.Extensions;
 using Learnix.Application.Wishlist.Commands.AddToWishlist;
 using Learnix.Application.Wishlist.Commands.RemoveFromWishlist;
 using Learnix.Application.Wishlist.Queries.GetMyWishlist;
+using Learnix.Application.Wishlist.Queries.GetWishlistCount;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +21,13 @@ public sealed class WishlistController(ISender sender) : ControllerBase
         CancellationToken ct = default)
     {
         var result = await sender.Send(new GetMyWishlistQuery(skip, take), ct);
+        return result.ToActionResult(onSuccess: value => Ok(value));
+    }
+
+    [HttpGet("count")]
+    public async Task<IActionResult> GetCount(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetWishlistCountQuery(), ct);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 

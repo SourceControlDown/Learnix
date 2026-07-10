@@ -1,5 +1,6 @@
 using Learnix.API.Extensions;
 using Learnix.Application.Enrollments.Commands.EnrollInCourse;
+using Learnix.Application.Enrollments.Queries.GetContinueLearning;
 using Learnix.Application.Enrollments.Queries.GetMyEnrollments;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -30,5 +31,13 @@ public sealed class EnrollmentsController(ISender sender) : ControllerBase
     {
         var result = await sender.Send(new GetMyEnrollmentsQuery(skip, take), ct);
         return result.ToActionResult(onSuccess: value => Ok(value));
+    }
+
+    /// <summary>Returns 204 when the student has no course in progress.</summary>
+    [HttpGet("continue")]
+    public async Task<IActionResult> GetContinueLearning(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetContinueLearningQuery(), ct);
+        return result.ToActionResult(onSuccess: value => value is null ? NoContent() : Ok(value));
     }
 }

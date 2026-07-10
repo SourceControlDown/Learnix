@@ -17,4 +17,17 @@ public interface ILessonProgressRepository : IRepositoryBase<LessonProgressEntit
         Guid studentId,
         IReadOnlyCollection<Guid> courseIds,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// The most recent <c>LastAccessedAt</c> the student has in each of the given courses.
+    /// Courses the student has no progress rows in are absent from the result.
+    /// </summary>
+    /// <remarks>
+    /// Progress rows are only written when a lesson is completed, so this timestamp marks the last
+    /// lesson the student <i>finished</i> in the course, not the last one they opened.
+    /// </remarks>
+    Task<IReadOnlyDictionary<Guid, DateTime>> GetLastActivityByCourseAsync(
+        Guid studentId,
+        IReadOnlyCollection<Guid> courseIds,
+        CancellationToken ct = default);
 }

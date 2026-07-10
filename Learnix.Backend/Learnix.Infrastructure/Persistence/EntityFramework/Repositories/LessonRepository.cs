@@ -70,6 +70,29 @@ internal sealed class LessonRepository(ApplicationDbContext context)
         ).AsNoTracking().FirstOrDefaultAsync(ct);
     }
 
+    public async Task<Guid?> GetResumeLessonIdAsync(Guid studentId, Guid courseId, CancellationToken ct = default)
+    {
+        var lessons = await (
+            from lesson in context.Set<Lesson>()
+            join section in context.Set<Section>() on lesson.SectionId equals section.Id
+            where section.CourseId == courseId && !lesson.IsHidden
+            orderby section.DisplayOrder, lesson.DisplayOrder
+            select new
+            {
+                lesson.Id,
+                IsCompleted = context.Set<LessonProgress>()
+                    .Any(lp => lp.LessonId == lesson.Id && lp.StudentId == studentId && lp.IsCompleted)
+            }
+        ).AsNoTracking().ToListAsync(ct);
+
+        if (lessons.Count == 0)
+            return null;
+
+        var next = lessons.FirstOrDefault(l => !l.IsCompleted);
+
+        return next?.Id ?? lessons[0].Id;
+    }
+
     public Task<int> GetMaxDisplayOrderAsync(Guid sectionId, CancellationToken ct = default)
     {
         throw new NotImplementedException();
