@@ -1,12 +1,33 @@
 {
     "meta": {
-        "FIRST_LESSON": { "name": "Перший крок", "description": "Пройдіть свій перший урок" },
-        "LESSONS_50": { "name": "Допитливий учень", "description": "Пройдіть 50 уроків" },
-        "LESSONS_200": { "name": "Шукач знань", "description": "Пройдіть 200 уроків" },
-        "LESSONS_500": { "name": "Вчений", "description": "Пройдіть 500 уроків" },
-        "FIRST_COURSE": { "name": "Випускник курсу", "description": "Завершіть свій перший курс" },
-        "COURSES_3": { "name": "Потрійна корона", "description": "Завершіть 3 курси" },
-        "COURSES_5": { "name": "Відданий студент", "description": "Завершіть 5 курсів" },
+        "FIRST_LESSON": {
+            "name": "Перший крок",
+            "description": "Пройдіть свій перший урок"
+        },
+        "LESSONS_50": {
+            "name": "Допитливий учень",
+            "description": "Пройдіть 50 уроків"
+        },
+        "LESSONS_200": {
+            "name": "Шукач знань",
+            "description": "Пройдіть 200 уроків"
+        },
+        "LESSONS_500": {
+            "name": "Вчений",
+            "description": "Пройдіть 500 уроків"
+        },
+        "FIRST_COURSE": {
+            "name": "Випускник курсу",
+            "description": "Завершіть свій перший курс"
+        },
+        "COURSES_3": {
+            "name": "Потрійна корона",
+            "description": "Завершіть 3 курси"
+        },
+        "COURSES_5": {
+            "name": "Відданий студент",
+            "description": "Завершіть 5 курсів"
+        },
         "SPEED_DEMON": {
             "name": "Блискавка",
             "description": "Пройдіть тест з 20+ питаннями за менш ніж 5 хвилин"
@@ -32,5 +53,8 @@
         "earnedCount_many": "{{count}} досягнень отримано",
         "lockedLabel": "Заблоковано",
         "earnedLabel": "Отримано"
+    },
+    "error": {
+        "title": "Не вдалося завантажити досягнення"
     }
 }

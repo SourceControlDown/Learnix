@@ -5,6 +5,7 @@ import { Award, CheckCircle2, MessageSquare, Trophy, XCircle } from 'lucide-reac
 import { messagesApi } from '@/api/messages.api';
 import { notificationsApi } from '@/api/notifications.api';
 import { queryKeys } from '@/api/queryKeys';
+import { QueryError } from '@/components/common/system/QueryError';
 import { APP_ROUTES } from '@/routes/paths';
 import type { ConversationSummary } from '@/types/message.types';
 import type { NotificationDto, NotificationEventType } from '@/types/notification.types';
@@ -109,16 +110,27 @@ export default function NotificationsPage() {
     const { t } = useTranslation('notifications');
     const queryClient = useQueryClient();
 
-    const { data: notifications = [] } = useQuery({
+    const {
+        data: notifications = [],
+        isError: isNotificationsError,
+        refetch: refetchNotifications,
+    } = useQuery({
         queryKey: queryKeys.notifications.list(),
         queryFn: notificationsApi.getAll,
     });
 
-    const { data: conversationsData } = useQuery({
+    const {
+        data: conversationsData,
+        isError: isConversationsError,
+        refetch: refetchConversations,
+    } = useQuery({
         queryKey: queryKeys.messages.conversations(),
         queryFn: () => messagesApi.getConversations(),
     });
     const conversations = conversationsData?.items || [];
+
+    // Either half failing makes the card lie by omission, so the whole card gives way.
+    const isError = isNotificationsError || isConversationsError;
 
     const markReadMutation = useMutation({
         mutationFn: notificationsApi.markRead,
@@ -142,7 +154,7 @@ export default function NotificationsPage() {
         <div className="mx-auto max-w-2xl px-4 py-8">
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="font-heading text-2xl font-bold text-foreground">
-                    {t('common:navigation.myLearning')}
+                    {t('common:navigation.notifications')}
                 </h1>
                 {hasUnread && (
                     <button
@@ -155,47 +167,59 @@ export default function NotificationsPage() {
                 )}
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-border bg-card">
-                {/* System notifications */}
-                <div className="border-b border-border px-4 py-2.5">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {t('systemSection')}
-                    </p>
-                </div>
-                {notifications.length === 0 ? (
-                    <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-                        {t('emptySystem')}
-                    </p>
-                ) : (
-                    <div className="divide-y divide-border">
-                        {notifications.map((n) => (
-                            <NotificationItem
-                                key={n.id}
-                                notification={n}
-                                onRead={(id) => markReadMutation.mutate(id)}
-                            />
-                        ))}
+            {isError ? (
+                <QueryError
+                    message={t('error.title')}
+                    onRetry={() => {
+                        refetchNotifications();
+                        refetchConversations();
+                    }}
+                    retryLabel={t('common:actions.tryAgain')}
+                    className="rounded-xl border border-border bg-card"
+                />
+            ) : (
+                <div className="overflow-hidden rounded-xl border border-border bg-card">
+                    {/* System notifications */}
+                    <div className="border-b border-border px-4 py-2.5">
+                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            {t('systemSection')}
+                        </p>
                     </div>
-                )}
+                    {notifications.length === 0 ? (
+                        <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                            {t('emptySystem')}
+                        </p>
+                    ) : (
+                        <div className="divide-y divide-border">
+                            {notifications.map((n) => (
+                                <NotificationItem
+                                    key={n.id}
+                                    notification={n}
+                                    onRead={(id) => markReadMutation.mutate(id)}
+                                />
+                            ))}
+                        </div>
+                    )}
 
-                {/* Messages */}
-                <div className="border-y border-border px-4 py-2.5">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {t('common:navigation.messages')}
-                    </p>
-                </div>
-                {conversations.length === 0 ? (
-                    <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-                        {t('emptyMessages')}
-                    </p>
-                ) : (
-                    <div className="max-h-72 divide-y divide-border overflow-y-auto">
-                        {conversations.map((c) => (
-                            <ConversationItem key={c.id} conversation={c} />
-                        ))}
+                    {/* Messages */}
+                    <div className="border-y border-border px-4 py-2.5">
+                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            {t('common:navigation.messages')}
+                        </p>
                     </div>
-                )}
-            </div>
+                    {conversations.length === 0 ? (
+                        <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                            {t('emptyMessages')}
+                        </p>
+                    ) : (
+                        <div className="max-h-72 divide-y divide-border overflow-y-auto">
+                            {conversations.map((c) => (
+                                <ConversationItem key={c.id} conversation={c} />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

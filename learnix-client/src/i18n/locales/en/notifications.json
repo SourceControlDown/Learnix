@@ -6,5 +6,8 @@
     "typeAchievementEarned": "Achievement",
     "typeCertificateReady": "Certificate",
     "typeInstructorApproved": "Application",
-    "typeInstructorRejected": "Application"
+    "typeInstructorRejected": "Application",
+    "error": {
+        "title": "Failed to load notifications"
+    }
 }

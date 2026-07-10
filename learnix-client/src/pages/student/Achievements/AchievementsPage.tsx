@@ -5,6 +5,7 @@ import { BookOpen, Globe, GraduationCap } from 'lucide-react';
 import { notificationsApi } from '@/api/notifications.api';
 import { queryKeys } from '@/api/queryKeys';
 import { AchievementBadge } from '@/components/common/course/AchievementBadge';
+import { QueryError } from '@/components/common/system/QueryError';
 import { BackLink } from '@/components/common/ui/BackLink';
 import { ALL_ACHIEVEMENT_CODES } from '@/const/achievements.constants';
 import { useMarkAchievementSeen } from '@/hooks/user/useMarkAchievementSeen';
@@ -13,7 +14,7 @@ import { APP_ROUTES } from '@/routes/paths';
 
 export default function AchievementsPage() {
     const { t } = useTranslation('achievements');
-    const { data, isLoading } = useMyAchievements();
+    const { data, isLoading, isError, refetch } = useMyAchievements();
     const markSeen = useMarkAchievementSeen();
     const queryClient = useQueryClient();
 
@@ -48,6 +49,20 @@ export default function AchievementsPage() {
                         ))}
                     </div>
                 </div>
+            </div>
+        );
+    }
+
+    // Ahead of the badge grid: without data every badge renders locked and the counter reads
+    // zero, which is indistinguishable from a student who has earned nothing.
+    if (isError) {
+        return (
+            <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
+                <QueryError
+                    message={t('error.title')}
+                    onRetry={refetch}
+                    retryLabel={t('common:actions.tryAgain')}
+                />
             </div>
         );
     }

@@ -6,5 +6,8 @@
     "typeAchievementEarned": "Досягнення",
     "typeCertificateReady": "Сертифікат",
     "typeInstructorApproved": "Заявка",
-    "typeInstructorRejected": "Заявка"
+    "typeInstructorRejected": "Заявка",
+    "error": {
+        "title": "Не вдалося завантажити сповіщення"
+    }
 }
