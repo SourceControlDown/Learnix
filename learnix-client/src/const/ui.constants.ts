@@ -6,5 +6,8 @@ export const PAGINATION = {
 } as const;
 
 export const CHAT_LIMITS = {
+    /** Student ↔ instructor direct message. Mirrors ConversationConstants.MessageMaxLength. */
     MESSAGE_MAX: 2000,
+    /** AI tutor prompt. Mirrors AiChatConstants.MessageMaxLength. */
+    AI_MESSAGE_MAX: 4000,
 } as const;

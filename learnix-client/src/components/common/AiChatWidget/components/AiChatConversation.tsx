@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ChatComposer } from '@/components/common/chat/ChatComposer';
+import { CHAT_LIMITS } from '@/const/ui.constants';
 import type { AiChatController } from '@/hooks/realtime/useAiChat';
 import { cn } from '@/utils/cn';
 import { AiChatClearButton } from './AiChatClearButton';
-import { AiChatInput } from './AiChatInput';
 import { AiChatMessages } from './AiChatMessages';
 
 interface AiChatConversationProps {
@@ -28,6 +30,7 @@ export function AiChatConversation({
     actions,
     toolbarClassName,
 }: AiChatConversationProps) {
+    const { t } = useTranslation('aiChat');
     const {
         messages,
         streamingContent,
@@ -66,11 +69,19 @@ export function AiChatConversation({
                 isExpanded={isWide}
             />
 
-            <AiChatInput
-                onSend={sendMessage}
-                disabled={isStreaming || isClearing}
-                isExpanded={isWide}
-            />
+            <div
+                className={cn(
+                    'shrink-0 border-t border-border p-3',
+                    isWide && 'mx-auto w-full max-w-3xl border-t-0 p-4 pb-6',
+                )}
+            >
+                <ChatComposer
+                    onSend={sendMessage}
+                    placeholder={t('placeholder')}
+                    disabled={isStreaming || isClearing}
+                    maxLength={CHAT_LIMITS.AI_MESSAGE_MAX}
+                />
+            </div>
         </>
     );
 }

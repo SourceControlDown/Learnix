@@ -6,9 +6,10 @@ import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { messagesApi } from '@/api/messages.api';
 import { queryKeys } from '@/api/queryKeys';
+import { ChatComposer } from '@/components/common/chat/ChatComposer';
 import { ChatMessage } from '@/components/common/messaging/ChatMessage';
-import { MessageInput } from '@/components/common/messaging/MessageInput';
 import { LoadingSpinner } from '@/components/common/ui/LoadingSpinner';
+import { CHAT_LIMITS } from '@/const/ui.constants';
 import { useAuthStore } from '@/store/auth.store';
 import type { ConversationSummary } from '@/types/message.types';
 
@@ -61,6 +62,14 @@ export function ConversationView({
     }, [data]);
 
     const messages = data ? [...(data.items ?? [])].reverse() : [];
+
+    function handleSend(content: string) {
+        if (!user?.emailVerified) {
+            toast.error(t('emailNotVerified', 'Please confirm your email address first.'));
+            return;
+        }
+        sendMutation.mutate(content);
+    }
 
     const formatDateDivider = (dateString: string) => {
         const date = new Date(dateString);
@@ -163,22 +172,12 @@ export function ConversationView({
             </div>
 
             <div className="shrink-0 border-t border-border bg-card">
-                <div className="mx-auto max-w-3xl">
-                    <MessageInput
-                        onSend={(content) => {
-                            if (!user?.emailVerified) {
-                                toast.error(
-                                    t(
-                                        'emailNotVerified',
-                                        'Please confirm your email address first.',
-                                    ),
-                                );
-                                return;
-                            }
-                            sendMutation.mutate(content);
-                        }}
+                <div className="mx-auto max-w-3xl p-3">
+                    <ChatComposer
+                        onSend={handleSend}
+                        placeholder={t('typeMessage')}
                         disabled={sendMutation.isPending}
-                        className="border-t-0 bg-transparent"
+                        maxLength={CHAT_LIMITS.MESSAGE_MAX}
                     />
                 </div>
             </div>
