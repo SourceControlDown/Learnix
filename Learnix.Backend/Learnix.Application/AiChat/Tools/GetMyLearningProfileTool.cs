@@ -43,8 +43,11 @@ public sealed class GetMyLearningProfileTool(IMediator mediator) : IChatTool
             "personalised course recommendation. It always describes the current user and nobody else.",
         ParametersJsonSchema: ParametersSchema);
 
-    public async Task<string> ExecuteAsync(string argumentsJson, CancellationToken ct)
+    public bool IsAvailableIn(ChatScopeType scope) => scope is ChatScopeType.Platform;
+
+    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken ct)
     {
+        var argumentsJson = invocation.ArgumentsJson;
         ProfileArgs? args;
         try
         {

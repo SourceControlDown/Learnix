@@ -1,4 +1,4 @@
-namespace Learnix.Application.AiChat.Queries.GetActiveChatSession;
+namespace Learnix.Application.AiChat.Queries.GetChatSession;
 
 public sealed record ChatSessionDto(
     string SessionId,

@@ -328,6 +328,7 @@ public static class DependencyInjection
         services.AddScoped<IChatTool, GetInstructorCoursesTool>();
         services.AddScoped<IChatTool, GetMyLearningProfileTool>();
         services.AddSingleton<IChatTool, GetPlatformInfoTool>();
+        services.AddScoped<ChatScopeAuthorizer>();
         services.AddScoped<ChatStreamOrchestrator>();
 
         // Background services
@@ -339,7 +340,6 @@ public static class DependencyInjection
         services.AddHostedService<OutboxNotificationListener>();
         services.AddHostedService<OutboxProcessorService>();
         services.AddHostedService<MongoIndexInitializer>();
-        services.AddHostedService<ChatSessionCleanupService>();
         services.AddHostedService<CategoryCoursesCountReconciliationService>();
         services.AddHostedService<CourseRatingReconciliationService>();
 

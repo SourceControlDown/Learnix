@@ -17,28 +17,33 @@ public sealed class ChatStreamOrchestrator(
 {
     private readonly IReadOnlyList<IChatTool> _tools = tools.ToList();
     private readonly int _contextWindowSize = aiChatOptions.Value.ContextWindowSize;
-    private readonly int _messagesPerSessionCap = aiChatOptions.Value.MessagesPerSessionCap;
+    private readonly int _storedMessagesLimit = aiChatOptions.Value.StoredMessagesLimit;
 
     public async IAsyncEnumerable<SseEvent> StreamAsync(
         Guid userId,
+        ChatScope scope,
+        Guid? lessonId,
         string userMessage,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        // Load or create active session
-        var session = await sessionRepository.GetActiveByUserIdAsync(userId, ct)
-            ?? await sessionRepository.CreateAsync(userId, ct);
+        var session = await sessionRepository.GetOrCreateAsync(userId, scope, ct);
 
-        var newUserMessage = new ChatMessage("user", userMessage, DateTime.UtcNow);
+        var newUserMessage = new ChatMessage("user", userMessage, DateTime.UtcNow, null, lessonId);
         var allMessages = new List<ChatMessage>(session.Messages) { newUserMessage };
 
-        var toolDefinitions = _tools.Select(t => t.Definition).ToList();
-        var toolMap = _tools.ToDictionary(t => t.Name);
+        var scopedTools = _tools.Where(t => t.IsAvailableIn(scope.Type)).ToList();
+        var toolDefinitions = scopedTools.Select(t => t.Definition).ToList();
+        var toolMap = scopedTools.ToDictionary(t => t.Name);
+        var systemPrompt = ChatSystemPrompt.For(scope, lessonId);
 
         // Collect assistant messages to persist after streaming completes
         var assistantMessages = new List<ChatMessage>();
         string? errorMessage = null;
 
-        await foreach (var evt in RunTurnLoopAsync(allMessages, toolDefinitions, toolMap, assistantMessages, ct))
+        var toolContext = new ChatToolContext(scope.CourseId, lessonId);
+
+        await foreach (var evt in RunTurnLoopAsync(
+                           allMessages, toolDefinitions, toolMap, systemPrompt, toolContext, assistantMessages, ct))
         {
             if (evt.EventType == "error")
                 errorMessage = evt.Data;
@@ -50,14 +55,12 @@ public sealed class ChatStreamOrchestrator(
             // Persist user message + all assistant messages from this turn
             var toAppend = new List<ChatMessage> { newUserMessage };
             toAppend.AddRange(assistantMessages);
-            await sessionRepository.AppendMessagesAsync(session.Id, toAppend, ct);
 
-            // Check hard cap
+            // The repository trims to the newest N; the session itself is never closed.
+            await sessionRepository.AppendMessagesAsync(session.Id, toAppend, _storedMessagesLimit, ct);
+
             var totalMessages = session.Messages.Count + toAppend.Count;
-            if (totalMessages >= _messagesPerSessionCap)
-                await sessionRepository.CloseSessionAsync(session.Id, ct);
-
-            var sessionCount = Math.Min(totalMessages, _messagesPerSessionCap);
+            var sessionCount = Math.Min(totalMessages, _storedMessagesLimit);
             yield return new SseEvent("message_end", $"{{\"finishReason\":\"end_turn\",\"sessionMessageCount\":{sessionCount}}}");
         }
     }
@@ -66,6 +69,8 @@ public sealed class ChatStreamOrchestrator(
         List<ChatMessage> conversation,
         List<ToolDefinition> toolDefinitions,
         Dictionary<string, IChatTool> toolMap,
+        string systemPrompt,
+        ChatToolContext toolContext,
         List<ChatMessage> assistantMessages,
         [EnumeratorCancellation] CancellationToken ct)
     {
@@ -79,7 +84,9 @@ public sealed class ChatStreamOrchestrator(
             var hasToolUse = false;
             var providerError = false;
 
-            await foreach (var streamEvent in provider.StreamChatAsync(window, toolDefinitions, ct))
+            var request = new ChatRequest(window, toolDefinitions, systemPrompt);
+
+            await foreach (var streamEvent in provider.StreamChatAsync(request, ct))
             {
                 switch (streamEvent)
                 {
@@ -129,7 +136,7 @@ public sealed class ChatStreamOrchestrator(
                 string resultJson;
                 if (toolMap.TryGetValue(tc.ToolName, out var tool))
                 {
-                    resultJson = await tool.ExecuteAsync(tc.ArgumentsJson, ct);
+                    resultJson = await tool.ExecuteAsync(new ChatToolInvocation(tc.ArgumentsJson, toolContext), ct);
                 }
                 else
                 {

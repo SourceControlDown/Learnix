@@ -21,12 +21,11 @@ internal sealed class GeminiChatProvider : IAiChatProvider
     }
 
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
-        IReadOnlyList<ChatMessage> conversation,
-        IReadOnlyList<ToolDefinition> tools,
+        ChatRequest request,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        var contents = MapContents(conversation);
-        var config = BuildConfig(tools);
+        var contents = MapContents(request.Conversation);
+        var config = BuildConfig(request.Tools, request.SystemPrompt);
         string? finishReason = null;
 
         await foreach (var chunk in _client.Models
@@ -120,13 +119,13 @@ internal sealed class GeminiChatProvider : IAiChatProvider
         return contents;
     }
 
-    private GenerateContentConfig BuildConfig(IReadOnlyList<ToolDefinition> tools)
+    private GenerateContentConfig BuildConfig(IReadOnlyList<ToolDefinition> tools, string systemPrompt)
     {
         var config = new GenerateContentConfig
         {
             SystemInstruction = new Content
             {
-                Parts = [new Part { Text = AiChatConstants.SystemPrompt }]
+                Parts = [new Part { Text = systemPrompt }]
             },
             MaxOutputTokens = _settings.MaxTokens
         };

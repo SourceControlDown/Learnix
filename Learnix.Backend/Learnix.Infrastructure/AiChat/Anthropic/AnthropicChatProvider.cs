@@ -15,8 +15,7 @@ internal sealed class AnthropicChatProvider(
     IOptions<AnthropicSettings> options) : IAiChatProvider
 {
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
-        IReadOnlyList<ChatMessage> conversation,
-        IReadOnlyList<ToolDefinition> tools,
+        ChatRequest request,
         [EnumeratorCancellation] CancellationToken ct)
     {
         var parameters = new MessageParameters
@@ -24,9 +23,9 @@ internal sealed class AnthropicChatProvider(
             Model = options.Value.Model,
             MaxTokens = options.Value.MaxTokens,
             Stream = true,
-            System = [new SystemMessage(AiChatConstants.SystemPrompt)],
-            Messages = BuildMessages(conversation),
-            Tools = tools.Count > 0 ? BuildTools(tools) : null
+            System = [new SystemMessage(request.SystemPrompt)],
+            Messages = BuildMessages(request.Conversation),
+            Tools = request.Tools.Count > 0 ? BuildTools(request.Tools) : null
         };
 
         var outputs = new List<MessageResponse>();

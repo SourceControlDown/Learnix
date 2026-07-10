@@ -4,8 +4,5 @@ namespace Learnix.Application.AiChat.Abstractions;
 
 public interface IAiChatProvider
 {
-    IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
-        IReadOnlyList<ChatMessage> conversation,
-        IReadOnlyList<ToolDefinition> tools,
-        CancellationToken ct);
+    IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(ChatRequest request, CancellationToken ct);
 }

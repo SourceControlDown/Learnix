@@ -164,12 +164,15 @@ public sealed class GetPlatformInfoTool : IChatTool
             "Pass a specific section for focused info, or omit it to get a list of available sections.",
         ParametersJsonSchema: ParametersSchema);
 
-    public Task<string> ExecuteAsync(string argumentsJson, CancellationToken ct)
+    /// <summary>Static reference content — useful to the tutor and to the platform assistant alike.</summary>
+    public bool IsAvailableIn(ChatScopeType scope) => true;
+
+    public Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken ct)
     {
         SectionArgs? args = null;
         try
         {
-            args = JsonSerializer.Deserialize<SectionArgs>(argumentsJson,
+            args = JsonSerializer.Deserialize<SectionArgs>(invocation.ArgumentsJson,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
         catch { }

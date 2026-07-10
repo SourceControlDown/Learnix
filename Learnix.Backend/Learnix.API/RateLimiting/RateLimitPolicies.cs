@@ -11,10 +11,17 @@ public static class RateLimitPolicies
     public const string AuthStrict = "auth-strict";
 
     /// <summary>
-    /// Per-user limit for AI chat messages endpoint.
+    /// Per-user limit for the platform-wide AI assistant.
     /// 20 requests per hour per authenticated user.
     /// </summary>
-    public const string AiChat = "ai-chat";
+    public const string AiChatPlatform = "ai-chat-platform";
+
+    /// <summary>
+    /// Per-user limit for the course tutor. Its own budget, and a larger one: working through a topic
+    /// with a tutor is dozens of turns, and course discovery must not spend it.
+    /// 60 requests per hour per authenticated user.
+    /// </summary>
+    public const string AiChatTutor = "ai-chat-tutor";
 
     /// <summary>
     /// Per-user limit for test attempt operations (start, submit) to prevent bot spamming.

@@ -1,5 +1,6 @@
 using FluentResults;
 using Learnix.Application.AiChat.Abstractions;
+using Learnix.Application.AiChat.Services;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
@@ -9,6 +10,7 @@ namespace Learnix.Application.AiChat.Commands.ClearChatSession;
 
 internal sealed class ClearChatSessionCommandHandler(
     IChatSessionRepository sessionRepository,
+    ChatScopeAuthorizer authorizer,
     ICurrentUserService currentUser)
     : IRequestHandler<ClearChatSessionCommand, Result>
 {
@@ -17,10 +19,14 @@ internal sealed class ClearChatSessionCommandHandler(
         if (currentUser.UserId is null)
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
 
-        var session = await sessionRepository.GetActiveByUserIdAsync(currentUser.UserId.Value, cancellationToken);
+        var userId = currentUser.UserId.Value;
 
-        if (session is not null)
-            await sessionRepository.CloseSessionAsync(session.Id, cancellationToken);
+        var access = await authorizer.EnsureAccessAsync(userId, request.Scope, cancellationToken);
+        if (access.IsFailed)
+            return access;
+
+        // Deleting one scope leaves the user's other conversations untouched.
+        await sessionRepository.DeleteAsync(userId, request.Scope, cancellationToken);
 
         return Result.Ok();
     }

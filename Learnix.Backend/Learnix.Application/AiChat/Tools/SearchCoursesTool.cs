@@ -27,8 +27,11 @@ public sealed class SearchCoursesTool(IMediator mediator) : IChatTool
         Description: "Search published courses by keyword and optional category. Use when user asks for course recommendations.",
         ParametersJsonSchema: ParametersSchema);
 
-    public async Task<string> ExecuteAsync(string argumentsJson, CancellationToken ct)
+    public bool IsAvailableIn(ChatScopeType scope) => scope is ChatScopeType.Platform;
+
+    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken ct)
     {
+        var argumentsJson = invocation.ArgumentsJson;
         SearchArgs? args = null;
         try
         {

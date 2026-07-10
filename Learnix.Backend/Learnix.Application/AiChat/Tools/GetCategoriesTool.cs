@@ -23,7 +23,9 @@ public sealed class GetCategoriesTool(IMediator mediator) : IChatTool
                      "to pass to search_courses.",
         ParametersJsonSchema: ParametersSchema);
 
-    public async Task<string> ExecuteAsync(string argumentsJson, CancellationToken ct)
+    public bool IsAvailableIn(ChatScopeType scope) => scope is ChatScopeType.Platform;
+
+    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken ct)
     {
         var result = await mediator.Send(new GetCategoriesQuery(), ct);
 

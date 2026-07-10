@@ -43,8 +43,11 @@ public sealed class GetInstructorCoursesTool(IMediator mediator) : IChatTool
             "one they meant, then call again with the chosen instructorId.",
         ParametersJsonSchema: ParametersSchema);
 
-    public async Task<string> ExecuteAsync(string argumentsJson, CancellationToken ct)
+    public bool IsAvailableIn(ChatScopeType scope) => scope is ChatScopeType.Platform;
+
+    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken ct)
     {
+        var argumentsJson = invocation.ArgumentsJson;
         InstructorArgs? args;
         try
         {
