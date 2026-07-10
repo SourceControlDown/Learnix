@@ -73,7 +73,7 @@ public sealed class ChatStreamOrchestrator(
 
         for (var turn = 0; turn < maxToolTurns; turn++)
         {
-            var window = conversation.TakeLast(_contextWindowSize).ToList();
+            var window = ChatConversationWindow.TakeAlignedWindow(conversation, _contextWindowSize);
             var pendingToolCalls = new List<ToolCall>();
             var assistantTextBuffer = new System.Text.StringBuilder();
             var hasToolUse = false;
