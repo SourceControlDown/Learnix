@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
     BookOpen,
     CreditCard,
@@ -11,18 +11,14 @@ import {
     Tag,
     Users,
 } from 'lucide-react';
-import { authApi } from '@/api/auth.api';
 import { messagesApi } from '@/api/messages.api';
 import { queryKeys } from '@/api/queryKeys';
+import { CountBadge } from '@/components/common/ui/CountBadge';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { APP_ROUTES } from '@/routes/paths';
-import { useAuthStore } from '@/store/auth.store';
 
 export function AdminLayout() {
     const { t } = useTranslation('admin');
-    const navigate = useNavigate();
-    const { logout } = useAuthStore();
-    const queryClient = useQueryClient();
 
     const { data: unreadData } = useQuery({
         queryKey: queryKeys.messages.unreadCount(),
@@ -55,25 +51,9 @@ export function AdminLayout() {
             to: APP_ROUTES.admin.messages,
             label: t('common:navigation.messages'),
             icon: <MessageSquare size={16} />,
-            badge:
-                unreadCount > 0 ? (
-                    <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
-                ) : undefined,
+            badge: <CountBadge count={unreadCount} placement="inline" />,
         },
     ];
-
-    /**
-     * Related ADRs:
-     * - ADR-FRONT-AUTH-004: Explicit Logout & State Clearing
-     */
-    function handleSignOut() {
-        authApi.logout().catch(() => {});
-        logout();
-        queryClient.clear();
-        navigate(APP_ROUTES.public.login);
-    }
 
     const AdminLogo = (
         <Link
@@ -93,10 +73,6 @@ export function AdminLayout() {
             themeColor="destructive"
             brandNode={AdminLogo}
             navItems={navItems}
-            profileLabel={t('common:navigation.myProfile')}
-            backToLabel={t('navBackToSite')}
-            signOutLabel={t('common:actions.signOut')}
-            onSignOut={handleSignOut}
         />
     );
 }

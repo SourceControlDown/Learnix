@@ -1,13 +1,12 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { BookOpen, Heart, LogOut, Menu, MessageSquare, User, X } from 'lucide-react';
-import { authApi } from '@/api/auth.api';
 import { BrandLogo } from '@/components/common/ui/BrandLogo';
 import { LanguageSwitcher } from '@/components/common/ui/LanguageSwitcher';
 import { ThemeSwitcher } from '@/components/common/ui/ThemeSwitcher';
+import { useLogout } from '@/hooks/auth/useLogout';
 import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/utils/cn';
@@ -26,10 +25,8 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
     const { t } = useTranslation('header');
     const [isOpen, setIsOpen] = useState(false);
     const user = useAuthStore((s) => s.user);
-    const { logout } = useAuthStore();
     const location = useLocation();
-    const navigate = useNavigate();
-    const queryClient = useQueryClient();
+    const signOut = useLogout();
 
     const [prevPathname, setPrevPathname] = useState(location.pathname);
 
@@ -59,13 +56,6 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
             document.body.style.overflow = '';
         }
     }, [isOpen]);
-
-    function handleSignOut() {
-        authApi.logout().catch(() => {});
-        logout();
-        queryClient.clear();
-        navigate(APP_ROUTES.public.login);
-    }
 
     return (
         <>
@@ -249,7 +239,7 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
                                     ) : (
                                         <button
                                             type="button"
-                                            onClick={handleSignOut}
+                                            onClick={signOut}
                                             className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-destructive transition-colors hover:bg-destructive/10"
                                         >
                                             <LogOut size={20} />
