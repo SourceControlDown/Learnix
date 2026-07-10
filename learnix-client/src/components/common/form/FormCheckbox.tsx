@@ -28,8 +28,8 @@ export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
                         id={id}
                         ref={ref}
                         className={cn(
-                            'size-4 cursor-pointer rounded border-border text-primary accent-primary outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-1 focus:ring-offset-background',
-                            errorMessages.length > 0 && 'border-destructive',
+                            'size-4 cursor-pointer rounded border-field-border accent-field-accent outline-none focus:ring-2 focus:ring-field-focus/50 focus:ring-offset-1 focus:ring-offset-background',
+                            errorMessages.length > 0 && 'border-field-error',
                             className,
                         )}
                         {...props}

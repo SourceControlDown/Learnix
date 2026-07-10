@@ -1,27 +1,25 @@
 import React, { forwardRef } from 'react';
 import { type VariantProps, cva } from 'class-variance-authority';
+import { FIELD_BASE, FIELD_ERROR, FIELD_SURFACE_CARD } from '@/components/common/form/fieldStyles';
 import { cn } from '@/utils/cn';
 
-const formTextareaVariants = cva(
-    'w-full resize-none rounded-lg border bg-background text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-2',
-    {
-        variants: {
-            variant: {
-                default: 'border-input px-3 py-2 focus:ring-ring',
-                auth: 'border-border px-3.5 py-2.5 focus:border-primary focus:ring-primary/10',
-                muted: 'border-transparent bg-muted/30 px-3 py-2.5 hover:border-primary/50 focus:border-primary focus:bg-background focus:ring-primary',
-            },
-            hasError: {
-                true: 'border-destructive focus:ring-destructive/10',
-                false: '',
-            },
+// Border/focus/fill come from the shared field tokens; the only choice is the surface.
+const formTextareaVariants = cva(`${FIELD_BASE} resize-none px-3 py-2.5`, {
+    variants: {
+        variant: {
+            default: '',
+            card: FIELD_SURFACE_CARD,
         },
-        defaultVariants: {
-            variant: 'default',
-            hasError: false,
+        hasError: {
+            true: FIELD_ERROR,
+            false: '',
         },
     },
-);
+    defaultVariants: {
+        variant: 'default',
+        hasError: false,
+    },
+});
 
 interface FormTextareaProps
     extends
