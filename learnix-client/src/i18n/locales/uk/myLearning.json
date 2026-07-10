@@ -3,5 +3,8 @@
     "emptyDescription": "Запишіться на курс, щоб почати навчання.",
     "statusActive": "В процесі",
     "statusSuspended": "Призупинено",
-    "enrolledOn": "Записаний"
+    "enrolledOn": "Записаний",
+    "error": {
+        "title": "Не вдалося завантажити ваші курси"
+    }
 }

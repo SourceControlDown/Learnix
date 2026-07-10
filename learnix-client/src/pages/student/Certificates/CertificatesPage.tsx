@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Download, GraduationCap, Link as LinkIcon, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { QueryError } from '@/components/common/system/QueryError';
+import { EmptyState } from '@/components/common/ui/EmptyState';
 import { useGenerateCertificate } from '@/hooks/user/useGenerateCertificate';
 import { useMyCertificates } from '@/hooks/user/useMyCertificates';
 import type { MyCertificateDto } from '@/types/certificate.types';
@@ -123,7 +125,7 @@ function CertificateCard({ cert }: CertificateCardProps) {
 
 export default function CertificatesPage() {
     const { t } = useTranslation('certificates');
-    const { data: certificates, isLoading } = useMyCertificates();
+    const { data: certificates, isLoading, isError, refetch } = useMyCertificates();
 
     if (isLoading) {
         return (
@@ -138,16 +140,28 @@ export default function CertificatesPage() {
         );
     }
 
+    // Ahead of the empty state: a failed request left `certificates` undefined, and the page
+    // then told the student they had earned none.
+    if (isError) {
+        return (
+            <div className="mx-auto max-w-7xl px-4 pb-12 pt-6 sm:px-6 sm:pb-16 sm:pt-8">
+                <QueryError
+                    message={t('error.title')}
+                    onRetry={refetch}
+                    retryLabel={t('common:actions.tryAgain')}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="mx-auto max-w-7xl px-4 pb-12 pt-6 sm:px-6 sm:pb-16 sm:pt-8">
             {!certificates || certificates.length === 0 ? (
-                <div className="mt-16 text-center">
-                    <div className="mx-auto flex size-24 items-center justify-center rounded-full bg-accent/10">
-                        <GraduationCap className="size-12 text-accent" />
-                    </div>
-                    <h2 className="mt-6 font-heading text-2xl font-bold">{t('emptyTitle')}</h2>
-                    <p className="mt-2 text-muted-foreground">{t('emptyDescription')}</p>
-                </div>
+                <EmptyState
+                    icon={GraduationCap}
+                    title={t('emptyTitle')}
+                    description={t('emptyDescription')}
+                />
             ) : (
                 <div className="max-w-4xl space-y-4">
                     {certificates.map((cert) => (

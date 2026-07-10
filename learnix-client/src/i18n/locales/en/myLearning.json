@@ -3,5 +3,8 @@
     "emptyDescription": "Enroll in a course to start learning.",
     "statusActive": "In Progress",
     "statusSuspended": "Suspended",
-    "enrolledOn": "Enrolled"
+    "enrolledOn": "Enrolled",
+    "error": {
+        "title": "Failed to load your courses"
+    }
 }

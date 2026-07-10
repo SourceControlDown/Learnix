@@ -5,5 +5,8 @@
     "removedSuccess": "Course removed from wishlist",
     "removedError": "Failed to remove course",
     "addedSuccess": "Course saved to wishlist",
-    "addedError": "Failed to save course"
+    "addedError": "Failed to save course",
+    "error": {
+        "title": "Failed to load your wishlist"
+    }
 }
