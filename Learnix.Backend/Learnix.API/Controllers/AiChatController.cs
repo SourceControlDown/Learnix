@@ -1,6 +1,7 @@
 using System.Text;
 using Learnix.API.Extensions;
 using Learnix.API.RateLimiting;
+using Learnix.Application.AiChat.Abstractions;
 using Learnix.Application.AiChat.Commands.ClearChatSession;
 using Learnix.Application.AiChat.Queries.GetActiveChatSession;
 using Learnix.Application.AiChat.Services;
@@ -42,6 +43,15 @@ public sealed class AiChatController(
         {
             Response.StatusCode = StatusCodes.Status400BadRequest;
             await Response.WriteAsJsonAsync(new { error = "Message cannot be empty" }, ct);
+            return;
+        }
+
+        if (request.Message.Length > AiChatConstants.MessageMaxLength)
+        {
+            Response.StatusCode = StatusCodes.Status400BadRequest;
+            await Response.WriteAsJsonAsync(
+                new { error = $"Message cannot exceed {AiChatConstants.MessageMaxLength} characters." },
+                ct);
             return;
         }
 
