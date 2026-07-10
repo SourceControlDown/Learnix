@@ -5,8 +5,11 @@ import type {
     UseFormSetValue,
     UseFormWatch,
 } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Trash2 } from 'lucide-react';
+import { FormSelect } from '@/components/common/form/FormSelect';
+import { Input } from '@/components/ui/input';
 import type { TestLessonFormData } from '@/schemas/lesson.schema';
 import { ChoiceEditor } from './editors/ChoiceEditor';
 import { TextInputEditor } from './editors/TextInputEditor';
@@ -45,28 +48,30 @@ export function QuestionEditor({
         <div className="space-y-3 rounded-lg border border-border p-4">
             <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
-                    <input
+                    <Input
+                        variant="card"
                         {...register(`questions.${qIdx}.text` as const)}
                         placeholder={t('fieldQuestionText')}
-                        className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="flex-1"
                     />
-                    <select
-                        {...register(`questions.${qIdx}.type` as const)}
-                        className="cursor-pointer appearance-none rounded-lg border border-input bg-background bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%20stroke%3D%22%236b7280%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22M6%208l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:18px_18px] bg-[position:right_8px_center] bg-no-repeat py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                        <option value="SingleChoice" className="bg-background py-1 text-foreground">
-                            {t('questionTypeSingle')}
-                        </option>
-                        <option
-                            value="MultipleChoice"
-                            className="bg-background py-1 text-foreground"
-                        >
-                            {t('questionTypeMultiple')}
-                        </option>
-                        <option value="TextInput" className="bg-background py-1 text-foreground">
-                            {t('questionTypeTextInput')}
-                        </option>
-                    </select>
+                    <Controller
+                        name={`questions.${qIdx}.type` as const}
+                        control={control}
+                        render={({ field }) => (
+                            <FormSelect
+                                variant="card"
+                                containerClassName="shrink-0"
+                                triggerClassName="w-[160px]"
+                                value={field.value}
+                                onValueChange={field.onChange}
+                                options={[
+                                    { value: 'SingleChoice', label: t('questionTypeSingle') },
+                                    { value: 'MultipleChoice', label: t('questionTypeMultiple') },
+                                    { value: 'TextInput', label: t('questionTypeTextInput') },
+                                ]}
+                            />
+                        )}
+                    />
                     <button
                         type="button"
                         onClick={onRemove}

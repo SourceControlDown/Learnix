@@ -2,6 +2,7 @@ import { useFieldArray } from 'react-hook-form';
 import type { Control, UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import type { TestLessonFormData } from '@/schemas/lesson.schema';
 import { cn } from '@/utils/cn';
 
@@ -56,19 +57,20 @@ export function ChoiceEditor({
                                         ),
                                     )
                                 }
-                                className="accent-primary"
+                                className="size-4 accent-field-accent"
                             />
                         ) : (
                             <input
                                 type="checkbox"
                                 {...register(isCorrectField)}
-                                className="accent-primary"
+                                className="size-4 accent-field-accent"
                             />
                         )}
-                        <input
+                        <Input
+                            variant="card"
                             {...register(`questions.${qIdx}.options.${oIdx}.text` as const)}
                             placeholder={t('fieldOptionText')}
-                            className="flex-1 rounded border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                            className="h-8 flex-1 py-1"
                         />
                         {optionFields.length > 2 && (
                             <button

@@ -75,12 +75,14 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <FormInput
+                variant="card"
                 label={t('fieldTitle')}
                 error={errors.title?.message}
                 {...register('title')}
             />
 
             <FormTextarea
+                variant="card"
                 label={t('fieldDescription')}
                 rows={2}
                 error={errors.description?.message}
@@ -89,6 +91,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
 
             <div className="grid grid-cols-3 items-end gap-4">
                 <FormInput
+                    variant="card"
                     label={t('fieldPassingThreshold')}
                     type="number"
                     min={LESSON_LIMITS.PASSING_THRESHOLD_MIN}
@@ -97,6 +100,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
                     {...register('passingThreshold', { valueAsNumber: true })}
                 />
                 <FormInput
+                    variant="card"
                     label={t('fieldAttemptLimit')}
                     type="number"
                     min={LESSON_LIMITS.ATTEMPT_LIMIT_MIN}
@@ -105,6 +109,7 @@ export function TestLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
                     {...register('attemptLimit', { valueAsNumber: true })}
                 />
                 <FormInput
+                    variant="card"
                     label={t('fieldCooldown')}
                     type="number"
                     min={LESSON_LIMITS.COOLDOWN_MINUTES_MIN}

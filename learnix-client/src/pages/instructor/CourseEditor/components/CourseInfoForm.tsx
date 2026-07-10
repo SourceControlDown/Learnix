@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import { FormInput } from '@/components/common/form/FormInput';
+import { FormSelect } from '@/components/common/form/FormSelect';
 import { FormTextarea } from '@/components/common/form/FormTextarea';
 import { COURSE_LIMITS } from '@/const/course.constants';
 import { useCategories } from '@/hooks/course/useCategories';
@@ -65,6 +66,7 @@ export function CourseInfoForm({ course, isPending, onSubmit }: Props) {
             {/* Title */}
             <FormInput
                 id="title"
+                variant="card"
                 label={t('fieldTitle')}
                 placeholder={t('fieldTitlePlaceholder')}
                 error={errors.title?.message}
@@ -73,6 +75,7 @@ export function CourseInfoForm({ course, isPending, onSubmit }: Props) {
 
             <FormTextarea
                 id="description"
+                variant="card"
                 label={t('fieldDescription')}
                 placeholder={t('fieldDescriptionPlaceholder')}
                 error={errors.description?.message}
@@ -82,28 +85,29 @@ export function CourseInfoForm({ course, isPending, onSubmit }: Props) {
 
             {/* Category + Price */}
             <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-foreground">
-                        {t('common:general.category')}
-                    </label>
-                    <select
-                        {...register('categoryId')}
-                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                        <option value="">{t('fieldCategoryPlaceholder')}</option>
-                        {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.categoryId && (
-                        <p className="mt-1 text-xs text-destructive">{errors.categoryId.message}</p>
+                <Controller
+                    name="categoryId"
+                    control={control}
+                    render={({ field }) => (
+                        <FormSelect
+                            id="categoryId"
+                            variant="card"
+                            label={t('common:general.category')}
+                            placeholder={t('fieldCategoryPlaceholder')}
+                            error={errors.categoryId?.message}
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            options={categories.map((cat) => ({
+                                value: cat.id,
+                                label: cat.name,
+                            }))}
+                        />
                     )}
-                </div>
+                />
                 <FormInput
                     id="price"
                     type="number"
+                    variant="card"
                     min={COURSE_LIMITS.PRICE_MIN}
                     step={0.01}
                     label={t('fieldPrice')}
@@ -118,7 +122,7 @@ export function CourseInfoForm({ course, isPending, onSubmit }: Props) {
                 <label className="mb-1 block text-sm font-medium text-foreground">
                     {t('fieldTags')}
                 </label>
-                <div className="flex min-h-[42px] flex-wrap gap-2 rounded-lg border border-input bg-background px-3 py-2">
+                <div className="flex min-h-[42px] flex-wrap gap-2 rounded-lg border border-field-border bg-field-card px-3 py-2 shadow-sm focus-within:border-field-focus focus-within:ring-2 focus-within:ring-field-focus/20">
                     {tags.map((tag) => (
                         <span
                             key={tag}

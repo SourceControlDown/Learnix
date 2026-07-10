@@ -20,6 +20,7 @@ export function TextInputEditor({ qIdx, register, qError }: TextInputEditorProps
     return (
         <div className="space-y-3 pt-2">
             <FormInput
+                variant="card"
                 label={
                     <span className="text-xs text-muted-foreground">{t('fieldCorrectAnswer')}</span>
                 }
