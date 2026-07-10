@@ -31,10 +31,10 @@ public sealed class GetMyLearningProfileTool(IMediator mediator) : IChatTool
         required = Array.Empty<string>()
     });
 
-    public string Name => "get_my_learning_profile";
+    public string Name => ChatToolNames.GetMyLearningProfile;
 
     public ToolDefinition Definition => new(
-        Name: "get_my_learning_profile",
+        Name: Name,
         Description:
             "Returns the signed-in user's own profile and learning state: personal details, courses in " +
             "progress with completion percentage, finished courses, wishlist, and unlocked achievements. " +

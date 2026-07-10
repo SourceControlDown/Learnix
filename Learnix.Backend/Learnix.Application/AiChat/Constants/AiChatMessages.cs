@@ -9,4 +9,12 @@ public static class AiChatMessages
 
     public const string InstructorLookupRequired =
         "Either instructorName or instructorId must be provided.";
+
+    public const string TestNotSubmitted =
+        "The student has not submitted this test yet, so there is nothing to review. "
+        + "Do not reveal or guess any answers.";
+
+    public const string TestAttemptInProgress =
+        "The student has an attempt open right now. The review stays unavailable until they submit it. "
+        + "Do not reveal or guess any answers; offer to explain the underlying topic instead.";
 }

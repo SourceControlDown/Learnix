@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search } from 'lucide-react';
+import { AI_CHAT_TOOLS } from '@/const/aiChat.constants';
 import type { LocalChatMessage } from '@/types/aiChat.types';
 import { cn } from '@/utils/cn';
 import { AiChatMessage } from './AiChatMessage';
@@ -27,13 +28,15 @@ export function AiChatMessages({
 
     function getToolLabel(toolName: string): string {
         switch (toolName) {
-            case 'search_courses':
-            case 'get_categories':
+            case AI_CHAT_TOOLS.searchCourses:
+            case AI_CHAT_TOOLS.getCategories:
                 return t('searching');
-            case 'get_platform_info':
+            case AI_CHAT_TOOLS.getPlatformInfo:
                 return t('lookingUpInfo');
-            case 'get_current_lesson':
+            case AI_CHAT_TOOLS.getCurrentLesson:
                 return t('readingLesson');
+            case AI_CHAT_TOOLS.getMyTestReview:
+                return t('reviewingAttempt');
             default:
                 return t('thinking');
         }

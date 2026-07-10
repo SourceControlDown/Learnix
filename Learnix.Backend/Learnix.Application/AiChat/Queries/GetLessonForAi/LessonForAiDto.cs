@@ -22,8 +22,14 @@ public sealed record LessonForAiDto(
     TestInfoDto? Test = null,
     string? ContentUnavailableReason = null);
 
+/// <param name="SubmittedAttempts">How many attempts the student has already submitted.</param>
+/// <param name="ReviewAvailable">
+/// Whether `get_my_test_review` will succeed: at least one submitted attempt and none currently open.
+/// </param>
 public sealed record TestInfoDto(
     int QuestionCount,
     int PassingThreshold,
     int? AttemptLimit,
-    int? CooldownMinutes);
+    int? CooldownMinutes,
+    int SubmittedAttempts,
+    bool ReviewAvailable);

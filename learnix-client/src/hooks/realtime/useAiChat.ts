@@ -103,6 +103,8 @@ export function useAiChat(isOpen: boolean, scope: ChatScope, lessonId?: string) 
             streamingRef.current = '';
             setStreamingContent('');
 
+            let settled = false;
+
             try {
                 for await (const event of streamAiMessage(
                     scope,
@@ -122,6 +124,7 @@ export function useAiChat(isOpen: boolean, scope: ChatScope, lessonId?: string) 
                     } else if (event.type === 'tool_use_end') {
                         setActiveToolName(null);
                     } else if (event.type === 'message_end') {
+                        settled = true;
                         const finalContent = streamingRef.current;
                         streamingRef.current = '';
                         setStreamingContent('');
@@ -134,6 +137,7 @@ export function useAiChat(isOpen: boolean, scope: ChatScope, lessonId?: string) 
                         setIsStreaming(false);
                         break;
                     } else if (event.type === 'error') {
+                        settled = true;
                         toast.error(t('error'));
                         streamingRef.current = '';
                         setStreamingContent('');
@@ -141,6 +145,16 @@ export function useAiChat(isOpen: boolean, scope: ChatScope, lessonId?: string) 
                         setActiveToolName(null);
                         break;
                     }
+                }
+
+                // A provider that dies mid-stream closes the connection after the SSE headers are out, so
+                // neither message_end nor error ever arrives. Without this the composer stays disabled.
+                if (!settled && !controller.signal.aborted) {
+                    toast.error(t('error'));
+                    streamingRef.current = '';
+                    setStreamingContent('');
+                    setIsStreaming(false);
+                    setActiveToolName(null);
                 }
             } catch {
                 if (!controller.signal.aborted) {

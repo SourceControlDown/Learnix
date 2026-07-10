@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Learnix.Application.AiChat.Abstractions.Models;
+using Learnix.Application.AiChat.Constants;
 
 namespace Learnix.Application.AiChat.Tools;
 
@@ -153,10 +154,10 @@ public sealed class GetPlatformInfoTool : IChatTool
         }
     });
 
-    public string Name => "get_platform_info";
+    public string Name => ChatToolNames.GetPlatformInfo;
 
     public ToolDefinition Definition => new(
-        Name: "get_platform_info",
+        Name: Name,
         Description:
             "Returns information about how the Learnix platform works — enrollment, lessons, tests, " +
             "achievements, certificates, becoming an instructor, payment, chat, and account features. " +

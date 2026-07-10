@@ -1,6 +1,6 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Learnix.Application.AiChat.Abstractions.Models;
+using Learnix.Application.AiChat.Constants;
 using Learnix.Application.AiChat.Queries.GetLessonForAi;
 using MediatR;
 
@@ -8,9 +8,6 @@ namespace Learnix.Application.AiChat.Tools;
 
 public sealed class GetCurrentLessonTool(IMediator mediator) : IChatTool
 {
-    private static readonly JsonSerializerOptions WriteOptions =
-        new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
-
     // No parameters at all: the lesson is decided by the request, not by the model. Accepting a lesson id
     // here would turn the tool into an arbitrary reader for anyone who can get text into the conversation.
     private static readonly string ParametersSchema = JsonSerializer.Serialize(new
@@ -20,10 +17,10 @@ public sealed class GetCurrentLessonTool(IMediator mediator) : IChatTool
         required = Array.Empty<string>()
     });
 
-    public string Name => "get_current_lesson";
+    public string Name => ChatToolNames.GetCurrentLesson;
 
     public ToolDefinition Definition => new(
-        Name: "get_current_lesson",
+        Name: Name,
         Description:
             "Returns the lesson the student currently has open: its title and type, the written body for a " +
             "post lesson, the instructor's description for a video lesson, and the rules of a test. " +
@@ -47,6 +44,6 @@ public sealed class GetCurrentLessonTool(IMediator mediator) : IChatTool
         if (result.IsFailed)
             return JsonSerializer.Serialize(new { error = result.Errors[0].Message });
 
-        return JsonSerializer.Serialize(new { currentLesson = result.Value }, WriteOptions);
+        return JsonSerializer.Serialize(new { currentLesson = result.Value }, ChatToolJson.Write);
     }
 }

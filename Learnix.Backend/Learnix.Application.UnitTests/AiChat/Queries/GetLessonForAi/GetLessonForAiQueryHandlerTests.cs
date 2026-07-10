@@ -6,6 +6,7 @@ using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.Lessons.Abstractions;
+using Learnix.Application.TestAttempts.Abstractions;
 using Learnix.Domain.Entities;
 using Learnix.Domain.Enums;
 using Learnix.Domain.ValueObjects;
@@ -17,6 +18,7 @@ public class GetLessonForAiQueryHandlerTests
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
     private readonly IEnrollmentRepository _enrollmentRepository = Substitute.For<IEnrollmentRepository>();
     private readonly ILessonRepository _lessonRepository = Substitute.For<ILessonRepository>();
+    private readonly ITestAttemptRepository _attemptRepository = Substitute.For<ITestAttemptRepository>();
     private readonly GetLessonForAiQueryHandler _sut;
 
     private static readonly Guid StudentId = Guid.NewGuid();
@@ -27,8 +29,19 @@ public class GetLessonForAiQueryHandlerTests
     public GetLessonForAiQueryHandlerTests()
     {
         _currentUser.UserId.Returns(StudentId);
-        _sut = new GetLessonForAiQueryHandler(_currentUser, _enrollmentRepository, _lessonRepository);
+        _sut = new GetLessonForAiQueryHandler(
+            _currentUser, _enrollmentRepository, _lessonRepository, _attemptRepository);
     }
+
+    private void SubmittedAttempts(int count) =>
+        _attemptRepository
+            .CountAsync(Arg.Any<ISpecification<TestAttempt>>(), Arg.Any<CancellationToken>())
+            .Returns(count);
+
+    private void OpenAttempt(bool exists) =>
+        _attemptRepository
+            .AnyAsync(Arg.Any<ISpecification<TestAttempt>>(), Arg.Any<CancellationToken>())
+            .Returns(exists);
 
     private void Enrolled(bool value) =>
         _enrollmentRepository
@@ -72,7 +85,7 @@ public class GetLessonForAiQueryHandlerTests
     public async Task Video_lesson_exposes_no_content_and_says_why()
     {
         Enrolled(true);
-        var video = VideoLesson.Create(SectionId, "Intro to Hooks", 0, "videos/intro.mp4", "What we cover", 300);
+        var video = VideoLesson.Create(SectionId, "Intro to Hooks", "videos/intro.mp4", "What we cover", 300);
         LessonInCourse(video);
 
         var dto = (await Act()).Value;
@@ -89,7 +102,7 @@ public class GetLessonForAiQueryHandlerTests
     {
         Enrolled(true);
         var body = new string('x', AiChatToolLimits.LessonContentMaxLength + 500);
-        LessonInCourse(PostLesson.Create(SectionId, "Closures", 0, body));
+        LessonInCourse(PostLesson.Create(SectionId, "Closures", body));
 
         var dto = (await Act()).Value;
 
@@ -102,6 +115,7 @@ public class GetLessonForAiQueryHandlerTests
     public async Task Test_lesson_leaks_neither_questions_nor_answers()
     {
         Enrolled(true);
+        SubmittedAttempts(0);
         LessonInCourse(BuildTest());
 
         var dto = (await Act()).Value;
@@ -111,6 +125,7 @@ public class GetLessonForAiQueryHandlerTests
         dto.Test!.QuestionCount.Should().Be(2);
         dto.Test.PassingThreshold.Should().Be(70);
         dto.Test.AttemptLimit.Should().Be(3);
+        dto.Test.ReviewAvailable.Should().BeFalse();
 
         // The DTO is what the model receives. Nothing in it may hint at the answers.
         var payload = JsonSerializer.Serialize(dto);
@@ -120,9 +135,49 @@ public class GetLessonForAiQueryHandlerTests
         payload.Should().NotContain("mitochondria");
     }
 
+    [Fact]
+    public async Task Test_lesson_offers_the_review_once_an_attempt_is_submitted()
+    {
+        Enrolled(true);
+        SubmittedAttempts(1);
+        OpenAttempt(false);
+        LessonInCourse(BuildTest());
+
+        var dto = (await Act()).Value;
+
+        dto.Test!.SubmittedAttempts.Should().Be(1);
+        dto.Test.ReviewAvailable.Should().BeTrue();
+        dto.ContentUnavailableReason.Should().Contain(ChatToolNames.GetMyTestReview);
+    }
+
+    [Fact]
+    public async Task Test_lesson_withholds_the_review_while_an_attempt_is_open()
+    {
+        Enrolled(true);
+        SubmittedAttempts(1);
+        OpenAttempt(true);
+        LessonInCourse(BuildTest());
+
+        var dto = (await Act()).Value;
+
+        dto.Test!.ReviewAvailable.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Video_and_post_lessons_never_ask_about_attempts()
+    {
+        Enrolled(true);
+        LessonInCourse(PostLesson.Create(SectionId, "Closures", "body"));
+
+        await Act();
+
+        await _attemptRepository.DidNotReceiveWithAnyArgs()
+            .CountAsync(default(ISpecification<TestAttempt>)!, default);
+    }
+
     private static TestLesson BuildTest()
     {
-        var test = TestLesson.Create(SectionId, "Checkpoint", 0, "Covers lessons 1-3", 3, 60, 70);
+        var test = TestLesson.Create(SectionId, "Checkpoint", "Covers lessons 1-3", 3, 60, 70);
 
         test.ReplaceQuestions(
         [

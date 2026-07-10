@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Learnix.Application.AiChat.Abstractions.Models;
+using Learnix.Application.AiChat.Constants;
 using Learnix.Application.AiChat.Queries.GetCategories;
 using MediatR;
 
@@ -14,10 +15,10 @@ public sealed class GetCategoriesTool(IMediator mediator) : IChatTool
         required = Array.Empty<string>()
     });
 
-    public string Name => "get_categories";
+    public string Name => ChatToolNames.GetCategories;
 
     public ToolDefinition Definition => new(
-        Name: "get_categories",
+        Name: Name,
         Description: "Returns all available course categories with their slugs and course counts. " +
                      "Call this when the user mentions a subject area and you need the correct category slug " +
                      "to pass to search_courses.",

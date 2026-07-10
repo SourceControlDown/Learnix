@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Learnix.Application.AiChat.Abstractions.Models;
+using Learnix.Application.AiChat.Constants;
 using Learnix.Application.AiChat.Queries.GetCoursesByInstructor;
 using MediatR;
 
@@ -32,10 +33,10 @@ public sealed class GetInstructorCoursesTool(IMediator mediator) : IChatTool
         required = Array.Empty<string>()
     });
 
-    public string Name => "get_instructor_courses";
+    public string Name => ChatToolNames.GetInstructorCourses;
 
     public ToolDefinition Definition => new(
-        Name: "get_instructor_courses",
+        Name: Name,
         Description:
             "Returns an instructor and their published courses. Pass instructorName when the user names a " +
             "person, or instructorId when you already have it. If several instructors match the name, the " +

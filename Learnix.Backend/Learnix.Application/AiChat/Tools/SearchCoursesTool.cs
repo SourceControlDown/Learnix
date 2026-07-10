@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Learnix.Application.AiChat.Abstractions.Models;
+using Learnix.Application.AiChat.Constants;
 using Learnix.Application.AiChat.Queries.SearchCourses;
 using MediatR;
 
@@ -20,10 +21,10 @@ public sealed class SearchCoursesTool(IMediator mediator) : IChatTool
         required = new[] { "query" }
     });
 
-    public string Name => "search_courses";
+    public string Name => ChatToolNames.SearchCourses;
 
     public ToolDefinition Definition => new(
-        Name: "search_courses",
+        Name: Name,
         Description: "Search published courses by keyword and optional category. Use when user asks for course recommendations.",
         ParametersJsonSchema: ParametersSchema);
 

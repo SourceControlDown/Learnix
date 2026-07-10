@@ -6,6 +6,8 @@ using Learnix.Application.Common.Errors;
 using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.Enrollments.Specifications;
 using Learnix.Application.Lessons.Abstractions;
+using Learnix.Application.TestAttempts.Abstractions;
+using Learnix.Application.TestAttempts.Specifications;
 using Learnix.Domain.Entities;
 using MediatR;
 
@@ -14,15 +16,20 @@ namespace Learnix.Application.AiChat.Queries.GetLessonForAi;
 internal sealed class GetLessonForAiQueryHandler(
     ICurrentUserService currentUser,
     IEnrollmentRepository enrollmentRepository,
-    ILessonRepository lessonRepository)
+    ILessonRepository lessonRepository,
+    ITestAttemptRepository testAttemptRepository)
     : IRequestHandler<GetLessonForAiQuery, Result<LessonForAiDto>>
 {
     private const string VideoUnavailableReason =
         "This is a video lesson. There is no transcript and the assistant cannot watch video, "
         + "so only the title and the instructor's description are known.";
 
-    private const string TestUnavailableReason =
-        "This is a test. Its questions and answers are intentionally withheld from the assistant.";
+    private const string TestNotSubmittedReason =
+        "This is a test. Its questions and answers are withheld until the student submits an attempt.";
+
+    private const string TestReviewableReason =
+        "This is a test the student has already submitted. The questions are not included here — "
+        + "call " + ChatToolNames.GetMyTestReview + " to go through their answers.";
 
     public async Task<Result<LessonForAiDto>> Handle(
         GetLessonForAiQuery request,
@@ -31,8 +38,10 @@ internal sealed class GetLessonForAiQueryHandler(
         if (currentUser.UserId is null)
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
 
+        var studentId = currentUser.UserId.Value;
+
         var isEnrolled = await enrollmentRepository.AnyAsync(
-            new ActiveEnrollmentByStudentAndCourseSpecification(currentUser.UserId.Value, request.CourseId),
+            new ActiveEnrollmentByStudentAndCourseSpecification(studentId, request.CourseId),
             cancellationToken);
 
         if (!isEnrolled)
@@ -44,30 +53,21 @@ internal sealed class GetLessonForAiQueryHandler(
         if (lesson is null)
             return Result.Fail(new NotFoundError(CommonMessages.LessonNotFound(request.LessonId)));
 
-        return Result.Ok(Map(lesson));
+        return lesson switch
+        {
+            VideoLesson v => Result.Ok(MapVideo(v)),
+            PostLesson p => Result.Ok(MapPost(p)),
+            TestLesson t => Result.Ok(await MapTestAsync(t, studentId, cancellationToken)),
+            _ => throw new InvalidOperationException($"Unknown lesson type for lesson {lesson.Id}.")
+        };
     }
 
-    private static LessonForAiDto Map(Lesson lesson) => lesson switch
-    {
-        VideoLesson v => new LessonForAiDto(
-            v.Id, v.Title, v.LessonType,
-            ContentAvailable: false,
-            Description: v.Description,
-            DurationSeconds: v.DurationSeconds,
-            ContentUnavailableReason: VideoUnavailableReason),
-
-        PostLesson p => MapPost(p),
-
-        // Questions are never read here — only counted. See ADR-CHAT-012.
-        TestLesson t => new LessonForAiDto(
-            t.Id, t.Title, t.LessonType,
-            ContentAvailable: false,
-            Description: t.Description,
-            Test: new TestInfoDto(t.Questions.Count, t.PassingThreshold, t.AttemptLimit, t.CooldownMinutes),
-            ContentUnavailableReason: TestUnavailableReason),
-
-        _ => throw new InvalidOperationException($"Unknown lesson type for lesson {lesson.Id}.")
-    };
+    private static LessonForAiDto MapVideo(VideoLesson video) => new(
+        video.Id, video.Title, video.LessonType,
+        ContentAvailable: false,
+        Description: video.Description,
+        DurationSeconds: video.DurationSeconds,
+        ContentUnavailableReason: VideoUnavailableReason);
 
     private static LessonForAiDto MapPost(PostLesson post)
     {
@@ -84,5 +84,31 @@ internal sealed class GetLessonForAiQueryHandler(
             ContentAvailable: true,
             Content: content,
             ContentTruncated: truncated);
+    }
+
+    /// <summary>Questions are never read here — only counted. See ADR-CHAT-012.</summary>
+    private async Task<LessonForAiDto> MapTestAsync(TestLesson test, Guid studentId, CancellationToken ct)
+    {
+        var submittedAttempts = await testAttemptRepository.CountAsync(
+            new TestAttemptsByStudentAndLessonSpecification(studentId, test.Id), ct);
+
+        // Only worth asking when there is something to review at all.
+        var hasOpenAttempt = submittedAttempts > 0 && await testAttemptRepository.AnyAsync(
+            new InProgressAttemptByStudentAndLessonSpecification(studentId, test.Id), ct);
+
+        var reviewAvailable = submittedAttempts > 0 && !hasOpenAttempt;
+
+        return new LessonForAiDto(
+            test.Id, test.Title, test.LessonType,
+            ContentAvailable: false,
+            Description: test.Description,
+            Test: new TestInfoDto(
+                test.Questions.Count,
+                test.PassingThreshold,
+                test.AttemptLimit,
+                test.CooldownMinutes,
+                submittedAttempts,
+                reviewAvailable),
+            ContentUnavailableReason: reviewAvailable ? TestReviewableReason : TestNotSubmittedReason);
     }
 }
