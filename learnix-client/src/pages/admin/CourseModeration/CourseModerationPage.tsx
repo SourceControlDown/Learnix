@@ -1,20 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminApi } from '@/api/admin.api';
 import { queryKeys } from '@/api/queryKeys';
 import { FormCheckbox } from '@/components/common/form/FormCheckbox';
 import { ConfirmDialog } from '@/components/common/ui/ConfirmDialog';
+import { PageSizeSelect } from '@/components/common/ui/PageSizeSelect';
 import { Pagination } from '@/components/common/ui/Pagination';
 import { SearchInput } from '@/components/common/ui/SearchInput';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
     Table,
@@ -248,30 +242,15 @@ export default function CourseModerationPage() {
 
                 {/* Footer Controls */}
                 <div className="flex items-center justify-between border-t border-border px-5 py-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{t('rowsPerPage')}</span>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="flex items-center gap-1 rounded-md border border-border px-2 py-1 hover:bg-secondary">
-                                    {pageSize} <ChevronDown className="size-4 opacity-50" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start">
-                                {[10, 20, 50, 100].map((size) => (
-                                    <DropdownMenuItem
-                                        key={size}
-                                        onClick={() => {
-                                            setPageSize(size);
-                                            setSkip(0);
-                                        }}
-                                        className={pageSize === size ? 'bg-secondary' : ''}
-                                    >
-                                        {size}
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+                    <PageSizeSelect
+                        value={pageSize}
+                        onChange={(size) => {
+                            setPageSize(size);
+                            setSkip(0);
+                        }}
+                        options={[10, 20, 50, 100]}
+                        label={t('rowsPerPage')}
+                    />
 
                     <Pagination
                         page={currentPage}

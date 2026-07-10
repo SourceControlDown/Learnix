@@ -151,7 +151,7 @@ export function ChangeRoleDialog({ user, onClose, onRolesChanged }: Props) {
                         </p>
                         <div className="flex gap-2">
                             <Select value={selectedRole} onValueChange={setSelectedRole}>
-                                <SelectTrigger className="flex-1">
+                                <SelectTrigger variant="card" className="flex-1">
                                     <SelectValue
                                         placeholder={t(
                                             'roleDialogSelectPlaceholder',
