@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FluentResults;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Constants;
@@ -25,9 +26,33 @@ internal sealed class GetMyNotificationsQueryHandler(
             cancellationToken);
 
         var dtos = notifications
-            .Select(n => new NotificationDto(n.Id, n.Type.ToString(), n.Title, n.Body, n.IsRead, n.CreatedAt))
+            .Select(n => new NotificationDto(
+                n.Id,
+                n.Type.ToString(),
+                Deserialize(n.Parameters),
+                n.IsRead,
+                n.CreatedAt))
             .ToList();
 
         return Result.Ok<IReadOnlyList<NotificationDto>>(dtos);
+    }
+
+    /// <summary>
+    /// Rows written before notifications became data (ADR-NOTIF-001) carry no parameters, and a row whose JSON
+    /// will not parse is not worth failing the whole bell over — the type alone still renders.
+    /// </summary>
+    private static IReadOnlyDictionary<string, string>? Deserialize(string? parameters)
+    {
+        if (string.IsNullOrWhiteSpace(parameters))
+            return null;
+
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, string>>(parameters);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 }

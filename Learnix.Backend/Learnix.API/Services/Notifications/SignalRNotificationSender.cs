@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Learnix.API.Hubs;
 using Learnix.Application.Common.Abstractions.Hubs;
 using Learnix.Application.Notifications.Abstractions;
@@ -13,9 +14,16 @@ internal sealed class SignalRNotificationSender(
     IHubContext<NotificationsHub, INotificationsHubClient> hubContext)
     : INotificationSender
 {
-    public async Task SendAsync(Guid userId, NotificationType type, string title, string body, CancellationToken ct = default)
+    public async Task SendAsync(
+        Guid userId,
+        NotificationType type,
+        IReadOnlyDictionary<string, string>? parameters = null,
+        CancellationToken ct = default)
     {
-        var notification = Notification.Create(userId, type, title, body);
+        // Stored as JSON, pushed as a map — the same facts, in the shape each side reads best.
+        var json = parameters is { Count: > 0 } ? JsonSerializer.Serialize(parameters) : null;
+
+        var notification = Notification.Create(userId, type, json);
         await notificationRepository.AddAsync(notification, ct);
         await notificationRepository.TrimToMaxAsync(userId, NotificationConstants.MaxPerUser, ct);
 
@@ -24,8 +32,7 @@ internal sealed class SignalRNotificationSender(
             .NotificationReceived(new NotificationReceivedPayload(
                 notification.Id,
                 type.ToString(),
-                title,
-                body,
+                parameters,
                 notification.CreatedAt));
     }
 }

@@ -8,7 +8,11 @@ import { queryKeys } from '@/api/queryKeys';
 import { QueryError } from '@/components/common/system/QueryError';
 import { APP_ROUTES } from '@/routes/paths';
 import type { ConversationSummary } from '@/types/message.types';
-import type { NotificationDto, NotificationEventType } from '@/types/notification.types';
+import type {
+    NotificationDto,
+    NotificationEventType,
+    NotificationParams,
+} from '@/types/notification.types';
 import { cn } from '@/utils/cn';
 import { formatRelativeTime } from '@/utils/formatDate';
 
@@ -33,10 +37,22 @@ type NotificationItemProps = {
 
 function NotificationItem({ notification, onRead }: NotificationItemProps) {
     const navigate = useNavigate();
+    const { t } = useTranslation('notifications');
+    const { t: tAchievements } = useTranslation('achievements');
 
     function handleClick() {
         if (!notification.isRead) onRead(notification.id);
         navigate(TYPE_ROUTE[notification.type]);
+    }
+
+    // The server sends the type and the facts; the words are ours (ADR-NOTIF-001). An achievement arrives as
+    // its code, which the achievements namespace already knows a name for — the server never sent one.
+    const params: NotificationParams = { ...notification.parameters };
+
+    if (params.code) {
+        params.achievement = tAchievements(`meta.${params.code}.name`, {
+            defaultValue: params.code,
+        });
     }
 
     return (
@@ -50,9 +66,11 @@ function NotificationItem({ notification, onRead }: NotificationItemProps) {
             <div className="mt-0.5 shrink-0">{TYPE_ICON[notification.type]}</div>
             <div className="min-w-0 flex-1">
                 <p className={cn('text-sm text-foreground', !notification.isRead && 'font-medium')}>
-                    {notification.title}
+                    {t(`items.${notification.type}.title`)}
                 </p>
-                <p className="mt-0.5 text-sm text-muted-foreground">{notification.body}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                    {t(`items.${notification.type}.body`, params)}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                     {formatRelativeTime(notification.createdAt)}
                 </p>
