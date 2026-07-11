@@ -9,6 +9,8 @@ namespace Learnix.Infrastructure.Persistence.EntityFramework.Repositories;
 internal sealed class LessonProgressRepository(ApplicationDbContext context)
     : RepositoryBase<LessonProgressEntity>(context), ILessonProgressRepository
 {
+    public void Add(LessonProgressEntity progress) => context.Set<LessonProgressEntity>().Add(progress);
+
     public async Task<IReadOnlyDictionary<Guid, CourseProgressCounts>> GetProgressCountsAsync(
         Guid studentId,
         IReadOnlyCollection<Guid> courseIds,

@@ -6,6 +6,10 @@ export interface LessonProgressItemDto {
     isCompleted: boolean;
     completedAt: string | null;
     lastAccessedAt: string | null;
+    /** A video's real length, or a post's estimated reading time. Null for tests. */
+    durationSeconds: number | null;
+    /** Only for tests — the closest thing a quiz has to a length. */
+    questionCount: number | null;
 }
 
 export interface SectionProgressDto {

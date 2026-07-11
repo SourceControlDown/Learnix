@@ -6,6 +6,13 @@ namespace Learnix.Application.LessonProgress.Abstractions;
 public interface ILessonProgressRepository : IRepositoryBase<LessonProgressEntity>
 {
     /// <summary>
+    /// Stages the progress row without saving. Unlike <c>AddAsync</c>, which commits on its own, this
+    /// leaves the unit of work to the caller — so completing a lesson and everything it triggers
+    /// (course completion, certificate) commit together or not at all.
+    /// </summary>
+    void Add(LessonProgressEntity progress);
+
+    /// <summary>
     /// Returns completed and total visible lesson counts for the student in each of the given courses.
     /// Every requested course id is present in the result, even when the course has no visible lessons.
     /// </summary>

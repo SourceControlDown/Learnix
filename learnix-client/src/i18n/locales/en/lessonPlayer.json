@@ -1,6 +1,6 @@
 {
     "header": {
-        "backToCatalog": "Back to courses",
+        "myLearning": "My learning",
         "messageInstructor": "Message instructor",
         "aiAssistant": "AI assistant"
     },
@@ -15,7 +15,12 @@
     "sidebar": {
         "progressLabel": "{{completed}} / {{total}} completed",
         "sectionPrefix": "Section",
-        "courseContent": "Course content"
+        "courseContent": "Course content",
+        "lessonNumber": "{{n}}.",
+        "durationMinutes": "{{n}}min",
+        "durationHours": "{{h}}h {{m}}min",
+        "collapse": "Hide course content",
+        "durationSeconds": "{{n}}s"
     },
     "actions": {
         "markComplete": "Mark as complete",

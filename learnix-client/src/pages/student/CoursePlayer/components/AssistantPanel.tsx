@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { MessageSquare, Sparkles, X } from 'lucide-react';
 import { AiChatClearButton } from '@/components/common/AiChatWidget/components/AiChatClearButton';
 import { AiChatConversation } from '@/components/common/AiChatWidget/components/AiChatConversation';
+import { AiChatStatusLine } from '@/components/common/AiChatWidget/components/AiChatStatusLine';
 import { ConversationView } from '@/components/common/messaging/ConversationView';
 import type { AiChatController } from '@/hooks/realtime/useAiChat';
 import { APP_ROUTES } from '@/routes/paths';
@@ -67,10 +68,7 @@ export function AssistantPanel({
                 <p className="truncate font-heading text-sm font-semibold leading-none text-foreground">
                     {tAi('title')}
                 </p>
-                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="size-2 shrink-0 rounded-full bg-success" />
-                    {tAi('status')}
-                </p>
+                <AiChatStatusLine status={chat.status} />
             </div>
         </div>
     );

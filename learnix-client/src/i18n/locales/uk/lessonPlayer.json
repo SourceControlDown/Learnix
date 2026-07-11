@@ -1,6 +1,6 @@
 {
     "header": {
-        "backToCatalog": "До курсів",
+        "myLearning": "Мої курси",
         "messageInstructor": "Написати інструктору",
         "aiAssistant": "AI-асистент"
     },
@@ -15,7 +15,12 @@
     "sidebar": {
         "progressLabel": "{{completed}} / {{total}} завершено",
         "sectionPrefix": "Секція",
-        "courseContent": "Вміст курсу"
+        "courseContent": "Вміст курсу",
+        "lessonNumber": "{{n}}.",
+        "durationMinutes": "{{n}}хв",
+        "durationHours": "{{h}}год {{m}}хв",
+        "collapse": "Сховати вміст курсу",
+        "durationSeconds": "{{n}}с"
     },
     "actions": {
         "markComplete": "Позначити як пройдений",

@@ -8,6 +8,7 @@ using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.Enrollments.Specifications;
 using Learnix.Application.LessonProgress.Abstractions;
 using Learnix.Application.LessonProgress.Specifications;
+using Learnix.Domain.Entities;
 using MediatR;
 
 namespace Learnix.Application.LessonProgress.Queries.GetCourseProgress;
@@ -65,7 +66,9 @@ public sealed class GetCourseProgressQueryHandler(
                             l.DisplayOrder,
                             p?.IsCompleted ?? false,
                             p?.CompletedAt,
-                            p?.LastAccessedAt);
+                            p?.LastAccessedAt,
+                            DurationOf(l),
+                            (l as TestLesson)?.Questions.Count);
                     })
                     .ToList();
 
@@ -81,4 +84,11 @@ public sealed class GetCourseProgressQueryHandler(
             allLessons.Count(l => l.IsCompleted),
             sections));
     }
+
+    private static int? DurationOf(Lesson lesson) => lesson switch
+    {
+        VideoLesson video => video.DurationSeconds,
+        PostLesson post => post.EstimatedReadingSeconds,
+        _ => null,
+    };
 }

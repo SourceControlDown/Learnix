@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import {
+    ArrowLeft,
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
     Menu,
     MessageSquare,
+    PanelLeftOpen,
     Sparkles,
 } from 'lucide-react';
 import { messagesApi } from '@/api/messages.api';
@@ -49,6 +51,7 @@ export default function CoursePlayerPage() {
     const markComplete = useMarkLessonComplete(courseId!);
     const isDesktop = useMediaQuery('(min-width: 1024px)');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [assistantTab, setAssistantTab] = useState<AssistantTab | null>(null);
     const [hasOpenedAiChat, setHasOpenedAiChat] = useState(false);
     const [activeChat, setActiveChat] = useState<ConversationSummary | null>(null);
@@ -163,7 +166,7 @@ export default function CoursePlayerPage() {
             courseId={courseId!}
             totalLessons={progress?.totalLessons ?? 0}
             completedLessons={progress?.completedLessons ?? 0}
-            onCloseMobile={() => setIsSidebarOpen(false)}
+            onClose={() => (isDesktop ? setIsSidebarCollapsed(true) : setIsSidebarOpen(false))}
         />
     );
 
@@ -284,13 +287,26 @@ export default function CoursePlayerPage() {
             {/* Top bar */}
             <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
                 <div className="flex min-w-0 items-center gap-3">
+                    {/* Opens the overlay on mobile; on desktop it is the way back from a collapsed sidebar */}
+                    {/* Mobile only: on desktop the sidebar is re-opened from the content edge, far
+                        away from the "my learning" link — a double click there must not navigate. */}
                     <button
                         type="button"
                         onClick={() => setIsSidebarOpen(true)}
+                        title={t('sidebar.courseContent')}
                         className="mr-1 rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground lg:hidden"
                     >
                         <Menu className="size-5" />
                     </button>
+                    <Link
+                        to={APP_ROUTES.student.myLearning}
+                        title={t('header.myLearning')}
+                        className="hidden shrink-0 items-center gap-1.5 rounded-md p-1.5 pr-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:flex"
+                    >
+                        <ArrowLeft className="size-4" />
+                        <span>{t('header.myLearning')}</span>
+                    </Link>
+                    <span className="hidden text-border lg:inline">|</span>
                     <BrandLogo
                         boxClassName="size-7"
                         iconClassName="size-5"
@@ -356,19 +372,35 @@ export default function CoursePlayerPage() {
 
             {/* Content */}
             <div className="relative flex min-h-0 flex-1 overflow-hidden">
+                {isDesktop && isSidebarCollapsed && (
+                    <button
+                        type="button"
+                        onClick={() => setIsSidebarCollapsed(false)}
+                        title={t('sidebar.courseContent')}
+                        className="absolute left-0 top-4 z-10 rounded-r-lg border border-l-0 border-border bg-card py-3 pl-2.5 pr-3 text-muted-foreground shadow-md transition-colors hover:bg-secondary hover:text-foreground"
+                    >
+                        <span className="sr-only">{t('sidebar.courseContent')}</span>
+                        <PanelLeftOpen className="size-5" />
+                    </button>
+                )}
+
                 {isDesktop ? (
                     <ResizablePanelGroup direction="horizontal" className="size-full">
-                        <ResizablePanel
-                            id="course-sidebar"
-                            defaultSize={SIDEBAR_SIZE}
-                            minSize="15"
-                            maxSize="30"
-                            className="flex min-w-0 flex-col overflow-hidden bg-card"
-                        >
-                            {sidebarElement}
-                        </ResizablePanel>
+                        {!isSidebarCollapsed && (
+                            <>
+                                <ResizablePanel
+                                    id="course-sidebar"
+                                    defaultSize={SIDEBAR_SIZE}
+                                    minSize="15"
+                                    maxSize="30"
+                                    className="flex min-w-0 flex-col overflow-hidden bg-card"
+                                >
+                                    {sidebarElement}
+                                </ResizablePanel>
 
-                        <ResizableHandle withHandle />
+                                <ResizableHandle withHandle />
+                            </>
+                        )}
 
                         <ResizablePanel
                             id="lesson-main"
