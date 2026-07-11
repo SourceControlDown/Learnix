@@ -1,4 +1,4 @@
-import type { ChatScope, ChatSessionDto } from '@/types/aiChat.types';
+import type { AiChatStatusDto, ChatScope, ChatSessionDto } from '@/types/aiChat.types';
 import { api } from './axios.instance';
 
 /** The scope is the address of the session — the user comes from the token. */
@@ -7,6 +7,9 @@ function scopePath(scope: ChatScope): string {
 }
 
 export const aiChatApi = {
+    /** Scope-independent: quota belongs to the provider, not to one conversation. */
+    getStatus: () => api.get<AiChatStatusDto>('/ai-chat/status').then((r) => r.data),
+
     getSession: (scope: ChatScope) =>
         api.get<ChatSessionDto>(`${scopePath(scope)}/session`).then((r) => r.data),
 

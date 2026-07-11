@@ -6,6 +6,7 @@ import { useMediaQuery } from '@/hooks/shared/useMediaQuery';
 import type { ChatScope } from '@/types/aiChat.types';
 import { cn } from '@/utils/cn';
 import { AiChatConversation } from './AiChatConversation';
+import { AiChatStatusLine } from './AiChatStatusLine';
 
 interface AiChatPanelProps {
     isOpen: boolean;
@@ -69,10 +70,7 @@ export function AiChatPanel({ isOpen, onClose, isExpanded, onToggleExpand }: AiC
                                 <p className="truncate font-heading text-base font-semibold leading-none text-foreground">
                                     {t('title')}
                                 </p>
-                                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <span className="size-2 shrink-0 rounded-full bg-success shadow-[0_0_5px_rgba(var(--success),0.8)]" />
-                                    {t('status')}
-                                </p>
+                                <AiChatStatusLine status={chat.status} />
                             </div>
                         </div>
                     }

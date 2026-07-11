@@ -9,6 +9,25 @@ export interface ChatSessionDto {
     messages: ChatMessageDto[];
 }
 
+/**
+ * Why the assistant cannot answer, as far as a student is told. The backend knows more — a rejected or a
+ * missing API key — but reports those as `unavailable`: they are the operator's problem, and the detail
+ * belongs in the logs, not on the wire (ADR-CHAT-014).
+ */
+export type AiOutageReason = 'quota_exceeded' | 'unavailable';
+
+/**
+ * Whether the assistant can answer right now. The backend learns this from real chat turns rather than
+ * from health-check pings — on a free tier a ping would spend the very quota it checks (ADR-CHAT-014).
+ */
+export interface AiChatStatusDto {
+    available: boolean;
+    provider: string;
+    reason: AiOutageReason | null;
+    /** When the provider is expected back, when it says so. */
+    retryAtUtc: string | null;
+}
+
 export interface LocalChatMessage {
     id: string;
     role: 'user' | 'assistant';

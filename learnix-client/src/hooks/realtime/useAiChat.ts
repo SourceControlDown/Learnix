@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { aiChatApi, streamAiMessage } from '@/api/aiChat.api';
 import { queryKeys } from '@/api/queryKeys';
-import type { ChatScope, LocalChatMessage } from '@/types/aiChat.types';
+import type { AiOutageReason, ChatScope, LocalChatMessage } from '@/types/aiChat.types';
 
 let msgCounter = 0;
 const nextId = () => `msg-${Date.now()}-${++msgCounter}`;
@@ -63,6 +63,23 @@ export function useAiChat(isOpen: boolean, scope: ChatScope, lessonId?: string) 
         staleTime: Infinity,
     });
 
+    // Whether the provider can answer at all — quota, key, outage. Shared by every scope, so it is not
+    // keyed by one. While an outage is in force we poll: it ends by expiry, with nothing to notify us.
+    const { data: status } = useQuery({
+        queryKey: queryKeys.aiChat.status,
+        queryFn: aiChatApi.getStatus,
+        enabled: isOpen,
+        staleTime: 30_000,
+        refetchInterval: (query) => (query.state.data?.available === false ? 60_000 : false),
+    });
+
+    const isAiAvailable = status?.available ?? true;
+
+    const refreshStatus = useCallback(
+        () => queryClient.invalidateQueries({ queryKey: queryKeys.aiChat.status }),
+        [queryClient],
+    );
+
     if (session && !sessionLoaded) {
         setSessionLoaded(true);
         const localMsgs: LocalChatMessage[] = session.messages
@@ -92,7 +109,7 @@ export function useAiChat(isOpen: boolean, scope: ChatScope, lessonId?: string) 
 
     const sendMessage = useCallback(
         async (text: string) => {
-            if (isStreaming || !text.trim()) return;
+            if (isStreaming || !text.trim() || !isAiAvailable) return;
 
             abortRef.current?.abort();
             const controller = new AbortController();
@@ -138,7 +155,10 @@ export function useAiChat(isOpen: boolean, scope: ChatScope, lessonId?: string) 
                         break;
                     } else if (event.type === 'error') {
                         settled = true;
-                        toast.error(t('error'));
+                        // The turn just found out the provider is down — the status query says how.
+                        const { code } = event.data as { code?: AiOutageReason };
+                        void refreshStatus();
+                        toast.error(code ? t(`unavailable.${code}`) : t('error'));
                         streamingRef.current = '';
                         setStreamingContent('');
                         setIsStreaming(false);
@@ -158,6 +178,9 @@ export function useAiChat(isOpen: boolean, scope: ChatScope, lessonId?: string) 
                 }
             } catch {
                 if (!controller.signal.aborted) {
+                    // Includes the 503 the API answers with when it already knows the provider is out:
+                    // the refetched status turns the composer off instead of letting them try again.
+                    void refreshStatus();
                     toast.error(t('error'));
                 }
                 streamingRef.current = '';
@@ -166,7 +189,7 @@ export function useAiChat(isOpen: boolean, scope: ChatScope, lessonId?: string) 
                 setActiveToolName(null);
             }
         },
-        [isStreaming, t, scope, lessonId],
+        [isStreaming, t, scope, lessonId, isAiAvailable, refreshStatus],
     );
 
     return {
@@ -178,5 +201,7 @@ export function useAiChat(isOpen: boolean, scope: ChatScope, lessonId?: string) 
         sendMessage,
         clearSession,
         isClearing,
+        status,
+        isAiAvailable,
     };
 }

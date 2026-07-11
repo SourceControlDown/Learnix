@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, TriangleAlert } from 'lucide-react';
 import { ChatComposer } from '@/components/common/chat/ChatComposer';
 import { CHAT_LIMITS } from '@/const/ui.constants';
 import type { AiChatController } from '@/hooks/realtime/useAiChat';
+import { useAiStatusLabel } from '@/hooks/shared/useAiStatusLabel';
 import { cn } from '@/utils/cn';
 import { AiChatClearButton } from './AiChatClearButton';
 import { AiChatMessages } from './AiChatMessages';
@@ -43,9 +44,12 @@ export function AiChatConversation({
         isSessionLoading,
         sendMessage,
         isClearing,
+        status,
+        isAiAvailable,
     } = chat;
 
     const hasToolbar = header !== undefined || actions !== undefined;
+    const { label: statusLabel } = useAiStatusLabel(status);
 
     return (
         <>
@@ -79,7 +83,7 @@ export function AiChatConversation({
                     isWide && 'mx-auto w-full max-w-3xl border-t-0 p-4 pb-6',
                 )}
             >
-                {lessonTitle && (
+                {lessonTitle && isAiAvailable && (
                     <p className="mb-2 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
                         <BookOpen className="size-3.5 shrink-0" aria-hidden />
                         <span className="truncate">
@@ -88,10 +92,18 @@ export function AiChatConversation({
                     </p>
                 )}
 
+                {/* The toolbar carries the same status, but it is hidden on the full-screen surfaces. */}
+                {!isAiAvailable && (
+                    <p className="mb-2 flex min-w-0 items-center gap-1.5 text-xs text-warning">
+                        <TriangleAlert className="size-3.5 shrink-0" aria-hidden />
+                        <span className="truncate">{statusLabel}</span>
+                    </p>
+                )}
+
                 <ChatComposer
                     onSend={sendMessage}
-                    placeholder={t('placeholder')}
-                    disabled={isStreaming || isClearing}
+                    placeholder={isAiAvailable ? t('placeholder') : t('unavailable.composer')}
+                    disabled={isStreaming || isClearing || !isAiAvailable}
                     maxLength={CHAT_LIMITS.AI_MESSAGE_MAX}
                 />
             </div>

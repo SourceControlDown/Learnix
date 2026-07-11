@@ -78,7 +78,7 @@ export function AiChatMessages({
                 ) : (
                     <>
                         {validMessages.map((msg) => (
-                            <AiChatMessage key={msg.id} message={msg} isExpanded={isExpanded} />
+                            <AiChatMessage key={msg.id} message={msg} />
                         ))}
                         {activeToolName && (
                             <div className="flex items-center gap-1.5 px-2 text-xs text-muted-foreground">
@@ -87,35 +87,20 @@ export function AiChatMessages({
                             </div>
                         )}
                         {isTyping && (
-                            <div className="flex justify-start">
-                                <div
-                                    className={cn(
-                                        'px-3.5 py-2.5 shadow-sm',
-                                        isExpanded
-                                            ? 'max-w-full'
-                                            : 'max-w-[85%] rounded-2xl rounded-tl-sm border border-border/50 bg-muted',
-                                    )}
-                                >
-                                    <span className="inline-flex items-center gap-1">
-                                        <span className="size-1.5 animate-pulse rounded-full bg-foreground/40" />
-                                        <span
-                                            className="size-1.5 animate-pulse rounded-full bg-foreground/40"
-                                            style={{ animationDelay: '0.2s' }}
-                                        />
-                                        <span
-                                            className="size-1.5 animate-pulse rounded-full bg-foreground/40"
-                                            style={{ animationDelay: '0.4s' }}
-                                        />
-                                    </span>
-                                </div>
-                            </div>
+                            <span className="inline-flex items-center gap-1 px-0.5 py-1">
+                                <span className="size-1.5 animate-pulse rounded-full bg-foreground/40" />
+                                <span
+                                    className="size-1.5 animate-pulse rounded-full bg-foreground/40"
+                                    style={{ animationDelay: '0.2s' }}
+                                />
+                                <span
+                                    className="size-1.5 animate-pulse rounded-full bg-foreground/40"
+                                    style={{ animationDelay: '0.4s' }}
+                                />
+                            </span>
                         )}
                         {streamingMessage && (
-                            <AiChatMessage
-                                message={streamingMessage}
-                                isStreaming
-                                isExpanded={isExpanded}
-                            />
+                            <AiChatMessage message={streamingMessage} isStreaming />
                         )}
                     </>
                 )}

@@ -62,6 +62,14 @@ internal sealed class ChatSessionRepository(MongoDbContext context) : IChatSessi
         await context.ChatSessions.DeleteOneAsync(ScopeFilter(userId, scope), ct);
     }
 
+    public async Task<long> DeleteAllForUserAsync(Guid userId, CancellationToken ct = default)
+    {
+        var filter = Builders<ChatSessionDocument>.Filter.Eq(s => s.UserId, userId);
+        var result = await context.ChatSessions.DeleteManyAsync(filter, ct);
+
+        return result.DeletedCount;
+    }
+
     private static FilterDefinition<ChatSessionDocument> ScopeFilter(Guid userId, ChatScope scope) =>
         Builders<ChatSessionDocument>.Filter.And(
             Builders<ChatSessionDocument>.Filter.Eq(s => s.UserId, userId),

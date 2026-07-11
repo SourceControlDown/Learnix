@@ -14,6 +14,15 @@ internal sealed class AnthropicChatProvider(
     AnthropicClient client,
     IOptions<AnthropicSettings> options) : IAiChatProvider
 {
+    public string Name => "Anthropic";
+
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(options.Value.ApiKey);
+
+    /// <summary>
+    /// Driven by hand rather than with <c>await foreach</c>: a rate limit or a rejected key surfaces as an
+    /// exception out of <c>MoveNextAsync</c>, and an iterator cannot yield from inside a catch. See
+    /// <see cref="AiProviderErrors"/> and ADR-CHAT-014.
+    /// </summary>
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
         ChatRequest request,
         [EnumeratorCancellation] CancellationToken ct)
@@ -29,12 +38,42 @@ internal sealed class AnthropicChatProvider(
         };
 
         var outputs = new List<MessageResponse>();
+        var responses = client.Messages.StreamClaudeMessageAsync(parameters, ct).GetAsyncEnumerator(ct);
 
-        await foreach (var res in client.Messages.StreamClaudeMessageAsync(parameters, ct))
+        try
         {
-            if (res.Delta?.Text is not null)
-                yield return new TextDeltaEvent(res.Delta.Text);
-            outputs.Add(res);
+            while (true)
+            {
+                MessageResponse? res = null;
+                ChatStreamEvent? failure = null;
+
+                try
+                {
+                    if (!await responses.MoveNextAsync())
+                        break;
+
+                    res = responses.Current;
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    failure = AiProviderErrors.Classify(ex);
+                }
+
+                if (failure is not null)
+                {
+                    yield return failure;
+                    yield break;
+                }
+
+                if (res!.Delta?.Text is not null)
+                    yield return new TextDeltaEvent(res.Delta.Text);
+
+                outputs.Add(res);
+            }
+        }
+        finally
+        {
+            await responses.DisposeAsync();
         }
 
         // Tool use blocks are fully accumulated after streaming ends

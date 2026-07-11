@@ -4,6 +4,7 @@ using Learnix.API.RateLimiting;
 using Learnix.Application.AiChat.Abstractions;
 using Learnix.Application.AiChat.Abstractions.Models;
 using Learnix.Application.AiChat.Commands.ClearChatSession;
+using Learnix.Application.AiChat.Queries.GetAiChatStatus;
 using Learnix.Application.AiChat.Queries.GetChatSession;
 using Learnix.Application.AiChat.Services;
 using Learnix.Application.Common.Abstractions.Identity;
@@ -27,6 +28,18 @@ public sealed class AiChatController(
     ChatScopeAuthorizer authorizer,
     ICurrentUserService currentUser) : ControllerBase
 {
+    /// <summary>
+    /// Whether the assistant can answer right now. Read from what the last real chat turns learned about the
+    /// provider — the endpoint never calls it, because on a free tier a health-check ping spends the very
+    /// quota it is checking (ADR-CHAT-014).
+    /// </summary>
+    [HttpGet("status")]
+    public async Task<IActionResult> GetStatus(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetAiChatStatusQuery(), ct);
+        return result.ToActionResult(onSuccess: value => Ok(value));
+    }
+
     [HttpGet("platform/session")]
     public Task<IActionResult> GetPlatformSession(CancellationToken ct) =>
         GetSession(ChatScope.Platform, ct);
@@ -103,6 +116,18 @@ public sealed class AiChatController(
         {
             Response.StatusCode = StatusCodes.Status403Forbidden;
             await Response.WriteAsJsonAsync(new { error = access.Errors[0].Message }, ct);
+            return;
+        }
+
+        // A provider we already know is out of quota gets no request: answering 503 here, before the SSE
+        // headers, is the difference between a message the client can show and a stream that just dies.
+        var status = await sender.Send(new GetAiChatStatusQuery(), ct);
+        if (status.IsSuccess && !status.Value.Available)
+        {
+            Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+            await Response.WriteAsJsonAsync(
+                new { code = status.Value.Reason, retryAtUtc = status.Value.RetryAtUtc },
+                ct);
             return;
         }
 

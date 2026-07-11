@@ -20,4 +20,10 @@ public interface IChatSessionRepository
         CancellationToken ct = default);
 
     Task DeleteAsync(Guid userId, ChatScope scope, CancellationToken ct = default);
+
+    /// <summary>
+    /// Every session the user has, in every scope. Chat history is as personal as it gets, so an account
+    /// being purged must not leave it behind in Mongo (ADR-USERS-001).
+    /// </summary>
+    Task<long> DeleteAllForUserAsync(Guid userId, CancellationToken ct = default);
 }

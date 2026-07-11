@@ -10,6 +10,12 @@
     "reviewingAttempt": "Reviewing your attempt...",
     "lessonContext": "Asking about: {{title}}",
     "error": "Something went wrong. Please try again.",
+    "unavailable": {
+        "quota_exceeded": "Request limit reached",
+        "quotaUntil": "Limit reached · back at {{time}}",
+        "unavailable": "Assistant is temporarily unavailable",
+        "composer": "The assistant is unavailable right now"
+    },
     "welcome": "Hi! I'm your Learnix AI tutor. I can help you find courses, answer questions about learning, and more.",
     "ariaToggle": "Toggle AI chat",
     "ariaClose": "Close chat",

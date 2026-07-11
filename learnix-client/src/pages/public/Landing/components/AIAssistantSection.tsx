@@ -66,14 +66,13 @@ export function AIAssistantSection() {
                                 {t('aiAssistant.chat.messages.q1End')}
                             </div>
                         </div>
-                        <div className="flex justify-start">
-                            <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/50 bg-muted px-3.5 py-2.5 text-sm text-foreground shadow-sm">
-                                {t('aiAssistant.chat.messages.a1')}{' '}
-                                <strong>{t('aiAssistant.chat.messages.a1Bold')}</strong>{' '}
-                                {t('aiAssistant.chat.messages.a1End')}
-                                <div className="mt-2 text-xs text-muted-foreground">
-                                    {t('aiAssistant.chat.messages.a1Note')}
-                                </div>
+                        {/* No bubble on the assistant's side — the real chat renders it the same way. */}
+                        <div className="px-0.5 text-sm text-foreground">
+                            {t('aiAssistant.chat.messages.a1')}{' '}
+                            <strong>{t('aiAssistant.chat.messages.a1Bold')}</strong>{' '}
+                            {t('aiAssistant.chat.messages.a1End')}
+                            <div className="mt-2 text-xs text-muted-foreground">
+                                {t('aiAssistant.chat.messages.a1Note')}
                             </div>
                         </div>
                         <div className="flex justify-end">
@@ -81,21 +80,17 @@ export function AIAssistantSection() {
                                 {t('aiAssistant.chat.messages.q2')}
                             </div>
                         </div>
-                        <div className="flex justify-start">
-                            <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/50 bg-muted px-3.5 py-2.5 text-sm text-foreground shadow-sm">
-                                <span className="inline-flex gap-1 py-1">
-                                    <span className="size-1.5 animate-pulse rounded-full bg-foreground/40" />
-                                    <span
-                                        className="size-1.5 animate-pulse rounded-full bg-foreground/40"
-                                        style={{ animationDelay: '0.2s' }}
-                                    />
-                                    <span
-                                        className="size-1.5 animate-pulse rounded-full bg-foreground/40"
-                                        style={{ animationDelay: '0.4s' }}
-                                    />
-                                </span>
-                            </div>
-                        </div>
+                        <span className="inline-flex gap-1 px-0.5 py-1">
+                            <span className="size-1.5 animate-pulse rounded-full bg-foreground/40" />
+                            <span
+                                className="size-1.5 animate-pulse rounded-full bg-foreground/40"
+                                style={{ animationDelay: '0.2s' }}
+                            />
+                            <span
+                                className="size-1.5 animate-pulse rounded-full bg-foreground/40"
+                                style={{ animationDelay: '0.4s' }}
+                            />
+                        </span>
                     </div>
 
                     {/* Presentational only — `inert` keeps the mock out of tab order and the a11y tree. */}

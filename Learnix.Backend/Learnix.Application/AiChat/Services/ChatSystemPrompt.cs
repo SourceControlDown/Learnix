@@ -1,23 +1,32 @@
+using System.Text;
 using Learnix.Application.AiChat.Abstractions.Models;
 using Learnix.Application.AiChat.Constants;
+using Learnix.Application.AiChat.Queries.GetCourseContextForAi;
 
 namespace Learnix.Application.AiChat.Services;
 
 /// <summary>
 /// Builds the system prompt for a scope. The tool list a scope advertises here must match what
 /// <see cref="Tools.IChatTool.IsAvailableIn"/> actually hands the provider.
+/// <para>
+/// The course a tutor session is about is described here rather than behind a tool (ADR-CHAT-013): the
+/// system prompt is rebuilt on every request and never enters the conversation, so these facts cost the
+/// same once and can neither go stale nor pile up the way a stored tool result does.
+/// </para>
 /// </summary>
 public static class ChatSystemPrompt
 {
-    public static string For(ChatScope scope, Guid? lessonId) => scope.Type switch
-    {
-        ChatScopeType.Course => string.Concat(
-            CourseTutorPrompt,
-            FormattingRules,
-            CurrentLessonBlock(scope.CourseId, lessonId)),
+    public static string For(ChatScope scope, Guid? lessonId, CourseContextForAiDto? course = null) =>
+        scope.Type switch
+        {
+            ChatScopeType.Course => string.Concat(
+                CourseTutorPrompt,
+                FormattingRules,
+                CourseBlock(course),
+                CurrentLessonBlock(scope.CourseId, lessonId)),
 
-        _ => PlatformAssistantPrompt + FormattingRules
-    };
+            _ => PlatformAssistantPrompt + FormattingRules
+        };
 
     private const string PlatformAssistantPrompt =
         "You are a helpful learning assistant for Learnix, an online learning platform. " +
@@ -48,6 +57,9 @@ public static class ChatSystemPrompt
         "this course and is working through its lessons right now. Help them understand the material: explain " +
         "concepts, answer follow-up questions, give examples, and relate the lesson to what they already know. " +
         "You are encouraged to provide detailed technical explanations and code examples.\n" +
+        "The course and its outline are given below, in <current_course> and <course_outline>. They are always " +
+        "up to date — answer anything about the course itself, its structure, what comes next, or how far the " +
+        "student has got, straight from them. No tool call gives you that.\n" +
         "Tools available to you:\n" +
         "- " + ChatToolNames.GetCurrentLesson + ": the lesson the student is looking at — its title, and for a written lesson its " +
         "full text. Call it whenever the student says 'this lesson', 'here', 'this test', or asks anything that " +
@@ -74,8 +86,10 @@ public static class ChatSystemPrompt
         "still open is not submitted: the review is unavailable and you must not coach them through it.\n" +
         "4. Stay with this course. If the student asks you to find or recommend other courses, tell them the " +
         "assistant on the main site does that, and get back to the lesson.\n" +
-        "5. Earlier turns in this conversation may concern a different lesson of the same course. The lesson in " +
-        "the <current_lesson> block below is the one the student has open now.\n";
+        "5. Earlier turns in this conversation may concern a different lesson of the same course, and a tool " +
+        "result from one of them may have been replaced by a 'Superseded' note. The lesson the student has " +
+        "open now is the one in <current_lesson>, marked OPEN NOW in the outline. When its content is already " +
+        "in this conversation, use it — do not fetch it again.\n";
 
     private const string FormattingRules =
         "Formatting rules:\n" +
@@ -86,8 +100,62 @@ public static class ChatSystemPrompt
         "- Provide complete ```language blocks``` with proper language tags (e.g. ```csharp) when demonstrating code examples.\n" +
         "Be concise and friendly. If you don't know something, say so honestly.";
 
+    /// <summary>
+    /// The course as facts, not as JSON: the model reads prose better than it reads a serialized DTO, and
+    /// the compact form is what keeps a per-request block affordable.
+    /// </summary>
+    private static string CourseBlock(CourseContextForAiDto? course)
+    {
+        if (course is null)
+            return string.Empty;
+
+        var block = new StringBuilder("\n<current_course");
+        block.Append($" id=\"{course.CourseId}\"");
+        block.Append($" title=\"{course.Title}\"");
+
+        if (!string.IsNullOrWhiteSpace(course.Category))
+            block.Append($" category=\"{course.Category}\"");
+
+        if (!string.IsNullOrWhiteSpace(course.Instructor))
+            block.Append($" instructor=\"{course.Instructor}\"");
+
+        block.Append(">\n").Append(course.Description).Append("\n</current_course>\n");
+
+        block.Append($"<course_outline lessons=\"{course.TotalLessons}\" completed=\"{course.CompletedLessons}\">\n");
+
+        foreach (var section in course.Sections)
+        {
+            block.Append($"{section.Number}. {section.Title}");
+
+            if (section.Lessons is null)
+            {
+                block.Append($" ({section.LessonCount} lessons, titles omitted)\n");
+                continue;
+            }
+
+            block.Append('\n');
+
+            foreach (var lesson in section.Lessons)
+            {
+                block.Append($"   [{(lesson.IsCompleted ? 'x' : ' ')}] {lesson.Title} ({lesson.Type})");
+                block.Append(lesson.IsCurrent ? " <- OPEN NOW\n" : "\n");
+            }
+        }
+
+        block.Append("</course_outline>\n");
+
+        if (course.OutlineCollapsed)
+        {
+            block.Append(
+                "The course is too large to list in full: only the section the student is in and the ones next " +
+                "to it show their lesson titles. Say so if they ask about a section listed without them.\n");
+        }
+
+        return block.ToString();
+    }
+
     private static string CurrentLessonBlock(Guid? courseId, Guid? lessonId) => lessonId is null
-        ? $"\n<current_lesson courseId=\"{courseId}\" lessonId=\"none\" />\n" +
+        ? $"<current_lesson courseId=\"{courseId}\" lessonId=\"none\" />\n" +
           "The student has the course open but no lesson selected. get_current_lesson will return nothing."
-        : $"\n<current_lesson courseId=\"{courseId}\" lessonId=\"{lessonId}\" />";
+        : $"<current_lesson courseId=\"{courseId}\" lessonId=\"{lessonId}\" />";
 }

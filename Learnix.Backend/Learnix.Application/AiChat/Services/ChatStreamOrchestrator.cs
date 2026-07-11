@@ -1,8 +1,11 @@
 using System.Runtime.CompilerServices;
 using Learnix.Application.AiChat.Abstractions;
 using Learnix.Application.AiChat.Abstractions.Models;
+using Learnix.Application.AiChat.Constants;
+using Learnix.Application.AiChat.Queries.GetCourseContextForAi;
 using Learnix.Application.AiChat.Tools;
 using Learnix.Application.Common.Settings;
+using MediatR;
 using Microsoft.Extensions.Options;
 
 namespace Learnix.Application.AiChat.Services;
@@ -13,6 +16,8 @@ public sealed class ChatStreamOrchestrator(
     IChatSessionRepository sessionRepository,
     IAiChatProvider provider,
     IEnumerable<IChatTool> tools,
+    IMediator mediator,
+    IAiAvailabilityStore availability,
     IOptions<AiChatSettings> aiChatOptions)
 {
     private readonly IReadOnlyList<IChatTool> _tools = tools.ToList();
@@ -34,23 +39,29 @@ public sealed class ChatStreamOrchestrator(
         var scopedTools = _tools.Where(t => t.IsAvailableIn(scope.Type)).ToList();
         var toolDefinitions = scopedTools.Select(t => t.Definition).ToList();
         var toolMap = scopedTools.ToDictionary(t => t.Name);
-        var systemPrompt = ChatSystemPrompt.For(scope, lessonId);
+        var systemPrompt = ChatSystemPrompt.For(scope, lessonId, await LoadCourseContextAsync(scope, lessonId, ct));
 
         // Collect assistant messages to persist after streaming completes
         var assistantMessages = new List<ChatMessage>();
-        string? errorMessage = null;
 
+        // The turn loop cannot return anything — it is an iterator — so the failure it saw comes back here.
+        var failures = new List<AiOutage>();
         var toolContext = new ChatToolContext(scope.CourseId, lessonId);
 
         await foreach (var evt in RunTurnLoopAsync(
-                           allMessages, toolDefinitions, toolMap, systemPrompt, toolContext, assistantMessages, ct))
+                           allMessages, toolDefinitions, toolMap, systemPrompt, toolContext, assistantMessages,
+                           failures, ct))
         {
-            if (evt.EventType == "error")
-                errorMessage = evt.Data;
             yield return evt;
         }
 
-        if (errorMessage is null)
+        // This turn is the health check: it just called the provider for real (ADR-CHAT-014).
+        if (failures.Count > 0)
+            await availability.ReportOutageAsync(failures[0], ct);
+        else
+            await availability.ReportSuccessAsync(ct);
+
+        if (failures.Count == 0)
         {
             // Persist user message + all assistant messages from this turn
             var toAppend = new List<ChatMessage> { newUserMessage };
@@ -72,13 +83,17 @@ public sealed class ChatStreamOrchestrator(
         string systemPrompt,
         ChatToolContext toolContext,
         List<ChatMessage> assistantMessages,
+        List<AiOutage> failures,
         [EnumeratorCancellation] CancellationToken ct)
     {
         const int maxToolTurns = 5;
 
         for (var turn = 0; turn < maxToolTurns; turn++)
         {
-            var window = ChatConversationWindow.TakeAlignedWindow(conversation, _contextWindowSize);
+            var window = ChatToolResultCompactor.Compact(
+                ChatConversationWindow.TakeAlignedWindow(conversation, _contextWindowSize),
+                toolContext.LessonId);
+
             var pendingToolCalls = new List<ToolCall>();
             var assistantTextBuffer = new System.Text.StringBuilder();
             var hasToolUse = false;
@@ -110,7 +125,8 @@ public sealed class ChatStreamOrchestrator(
 
                     case ProviderErrorEvent error:
                         providerError = true;
-                        yield return new SseEvent("error", $"{{\"message\":{System.Text.Json.JsonSerializer.Serialize(error.Message)},\"code\":{System.Text.Json.JsonSerializer.Serialize(error.Code)}}}");
+                        failures.Add(new AiOutage(error.Code, error.Message, error.RetryAtUtc));
+                        yield return new SseEvent("error", ErrorPayload(error));
                         break;
                 }
             }
@@ -155,6 +171,41 @@ public sealed class ChatStreamOrchestrator(
             assistantMessages.Add(toolResultMsg);
             conversation.Add(toolResultMsg);
         }
+    }
+
+    /// <summary>
+    /// What the client is told about a failed turn: only what a student can act on. The provider's own
+    /// message never leaves the server — it can carry key fragments and endpoint detail — and the reason is
+    /// narrowed to the public one, so a rejected key reads as "unavailable" and not as a status report on
+    /// our credentials (ADR-CHAT-014).
+    /// </summary>
+    private static string ErrorPayload(ProviderErrorEvent error)
+    {
+        var retryAt = error.RetryAtUtc is null
+            ? "null"
+            : System.Text.Json.JsonSerializer.Serialize(error.RetryAtUtc.Value);
+
+        var code = System.Text.Json.JsonSerializer.Serialize(AiOutageReasons.Public(error.Code));
+
+        return $"{{\"code\":{code},\"retryAtUtc\":{retryAt}}}";
+    }
+
+    /// <summary>
+    /// The course behind a tutor session. A failure here is not worth killing the turn over: the tutor keeps
+    /// its tools and simply answers without knowing which course it is in — which is where it was before
+    /// ADR-CHAT-013.
+    /// </summary>
+    private async Task<CourseContextForAiDto?> LoadCourseContextAsync(
+        ChatScope scope,
+        Guid? lessonId,
+        CancellationToken ct)
+    {
+        if (scope.Type != ChatScopeType.Course || scope.CourseId is null)
+            return null;
+
+        var result = await mediator.Send(new GetCourseContextForAiQuery(scope.CourseId.Value, lessonId), ct);
+
+        return result.IsSuccess ? result.Value : null;
     }
 
     private static int TryCountResults(string json)

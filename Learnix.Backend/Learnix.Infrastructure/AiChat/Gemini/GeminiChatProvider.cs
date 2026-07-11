@@ -20,6 +20,16 @@ internal sealed class GeminiChatProvider : IAiChatProvider
         _client = new Client(apiKey: _settings.ApiKey);
     }
 
+    public string Name => "Gemini";
+
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(_settings.ApiKey);
+
+    /// <summary>
+    /// The stream is driven by hand rather than with <c>await foreach</c>: a quota refusal surfaces as an
+    /// exception out of <c>MoveNextAsync</c>, and an iterator cannot yield from inside a catch. Classifying
+    /// it into a <see cref="ProviderErrorEvent"/> is the whole point — a throw here would just kill an SSE
+    /// connection whose headers are already out (ADR-CHAT-014).
+    /// </summary>
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
         ChatRequest request,
         [EnumeratorCancellation] CancellationToken ct)
@@ -28,38 +38,80 @@ internal sealed class GeminiChatProvider : IAiChatProvider
         var config = BuildConfig(request.Tools, request.SystemPrompt);
         string? finishReason = null;
 
-        await foreach (var chunk in _client.Models
+        var chunks = _client.Models
             .GenerateContentStreamAsync(_settings.Model, contents, config)
-            .WithCancellation(ct))
+            .GetAsyncEnumerator(ct);
+
+        try
         {
-            if (chunk.Candidates is null) continue;
-
-            foreach (var candidate in chunk.Candidates)
+            while (true)
             {
-                if (candidate.Content?.Parts is not null)
-                {
-                    foreach (var part in candidate.Content.Parts)
-                    {
-                        if (part.Text is not null)
-                            yield return new TextDeltaEvent(part.Text);
+                List<ChatStreamEvent> events;
+                ChatStreamEvent? failure = null;
 
-                        if (part.FunctionCall is not null)
-                        {
-                            var callId = Guid.NewGuid().ToString("N")[..8];
-                            var argsJson = JsonSerializer.Serialize(part.FunctionCall.Args);
-                            var toolName = part.FunctionCall.Name ?? string.Empty;
-                            yield return new ToolUseStartEvent(callId, toolName);
-                            yield return new ToolUseEndEvent(callId, toolName, argsJson);
-                        }
-                    }
+                try
+                {
+                    if (!await chunks.MoveNextAsync())
+                        break;
+
+                    events = MapChunk(chunks.Current, ref finishReason);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    events = [];
+                    failure = AiProviderErrors.Classify(ex);
                 }
 
-                if (candidate.FinishReason is not null)
-                    finishReason = candidate.FinishReason.ToString();
+                if (failure is not null)
+                {
+                    yield return failure;
+                    yield break;
+                }
+
+                foreach (var streamEvent in events)
+                    yield return streamEvent;
             }
+        }
+        finally
+        {
+            await chunks.DisposeAsync();
         }
 
         yield return new MessageEndEvent(finishReason ?? "stop");
+    }
+
+    private static List<ChatStreamEvent> MapChunk(GenerateContentResponse chunk, ref string? finishReason)
+    {
+        var events = new List<ChatStreamEvent>();
+
+        if (chunk.Candidates is null)
+            return events;
+
+        foreach (var candidate in chunk.Candidates)
+        {
+            if (candidate.Content?.Parts is not null)
+            {
+                foreach (var part in candidate.Content.Parts)
+                {
+                    if (part.Text is not null)
+                        events.Add(new TextDeltaEvent(part.Text));
+
+                    if (part.FunctionCall is not null)
+                    {
+                        var callId = Guid.NewGuid().ToString("N")[..8];
+                        var argsJson = JsonSerializer.Serialize(part.FunctionCall.Args);
+                        var toolName = part.FunctionCall.Name ?? string.Empty;
+                        events.Add(new ToolUseStartEvent(callId, toolName));
+                        events.Add(new ToolUseEndEvent(callId, toolName, argsJson));
+                    }
+                }
+            }
+
+            if (candidate.FinishReason is not null)
+                finishReason = candidate.FinishReason.ToString();
+        }
+
+        return events;
     }
 
     private static List<Content> MapContents(IReadOnlyList<ChatMessage> conversation)
