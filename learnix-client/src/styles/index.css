@@ -122,6 +122,59 @@
         caret-color: hsl(var(--foreground));
     }
 
+    /*
+     * Sonner toasts. The library paints itself from its own CSS variables, so it cannot be styled
+     * with utility classes — these bindings are what tie it to the design tokens, in both themes.
+     * Its action button is hardcoded to `background: var(--normal-text); color: var(--normal-bg)`,
+     * so the neutral pair below is also what makes that button legible on every toast type.
+     */
+    [data-sonner-toaster] {
+        --normal-bg: hsl(var(--card));
+        --normal-text: hsl(var(--card-foreground));
+        --normal-border: hsl(var(--border));
+
+        --success-bg: color-mix(in srgb, hsl(var(--success)) 10%, hsl(var(--card)));
+        --success-border: hsl(var(--success) / 0.4);
+        --success-text: hsl(var(--card-foreground));
+
+        --error-bg: color-mix(in srgb, hsl(var(--destructive)) 10%, hsl(var(--card)));
+        --error-border: hsl(var(--destructive) / 0.4);
+        --error-text: hsl(var(--card-foreground));
+
+        --warning-bg: color-mix(in srgb, hsl(var(--warning)) 10%, hsl(var(--card)));
+        --warning-border: hsl(var(--warning) / 0.4);
+        --warning-text: hsl(var(--card-foreground));
+
+        --info-bg: color-mix(in srgb, hsl(var(--primary)) 10%, hsl(var(--card)));
+        --info-border: hsl(var(--primary) / 0.4);
+        --info-text: hsl(var(--card-foreground));
+    }
+
+    /* Body copy stays neutral; the semantic colour is carried by the icon and the border. */
+    [data-sonner-toast] [data-description] {
+        color: hsl(var(--muted-foreground));
+    }
+
+    [data-sonner-toast][data-type='success'] [data-icon] {
+        color: hsl(var(--success));
+    }
+    [data-sonner-toast][data-type='error'] [data-icon] {
+        color: hsl(var(--destructive));
+    }
+    [data-sonner-toast][data-type='warning'] [data-icon] {
+        color: hsl(var(--warning));
+    }
+    [data-sonner-toast][data-type='info'] [data-icon] {
+        color: hsl(var(--primary));
+    }
+
+    /* Hold the scrollbar's lane open even on pages short enough not to need one. Otherwise the
+       viewport widens by the scrollbar's width the moment such a page loads, and everything
+       centred — the header above all — slides sideways on the way in and back on the way out. */
+    html {
+        scrollbar-gutter: stable;
+    }
+
     body {
         @apply bg-background font-sans text-foreground antialiased;
     }

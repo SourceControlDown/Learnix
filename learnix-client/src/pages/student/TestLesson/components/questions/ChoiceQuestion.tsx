@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { ChoiceIndicator } from '@/components/common/form/ChoiceIndicator';
 import type { QuestionOptionDto, QuestionResultDto } from '@/types/lesson.types';
 import { cn } from '@/utils/cn';
 
@@ -48,11 +49,18 @@ export function ChoiceQuestion({
                                 : 'border-border opacity-60'
                         : null;
 
+                    // The control says the same thing the card does: right in green, wrong in red.
+                    const tone: 'default' | 'success' | 'destructive' = !hasResult
+                        ? 'default'
+                        : isCorrectOption
+                          ? 'success'
+                          : 'destructive';
+
                     return (
                         <li key={option.order}>
                             <label
                                 className={cn(
-                                    'flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-colors',
+                                    'group flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-colors',
                                     readonly && 'cursor-default',
                                     !hasResult && isSelected
                                         ? 'border-primary bg-primary/5'
@@ -62,12 +70,19 @@ export function ChoiceQuestion({
                                     reviewStyle,
                                 )}
                             >
+                                {/* Real input, hidden: the browser's own control is a white disc in the
+                                    dark theme. Keyboard and screen readers still get a genuine radio. */}
                                 <input
                                     type={inputType}
                                     disabled={readonly}
                                     checked={isSelected}
                                     onChange={() => onOptionToggle(option.order)}
-                                    className="size-4 accent-field-accent"
+                                    className="sr-only"
+                                />
+                                <ChoiceIndicator
+                                    type={inputType}
+                                    checked={isSelected}
+                                    tone={tone}
                                 />
                                 <span>{option.text}</span>
                                 {hasResult && isCorrectOption && (
