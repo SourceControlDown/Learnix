@@ -7,5 +7,5 @@ public interface ICertificateNotifier
         Guid certificateId,
         Guid courseId,
         string courseTitle,
-        CancellationToken ct);
+        CancellationToken cancellationToken);
 }

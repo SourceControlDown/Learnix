@@ -18,14 +18,14 @@ internal sealed class SignalRNotificationSender(
         Guid userId,
         NotificationType type,
         IReadOnlyDictionary<string, string>? parameters = null,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         // Stored as JSON, pushed as a map — the same facts, in the shape each side reads best.
         var json = parameters is { Count: > 0 } ? JsonSerializer.Serialize(parameters) : null;
 
         var notification = Notification.Create(userId, type, json);
-        await notificationRepository.AddAsync(notification, ct);
-        await notificationRepository.TrimToMaxAsync(userId, NotificationConstants.MaxPerUser, ct);
+        await notificationRepository.AddAsync(notification, cancellationToken);
+        await notificationRepository.TrimToMaxAsync(userId, NotificationConstants.MaxPerUser, cancellationToken);
 
         await hubContext.Clients
             .Group(NotificationsHub.UserGroup(userId.ToString()))

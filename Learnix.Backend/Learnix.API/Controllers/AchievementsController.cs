@@ -13,16 +13,16 @@ namespace Learnix.API.Controllers;
 public sealed class AchievementsController(ISender sender) : ControllerBase
 {
     [HttpGet("me")]
-    public async Task<IActionResult> GetMyAchievements(CancellationToken ct)
+    public async Task<IActionResult> GetMyAchievements(CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetMyAchievementsQuery(), ct);
+        var result = await sender.Send(new GetMyAchievementsQuery(), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpPost("{achievementId:guid}/seen")]
-    public async Task<IActionResult> MarkSeen(Guid achievementId, CancellationToken ct)
+    public async Task<IActionResult> MarkSeen(Guid achievementId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new MarkAchievementSeenCommand(achievementId), ct);
+        var result = await sender.Send(new MarkAchievementSeenCommand(achievementId), cancellationToken);
         return result.ToActionResult();
     }
 }

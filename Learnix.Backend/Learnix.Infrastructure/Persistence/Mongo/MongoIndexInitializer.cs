@@ -9,7 +9,7 @@ internal sealed class MongoIndexInitializer(
     MongoDbContext context,
     ILogger<MongoIndexInitializer> logger) : IHostedService
 {
-    public async Task StartAsync(CancellationToken ct)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -24,7 +24,7 @@ internal sealed class MongoIndexInitializer(
                 indexKeys,
                 new CreateIndexOptions { Name = "UX_chat_sessions_userId_scope_courseId", Unique = true });
 
-            await context.ChatSessions.Indexes.CreateOneAsync(indexModel, cancellationToken: ct);
+            await context.ChatSessions.Indexes.CreateOneAsync(indexModel, cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {
@@ -37,5 +37,5 @@ internal sealed class MongoIndexInitializer(
         }
     }
 
-    public Task StopAsync(CancellationToken ct) => Task.CompletedTask;
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

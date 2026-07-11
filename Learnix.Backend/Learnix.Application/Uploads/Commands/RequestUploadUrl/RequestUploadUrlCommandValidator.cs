@@ -20,9 +20,9 @@ public class RequestUploadUrlCommandValidator : AbstractValidator<RequestUploadU
 
         RuleFor(x => x.ContentType)
             .NotEmpty()
-            .Must((cmd, ct) =>
+            .Must((cmd, cancellationToken) =>
                 AllowedContentTypes.TryGetValue(cmd.Target, out var allowed)
-                && allowed.Contains(ct))
+                && allowed.Contains(cancellationToken))
             .WithMessage(cmd =>
                 $"Content type must be one of: {string.Join(", ", AllowedContentTypes.GetValueOrDefault(cmd.Target, []))}");
     }

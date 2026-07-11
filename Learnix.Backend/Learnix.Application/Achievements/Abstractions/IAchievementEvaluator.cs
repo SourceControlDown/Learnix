@@ -7,8 +7,8 @@ namespace Learnix.Application.Achievements.Abstractions;
 /// </summary>
 public interface IAchievementEvaluator
 {
-    Task OnLessonCompletedAsync(Guid userId, CancellationToken ct);
-    Task OnEnrollmentCompletedAsync(Guid userId, Guid courseId, CancellationToken ct);
-    Task OnTestSubmittedAsync(Guid userId, int questionsCount, int durationSeconds, bool passed, CancellationToken ct);
-    Task OnProfileChangedAsync(Guid userId, CancellationToken ct);
+    Task OnLessonCompletedAsync(Guid userId, CancellationToken cancellationToken);
+    Task OnEnrollmentCompletedAsync(Guid userId, Guid courseId, CancellationToken cancellationToken);
+    Task OnTestSubmittedAsync(Guid userId, int questionsCount, int durationSeconds, bool passed, CancellationToken cancellationToken);
+    Task OnProfileChangedAsync(Guid userId, CancellationToken cancellationToken);
 }

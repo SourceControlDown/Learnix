@@ -16,5 +16,5 @@ public interface INotificationSender
         Guid userId,
         NotificationType type,
         IReadOnlyDictionary<string, string>? parameters = null,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 }

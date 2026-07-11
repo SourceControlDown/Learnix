@@ -18,9 +18,9 @@ internal sealed class UpdatePostLessonCommandHandler(
     : CourseCommandHandler<UpdatePostLessonCommand, Result>(courseRepository, currentUser)
 {
     protected override async Task<Result> HandleAsync(
-        UpdatePostLessonCommand request, Course course, CancellationToken ct)
+        UpdatePostLessonCommand request, Course course, CancellationToken cancellationToken)
     {
-        var lesson = await lessonRepository.GetLessonOfTypeByIdAsync<PostLesson>(request.LessonId, forUpdate: true, ct);
+        var lesson = await lessonRepository.GetLessonOfTypeByIdAsync<PostLesson>(request.LessonId, forUpdate: true, cancellationToken);
 
         if (lesson is null)
             return Result.Fail(new NotFoundError(CommonMessages.LessonNotFound(request.LessonId)));
@@ -30,9 +30,9 @@ internal sealed class UpdatePostLessonCommandHandler(
 
         lesson.UpdatePost(request.Title, request.Content);
 
-        await lessonRepository.AddAsync(lesson, ct);
+        await lessonRepository.AddAsync(lesson, cancellationToken);
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok();
     }

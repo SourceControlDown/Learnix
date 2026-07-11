@@ -11,6 +11,6 @@ internal sealed class DeleteBlobHandler(IBlobStorageService blobStorage)
 {
     public override string MessageType => OutboxMessageTypes.DeleteBlob;
 
-    protected override Task HandleAsync(DeleteBlobPayload payload, CancellationToken ct) =>
-        blobStorage.DeleteAsync(payload.BlobPath, ct);
+    protected override Task HandleAsync(DeleteBlobPayload payload, CancellationToken cancellationToken) =>
+        blobStorage.DeleteAsync(payload.BlobPath, cancellationToken);
 }

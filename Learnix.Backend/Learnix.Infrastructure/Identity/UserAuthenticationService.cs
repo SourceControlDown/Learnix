@@ -17,7 +17,7 @@ internal sealed class UserAuthenticationService(
     : IUserAuthenticationService
 {
     public async Task<Result<UserAuthenticationInfo>> ValidateCredentialsAsync(
-        string email, string password, CancellationToken ct = default)
+        string email, string password, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user is null)
@@ -40,7 +40,7 @@ internal sealed class UserAuthenticationService(
     }
 
     public async Task<Result<UserAuthenticationInfo>> GetAuthenticationInfoAsync(
-        Guid userId, CancellationToken ct = default)
+        Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user is null)

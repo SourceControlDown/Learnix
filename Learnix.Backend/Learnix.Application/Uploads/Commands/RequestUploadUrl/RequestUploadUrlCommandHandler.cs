@@ -18,7 +18,7 @@ public sealed class RequestUploadUrlCommandHandler(
 {
     public async Task<Result<UploadUrlResponse>> Handle(
         RequestUploadUrlCommand request,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         if (currentUser.UserId is null)
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
@@ -46,7 +46,7 @@ public sealed class RequestUploadUrlCommandHandler(
         var response = await blobStorage.GenerateUploadUrlAsync(
             request.Target,
             request.ContentType,
-            ct);
+            cancellationToken);
 
         logger.LogInformation(
             "Upload URL generated for user {UserId}, target {Target}, path {Path}",

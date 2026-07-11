@@ -65,25 +65,25 @@ internal sealed class GetCoursesByInstructorQueryHandler(
 
     private async Task<IReadOnlyList<User>> FindCandidatesAsync(
         GetCoursesByInstructorQuery request,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         if (request.InstructorId is { } id)
         {
-            var user = await userRepository.FirstOrDefaultAsync(new UserByIdSpecification(id), ct);
+            var user = await userRepository.FirstOrDefaultAsync(new UserByIdSpecification(id), cancellationToken);
             return user is null ? [] : [user];
         }
 
         return await userRepository.ListAsync(
             new InstructorCandidatesByNameSpecification(request.InstructorName!, AiChatToolLimits.InstructorCandidates),
-            ct);
+            cancellationToken);
     }
 
-    private async Task<IReadOnlyList<User>> KeepInstructorsAsync(IReadOnlyList<User> candidates, CancellationToken ct)
+    private async Task<IReadOnlyList<User>> KeepInstructorsAsync(IReadOnlyList<User> candidates, CancellationToken cancellationToken)
     {
         if (candidates.Count == 0)
             return [];
 
-        var roleMap = await roleService.GetRolesBulkAsync(candidates.Select(u => u.Id), ct);
+        var roleMap = await roleService.GetRolesBulkAsync(candidates.Select(u => u.Id), cancellationToken);
 
         return candidates
             .Where(u => roleMap.TryGetValue(u.Id, out var roles) && roles.Contains(Roles.Instructor))
@@ -92,14 +92,14 @@ internal sealed class GetCoursesByInstructorQueryHandler(
 
     private async Task<IReadOnlyDictionary<Guid, string>> ResolveCategoryNamesAsync(
         IReadOnlyList<Course> courses,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var ids = courses.Select(c => c.CategoryId).Distinct().ToList();
 
         if (ids.Count == 0)
             return new Dictionary<Guid, string>();
 
-        var categories = await categoryRepository.ListAsync(new CategoriesByIdsSpecification(ids), ct);
+        var categories = await categoryRepository.ListAsync(new CategoriesByIdsSpecification(ids), cancellationToken);
         return categories.ToDictionary(c => c.Id, c => c.Name);
     }
 

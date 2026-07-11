@@ -61,6 +61,9 @@ public static class CacheKeys
         /// publish by up to that duration. Accepted trade-off. The key space is bounded only by
         /// the search-term length cap (<c>CourseValidationConstants.SearchMaxLength</c>).
         /// </remarks>
+        // S107: every parameter is part of the cache identity. Collapsing them into an object would
+        // just move the same eight values behind a type and make drift from the query easier.
+#pragma warning disable S107
         public static string Public(
             string? search,
             int pageIndex,
@@ -71,6 +74,7 @@ public static class CacheKeys
             bool? isFree,
             decimal? minRating)
             => $"courses:public:{search}:{pageIndex}:{pageSize}:{categoryId}:{instructorId}:{sortBy}:{isFree}:{minRating}";
+#pragma warning restore S107
 
         public static readonly TimeSpan PublicTtl = TimeSpan.FromMinutes(5);
     }

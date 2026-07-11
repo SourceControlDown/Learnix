@@ -2,6 +2,9 @@ using static Learnix.DbMigrator.Seeders.Demo.CourseSeeders.SeedHelpers;
 
 namespace Learnix.DbMigrator.Seeders.Demo.CourseSeeders;
 
+// S1192: the repeated literals are quiz content — "Strategy" is an answer option a student picks,
+// not a magic string. Hoisting them into constants would make the seed data harder to read.
+#pragma warning disable S1192
 internal static class DesignPatternsSeeder
 {
     public static SeedCourseDefinition GetDefinition() => new(
@@ -122,5 +125,6 @@ internal static class DesignPatternsSeeder
         ],
         "desing_paterns_thumbnail.webp");
 }
+#pragma warning restore S1192
 
 

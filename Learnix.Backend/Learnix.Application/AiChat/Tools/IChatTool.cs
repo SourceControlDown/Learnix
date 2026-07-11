@@ -13,5 +13,5 @@ public interface IChatTool
     /// </summary>
     bool IsAvailableIn(ChatScopeType scope);
 
-    Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken ct);
+    Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken cancellationToken);
 }

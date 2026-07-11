@@ -37,7 +37,7 @@ public abstract class CourseCommandHandler<TCommand, TResult>(
         return await HandleAsync(request, course, cancellationToken);
     }
 
-    protected abstract Task<TResult> HandleAsync(TCommand request, Course course, CancellationToken ct);
+    protected abstract Task<TResult> HandleAsync(TCommand request, Course course, CancellationToken cancellationToken);
 
     protected static TResult Fail(IError error)
     {
@@ -89,7 +89,7 @@ public abstract class CourseSectionCommandHandler<TCommand, TResult>(
         return await HandleAsync(request, course, cancellationToken);
     }
 
-    protected abstract Task<TResult> HandleAsync(TCommand request, Course course, CancellationToken ct);
+    protected abstract Task<TResult> HandleAsync(TCommand request, Course course, CancellationToken cancellationToken);
 
     protected static TResult Fail(IError error)
     {

@@ -21,7 +21,7 @@ internal sealed class PublicCourseCatalogSearchService(
         string? sortBy,
         bool? isFree,
         decimal? minRating,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         IQueryable<Domain.Entities.Course> query = context.Courses
             .AsNoTracking()
@@ -72,7 +72,7 @@ internal sealed class PublicCourseCatalogSearchService(
                 .ThenByDescending(c => c.UpdatedAt);
         }
 
-        var totalCount = await orderedQuery.LongCountAsync(ct);
+        var totalCount = await orderedQuery.LongCountAsync(cancellationToken);
 
         if (totalCount == 0)
             return PaginatedResult<PublicCourseCardDto>.Empty(pagination.PageIndex, pagination.PageSize);
@@ -100,7 +100,7 @@ internal sealed class PublicCourseCatalogSearchService(
                     u.FirstName,
                     u.LastName,
                 })
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         var cards = courses
             .Select(c => new PublicCourseCardDto(

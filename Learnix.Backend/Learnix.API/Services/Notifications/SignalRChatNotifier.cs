@@ -9,12 +9,12 @@ internal sealed class SignalRChatNotifier(
     IHubContext<NotificationsHub, INotificationsHubClient> hubContext)
     : IChatNotifier
 {
-    public Task NotifyNewMessageAsync(Guid recipientId, NewMessageNotification notification, CancellationToken ct)
+    public Task NotifyNewMessageAsync(Guid recipientId, NewMessageNotification notification, CancellationToken cancellationToken)
         => hubContext.Clients
             .Group(NotificationsHub.UserGroup(recipientId.ToString()))
             .ReceiveMessage(notification);
 
-    public Task NotifyUnreadCountChangedAsync(Guid userId, int totalUnread, CancellationToken ct)
+    public Task NotifyUnreadCountChangedAsync(Guid userId, int totalUnread, CancellationToken cancellationToken)
         => hubContext.Clients
             .Group(NotificationsHub.UserGroup(userId.ToString()))
             .UnreadCountChanged(new UnreadCountNotification(totalUnread));

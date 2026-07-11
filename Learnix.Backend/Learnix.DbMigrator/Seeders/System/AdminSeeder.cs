@@ -21,8 +21,10 @@ internal sealed class AdminSeeder(
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
             logger.LogWarning(
-                $"SeedAdmin:Email or {ConfigurationSectionNameConstants.SeedAdmin}:Password is not configured — skipping admin seeding. " +
-                "Set both values to create the initial admin account on startup.");
+                "{Section}:Email or {Section}:Password is not configured — skipping admin seeding. " +
+                "Set both values to create the initial admin account on startup.",
+                ConfigurationSectionNameConstants.SeedAdmin,
+                ConfigurationSectionNameConstants.SeedAdmin);
             return;
         }
 

@@ -55,9 +55,9 @@ public sealed class LessonsController(ISender sender) : ControllerBase
     // Get lesson content (student)
 
     [HttpGet("lessons/{lessonId:guid}")]
-    public async Task<IActionResult> GetContent(Guid courseId, Guid lessonId, CancellationToken ct)
+    public async Task<IActionResult> GetContent(Guid courseId, Guid lessonId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetLessonContentQuery(courseId, lessonId), ct);
+        var result = await sender.Send(new GetLessonContentQuery(courseId, lessonId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -68,12 +68,12 @@ public sealed class LessonsController(ISender sender) : ControllerBase
         Guid courseId,
         Guid sectionId,
         [FromBody] CreateVideoLessonRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var result = await sender.Send(
             new CreateVideoLessonCommand(
                 courseId, sectionId, body.Title, body.VideoUrl, body.Description, body.DurationSeconds),
-            ct);
+            cancellationToken);
         return result.ToActionResult(id => CreatedAtAction(nameof(CreateVideo),
             new { courseId, sectionId }, new { id }));
     }
@@ -83,13 +83,13 @@ public sealed class LessonsController(ISender sender) : ControllerBase
         Guid courseId,
         Guid sectionId,
         [FromBody] CreateTestLessonRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var result = await sender.Send(
             new CreateTestLessonCommand(
                 courseId, sectionId, body.Title, body.Description,
                 body.AttemptLimit, body.CooldownMinutes, body.PassingThreshold, body.Questions),
-            ct);
+            cancellationToken);
         return result.ToActionResult(id => CreatedAtAction(nameof(CreateTest),
             new { courseId, sectionId }, new { id }));
     }
@@ -99,10 +99,10 @@ public sealed class LessonsController(ISender sender) : ControllerBase
         Guid courseId,
         Guid sectionId,
         [FromBody] CreatePostLessonRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var result = await sender.Send(
-            new CreatePostLessonCommand(courseId, sectionId, body.Title, body.Content), ct);
+            new CreatePostLessonCommand(courseId, sectionId, body.Title, body.Content), cancellationToken);
         return result.ToActionResult(id => CreatedAtAction(nameof(CreatePost),
             new { courseId, sectionId }, new { id }));
     }
@@ -114,12 +114,12 @@ public sealed class LessonsController(ISender sender) : ControllerBase
         Guid courseId,
         Guid lessonId,
         [FromBody] UpdateVideoLessonRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var result = await sender.Send(
             new UpdateVideoLessonCommand(
                 courseId, lessonId, body.Title, body.VideoUrl, body.Description, body.DurationSeconds),
-            ct);
+            cancellationToken);
         return result.ToActionResult();
     }
 
@@ -128,13 +128,13 @@ public sealed class LessonsController(ISender sender) : ControllerBase
         Guid courseId,
         Guid lessonId,
         [FromBody] UpdateTestLessonRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var result = await sender.Send(
             new UpdateTestLessonCommand(
                 courseId, lessonId, body.Title, body.Description,
                 body.AttemptLimit, body.CooldownMinutes, body.PassingThreshold, body.Questions),
-            ct);
+            cancellationToken);
         return result.ToActionResult();
     }
 
@@ -143,10 +143,10 @@ public sealed class LessonsController(ISender sender) : ControllerBase
         Guid courseId,
         Guid lessonId,
         [FromBody] UpdatePostLessonRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var result = await sender.Send(
-            new UpdatePostLessonCommand(courseId, lessonId, body.Title, body.Content), ct);
+            new UpdatePostLessonCommand(courseId, lessonId, body.Title, body.Content), cancellationToken);
         return result.ToActionResult();
     }
 
@@ -155,18 +155,18 @@ public sealed class LessonsController(ISender sender) : ControllerBase
         Guid courseId,
         Guid lessonId,
         [FromBody] ToggleLessonVisibilityRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var result = await sender.Send(
-            new ToggleLessonVisibilityCommand(courseId, lessonId, body.IsVisible), ct);
+            new ToggleLessonVisibilityCommand(courseId, lessonId, body.IsVisible), cancellationToken);
         return result.ToActionResult();
     }
 
     // Delete / Reorder
     [HttpDelete("lessons/{lessonId:guid}")]
-    public async Task<IActionResult> Delete(Guid courseId, Guid lessonId, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid courseId, Guid lessonId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new DeleteLessonCommand(courseId, lessonId), ct);
+        var result = await sender.Send(new DeleteLessonCommand(courseId, lessonId), cancellationToken);
         return result.ToActionResult();
     }
 
@@ -175,10 +175,10 @@ public sealed class LessonsController(ISender sender) : ControllerBase
         Guid courseId,
         Guid sectionId,
         [FromBody] ReorderLessonsRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var result = await sender.Send(
-            new ReorderLessonsCommand(courseId, sectionId, body.Items), ct);
+            new ReorderLessonsCommand(courseId, sectionId, body.Items), cancellationToken);
         return result.ToActionResult();
     }
 }

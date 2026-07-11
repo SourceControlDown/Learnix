@@ -7,6 +7,8 @@ namespace Learnix.Application.AiChat.Tools;
 
 public sealed class GetPlatformInfoTool : IChatTool
 {
+    private static readonly JsonSerializerOptions ArgumentsOptions = new() { PropertyNameCaseInsensitive = true };
+
     private static readonly string ParametersSchema = JsonSerializer.Serialize(new
     {
         type = "object",
@@ -168,15 +170,17 @@ public sealed class GetPlatformInfoTool : IChatTool
     /// <summary>Static reference content — useful to the tutor and to the platform assistant alike.</summary>
     public bool IsAvailableIn(ChatScopeType scope) => true;
 
-    public Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken ct)
+    public Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken cancellationToken)
     {
         SectionArgs? args = null;
         try
         {
-            args = JsonSerializer.Deserialize<SectionArgs>(invocation.ArgumentsJson,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            args = JsonSerializer.Deserialize<SectionArgs>(invocation.ArgumentsJson, ArgumentsOptions);
         }
-        catch { }
+        catch (JsonException)
+        {
+            // Malformed arguments from the model: fall through and return the sections index.
+        }
 
         if (string.IsNullOrWhiteSpace(args?.Section))
             return Task.FromResult(SectionsIndex);

@@ -17,15 +17,15 @@ public sealed class ArchiveCourseCommandHandler(
     : CourseCommandHandler<ArchiveCourseCommand, Result>(courseRepository, currentUser)
 {
     protected override async Task<Result> HandleAsync(
-        ArchiveCourseCommand request, Course course, CancellationToken ct)
+        ArchiveCourseCommand request, Course course, CancellationToken cancellationToken)
     {
         course.Archive();
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await Task.WhenAll(
-            cache.RemoveAsync(CacheKeys.Courses.ById(request.CourseId), ct),
-            cache.RemoveAsync(CacheKeys.Courses.Featured, ct));
+            cache.RemoveAsync(CacheKeys.Courses.ById(request.CourseId), cancellationToken),
+            cache.RemoveAsync(CacheKeys.Courses.Featured, cancellationToken));
 
         return Result.Ok();
     }

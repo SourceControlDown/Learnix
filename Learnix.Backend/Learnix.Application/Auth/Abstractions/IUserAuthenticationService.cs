@@ -9,10 +9,10 @@ public interface IUserAuthenticationService
     Task<Result<UserAuthenticationInfo>> ValidateCredentialsAsync(
         string email,
         string password,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 
     /// <summary>Loads user + roles for token regeneration during refresh.</summary>
     Task<Result<UserAuthenticationInfo>> GetAuthenticationInfoAsync(
         Guid userId,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 }

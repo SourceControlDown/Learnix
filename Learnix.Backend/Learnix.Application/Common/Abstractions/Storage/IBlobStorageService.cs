@@ -12,7 +12,7 @@ public interface IBlobStorageService
     Task<UploadUrlResponse> GenerateUploadUrlAsync(
         UploadTarget target,
         string contentType,
-        CancellationToken ct);
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Validates an uploaded blob (size, magic bytes) in the temporary container,
@@ -23,7 +23,7 @@ public interface IBlobStorageService
     Task<Result<BlobMetadata>> CommitUploadAsync(
         string tempBlobPath,
         UploadTarget target,
-        CancellationToken ct);
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Generates a read SAS URL for a confirmed blob.
@@ -40,12 +40,12 @@ public interface IBlobStorageService
     /// Deletes a blob. Safe to call on non-existent blobs.
     /// Errors are logged, not thrown.
     /// </summary>
-    Task DeleteAsync(string blobPath, CancellationToken ct);
+    Task DeleteAsync(string blobPath, CancellationToken cancellationToken);
 
     /// <summary>
     /// Server-side direct upload. Used by background services (e.g. certificate PDF generation).
     /// </summary>
-    Task UploadAsync(string blobPath, Stream content, string contentType, CancellationToken ct);
+    Task UploadAsync(string blobPath, Stream content, string contentType, CancellationToken cancellationToken);
 
 }
 

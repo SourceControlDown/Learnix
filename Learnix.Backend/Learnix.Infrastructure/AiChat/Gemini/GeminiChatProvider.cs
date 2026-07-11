@@ -32,15 +32,15 @@ internal sealed class GeminiChatProvider : IAiChatProvider
     /// </summary>
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
         ChatRequest request,
-        [EnumeratorCancellation] CancellationToken ct)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var contents = MapContents(request.Conversation);
         var config = BuildConfig(request.Tools, request.SystemPrompt);
         string? finishReason = null;
 
         var chunks = _client.Models
-            .GenerateContentStreamAsync(_settings.Model, contents, config)
-            .GetAsyncEnumerator(ct);
+            .GenerateContentStreamAsync(_settings.Model, contents, config, cancellationToken)
+            .GetAsyncEnumerator(cancellationToken);
 
         try
         {

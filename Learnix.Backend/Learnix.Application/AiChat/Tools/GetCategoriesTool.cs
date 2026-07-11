@@ -26,9 +26,9 @@ public sealed class GetCategoriesTool(IMediator mediator) : IChatTool
 
     public bool IsAvailableIn(ChatScopeType scope) => scope is ChatScopeType.Platform;
 
-    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken ct)
+    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetCategoriesQuery(), ct);
+        var result = await mediator.Send(new GetCategoriesQuery(), cancellationToken);
 
         if (result.IsFailed)
             return JsonSerializer.Serialize(new { error = "Failed to retrieve categories" });

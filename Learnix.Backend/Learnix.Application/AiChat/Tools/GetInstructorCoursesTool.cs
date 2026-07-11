@@ -46,7 +46,7 @@ public sealed class GetInstructorCoursesTool(IMediator mediator) : IChatTool
 
     public bool IsAvailableIn(ChatScopeType scope) => scope is ChatScopeType.Platform;
 
-    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken ct)
+    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken cancellationToken)
     {
         var argumentsJson = invocation.ArgumentsJson;
         InstructorArgs? args;
@@ -69,7 +69,7 @@ public sealed class GetInstructorCoursesTool(IMediator mediator) : IChatTool
         }
 
         var result = await mediator.Send(
-            new GetCoursesByInstructorQuery(args?.InstructorName, instructorId), ct);
+            new GetCoursesByInstructorQuery(args?.InstructorName, instructorId), cancellationToken);
 
         if (result.IsFailed)
             return JsonSerializer.Serialize(new { error = result.Errors[0].Message });

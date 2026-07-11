@@ -49,7 +49,7 @@ internal sealed class AzureBlobStorageService(
     public Task<UploadUrlResponse> GenerateUploadUrlAsync(
         UploadTarget target,
         string contentType,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var containerName = _options.TempContainer;
         var blobName = $"{Guid.NewGuid():N}";
@@ -78,7 +78,7 @@ internal sealed class AzureBlobStorageService(
     public async Task<Result<BlobMetadata>> CommitUploadAsync(
         string tempBlobPath,
         UploadTarget target,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var (tempContainer, tempBlobName) = ParseBlobPath(tempBlobPath);
         if (tempContainer != _options.TempContainer)
@@ -88,24 +88,24 @@ internal sealed class AzureBlobStorageService(
             .GetBlobContainerClient(tempContainer)
             .GetBlobClient(tempBlobName);
 
-        if (!await tempBlob.ExistsAsync(ct))
+        if (!await tempBlob.ExistsAsync(cancellationToken))
             return Result.Fail(new NotFoundError($"File not found or expired. Please upload it again."));
 
-        var properties = await tempBlob.GetPropertiesAsync(cancellationToken: ct);
+        var properties = await tempBlob.GetPropertiesAsync(cancellationToken: cancellationToken);
         var size = properties.Value.ContentLength;
 
         var maxSize = MaxSizes[target];
         if (size > maxSize)
         {
-            await tempBlob.DeleteIfExistsAsync(cancellationToken: ct);
+            await tempBlob.DeleteIfExistsAsync(cancellationToken: cancellationToken);
             return Result.Fail(new BlobValidationError(
                 $"File too large. Size: {FormatBytes(size)}, max: {FormatBytes(maxSize)}"));
         }
 
-        var actualContentType = await DetectContentTypeAsync(tempBlob, ct);
+        var actualContentType = await DetectContentTypeAsync(tempBlob, cancellationToken);
         if (!AllowedContentTypes[target].Contains(actualContentType))
         {
-            await tempBlob.DeleteIfExistsAsync(cancellationToken: ct);
+            await tempBlob.DeleteIfExistsAsync(cancellationToken: cancellationToken);
             return Result.Fail(new BlobValidationError(
                 $"Content type '{actualContentType}' not allowed for {target}"));
         }
@@ -115,15 +115,15 @@ internal sealed class AzureBlobStorageService(
             .GetBlobContainerClient(finalContainer)
             .GetBlobClient(finalBlobName);
 
-        var copyOp = await finalBlob.StartCopyFromUriAsync(tempBlob.Uri, cancellationToken: ct);
-        await copyOp.WaitForCompletionAsync(ct);
+        var copyOp = await finalBlob.StartCopyFromUriAsync(tempBlob.Uri, cancellationToken: cancellationToken);
+        await copyOp.WaitForCompletionAsync(cancellationToken);
 
-        await tempBlob.DeleteIfExistsAsync(cancellationToken: ct);
+        await tempBlob.DeleteIfExistsAsync(cancellationToken: cancellationToken);
 
         // Overwrite Content-Type header with trusted value (in case client lied)
         await finalBlob.SetHttpHeadersAsync(
             new BlobHttpHeaders { ContentType = actualContentType },
-            cancellationToken: ct);
+            cancellationToken: cancellationToken);
 
         return Result.Ok(new BlobMetadata($"{finalContainer}/{finalBlobName}", actualContentType, size));
     }
@@ -156,7 +156,7 @@ internal sealed class AzureBlobStorageService(
             .Uri.ToString();
     }
 
-    public async Task DeleteAsync(string blobPath, CancellationToken ct)
+    public async Task DeleteAsync(string blobPath, CancellationToken cancellationToken)
     {
         try
         {
@@ -164,7 +164,7 @@ internal sealed class AzureBlobStorageService(
             await blobServiceClient
                 .GetBlobContainerClient(container)
                 .GetBlobClient(blobName)
-                .DeleteIfExistsAsync(cancellationToken: ct);
+                .DeleteIfExistsAsync(cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {
@@ -172,7 +172,7 @@ internal sealed class AzureBlobStorageService(
         }
     }
 
-    public async Task UploadAsync(string blobPath, Stream content, string contentType, CancellationToken ct)
+    public async Task UploadAsync(string blobPath, Stream content, string contentType, CancellationToken cancellationToken)
     {
         var (container, blobName) = ParseBlobPath(blobPath);
         var blob = blobServiceClient
@@ -182,7 +182,7 @@ internal sealed class AzureBlobStorageService(
         await blob.UploadAsync(content, new BlobUploadOptions
         {
             HttpHeaders = new BlobHttpHeaders { ContentType = contentType }
-        }, ct);
+        }, cancellationToken);
     }
 
     private (string container, string blobName) BuildBlobLocation(UploadTarget target)
@@ -212,14 +212,14 @@ internal sealed class AzureBlobStorageService(
         );
     }
 
-    private static async Task<string> DetectContentTypeAsync(BlobClient blob, CancellationToken ct)
+    private static async Task<string> DetectContentTypeAsync(BlobClient blob, CancellationToken cancellationToken)
     {
         var range = new HttpRange(0, 512);
         var response = await blob.DownloadStreamingAsync(
-            new BlobDownloadOptions { Range = range }, ct);
+            new BlobDownloadOptions { Range = range }, cancellationToken);
 
         using var ms = new MemoryStream();
-        await response.Value.Content.CopyToAsync(ms, ct);
+        await response.Value.Content.CopyToAsync(ms, cancellationToken);
         return DetectMimeFromMagicBytes(ms.ToArray());
     }
 

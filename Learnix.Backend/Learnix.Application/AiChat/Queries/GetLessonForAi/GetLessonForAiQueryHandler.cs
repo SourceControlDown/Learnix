@@ -87,14 +87,14 @@ internal sealed class GetLessonForAiQueryHandler(
     }
 
     /// <summary>Questions are never read here — only counted. See ADR-CHAT-012.</summary>
-    private async Task<LessonForAiDto> MapTestAsync(TestLesson test, Guid studentId, CancellationToken ct)
+    private async Task<LessonForAiDto> MapTestAsync(TestLesson test, Guid studentId, CancellationToken cancellationToken)
     {
         var submittedAttempts = await testAttemptRepository.CountAsync(
-            new TestAttemptsByStudentAndLessonSpecification(studentId, test.Id), ct);
+            new TestAttemptsByStudentAndLessonSpecification(studentId, test.Id), cancellationToken);
 
         // Only worth asking when there is something to review at all.
         var hasOpenAttempt = submittedAttempts > 0 && await testAttemptRepository.AnyAsync(
-            new InProgressAttemptByStudentAndLessonSpecification(studentId, test.Id), ct);
+            new InProgressAttemptByStudentAndLessonSpecification(studentId, test.Id), cancellationToken);
 
         var reviewAvailable = submittedAttempts > 0 && !hasOpenAttempt;
 

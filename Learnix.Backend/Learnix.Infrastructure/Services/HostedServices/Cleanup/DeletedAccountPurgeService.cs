@@ -61,7 +61,7 @@ internal sealed class DeletedAccountPurgeService(
 
     protected override TimeSpan Interval => BackgroundJobConstants.DeletedAccountPurgeInterval;
 
-    protected override async Task RunAsync(CancellationToken ct)
+    protected override async Task RunAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -78,27 +78,27 @@ internal sealed class DeletedAccountPurgeService(
                 .Where(u => u.IsDeleted && u.PurgeAfter != null && u.PurgeAfter <= now)
                 .OrderBy(u => u.PurgeAfter)
                 .Take(BatchSize)
-                .ToListAsync(ct);
+                .ToListAsync(cancellationToken);
 
             if (due.Count == 0)
                 return;
 
             foreach (var user in due)
             {
-                await PurgePersonalRecordsAsync(context, chatSessions, user.Id, ct);
+                await PurgePersonalRecordsAsync(context, chatSessions, user.Id, cancellationToken);
 
                 // Clears PurgeAfter, so a user cannot be purged twice, and raises the avatar-removed event
                 // whose outbox message deletes the blob.
                 user.Anonymize();
             }
 
-            await context.SaveChangesAsync(ct);
+            await context.SaveChangesAsync(cancellationToken);
 
             logger.LogInformation(
                 "Deleted account purge: anonymized {Count} accounts whose recovery window expired.",
                 due.Count);
         }
-        catch (Exception ex) when (!ct.IsCancellationRequested)
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
         {
             logger.LogError(ex, "Deleted account purge failed.");
         }
@@ -113,21 +113,21 @@ internal sealed class DeletedAccountPurgeService(
         ApplicationDbContext context,
         IChatSessionRepository chatSessions,
         Guid userId,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        await context.RefreshTokens.Where(t => t.UserId == userId).ExecuteDeleteAsync(ct);
-        await context.Notifications.Where(n => n.UserId == userId).ExecuteDeleteAsync(ct);
-        await context.WishlistItems.Where(w => w.UserId == userId).ExecuteDeleteAsync(ct);
-        await context.UserAchievements.Where(a => a.UserId == userId).ExecuteDeleteAsync(ct);
-        await context.UserAchievementProgresses.Where(p => p.UserId == userId).ExecuteDeleteAsync(ct);
-        await context.UserCompletedCategories.Where(c => c.UserId == userId).ExecuteDeleteAsync(ct);
+        await context.RefreshTokens.Where(t => t.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+        await context.Notifications.Where(n => n.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+        await context.WishlistItems.Where(w => w.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+        await context.UserAchievements.Where(a => a.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+        await context.UserAchievementProgresses.Where(p => p.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+        await context.UserCompletedCategories.Where(c => c.UserId == userId).ExecuteDeleteAsync(cancellationToken);
 
         // The Google link and any Identity-issued tokens: credentials, not history.
-        await context.Set<IdentityUserLogin<Guid>>().Where(l => l.UserId == userId).ExecuteDeleteAsync(ct);
-        await context.Set<IdentityUserToken<Guid>>().Where(t => t.UserId == userId).ExecuteDeleteAsync(ct);
-        await context.Set<IdentityUserClaim<Guid>>().Where(c => c.UserId == userId).ExecuteDeleteAsync(ct);
+        await context.Set<IdentityUserLogin<Guid>>().Where(l => l.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+        await context.Set<IdentityUserToken<Guid>>().Where(t => t.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+        await context.Set<IdentityUserClaim<Guid>>().Where(c => c.UserId == userId).ExecuteDeleteAsync(cancellationToken);
 
         // Chat history lives in Mongo and no cascade reaches it.
-        await chatSessions.DeleteAllForUserAsync(userId, ct);
+        await chatSessions.DeleteAllForUserAsync(userId, cancellationToken);
     }
 }

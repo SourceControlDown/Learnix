@@ -29,9 +29,9 @@ public sealed class ChatStreamOrchestrator(
         ChatScope scope,
         Guid? lessonId,
         string userMessage,
-        [EnumeratorCancellation] CancellationToken ct)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var session = await sessionRepository.GetOrCreateAsync(userId, scope, ct);
+        var session = await sessionRepository.GetOrCreateAsync(userId, scope, cancellationToken);
 
         var newUserMessage = new ChatMessage("user", userMessage, DateTime.UtcNow, null, lessonId);
         var allMessages = new List<ChatMessage>(session.Messages) { newUserMessage };
@@ -39,7 +39,7 @@ public sealed class ChatStreamOrchestrator(
         var scopedTools = _tools.Where(t => t.IsAvailableIn(scope.Type)).ToList();
         var toolDefinitions = scopedTools.Select(t => t.Definition).ToList();
         var toolMap = scopedTools.ToDictionary(t => t.Name);
-        var systemPrompt = ChatSystemPrompt.For(scope, lessonId, await LoadCourseContextAsync(scope, lessonId, ct));
+        var systemPrompt = ChatSystemPrompt.For(scope, lessonId, await LoadCourseContextAsync(scope, lessonId, cancellationToken));
 
         // Collect assistant messages to persist after streaming completes
         var assistantMessages = new List<ChatMessage>();
@@ -50,16 +50,16 @@ public sealed class ChatStreamOrchestrator(
 
         await foreach (var evt in RunTurnLoopAsync(
                            allMessages, toolDefinitions, toolMap, systemPrompt, toolContext, assistantMessages,
-                           failures, ct))
+                           failures, cancellationToken))
         {
             yield return evt;
         }
 
         // This turn is the health check: it just called the provider for real (ADR-CHAT-014).
         if (failures.Count > 0)
-            await availability.ReportOutageAsync(failures[0], ct);
+            await availability.ReportOutageAsync(failures[0], cancellationToken);
         else
-            await availability.ReportSuccessAsync(ct);
+            await availability.ReportSuccessAsync(cancellationToken);
 
         if (failures.Count == 0)
         {
@@ -68,7 +68,7 @@ public sealed class ChatStreamOrchestrator(
             toAppend.AddRange(assistantMessages);
 
             // The repository trims to the newest N; the session itself is never closed.
-            await sessionRepository.AppendMessagesAsync(session.Id, toAppend, _storedMessagesLimit, ct);
+            await sessionRepository.AppendMessagesAsync(session.Id, toAppend, _storedMessagesLimit, cancellationToken);
 
             var totalMessages = session.Messages.Count + toAppend.Count;
             var sessionCount = Math.Min(totalMessages, _storedMessagesLimit);
@@ -84,7 +84,7 @@ public sealed class ChatStreamOrchestrator(
         ChatToolContext toolContext,
         List<ChatMessage> assistantMessages,
         List<AiOutage> failures,
-        [EnumeratorCancellation] CancellationToken ct)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         const int maxToolTurns = 5;
 
@@ -101,7 +101,7 @@ public sealed class ChatStreamOrchestrator(
 
             var request = new ChatRequest(window, toolDefinitions, systemPrompt);
 
-            await foreach (var streamEvent in provider.StreamChatAsync(request, ct))
+            await foreach (var streamEvent in provider.StreamChatAsync(request, cancellationToken))
             {
                 switch (streamEvent)
                 {
@@ -152,7 +152,7 @@ public sealed class ChatStreamOrchestrator(
                 string resultJson;
                 if (toolMap.TryGetValue(tc.ToolName, out var tool))
                 {
-                    resultJson = await tool.ExecuteAsync(new ChatToolInvocation(tc.ArgumentsJson, toolContext), ct);
+                    resultJson = await tool.ExecuteAsync(new ChatToolInvocation(tc.ArgumentsJson, toolContext), cancellationToken);
                 }
                 else
                 {
@@ -198,12 +198,12 @@ public sealed class ChatStreamOrchestrator(
     private async Task<CourseContextForAiDto?> LoadCourseContextAsync(
         ChatScope scope,
         Guid? lessonId,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         if (scope.Type != ChatScopeType.Course || scope.CourseId is null)
             return null;
 
-        var result = await mediator.Send(new GetCourseContextForAiQuery(scope.CourseId.Value, lessonId), ct);
+        var result = await mediator.Send(new GetCourseContextForAiQuery(scope.CourseId.Value, lessonId), cancellationToken);
 
         return result.IsSuccess ? result.Value : null;
     }

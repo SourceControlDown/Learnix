@@ -23,5 +23,5 @@ public interface ICourseCompletionService
         Guid studentId,
         Guid courseId,
         Guid? justCompletedLessonId,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 }

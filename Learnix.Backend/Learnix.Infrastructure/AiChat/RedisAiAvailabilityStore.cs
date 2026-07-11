@@ -19,17 +19,17 @@ internal sealed class RedisAiAvailabilityStore(
     /// <summary>An outage with no stated end still expires: the provider may recover without telling us.</summary>
     private static readonly TimeSpan MaxOutage = TimeSpan.FromHours(1);
 
-    public async Task<AiOutage?> GetOutageAsync(CancellationToken ct = default)
+    public async Task<AiOutage?> GetOutageAsync(CancellationToken cancellationToken = default)
     {
-        var payload = await cache.GetStringAsync(CacheKeys.AiChat.Outage, ct);
+        var payload = await cache.GetStringAsync(CacheKeys.AiChat.Outage, cancellationToken);
 
         return payload is null ? null : JsonSerializer.Deserialize<AiOutage>(payload);
     }
 
-    public Task ReportSuccessAsync(CancellationToken ct = default) =>
-        cache.RemoveAsync(CacheKeys.AiChat.Outage, ct);
+    public Task ReportSuccessAsync(CancellationToken cancellationToken = default) =>
+        cache.RemoveAsync(CacheKeys.AiChat.Outage, cancellationToken);
 
-    public async Task ReportOutageAsync(AiOutage outage, CancellationToken ct = default)
+    public async Task ReportOutageAsync(AiOutage outage, CancellationToken cancellationToken = default)
     {
         var ttl = outage.RetryAtUtc is { } retryAt
             ? retryAt - DateTime.UtcNow
@@ -49,7 +49,7 @@ internal sealed class RedisAiAvailabilityStore(
             CacheKeys.AiChat.Outage,
             JsonSerializer.Serialize(outage),
             new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = Min(ttl, MaxOutage) },
-            ct);
+            cancellationToken);
     }
 
     private static TimeSpan Min(TimeSpan a, TimeSpan b) => a < b ? a : b;

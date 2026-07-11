@@ -254,8 +254,8 @@ public class Course : SoftDeletableEntity
     {
         EnsureStructureMutable();
 
-        var section = _sections.FirstOrDefault(s => s.Id == lesson.SectionId)
-            ?? throw new DomainException($"Lesson {lesson.Id} does not belong to course {Id}.");
+        if (!SectionExists(lesson.SectionId))
+            throw new DomainException($"Lesson {lesson.Id} does not belong to course {Id}.");
 
         lesson.SetVisibility(isVisible);
 

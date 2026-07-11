@@ -23,7 +23,7 @@ public interface ILessonProgressRepository : IRepositoryBase<LessonProgressEntit
     Task<IReadOnlyDictionary<Guid, CourseProgressCounts>> GetProgressCountsAsync(
         Guid studentId,
         IReadOnlyCollection<Guid> courseIds,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// The most recent <c>LastAccessedAt</c> the student has in each of the given courses.
@@ -36,5 +36,5 @@ public interface ILessonProgressRepository : IRepositoryBase<LessonProgressEntit
     Task<IReadOnlyDictionary<Guid, DateTime>> GetLastActivityByCourseAsync(
         Guid studentId,
         IReadOnlyCollection<Guid> courseIds,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 }

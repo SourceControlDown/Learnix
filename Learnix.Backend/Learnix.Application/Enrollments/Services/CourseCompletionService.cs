@@ -19,9 +19,9 @@ internal sealed class CourseCompletionService(
         Guid studentId,
         Guid courseId,
         Guid? justCompletedLessonId,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        var lessons = await lessonRepository.GetVisibleLessonCompletionAsync(studentId, courseId, ct);
+        var lessons = await lessonRepository.GetVisibleLessonCompletionAsync(studentId, courseId, cancellationToken);
 
         // A course with nothing to learn cannot be finished.
         if (lessons.Count == 0)
@@ -33,12 +33,12 @@ internal sealed class CourseCompletionService(
             return;
 
         var enrollment = await enrollmentRepository.FirstOrDefaultAsync(
-            new EnrollmentByStudentAndCourseSpecification(studentId, courseId, forUpdate: true), ct);
+            new EnrollmentByStudentAndCourseSpecification(studentId, courseId, forUpdate: true), cancellationToken);
 
         if (enrollment is null || enrollment.Status == EnrollmentStatus.Completed)
             return;
 
-        var course = await courseRepository.GetByIdAsync(courseId, ct);
+        var course = await courseRepository.GetByIdAsync(courseId, cancellationToken);
 
         if (course is null)
             return;

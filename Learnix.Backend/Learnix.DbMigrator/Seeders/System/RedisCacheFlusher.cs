@@ -24,7 +24,7 @@ namespace Learnix.DbMigrator.Seeders;
 /// </summary>
 public sealed class RedisCacheFlusher(IConfiguration configuration, ILogger<RedisCacheFlusher> logger)
 {
-    public async Task FlushAsync(CancellationToken ct = default)
+    public async Task FlushAsync(CancellationToken cancellationToken = default)
     {
         var connectionString = configuration.GetConnectionString("Redis");
 

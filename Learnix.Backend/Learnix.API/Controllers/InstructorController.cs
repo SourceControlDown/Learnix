@@ -13,9 +13,9 @@ namespace Learnix.API.Controllers;
 public sealed class InstructorController(ISender sender) : ControllerBase
 {
     [HttpGet("earnings")]
-    public async Task<IActionResult> GetEarnings(CancellationToken ct)
+    public async Task<IActionResult> GetEarnings(CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetInstructorEarningsQuery(), ct);
+        var result = await sender.Send(new GetInstructorEarningsQuery(), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 }

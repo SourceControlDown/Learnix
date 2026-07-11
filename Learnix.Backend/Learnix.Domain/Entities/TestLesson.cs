@@ -24,7 +24,7 @@ public class TestLesson : Lesson
         PassingThreshold = passingThreshold;
     }
 
-    private List<Question> _questions = new();
+    private List<Question> _questions = [];
     public IReadOnlyList<Question> Questions => _questions;
     public string? Description { get; private set; }
     public int? AttemptLimit { get; private set; }

@@ -24,9 +24,9 @@ public sealed class MessagesController(ISender sender) : ControllerBase
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
         [FromQuery] string? search = null,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        var result = await sender.Send(new GetMyConversationsQuery(skip, take, search), ct);
+        var result = await sender.Send(new GetMyConversationsQuery(skip, take, search), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -35,9 +35,9 @@ public sealed class MessagesController(ISender sender) : ControllerBase
         Guid conversationId,
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        var result = await sender.Send(new GetConversationMessagesQuery(conversationId, skip, take), ct);
+        var result = await sender.Send(new GetConversationMessagesQuery(conversationId, skip, take), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -46,9 +46,9 @@ public sealed class MessagesController(ISender sender) : ControllerBase
     [EnableRateLimiting(RateLimitPolicies.ChatMessages)]
     public async Task<IActionResult> StartOrGet(
         [FromBody] StartConversationRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetOrStartConversationQuery(body.CourseId), ct);
+        var result = await sender.Send(new GetOrStartConversationQuery(body.CourseId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -58,23 +58,23 @@ public sealed class MessagesController(ISender sender) : ControllerBase
     public async Task<IActionResult> SendMessage(
         Guid conversationId,
         [FromBody] SendChatMessageRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new SendMessageCommand(conversationId, body.Content), ct);
+        var result = await sender.Send(new SendMessageCommand(conversationId, body.Content), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpPut("conversations/{conversationId:guid}/read")]
-    public async Task<IActionResult> MarkRead(Guid conversationId, CancellationToken ct)
+    public async Task<IActionResult> MarkRead(Guid conversationId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new MarkConversationReadCommand(conversationId), ct);
+        var result = await sender.Send(new MarkConversationReadCommand(conversationId), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpGet("unread-count")]
-    public async Task<IActionResult> GetUnreadCount(CancellationToken ct)
+    public async Task<IActionResult> GetUnreadCount(CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetUnreadCountQuery(), ct);
+        var result = await sender.Send(new GetUnreadCountQuery(), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 }

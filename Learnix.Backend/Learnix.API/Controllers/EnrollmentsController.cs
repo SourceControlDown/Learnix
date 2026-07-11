@@ -17,9 +17,9 @@ public sealed class EnrollmentsController(ISender sender) : ControllerBase
     [Authorize(Policy = "EmailConfirmed")]
     public async Task<IActionResult> Enroll(
         [FromBody] EnrollInCourseCommand command,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -27,17 +27,17 @@ public sealed class EnrollmentsController(ISender sender) : ControllerBase
     public async Task<IActionResult> GetMine(
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        var result = await sender.Send(new GetMyEnrollmentsQuery(skip, take), ct);
+        var result = await sender.Send(new GetMyEnrollmentsQuery(skip, take), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     /// <summary>Returns 204 when the student has no course in progress.</summary>
     [HttpGet("continue")]
-    public async Task<IActionResult> GetContinueLearning(CancellationToken ct)
+    public async Task<IActionResult> GetContinueLearning(CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetContinueLearningQuery(), ct);
+        var result = await sender.Send(new GetContinueLearningQuery(), cancellationToken);
         return result.ToActionResult(onSuccess: value => value is null ? NoContent() : Ok(value));
     }
 }

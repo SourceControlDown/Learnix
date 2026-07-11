@@ -45,7 +45,7 @@ public sealed class GetMyLearningProfileTool(IMediator mediator) : IChatTool
 
     public bool IsAvailableIn(ChatScopeType scope) => scope is ChatScopeType.Platform;
 
-    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken ct)
+    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken cancellationToken)
     {
         var argumentsJson = invocation.ArgumentsJson;
         ProfileArgs? args;
@@ -58,7 +58,7 @@ public sealed class GetMyLearningProfileTool(IMediator mediator) : IChatTool
             return JsonSerializer.Serialize(new { error = "Invalid arguments" });
         }
 
-        var result = await mediator.Send(new GetMyLearningProfileQuery(args?.Sections), ct);
+        var result = await mediator.Send(new GetMyLearningProfileQuery(args?.Sections), cancellationToken);
 
         if (result.IsFailed)
             return JsonSerializer.Serialize(new { error = result.Errors[0].Message });

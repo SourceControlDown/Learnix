@@ -32,14 +32,14 @@ public sealed class GetCurrentLessonTool(IMediator mediator) : IChatTool
 
     public bool IsAvailableIn(ChatScopeType scope) => scope is ChatScopeType.Course;
 
-    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken ct)
+    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken cancellationToken)
     {
         var (courseId, lessonId) = invocation.Context;
 
         if (courseId is null || lessonId is null)
             return JsonSerializer.Serialize(new { error = "The student does not have a lesson open." });
 
-        var result = await mediator.Send(new GetLessonForAiQuery(courseId.Value, lessonId.Value), ct);
+        var result = await mediator.Send(new GetLessonForAiQuery(courseId.Value, lessonId.Value), cancellationToken);
 
         if (result.IsFailed)
             return JsonSerializer.Serialize(new { error = result.Errors[0].Message });

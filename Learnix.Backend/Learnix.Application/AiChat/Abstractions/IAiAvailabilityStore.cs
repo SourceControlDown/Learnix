@@ -13,11 +13,11 @@ namespace Learnix.Application.AiChat.Abstractions;
 public interface IAiAvailabilityStore
 {
     /// <summary>The outage in force, or null when the provider is believed healthy.</summary>
-    Task<AiOutage?> GetOutageAsync(CancellationToken ct = default);
+    Task<AiOutage?> GetOutageAsync(CancellationToken cancellationToken = default);
 
     /// <summary>A turn completed. Clears any outage — the provider answered, so it is up.</summary>
-    Task ReportSuccessAsync(CancellationToken ct = default);
+    Task ReportSuccessAsync(CancellationToken cancellationToken = default);
 
     /// <summary>A turn failed. The outage stands until <see cref="AiOutage.RetryAtUtc"/>.</summary>
-    Task ReportOutageAsync(AiOutage outage, CancellationToken ct = default);
+    Task ReportOutageAsync(AiOutage outage, CancellationToken cancellationToken = default);
 }

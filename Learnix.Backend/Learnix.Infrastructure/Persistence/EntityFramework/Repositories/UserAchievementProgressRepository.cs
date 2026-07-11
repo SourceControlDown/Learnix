@@ -7,17 +7,17 @@ namespace Learnix.Infrastructure.Persistence.EntityFramework.Repositories;
 internal sealed class UserAchievementProgressRepository(ApplicationDbContext context)
     : IUserAchievementProgressRepository
 {
-    public Task<UserAchievementProgress?> GetAsync(Guid userId, CancellationToken ct)
-        => context.UserAchievementProgresses.FirstOrDefaultAsync(p => p.UserId == userId, ct);
+    public Task<UserAchievementProgress?> GetAsync(Guid userId, CancellationToken cancellationToken)
+        => context.UserAchievementProgresses.FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
 
-    public async Task<UserAchievementProgress> GetOrCreateAsync(Guid userId, CancellationToken ct)
+    public async Task<UserAchievementProgress> GetOrCreateAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var existing = await GetAsync(userId, ct);
+        var existing = await GetAsync(userId, cancellationToken);
         if (existing is not null)
             return existing;
 
         var created = UserAchievementProgress.Create(userId);
-        await context.UserAchievementProgresses.AddAsync(created, ct);
+        await context.UserAchievementProgresses.AddAsync(created, cancellationToken);
         return created;
     }
 }

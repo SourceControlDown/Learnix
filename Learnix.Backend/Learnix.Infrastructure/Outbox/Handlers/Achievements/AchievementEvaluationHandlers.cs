@@ -12,8 +12,8 @@ internal sealed class EvaluateLessonCompletedHandler(IAchievementEvaluator evalu
 {
     public override string MessageType => OutboxMessageTypes.EvaluateLessonCompleted;
 
-    protected override Task HandleAsync(EvaluateLessonCompletedPayload payload, CancellationToken ct) =>
-        evaluator.OnLessonCompletedAsync(payload.UserId, ct);
+    protected override Task HandleAsync(EvaluateLessonCompletedPayload payload, CancellationToken cancellationToken) =>
+        evaluator.OnLessonCompletedAsync(payload.UserId, cancellationToken);
 }
 
 internal sealed class EvaluateEnrollmentCompletedHandler(IAchievementEvaluator evaluator)
@@ -21,8 +21,8 @@ internal sealed class EvaluateEnrollmentCompletedHandler(IAchievementEvaluator e
 {
     public override string MessageType => OutboxMessageTypes.EvaluateEnrollmentCompleted;
 
-    protected override Task HandleAsync(EvaluateEnrollmentCompletedPayload payload, CancellationToken ct) =>
-        evaluator.OnEnrollmentCompletedAsync(payload.UserId, payload.CourseId, ct);
+    protected override Task HandleAsync(EvaluateEnrollmentCompletedPayload payload, CancellationToken cancellationToken) =>
+        evaluator.OnEnrollmentCompletedAsync(payload.UserId, payload.CourseId, cancellationToken);
 }
 
 internal sealed class EvaluateTestSubmittedHandler(IAchievementEvaluator evaluator)
@@ -30,9 +30,9 @@ internal sealed class EvaluateTestSubmittedHandler(IAchievementEvaluator evaluat
 {
     public override string MessageType => OutboxMessageTypes.EvaluateTestSubmitted;
 
-    protected override Task HandleAsync(EvaluateTestSubmittedPayload payload, CancellationToken ct) =>
+    protected override Task HandleAsync(EvaluateTestSubmittedPayload payload, CancellationToken cancellationToken) =>
         evaluator.OnTestSubmittedAsync(
-            payload.UserId, payload.QuestionsCount, payload.DurationSeconds, payload.Passed, ct);
+            payload.UserId, payload.QuestionsCount, payload.DurationSeconds, payload.Passed, cancellationToken);
 }
 
 internal sealed class EvaluateProfileChangedHandler(IAchievementEvaluator evaluator)
@@ -40,6 +40,6 @@ internal sealed class EvaluateProfileChangedHandler(IAchievementEvaluator evalua
 {
     public override string MessageType => OutboxMessageTypes.EvaluateProfileChanged;
 
-    protected override Task HandleAsync(EvaluateProfileChangedPayload payload, CancellationToken ct) =>
-        evaluator.OnProfileChangedAsync(payload.UserId, ct);
+    protected override Task HandleAsync(EvaluateProfileChangedPayload payload, CancellationToken cancellationToken) =>
+        evaluator.OnProfileChangedAsync(payload.UserId, cancellationToken);
 }

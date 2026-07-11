@@ -4,9 +4,9 @@ namespace Learnix.Application.Wishlist.Abstractions;
 
 public interface IWishlistRepository
 {
-    Task<bool> ExistsAsync(Guid userId, Guid courseId, CancellationToken ct);
-    Task AddIfMissingAsync(Guid userId, Guid courseId, CancellationToken ct);
-    Task RemoveIfExistsAsync(Guid userId, Guid courseId, CancellationToken ct);
-    Task<int> CountAsync(Guid userId, CancellationToken ct);
-    Task<List<WishlistItem>> GetPagedAsync(Guid userId, int skip, int take, CancellationToken ct);
+    Task<bool> ExistsAsync(Guid userId, Guid courseId, CancellationToken cancellationToken);
+    Task AddIfMissingAsync(Guid userId, Guid courseId, CancellationToken cancellationToken);
+    Task RemoveIfExistsAsync(Guid userId, Guid courseId, CancellationToken cancellationToken);
+    Task<int> CountAsync(Guid userId, CancellationToken cancellationToken);
+    Task<List<WishlistItem>> GetPagedAsync(Guid userId, int skip, int take, CancellationToken cancellationToken);
 }

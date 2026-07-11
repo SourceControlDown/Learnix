@@ -15,13 +15,13 @@ internal sealed class CreatePostLessonCommandHandler(
         courseRepository, currentUser, lessonsBySectionId: true)
 {
     protected override async Task<Result<Guid>> HandleAsync(
-        CreatePostLessonCommand request, Course course, CancellationToken ct)
+        CreatePostLessonCommand request, Course course, CancellationToken cancellationToken)
     {
         var lesson = PostLesson.Create(request.SectionId, request.Title, request.Content);
 
         course.AddLesson(lesson);
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok(lesson.Id);
     }

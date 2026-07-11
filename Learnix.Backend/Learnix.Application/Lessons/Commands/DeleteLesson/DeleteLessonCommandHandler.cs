@@ -18,7 +18,7 @@ internal sealed class DeleteLessonCommandHandler(
     : CourseCommandHandler<DeleteLessonCommand, Result>(courseRepository, currentUser, includeLessons: true)
 {
     protected override async Task<Result> HandleAsync(
-        DeleteLessonCommand request, Course course, CancellationToken ct)
+        DeleteLessonCommand request, Course course, CancellationToken cancellationToken)
     {
         var lesson = course.TryGetLesson(request.LessonId);
 
@@ -27,9 +27,9 @@ internal sealed class DeleteLessonCommandHandler(
 
         course.RemoveLesson(lesson);
 
-        await lessonRepository.DeleteAsync(lesson, ct);
+        await lessonRepository.DeleteAsync(lesson, cancellationToken);
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok();
     }

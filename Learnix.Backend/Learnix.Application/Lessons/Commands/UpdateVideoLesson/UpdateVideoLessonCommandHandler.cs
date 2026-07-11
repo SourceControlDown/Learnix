@@ -20,10 +20,10 @@ internal sealed class UpdateVideoLessonCommandHandler(
     : CourseCommandHandler<UpdateVideoLessonCommand, Result>(courseRepository, currentUser)
 {
     protected override async Task<Result> HandleAsync(
-        UpdateVideoLessonCommand request, Course course, CancellationToken ct)
+        UpdateVideoLessonCommand request, Course course, CancellationToken cancellationToken)
     {
         var lesson = await lessonRepository.GetLessonOfTypeByIdAsync<VideoLesson>(
-                    request.LessonId, forUpdate: true, ct);
+                    request.LessonId, forUpdate: true, cancellationToken);
 
         if (lesson is null)
             return Result.Fail(new NotFoundError(CommonMessages.LessonNotFound(request.LessonId)));
@@ -36,7 +36,7 @@ internal sealed class UpdateVideoLessonCommandHandler(
         if (request.VideoBlobPath is not null && request.VideoBlobPath != lesson.VideoBlobPath)
         {
             var commitResult = await blobStorage.CommitUploadAsync(
-                request.VideoBlobPath, UploadTarget.LessonVideo, ct);
+                request.VideoBlobPath, UploadTarget.LessonVideo, cancellationToken);
 
             if (commitResult.IsFailed)
                 return Result.Fail(commitResult.Errors);
@@ -44,7 +44,7 @@ internal sealed class UpdateVideoLessonCommandHandler(
             lesson.ReplaceVideo(commitResult.Value.BlobPath);
         }
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok();
     }

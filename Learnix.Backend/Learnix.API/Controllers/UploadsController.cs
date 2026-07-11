@@ -17,9 +17,9 @@ public sealed class UploadsController(ISender mediator) : ControllerBase
     [EnableRateLimiting(RateLimitPolicies.Uploads)]
     public async Task<IActionResult> RequestUploadUrl(
         [FromBody] RequestUploadUrlCommand command,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(command, ct);
+        var result = await mediator.Send(command, cancellationToken);
 
         return result.ToActionResult();
     }

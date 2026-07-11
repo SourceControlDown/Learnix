@@ -14,13 +14,13 @@ internal sealed class ReorderLessonsCommandHandler(
     : CourseSectionCommandHandler<ReorderLessonsCommand, Result>(courseRepository, currentUser, lessonsBySectionId: true)
 {
     protected override async Task<Result> HandleAsync(
-        ReorderLessonsCommand request, Course course, CancellationToken ct)
+        ReorderLessonsCommand request, Course course, CancellationToken cancellationToken)
     {
         var pairs = request.Items.Select(i => (i.Id, i.Order)).ToList();
 
         course.ReorderLessons(request.SectionId, pairs);
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok();
     }

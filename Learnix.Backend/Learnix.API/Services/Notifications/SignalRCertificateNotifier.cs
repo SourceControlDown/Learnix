@@ -14,7 +14,7 @@ internal sealed class SignalRCertificateNotifier(
         Guid certificateId,
         Guid courseId,
         string courseTitle,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
         => hubContext.Clients
             .Group(NotificationsHub.UserGroup(userId.ToString()))
             .CertificateIssued(new CertificateIssuedNotification(certificateId, courseId, courseTitle));

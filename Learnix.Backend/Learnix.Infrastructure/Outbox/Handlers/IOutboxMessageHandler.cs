@@ -12,7 +12,7 @@ public interface IOutboxMessageHandler
     /// <summary>The value in <c>OutboxMessage.Type</c> this handler answers to (<see cref="OutboxMessageTypes"/>).</summary>
     string MessageType { get; }
 
-    Task HandleAsync(string payloadJson, CancellationToken ct);
+    Task HandleAsync(string payloadJson, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -24,14 +24,14 @@ public abstract class OutboxMessageHandler<TPayload> : IOutboxMessageHandler
 {
     public abstract string MessageType { get; }
 
-    public Task HandleAsync(string payloadJson, CancellationToken ct)
+    public Task HandleAsync(string payloadJson, CancellationToken cancellationToken)
     {
         var payload = JsonSerializer.Deserialize<TPayload>(payloadJson)
             ?? throw new InvalidOperationException(
                 $"Outbox message of type '{MessageType}' has an unreadable payload.");
 
-        return HandleAsync(payload, ct);
+        return HandleAsync(payload, cancellationToken);
     }
 
-    protected abstract Task HandleAsync(TPayload payload, CancellationToken ct);
+    protected abstract Task HandleAsync(TPayload payload, CancellationToken cancellationToken);
 }

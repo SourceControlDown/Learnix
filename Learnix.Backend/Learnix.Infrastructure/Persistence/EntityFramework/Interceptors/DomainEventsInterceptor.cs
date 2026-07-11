@@ -12,12 +12,12 @@ public class DomainEventsInterceptor(IServiceProvider serviceProvider) : SaveCha
     public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         var dbContext = eventData.Context;
 
         if (dbContext is null)
-            return await base.SavingChangesAsync(eventData, result, ct);
+            return await base.SavingChangesAsync(eventData, result, cancellationToken);
 
         var entities = dbContext.ChangeTracker
             .Entries<IHasDomainEvents>()
@@ -42,9 +42,9 @@ public class DomainEventsInterceptor(IServiceProvider serviceProvider) : SaveCha
         {
             var notificationType = typeof(DomainEventNotification<>).MakeGenericType(@event.GetType());
             var notification = Activator.CreateInstance(notificationType, @event)!;
-            await publisher.Publish(notification, ct);
+            await publisher.Publish(notification, cancellationToken);
         }
 
-        return await base.SavingChangesAsync(eventData, result, ct);
+        return await base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 }

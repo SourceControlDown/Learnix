@@ -23,10 +23,10 @@ public sealed class UpdateCourseDetailsCommandHandler(
     : CourseCommandHandler<UpdateCourseDetailsCommand, Result>(courseRepository, currentUser)
 {
     protected override async Task<Result> HandleAsync(
-        UpdateCourseDetailsCommand request, Course course, CancellationToken ct)
+        UpdateCourseDetailsCommand request, Course course, CancellationToken cancellationToken)
     {
         var newCategory = await categoryRepository.FirstOrDefaultAsync(
-            new CategoryByIdSpecification(request.CategoryId, forUpdate: true), ct);
+            new CategoryByIdSpecification(request.CategoryId, forUpdate: true), cancellationToken);
         if (newCategory is null)
             return Result.Fail(new NotFoundError(CommonMessages.CourseCategoryNotFound(request.CategoryId)));
 
@@ -34,7 +34,7 @@ public sealed class UpdateCourseDetailsCommandHandler(
         if (course.Status == CourseStatus.Published && course.CategoryId != request.CategoryId)
         {
             var oldCategory = await categoryRepository.FirstOrDefaultAsync(
-                new CategoryByIdSpecification(course.CategoryId, forUpdate: true), ct);
+                new CategoryByIdSpecification(course.CategoryId, forUpdate: true), cancellationToken);
             oldCategory?.DecrementCoursesCount();
             newCategory.IncrementCoursesCount();
         }
@@ -55,7 +55,7 @@ public sealed class UpdateCourseDetailsCommandHandler(
         if (request.CoverImageUrl is not null && request.CoverImageUrl != course.CoverBlobPath)
         {
             var commitResult = await blobStorage.CommitUploadAsync(
-                request.CoverImageUrl, UploadTarget.CourseCover, ct);
+                request.CoverImageUrl, UploadTarget.CourseCover, cancellationToken);
 
             if (commitResult.IsFailed)
                 return Result.Fail(commitResult.Errors);
@@ -63,11 +63,11 @@ public sealed class UpdateCourseDetailsCommandHandler(
             course.SetCoverImage(commitResult.Value.BlobPath);
         }
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await Task.WhenAll(
-            cache.RemoveAsync(CacheKeys.Courses.ById(request.CourseId), ct),
-            cache.RemoveAsync(CacheKeys.Courses.Featured, ct));
+            cache.RemoveAsync(CacheKeys.Courses.ById(request.CourseId), cancellationToken),
+            cache.RemoveAsync(CacheKeys.Courses.Featured, cancellationToken));
 
         return Result.Ok();
     }

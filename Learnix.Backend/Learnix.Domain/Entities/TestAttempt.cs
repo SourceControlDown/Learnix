@@ -7,7 +7,7 @@ namespace Learnix.Domain.Entities;
 
 public class TestAttempt : BaseEntity
 {
-    private List<StudentAnswer> _answers = [];
+    private readonly List<StudentAnswer> _answers = [];
 
     private TestAttempt() { }
 

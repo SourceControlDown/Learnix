@@ -95,7 +95,7 @@ public class OutboxMessageDispatcherTests
 
         public int Handled { get; private set; }
 
-        public Task HandleAsync(string payloadJson, CancellationToken ct)
+        public Task HandleAsync(string payloadJson, CancellationToken cancellationToken)
         {
             Handled++;
             return Task.CompletedTask;

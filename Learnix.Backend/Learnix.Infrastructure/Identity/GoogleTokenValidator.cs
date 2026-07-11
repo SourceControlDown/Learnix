@@ -16,7 +16,7 @@ internal sealed class GoogleTokenValidator(
 {
     private readonly GoogleSettings _settings = googleSettings.Value;
 
-    public async Task<Result<GoogleUserInfo>> ValidateAsync(string idToken, CancellationToken ct = default)
+    public async Task<Result<GoogleUserInfo>> ValidateAsync(string idToken, CancellationToken cancellationToken = default)
     {
         GoogleJsonWebSignature.Payload payload;
 

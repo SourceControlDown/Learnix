@@ -25,7 +25,7 @@ internal sealed class AnthropicChatProvider(
     /// </summary>
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
         ChatRequest request,
-        [EnumeratorCancellation] CancellationToken ct)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var parameters = new MessageParameters
         {
@@ -38,7 +38,7 @@ internal sealed class AnthropicChatProvider(
         };
 
         var outputs = new List<MessageResponse>();
-        var responses = client.Messages.StreamClaudeMessageAsync(parameters, ct).GetAsyncEnumerator(ct);
+        var responses = client.Messages.StreamClaudeMessageAsync(parameters, cancellationToken).GetAsyncEnumerator(cancellationToken);
 
         try
         {

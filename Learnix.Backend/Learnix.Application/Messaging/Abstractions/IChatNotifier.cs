@@ -4,6 +4,6 @@ namespace Learnix.Application.Messaging.Abstractions;
 
 public interface IChatNotifier
 {
-    Task NotifyNewMessageAsync(Guid recipientId, NewMessageNotification notification, CancellationToken ct);
-    Task NotifyUnreadCountChangedAsync(Guid userId, int totalUnread, CancellationToken ct);
+    Task NotifyNewMessageAsync(Guid recipientId, NewMessageNotification notification, CancellationToken cancellationToken);
+    Task NotifyUnreadCountChangedAsync(Guid userId, int totalUnread, CancellationToken cancellationToken);
 }

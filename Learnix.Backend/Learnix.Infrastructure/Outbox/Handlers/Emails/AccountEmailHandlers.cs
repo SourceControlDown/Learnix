@@ -9,9 +9,9 @@ internal sealed class EmailConfirmationHandler(IEmailSender emailSender)
 {
     public override string MessageType => OutboxMessageTypes.EmailConfirmation;
 
-    protected override Task HandleAsync(SendEmailConfirmationPayload payload, CancellationToken ct) =>
+    protected override Task HandleAsync(SendEmailConfirmationPayload payload, CancellationToken cancellationToken) =>
         emailSender.SendEmailConfirmationAsync(
-            payload.ToEmail, payload.FirstName, payload.ConfirmationCode, payload.Language, ct);
+            payload.ToEmail, payload.FirstName, payload.ConfirmationCode, payload.Language, cancellationToken);
 }
 
 internal sealed class PasswordResetEmailHandler(IEmailSender emailSender)
@@ -19,9 +19,9 @@ internal sealed class PasswordResetEmailHandler(IEmailSender emailSender)
 {
     public override string MessageType => OutboxMessageTypes.PasswordResetEmail;
 
-    protected override Task HandleAsync(SendPasswordResetEmailPayload payload, CancellationToken ct) =>
+    protected override Task HandleAsync(SendPasswordResetEmailPayload payload, CancellationToken cancellationToken) =>
         emailSender.SendPasswordResetAsync(
-            payload.ToEmail, payload.FirstName, payload.ResetLink, payload.Language, ct);
+            payload.ToEmail, payload.FirstName, payload.ResetLink, payload.Language, cancellationToken);
 }
 
 internal sealed class UserBannedEmailHandler(IEmailSender emailSender)
@@ -29,8 +29,8 @@ internal sealed class UserBannedEmailHandler(IEmailSender emailSender)
 {
     public override string MessageType => OutboxMessageTypes.UserBannedEmail;
 
-    protected override Task HandleAsync(SendUserBannedEmailPayload payload, CancellationToken ct) =>
-        emailSender.SendUserBannedAsync(payload.ToEmail, payload.FirstName, payload.Language, ct);
+    protected override Task HandleAsync(SendUserBannedEmailPayload payload, CancellationToken cancellationToken) =>
+        emailSender.SendUserBannedAsync(payload.ToEmail, payload.FirstName, payload.Language, cancellationToken);
 }
 
 internal sealed class UserUnbannedEmailHandler(IEmailSender emailSender)
@@ -38,8 +38,8 @@ internal sealed class UserUnbannedEmailHandler(IEmailSender emailSender)
 {
     public override string MessageType => OutboxMessageTypes.UserUnbannedEmail;
 
-    protected override Task HandleAsync(SendUserUnbannedEmailPayload payload, CancellationToken ct) =>
-        emailSender.SendUserUnbannedAsync(payload.ToEmail, payload.FirstName, payload.Language, ct);
+    protected override Task HandleAsync(SendUserUnbannedEmailPayload payload, CancellationToken cancellationToken) =>
+        emailSender.SendUserUnbannedAsync(payload.ToEmail, payload.FirstName, payload.Language, cancellationToken);
 }
 
 internal sealed class UserRoleChangedEmailHandler(IEmailSender emailSender)
@@ -47,9 +47,9 @@ internal sealed class UserRoleChangedEmailHandler(IEmailSender emailSender)
 {
     public override string MessageType => OutboxMessageTypes.UserRoleChangedEmail;
 
-    protected override Task HandleAsync(SendUserRoleChangedEmailPayload payload, CancellationToken ct) =>
+    protected override Task HandleAsync(SendUserRoleChangedEmailPayload payload, CancellationToken cancellationToken) =>
         emailSender.SendUserRoleChangedAsync(
-            payload.ToEmail, payload.FirstName, payload.Role, payload.Assigned, payload.Language, ct);
+            payload.ToEmail, payload.FirstName, payload.Role, payload.Assigned, payload.Language, cancellationToken);
 }
 
 internal sealed class AccountDeletedEmailHandler(IEmailSender emailSender)
@@ -57,9 +57,9 @@ internal sealed class AccountDeletedEmailHandler(IEmailSender emailSender)
 {
     public override string MessageType => OutboxMessageTypes.AccountDeletedEmail;
 
-    protected override Task HandleAsync(SendAccountDeletedEmailPayload payload, CancellationToken ct) =>
+    protected override Task HandleAsync(SendAccountDeletedEmailPayload payload, CancellationToken cancellationToken) =>
         emailSender.SendAccountDeletedAsync(
-            payload.ToEmail, payload.FirstName, payload.PurgeAfterUtc, payload.Language, ct);
+            payload.ToEmail, payload.FirstName, payload.PurgeAfterUtc, payload.Language, cancellationToken);
 }
 
 internal sealed class AccountRecoveredEmailHandler(IEmailSender emailSender)
@@ -67,6 +67,6 @@ internal sealed class AccountRecoveredEmailHandler(IEmailSender emailSender)
 {
     public override string MessageType => OutboxMessageTypes.AccountRecoveredEmail;
 
-    protected override Task HandleAsync(SendAccountRecoveredEmailPayload payload, CancellationToken ct) =>
-        emailSender.SendAccountRecoveredAsync(payload.ToEmail, payload.FirstName, payload.Language, ct);
+    protected override Task HandleAsync(SendAccountRecoveredEmailPayload payload, CancellationToken cancellationToken) =>
+        emailSender.SendAccountRecoveredAsync(payload.ToEmail, payload.FirstName, payload.Language, cancellationToken);
 }

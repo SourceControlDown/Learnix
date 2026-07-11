@@ -8,7 +8,7 @@ namespace Learnix.Infrastructure.Persistence.EntityFramework.Repositories;
 internal sealed class LessonRepository(ApplicationDbContext context)
     : RepositoryBase<Lesson>(context), ILessonRepository
 {
-    public Task<T?> GetLessonOfTypeByIdAsync<T>(Guid id, bool forUpdate = false, CancellationToken ct = default)
+    public Task<T?> GetLessonOfTypeByIdAsync<T>(Guid id, bool forUpdate = false, CancellationToken cancellationToken = default)
             where T : Lesson
     {
         var query = context.Set<Lesson>().OfType<T>();
@@ -16,33 +16,33 @@ internal sealed class LessonRepository(ApplicationDbContext context)
         if (!forUpdate)
             query = query.AsNoTracking();
 
-        return query.FirstOrDefaultAsync(l => l.Id == id, ct);
+        return query.FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
     }
 
-    public Task<bool> IsLessonInCourseAsync(Guid courseId, Guid lessonId, CancellationToken ct = default)
+    public Task<bool> IsLessonInCourseAsync(Guid courseId, Guid lessonId, CancellationToken cancellationToken = default)
     {
         return (
             from lesson in context.Set<Lesson>()
             join section in context.Set<Section>() on lesson.SectionId equals section.Id
             where lesson.Id == lessonId && section.CourseId == courseId && !lesson.IsHidden
             select lesson
-        ).AnyAsync(ct);
+        ).AnyAsync(cancellationToken);
     }
 
-    public Task<TestLesson?> GetTestLessonInCourseAsync(Guid courseId, Guid lessonId, CancellationToken ct = default)
+    public Task<TestLesson?> GetTestLessonInCourseAsync(Guid courseId, Guid lessonId, CancellationToken cancellationToken = default)
     {
         return (
             from lesson in context.Set<TestLesson>()
             join section in context.Set<Section>() on lesson.SectionId equals section.Id
             where lesson.Id == lessonId && section.CourseId == courseId && !lesson.IsHidden
             select lesson
-        ).FirstOrDefaultAsync(ct);
+        ).FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<LessonCompletion>> GetVisibleLessonCompletionAsync(
         Guid studentId,
         Guid courseId,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         return await (
             from lesson in context.Set<Lesson>()
@@ -52,20 +52,20 @@ internal sealed class LessonRepository(ApplicationDbContext context)
                 lesson.Id,
                 context.Set<LessonProgress>()
                     .Any(lp => lp.LessonId == lesson.Id && lp.StudentId == studentId && lp.IsCompleted))
-        ).AsNoTracking().ToListAsync(ct);
+        ).AsNoTracking().ToListAsync(cancellationToken);
     }
 
-    public Task<Lesson?> GetVisibleLessonInCourseAsync(Guid courseId, Guid lessonId, CancellationToken ct = default)
+    public Task<Lesson?> GetVisibleLessonInCourseAsync(Guid courseId, Guid lessonId, CancellationToken cancellationToken = default)
     {
         return (
             from lesson in context.Set<Lesson>()
             join section in context.Set<Section>() on lesson.SectionId equals section.Id
             where lesson.Id == lessonId && section.CourseId == courseId && !lesson.IsHidden
             select lesson
-        ).AsNoTracking().FirstOrDefaultAsync(ct);
+        ).AsNoTracking().FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<Guid?> GetResumeLessonIdAsync(Guid studentId, Guid courseId, CancellationToken ct = default)
+    public async Task<Guid?> GetResumeLessonIdAsync(Guid studentId, Guid courseId, CancellationToken cancellationToken = default)
     {
         var lessons = await (
             from lesson in context.Set<Lesson>()
@@ -78,7 +78,7 @@ internal sealed class LessonRepository(ApplicationDbContext context)
                 IsCompleted = context.Set<LessonProgress>()
                     .Any(lp => lp.LessonId == lesson.Id && lp.StudentId == studentId && lp.IsCompleted)
             }
-        ).AsNoTracking().ToListAsync(ct);
+        ).AsNoTracking().ToListAsync(cancellationToken);
 
         if (lessons.Count == 0)
             return null;

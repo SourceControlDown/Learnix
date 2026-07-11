@@ -22,7 +22,7 @@ internal sealed class SmtpEmailSender(
     private readonly AppSettings _appSettings = appSettings.Value;
     private readonly IStringLocalizer _localizer = localizerFactory.Create(typeof(EmailStrings));
 
-    public async Task SendEmailConfirmationAsync(string toEmail, string firstName, string confirmationCode, string language = "en", CancellationToken ct = default)
+    public async Task SendEmailConfirmationAsync(string toEmail, string firstName, string confirmationCode, string language = "en", CancellationToken cancellationToken = default)
     {
         CultureInfo.CurrentUICulture = new CultureInfo(language);
         var subject = $"{_localizer["EmailConfirmation_Subject"]} — Learnix";
@@ -33,10 +33,10 @@ internal sealed class SmtpEmailSender(
             ClientBaseUrl = _appSettings.ClientBaseUrl,
             Strings = _localizer
         });
-        await SendAsync(toEmail, subject, html, ct);
+        await SendAsync(toEmail, subject, html, cancellationToken);
     }
 
-    public async Task SendPasswordResetAsync(string toEmail, string firstName, string resetLink, string language = "en", CancellationToken ct = default)
+    public async Task SendPasswordResetAsync(string toEmail, string firstName, string resetLink, string language = "en", CancellationToken cancellationToken = default)
     {
         CultureInfo.CurrentUICulture = new CultureInfo(language);
         var subject = $"{_localizer["PasswordReset_Subject"]} — Learnix";
@@ -47,10 +47,10 @@ internal sealed class SmtpEmailSender(
             ClientBaseUrl = _appSettings.ClientBaseUrl,
             Strings = _localizer
         });
-        await SendAsync(toEmail, subject, html, ct);
+        await SendAsync(toEmail, subject, html, cancellationToken);
     }
 
-    public async Task SendInstructorApplicationApprovedAsync(string toEmail, string firstName, string language = "en", CancellationToken ct = default)
+    public async Task SendInstructorApplicationApprovedAsync(string toEmail, string firstName, string language = "en", CancellationToken cancellationToken = default)
     {
         CultureInfo.CurrentUICulture = new CultureInfo(language);
         var subject = $"{_localizer["InstructorApproved_Subject"]} — Learnix";
@@ -60,10 +60,10 @@ internal sealed class SmtpEmailSender(
             ClientBaseUrl = _appSettings.ClientBaseUrl,
             Strings = _localizer
         });
-        await SendAsync(toEmail, subject, html, ct);
+        await SendAsync(toEmail, subject, html, cancellationToken);
     }
 
-    public async Task SendInstructorApplicationRejectedAsync(string toEmail, string firstName, string? rejectionReason, string language = "en", CancellationToken ct = default)
+    public async Task SendInstructorApplicationRejectedAsync(string toEmail, string firstName, string? rejectionReason, string language = "en", CancellationToken cancellationToken = default)
     {
         CultureInfo.CurrentUICulture = new CultureInfo(language);
         var subject = $"{_localizer["InstructorRejected_Subject"]} — Learnix";
@@ -74,10 +74,10 @@ internal sealed class SmtpEmailSender(
             ClientBaseUrl = _appSettings.ClientBaseUrl,
             Strings = _localizer
         });
-        await SendAsync(toEmail, subject, html, ct);
+        await SendAsync(toEmail, subject, html, cancellationToken);
     }
 
-    public async Task SendUserBannedAsync(string toEmail, string firstName, string language = "en", CancellationToken ct = default)
+    public async Task SendUserBannedAsync(string toEmail, string firstName, string language = "en", CancellationToken cancellationToken = default)
     {
         CultureInfo.CurrentUICulture = new CultureInfo(language);
         var subject = $"{_localizer["UserBanned_Subject"]} — Learnix";
@@ -87,10 +87,10 @@ internal sealed class SmtpEmailSender(
             ClientBaseUrl = _appSettings.ClientBaseUrl,
             Strings = _localizer
         });
-        await SendAsync(toEmail, subject, html, ct);
+        await SendAsync(toEmail, subject, html, cancellationToken);
     }
 
-    public async Task SendUserUnbannedAsync(string toEmail, string firstName, string language = "en", CancellationToken ct = default)
+    public async Task SendUserUnbannedAsync(string toEmail, string firstName, string language = "en", CancellationToken cancellationToken = default)
     {
         CultureInfo.CurrentUICulture = new CultureInfo(language);
         var subject = $"{_localizer["UserUnbanned_Subject"]} — Learnix";
@@ -100,10 +100,10 @@ internal sealed class SmtpEmailSender(
             ClientBaseUrl = _appSettings.ClientBaseUrl,
             Strings = _localizer
         });
-        await SendAsync(toEmail, subject, html, ct);
+        await SendAsync(toEmail, subject, html, cancellationToken);
     }
 
-    public async Task SendAccountDeletedAsync(string toEmail, string firstName, DateTime purgeAfterUtc, string language = "en", CancellationToken ct = default)
+    public async Task SendAccountDeletedAsync(string toEmail, string firstName, DateTime purgeAfterUtc, string language = "en", CancellationToken cancellationToken = default)
     {
         var culture = new CultureInfo(language);
         CultureInfo.CurrentUICulture = culture;
@@ -116,10 +116,10 @@ internal sealed class SmtpEmailSender(
             ClientBaseUrl = _appSettings.ClientBaseUrl,
             Strings = _localizer
         });
-        await SendAsync(toEmail, subject, html, ct);
+        await SendAsync(toEmail, subject, html, cancellationToken);
     }
 
-    public async Task SendAccountRecoveredAsync(string toEmail, string firstName, string language = "en", CancellationToken ct = default)
+    public async Task SendAccountRecoveredAsync(string toEmail, string firstName, string language = "en", CancellationToken cancellationToken = default)
     {
         CultureInfo.CurrentUICulture = new CultureInfo(language);
         var subject = $"{_localizer["AccountRecovered_Subject"]} — Learnix";
@@ -129,10 +129,10 @@ internal sealed class SmtpEmailSender(
             ClientBaseUrl = _appSettings.ClientBaseUrl,
             Strings = _localizer
         });
-        await SendAsync(toEmail, subject, html, ct);
+        await SendAsync(toEmail, subject, html, cancellationToken);
     }
 
-    public async Task SendUserRoleChangedAsync(string toEmail, string firstName, string role, bool assigned, string language = "en", CancellationToken ct = default)
+    public async Task SendUserRoleChangedAsync(string toEmail, string firstName, string role, bool assigned, string language = "en", CancellationToken cancellationToken = default)
     {
         CultureInfo.CurrentUICulture = new CultureInfo(language);
         var subject = $"{_localizer["UserRoleChanged_Subject"]} — Learnix";
@@ -144,10 +144,10 @@ internal sealed class SmtpEmailSender(
             ClientBaseUrl = _appSettings.ClientBaseUrl,
             Strings = _localizer
         });
-        await SendAsync(toEmail, subject, html, ct);
+        await SendAsync(toEmail, subject, html, cancellationToken);
     }
 
-    public async Task SendCourseAdminUnpublishedAsync(string toEmail, string instructorFirstName, string courseTitle, string language = "en", CancellationToken ct = default)
+    public async Task SendCourseAdminUnpublishedAsync(string toEmail, string instructorFirstName, string courseTitle, string language = "en", CancellationToken cancellationToken = default)
     {
         CultureInfo.CurrentUICulture = new CultureInfo(language);
         var subject = $"{_localizer["CourseAdminUnpublished_Subject"]} — Learnix";
@@ -158,10 +158,10 @@ internal sealed class SmtpEmailSender(
             ClientBaseUrl = _appSettings.ClientBaseUrl,
             Strings = _localizer
         });
-        await SendAsync(toEmail, subject, html, ct);
+        await SendAsync(toEmail, subject, html, cancellationToken);
     }
 
-    public async Task SendCourseAdminDeletedAsync(string toEmail, string instructorFirstName, string courseTitle, string language = "en", CancellationToken ct = default)
+    public async Task SendCourseAdminDeletedAsync(string toEmail, string instructorFirstName, string courseTitle, string language = "en", CancellationToken cancellationToken = default)
     {
         CultureInfo.CurrentUICulture = new CultureInfo(language);
         var subject = $"{_localizer["CourseAdminDeleted_Subject"]} — Learnix";
@@ -172,10 +172,10 @@ internal sealed class SmtpEmailSender(
             ClientBaseUrl = _appSettings.ClientBaseUrl,
             Strings = _localizer
         });
-        await SendAsync(toEmail, subject, html, ct);
+        await SendAsync(toEmail, subject, html, cancellationToken);
     }
 
-    private async Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct)
+    private async Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken cancellationToken)
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(_settings.SenderName, _settings.SenderEmail));
@@ -185,7 +185,7 @@ internal sealed class SmtpEmailSender(
         var logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Email", "Resources", "logo.png");
         if (System.IO.File.Exists(logoPath))
         {
-            var logo = builder.LinkedResources.Add(logoPath);
+            var logo = await builder.LinkedResources.AddAsync(logoPath, cancellationToken);
             logo.ContentId = "learnix-logo";
         }
         message.Body = builder.ToMessageBody();
@@ -194,21 +194,26 @@ internal sealed class SmtpEmailSender(
         try
         {
             var socketOptions = _settings.EnableSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None;
-            await client.ConnectAsync(_settings.Host, _settings.Port, socketOptions, ct);
+            await client.ConnectAsync(_settings.Host, _settings.Port, socketOptions, cancellationToken);
 
             if (!string.IsNullOrEmpty(_settings.Username))
-                await client.AuthenticateAsync(_settings.Username, _settings.Password, ct);
+                await client.AuthenticateAsync(_settings.Username, _settings.Password, cancellationToken);
 
-            await client.SendAsync(message, ct);
-            await client.DisconnectAsync(true, ct);
+            await client.SendAsync(message, cancellationToken);
+            await client.DisconnectAsync(true, cancellationToken);
 
             logger.LogInformation("Email [{Subject}] sent to {Email}", subject, MaskEmail(toEmail));
         }
+        // S2139: logging and rethrowing is deliberate. The subject and the masked recipient only exist
+        // here — the outbox processor that catches this sees an opaque SMTP exception — and the rethrow
+        // is what marks the outbox message for retry.
+#pragma warning disable S2139
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to send email [{Subject}] to {Email}", subject, MaskEmail(toEmail));
             throw;
         }
+#pragma warning restore S2139
     }
 
     private static string MaskEmail(string email)

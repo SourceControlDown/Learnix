@@ -7,16 +7,16 @@ namespace Learnix.Infrastructure.Persistence.Mongo.Repositories;
 
 internal sealed class ChatSessionRepository(MongoDbContext context) : IChatSessionRepository
 {
-    public async Task<ChatSession?> GetByScopeAsync(Guid userId, ChatScope scope, CancellationToken ct = default)
+    public async Task<ChatSession?> GetByScopeAsync(Guid userId, ChatScope scope, CancellationToken cancellationToken = default)
     {
         var doc = await context.ChatSessions
             .Find(ScopeFilter(userId, scope))
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(cancellationToken);
 
         return doc is null ? null : MapToModel(doc);
     }
 
-    public async Task<ChatSession> GetOrCreateAsync(Guid userId, ChatScope scope, CancellationToken ct = default)
+    public async Task<ChatSession> GetOrCreateAsync(Guid userId, ChatScope scope, CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
 
@@ -25,7 +25,7 @@ internal sealed class ChatSessionRepository(MongoDbContext context) : IChatSessi
         var update = Builders<ChatSessionDocument>.Update
             .SetOnInsert(s => s.CreatedAt, now)
             .SetOnInsert(s => s.UpdatedAt, now)
-            .SetOnInsert(s => s.Messages, new List<ChatMessageDocument>());
+            .SetOnInsert(s => s.Messages, []);
 
         var options = new FindOneAndUpdateOptions<ChatSessionDocument>
         {
@@ -34,7 +34,7 @@ internal sealed class ChatSessionRepository(MongoDbContext context) : IChatSessi
         };
 
         var doc = await context.ChatSessions.FindOneAndUpdateAsync(
-            ScopeFilter(userId, scope), update, options, ct);
+            ScopeFilter(userId, scope), update, options, cancellationToken);
 
         return MapToModel(doc);
     }
@@ -43,7 +43,7 @@ internal sealed class ChatSessionRepository(MongoDbContext context) : IChatSessi
         string sessionId,
         IEnumerable<ChatMessage> messages,
         int storedMessagesLimit,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         var docs = messages.Select(MapMessageToDocument).ToList();
 
@@ -54,18 +54,18 @@ internal sealed class ChatSessionRepository(MongoDbContext context) : IChatSessi
             .Set(s => s.UpdatedAt, DateTime.UtcNow);
 
         var filter = Builders<ChatSessionDocument>.Filter.Eq(s => s.Id, MongoDB.Bson.ObjectId.Parse(sessionId));
-        await context.ChatSessions.UpdateOneAsync(filter, update, cancellationToken: ct);
+        await context.ChatSessions.UpdateOneAsync(filter, update, cancellationToken: cancellationToken);
     }
 
-    public async Task DeleteAsync(Guid userId, ChatScope scope, CancellationToken ct = default)
+    public async Task DeleteAsync(Guid userId, ChatScope scope, CancellationToken cancellationToken = default)
     {
-        await context.ChatSessions.DeleteOneAsync(ScopeFilter(userId, scope), ct);
+        await context.ChatSessions.DeleteOneAsync(ScopeFilter(userId, scope), cancellationToken);
     }
 
-    public async Task<long> DeleteAllForUserAsync(Guid userId, CancellationToken ct = default)
+    public async Task<long> DeleteAllForUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var filter = Builders<ChatSessionDocument>.Filter.Eq(s => s.UserId, userId);
-        var result = await context.ChatSessions.DeleteManyAsync(filter, ct);
+        var result = await context.ChatSessions.DeleteManyAsync(filter, cancellationToken);
 
         return result.DeletedCount;
     }

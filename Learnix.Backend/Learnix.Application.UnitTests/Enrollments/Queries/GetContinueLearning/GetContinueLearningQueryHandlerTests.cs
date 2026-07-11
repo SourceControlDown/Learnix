@@ -91,7 +91,7 @@ public class GetContinueLearningQueryHandlerTests
         var newer = NewEnrollment("Newer", enrolledAt: new DateTime(2026, 6, 1));
         StubEnrollments(older, newer);
 
-        StubLastActivity(new Dictionary<Guid, DateTime>());
+        StubLastActivity([]);
 
         var resumeLessonId = Guid.NewGuid();
         StubResumeLesson(newer.CourseId, resumeLessonId);
@@ -111,7 +111,7 @@ public class GetContinueLearningQueryHandlerTests
         // Arrange
         var enrollment = NewEnrollment("Empty course", enrolledAt: new DateTime(2026, 1, 1));
         StubEnrollments(enrollment);
-        StubLastActivity(new Dictionary<Guid, DateTime>());
+        StubLastActivity([]);
 
         _lessonRepository
             .GetResumeLessonIdAsync(StudentId, enrollment.CourseId, Arg.Any<CancellationToken>())

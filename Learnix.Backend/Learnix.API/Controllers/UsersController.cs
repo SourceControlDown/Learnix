@@ -14,24 +14,24 @@ namespace Learnix.API.Controllers;
 public sealed class UsersController(ISender sender) : ControllerBase
 {
     [HttpGet("me")]
-    public async Task<IActionResult> GetMyProfile(CancellationToken ct)
+    public async Task<IActionResult> GetMyProfile(CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetMyProfileQuery(), ct);
+        var result = await sender.Send(new GetMyProfileQuery(), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpPut("me")]
-    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileCommand command, CancellationToken ct)
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileCommand command, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpGet("{userId:guid}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetUserProfile(Guid userId, CancellationToken ct)
+    public async Task<IActionResult> GetUserProfile(Guid userId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetUserProfileQuery(userId), ct);
+        var result = await sender.Send(new GetUserProfileQuery(userId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 }

@@ -8,14 +8,14 @@ namespace Learnix.Infrastructure.Persistence.EntityFramework.Repositories;
 internal sealed class ConversationRepository(ApplicationDbContext context)
     : RepositoryBase<CourseConversation>(context), IConversationRepository
 {
-    public async Task<int> GetTotalUnreadAsync(Guid userId, bool isInstructor, CancellationToken ct = default)
+    public async Task<int> GetTotalUnreadAsync(Guid userId, bool isInstructor, CancellationToken cancellationToken = default)
     {
         return isInstructor
             ? await DbContext.Set<CourseConversation>()
                 .Where(c => c.InstructorId == userId)
-                .SumAsync(c => c.InstructorUnreadCount, ct)
+                .SumAsync(c => c.InstructorUnreadCount, cancellationToken)
             : await DbContext.Set<CourseConversation>()
                 .Where(c => c.StudentId == userId)
-                .SumAsync(c => c.StudentUnreadCount, ct);
+                .SumAsync(c => c.StudentUnreadCount, cancellationToken);
     }
 }

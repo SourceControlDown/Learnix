@@ -18,30 +18,30 @@ public sealed class WishlistController(ISender sender) : ControllerBase
     public async Task<IActionResult> GetMine(
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        var result = await sender.Send(new GetMyWishlistQuery(skip, take), ct);
+        var result = await sender.Send(new GetMyWishlistQuery(skip, take), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpGet("count")]
-    public async Task<IActionResult> GetCount(CancellationToken ct)
+    public async Task<IActionResult> GetCount(CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetWishlistCountQuery(), ct);
+        var result = await sender.Send(new GetWishlistCountQuery(), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpPost("{courseId:guid}")]
-    public async Task<IActionResult> Add(Guid courseId, CancellationToken ct)
+    public async Task<IActionResult> Add(Guid courseId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new AddToWishlistCommand(courseId), ct);
+        var result = await sender.Send(new AddToWishlistCommand(courseId), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpDelete("{courseId:guid}")]
-    public async Task<IActionResult> Remove(Guid courseId, CancellationToken ct)
+    public async Task<IActionResult> Remove(Guid courseId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new RemoveFromWishlistCommand(courseId), ct);
+        var result = await sender.Send(new RemoveFromWishlistCommand(courseId), cancellationToken);
         return result.ToActionResult();
     }
 }

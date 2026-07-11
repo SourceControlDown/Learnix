@@ -5,7 +5,7 @@ namespace Learnix.Infrastructure.Outbox;
 
 public interface IOutboxMessageDispatcher
 {
-    Task DispatchAsync(OutboxMessage message, CancellationToken ct);
+    Task DispatchAsync(OutboxMessage message, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -56,7 +56,7 @@ internal sealed class OutboxMessageDispatcher : IOutboxMessageDispatcher
         }
     }
 
-    public Task DispatchAsync(OutboxMessage message, CancellationToken ct)
+    public Task DispatchAsync(OutboxMessage message, CancellationToken cancellationToken)
     {
         if (!_handlers.TryGetValue(message.Type, out var handler))
         {
@@ -65,6 +65,6 @@ internal sealed class OutboxMessageDispatcher : IOutboxMessageDispatcher
             throw new InvalidOperationException($"Unknown outbox message type: {message.Type}");
         }
 
-        return handler.HandleAsync(message.Payload, ct);
+        return handler.HandleAsync(message.Payload, cancellationToken);
     }
 }

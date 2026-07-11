@@ -13,13 +13,13 @@ namespace Learnix.Application.AiChat.Services;
 /// </summary>
 public sealed class ChatScopeAuthorizer(IEnrollmentRepository enrollmentRepository)
 {
-    public async Task<Result> EnsureAccessAsync(Guid userId, ChatScope scope, CancellationToken ct)
+    public async Task<Result> EnsureAccessAsync(Guid userId, ChatScope scope, CancellationToken cancellationToken)
     {
         if (scope.Type != ChatScopeType.Course)
             return Result.Ok();
 
         var isEnrolled = await enrollmentRepository.AnyAsync(
-            new ActiveEnrollmentByStudentAndCourseSpecification(userId, scope.CourseId!.Value), ct);
+            new ActiveEnrollmentByStudentAndCourseSpecification(userId, scope.CourseId!.Value), cancellationToken);
 
         return isEnrolled
             ? Result.Ok()

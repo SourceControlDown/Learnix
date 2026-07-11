@@ -15,7 +15,7 @@ internal sealed class CreateTestLessonCommandHandler(
         courseRepository, currentUser, lessonsBySectionId: true)
 {
     protected override async Task<Result<Guid>> HandleAsync(
-        CreateTestLessonCommand request, Course course, CancellationToken ct)
+        CreateTestLessonCommand request, Course course, CancellationToken cancellationToken)
     {
         var lesson = TestLesson.Create(
             request.SectionId,
@@ -29,7 +29,7 @@ internal sealed class CreateTestLessonCommandHandler(
 
         course.AddLesson(lesson);
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok(lesson.Id);
     }

@@ -11,17 +11,17 @@ public interface IUserRegistrationService
         string firstName,
         string lastName,
         string language = "en",
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 
     Task<Result> ConfirmEmailAsync(
         Guid userId,
         string token,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 
     /// <summary>Always returns Result.Ok — anti-enumeration.</summary>
     Task<Result> ResendConfirmationEmailAsync(
         string email,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Find-or-create for Google OAuth users.
@@ -33,5 +33,5 @@ public interface IUserRegistrationService
     /// </summary>
     Task<Result<Guid>> FindOrCreateGoogleUserAsync(
         GoogleUserInfo googleUser,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 }

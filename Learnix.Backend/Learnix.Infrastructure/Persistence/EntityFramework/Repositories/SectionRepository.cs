@@ -5,10 +5,10 @@ namespace Learnix.Infrastructure.Persistence.EntityFramework.Repositories;
 
 internal sealed class SectionRepository(ApplicationDbContext context) : ISectionRepository
 {
-    public async Task BulkSetDisplayOrderAsync(IReadOnlyList<(Guid Id, int Order)> pairs, CancellationToken ct)
+    public async Task BulkSetDisplayOrderAsync(IReadOnlyList<(Guid Id, int Order)> pairs, CancellationToken cancellationToken)
     {
         foreach (var (id, order) in pairs)
             await context.Database.ExecuteSqlInterpolatedAsync(
-                $"UPDATE \"Sections\" SET \"DisplayOrder\" = {order} WHERE \"Id\" = {id}", ct);
+                $"UPDATE \"Sections\" SET \"DisplayOrder\" = {order} WHERE \"Id\" = {id}", cancellationToken);
     }
 }

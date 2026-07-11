@@ -22,17 +22,17 @@ internal sealed class AchievementUnlockedNotificationHandler(
 {
     public override string MessageType => OutboxMessageTypes.NotifyAchievementUnlocked;
 
-    protected override async Task HandleAsync(NotifyAchievementUnlockedPayload payload, CancellationToken ct)
+    protected override async Task HandleAsync(NotifyAchievementUnlockedPayload payload, CancellationToken cancellationToken)
     {
         await achievementNotifier.NotifyAsync(
-            payload.UserId, payload.UserAchievementId, payload.Code, payload.UnlockedAt, ct);
+            payload.UserId, payload.UserAchievementId, payload.Code, payload.UnlockedAt, cancellationToken);
 
         // The code, not a prettified version of it: the client has a name for every achievement already.
         await notificationSender.SendAsync(
             payload.UserId,
             NotificationType.AchievementEarned,
             new Dictionary<string, string> { ["code"] = payload.Code },
-            ct);
+            cancellationToken);
     }
 }
 
@@ -43,16 +43,16 @@ internal sealed class CertificateIssuedNotificationHandler(
 {
     public override string MessageType => OutboxMessageTypes.NotifyCertificateIssued;
 
-    protected override async Task HandleAsync(NotifyCertificateIssuedPayload payload, CancellationToken ct)
+    protected override async Task HandleAsync(NotifyCertificateIssuedPayload payload, CancellationToken cancellationToken)
     {
         await certificateNotifier.NotifyCertificateIssuedAsync(
-            payload.UserId, payload.CertificateId, payload.CourseId, payload.CourseTitle, ct);
+            payload.UserId, payload.CertificateId, payload.CourseId, payload.CourseTitle, cancellationToken);
 
         await notificationSender.SendAsync(
             payload.UserId,
             NotificationType.CertificateReady,
             new Dictionary<string, string> { ["courseTitle"] = payload.CourseTitle },
-            ct);
+            cancellationToken);
     }
 }
 
@@ -62,8 +62,8 @@ internal sealed class InstructorApprovedNotificationHandler(INotificationSender 
 {
     public override string MessageType => OutboxMessageTypes.NotifyInstructorApproved;
 
-    protected override Task HandleAsync(NotifyInstructorApprovedPayload payload, CancellationToken ct) =>
-        notificationSender.SendAsync(payload.UserId, NotificationType.InstructorApproved, ct: ct);
+    protected override Task HandleAsync(NotifyInstructorApprovedPayload payload, CancellationToken cancellationToken) =>
+        notificationSender.SendAsync(payload.UserId, NotificationType.InstructorApproved, cancellationToken: cancellationToken);
 }
 
 internal sealed class InstructorRejectedNotificationHandler(INotificationSender notificationSender)
@@ -71,6 +71,6 @@ internal sealed class InstructorRejectedNotificationHandler(INotificationSender 
 {
     public override string MessageType => OutboxMessageTypes.NotifyInstructorRejected;
 
-    protected override Task HandleAsync(NotifyInstructorRejectedPayload payload, CancellationToken ct) =>
-        notificationSender.SendAsync(payload.UserId, NotificationType.InstructorRejected, ct: ct);
+    protected override Task HandleAsync(NotifyInstructorRejectedPayload payload, CancellationToken cancellationToken) =>
+        notificationSender.SendAsync(payload.UserId, NotificationType.InstructorRejected, cancellationToken: cancellationToken);
 }

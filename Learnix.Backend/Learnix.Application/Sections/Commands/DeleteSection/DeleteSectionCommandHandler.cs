@@ -20,11 +20,11 @@ internal sealed class DeleteSectionCommandHandler(
         courseRepository, currentUser, includeAllLessons: true)
 {
     protected override async Task<Result> HandleAsync(
-        DeleteSectionCommand request, Course course, CancellationToken ct)
+        DeleteSectionCommand request, Course course, CancellationToken cancellationToken)
     {
         course.RemoveSection(request.SectionId);
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok();
     }

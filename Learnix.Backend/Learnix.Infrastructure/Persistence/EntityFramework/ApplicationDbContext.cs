@@ -14,14 +14,14 @@ public class ApplicationDbContext(
     DbContextOptions<ApplicationDbContext> options)
     : IdentityDbContext<User, IdentityRole<Guid>, Guid>(options), IUnitOfWork
 {
-    public async Task ExecuteInTransactionAsync(Func<Task> work, CancellationToken ct = default)
+    public async Task ExecuteInTransactionAsync(Func<Task> work, CancellationToken cancellationToken = default)
     {
         var strategy = Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
         {
-            await using var tx = await Database.BeginTransactionAsync(ct);
+            await using var tx = await Database.BeginTransactionAsync(cancellationToken);
             await work();
-            await tx.CommitAsync(ct);
+            await tx.CommitAsync(cancellationToken);
         });
     }
 

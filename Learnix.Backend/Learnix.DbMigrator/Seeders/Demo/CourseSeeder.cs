@@ -217,7 +217,7 @@ public sealed class CourseSeeder(
         IBlobStorageService blobStorage,
         IOptions<BlobStorageOptions> blobOptions,
         ILogger logger,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         // Step 1 — persist course + sections so their IDs are stable before adding lessons.
         var course = Course.Create(
@@ -232,7 +232,7 @@ public sealed class CourseSeeder(
             using var stream = assembly.GetManifestResourceStream($"Learnix.DbMigrator.Assets.{definition.ImageName}");
             if (stream != null)
             {
-                await blobStorage.UploadAsync(coverPath, stream, "image/png", ct);
+                await blobStorage.UploadAsync(coverPath, stream, "image/png", cancellationToken);
                 course.SetCoverImage(coverPath);
             }
         }
@@ -247,7 +247,7 @@ public sealed class CourseSeeder(
             .Select(s => (Entity: course.AddSection(s.Title), Def: s))
             .ToList();
 
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync(cancellationToken);
 
         // Step 2 — add lessons through the aggregate root, which assigns DisplayOrder from the
         // section and so keeps the unique (SectionId, DisplayOrder) index satisfied.
@@ -274,7 +274,7 @@ public sealed class CourseSeeder(
                             using var stream = assembly.GetManifestResourceStream("Learnix.DbMigrator.Assets.placeholder.mp4");
                             if (stream != null)
                             {
-                                await blobStorage.UploadAsync(videoPath, stream, "video/mp4", ct);
+                                await blobStorage.UploadAsync(videoPath, stream, "video/mp4", cancellationToken);
                             }
                         }
                         catch (Exception ex)
@@ -298,14 +298,14 @@ public sealed class CourseSeeder(
             }
         }
 
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync(cancellationToken);
 
         // Step 3 — reload with full navigation so Publish() can validate the in-memory
         // lesson collection. Section._lessons is a backing field populated by EF on load.
         var fullCourse = await context.Courses
             .Include(c => c.Sections)
             .ThenInclude(s => s.Lessons)
-            .FirstAsync(c => c.Id == course.Id, ct);
+            .FirstAsync(c => c.Id == course.Id, cancellationToken);
 
         // Toggle visibility via the aggregate root
         foreach (var sec in fullCourse.Sections)
@@ -321,7 +321,7 @@ public sealed class CourseSeeder(
 
         fullCourse.Publish();
 
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync(cancellationToken);
     }
 }
 

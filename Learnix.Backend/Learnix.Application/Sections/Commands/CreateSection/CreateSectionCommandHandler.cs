@@ -14,11 +14,11 @@ internal sealed class CreateSectionCommandHandler(
     : CourseCommandHandler<CreateSectionCommand, Result<Guid>>(courseRepository, currentUser)
 {
     protected override async Task<Result<Guid>> HandleAsync(
-        CreateSectionCommand request, Course course, CancellationToken ct)
+        CreateSectionCommand request, Course course, CancellationToken cancellationToken)
     {
         var section = course.AddSection(request.Title);
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok(section.Id);
     }

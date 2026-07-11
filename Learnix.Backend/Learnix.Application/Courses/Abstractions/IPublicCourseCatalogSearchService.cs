@@ -13,5 +13,5 @@ public interface IPublicCourseCatalogSearchService
         string? sortBy,
         bool? isFree,
         decimal? minRating,
-        CancellationToken ct);
+        CancellationToken cancellationToken);
 }

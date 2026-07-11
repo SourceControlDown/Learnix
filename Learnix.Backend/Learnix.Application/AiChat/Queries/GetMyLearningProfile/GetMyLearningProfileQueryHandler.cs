@@ -19,6 +19,9 @@ using MediatR;
 
 namespace Learnix.Application.AiChat.Queries.GetMyLearningProfile;
 
+// S107: this read-model is assembled from six independent aggregates. Wrapping the repositories in a
+// facade would hide the dependencies rather than remove them.
+#pragma warning disable S107
 internal sealed class GetMyLearningProfileQueryHandler(
     ICurrentUserService currentUser,
     IUserRepository userRepository,
@@ -30,6 +33,7 @@ internal sealed class GetMyLearningProfileQueryHandler(
     IUserAchievementRepository achievementRepository,
     IUserAchievementProgressRepository achievementProgressRepository)
     : IRequestHandler<GetMyLearningProfileQuery, Result<MyLearningProfileDto>>
+#pragma warning restore S107
 {
     private const int Cap = AiChatToolLimits.LearningProfileSectionItems;
 
@@ -59,51 +63,9 @@ internal sealed class GetMyLearningProfileQueryHandler(
         var wantsInProgress = wanted.Contains(LearningProfileSections.InProgress);
         var wantsCompleted = wanted.Contains(LearningProfileSections.Completed);
 
-        LearningProfileSection<InProgressCourseDto>? inProgress = null;
-        LearningProfileSection<CompletedCourseDto>? completed = null;
-
-        if (wantsInProgress || wantsCompleted)
-        {
-            var enrollments = await enrollmentRepository.ListAsync(
-                new StudentEnrollmentsSpecification(userId), cancellationToken);
-
-            // Course is a required relationship, so the global soft-delete filter drops the whole
-            // enrollment row rather than nulling the navigation. The guard only satisfies the compiler.
-            var visible = enrollments.Where(e => e.Course is not null).ToList();
-
-            var active = visible.Where(e => e.Status == EnrollmentStatus.Active).ToList();
-            var finished = visible.Where(e => e.Status == EnrollmentStatus.Completed).ToList();
-
-            var activePage = wantsInProgress ? active.Take(Cap).ToList() : [];
-            var finishedPage = wantsCompleted ? finished.Take(Cap).ToList() : [];
-
-            var categoryNames = await ResolveCategoryNamesAsync(
-                activePage.Concat(finishedPage).Select(e => e.Course!.CategoryId),
-                cancellationToken);
-
-            if (wantsInProgress)
-            {
-                var counts = await lessonProgressRepository.GetProgressCountsAsync(
-                    userId, activePage.Select(e => e.CourseId).ToList(), cancellationToken);
-
-                inProgress = new LearningProfileSection<InProgressCourseDto>(
-                    active.Count,
-                    active.Count > activePage.Count,
-                    activePage.Select(e => ToInProgressDto(e, counts, categoryNames)).ToList());
-            }
-
-            if (wantsCompleted)
-            {
-                completed = new LearningProfileSection<CompletedCourseDto>(
-                    finished.Count,
-                    finished.Count > finishedPage.Count,
-                    finishedPage.Select(e => new CompletedCourseDto(
-                        e.CourseId,
-                        e.Course!.Title,
-                        CategoryNameOf(categoryNames, e.Course.CategoryId),
-                        e.CompletedAt)).ToList());
-            }
-        }
+        var (inProgress, completed) = wantsInProgress || wantsCompleted
+            ? await BuildCourseSectionsAsync(userId, wantsInProgress, wantsCompleted, cancellationToken)
+            : (null, null);
 
         var wishlist = wanted.Contains(LearningProfileSections.Wishlist)
             ? await BuildWishlistAsync(userId, cancellationToken)
@@ -116,14 +78,67 @@ internal sealed class GetMyLearningProfileQueryHandler(
         return Result.Ok(new MyLearningProfileDto(profile, inProgress, completed, wishlist, achievements));
     }
 
-    private async Task<ProfileSummaryDto?> BuildProfileAsync(Guid userId, CancellationToken ct)
+    private async Task<(LearningProfileSection<InProgressCourseDto>? InProgress, LearningProfileSection<CompletedCourseDto>? Completed)>
+        BuildCourseSectionsAsync(
+            Guid userId,
+            bool wantsInProgress,
+            bool wantsCompleted,
+            CancellationToken cancellationToken)
     {
-        var user = await userRepository.FirstOrDefaultAsync(new UserByIdSpecification(userId), ct);
+        var enrollments = await enrollmentRepository.ListAsync(
+            new StudentEnrollmentsSpecification(userId), cancellationToken);
+
+        // Course is a required relationship, so the global soft-delete filter drops the whole
+        // enrollment row rather than nulling the navigation. The guard only satisfies the compiler.
+        var visible = enrollments.Where(e => e.Course is not null).ToList();
+
+        var active = visible.Where(e => e.Status == EnrollmentStatus.Active).ToList();
+        var finished = visible.Where(e => e.Status == EnrollmentStatus.Completed).ToList();
+
+        var activePage = wantsInProgress ? active.Take(Cap).ToList() : [];
+        var finishedPage = wantsCompleted ? finished.Take(Cap).ToList() : [];
+
+        var categoryNames = await ResolveCategoryNamesAsync(
+            activePage.Concat(finishedPage).Select(e => e.Course!.CategoryId),
+            cancellationToken);
+
+        LearningProfileSection<InProgressCourseDto>? inProgress = null;
+        LearningProfileSection<CompletedCourseDto>? completed = null;
+
+        if (wantsInProgress)
+        {
+            var counts = await lessonProgressRepository.GetProgressCountsAsync(
+                userId, activePage.Select(e => e.CourseId).ToList(), cancellationToken);
+
+            inProgress = new LearningProfileSection<InProgressCourseDto>(
+                active.Count,
+                active.Count > activePage.Count,
+                activePage.Select(e => ToInProgressDto(e, counts, categoryNames)).ToList());
+        }
+
+        if (wantsCompleted)
+        {
+            completed = new LearningProfileSection<CompletedCourseDto>(
+                finished.Count,
+                finished.Count > finishedPage.Count,
+                finishedPage.Select(e => new CompletedCourseDto(
+                    e.CourseId,
+                    e.Course!.Title,
+                    CategoryNameOf(categoryNames, e.Course.CategoryId),
+                    e.CompletedAt)).ToList());
+        }
+
+        return (inProgress, completed);
+    }
+
+    private async Task<ProfileSummaryDto?> BuildProfileAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var user = await userRepository.FirstOrDefaultAsync(new UserByIdSpecification(userId), cancellationToken);
 
         if (user is null)
             return null;
 
-        var roles = await roleService.GetRolesAsync(userId, ct);
+        var roles = await roleService.GetRolesAsync(userId, cancellationToken);
 
         return new ProfileSummaryDto(
             user.FirstName,
@@ -134,12 +149,12 @@ internal sealed class GetMyLearningProfileQueryHandler(
             user.CreatedAt);
     }
 
-    private async Task<LearningProfileSection<WishlistCourseAiDto>> BuildWishlistAsync(Guid userId, CancellationToken ct)
+    private async Task<LearningProfileSection<WishlistCourseAiDto>> BuildWishlistAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var total = await wishlistRepository.CountAsync(userId, ct);
+        var total = await wishlistRepository.CountAsync(userId, cancellationToken);
         var items = total == 0
             ? []
-            : await wishlistRepository.GetPagedAsync(userId, 0, Cap, ct);
+            : await wishlistRepository.GetPagedAsync(userId, 0, Cap, cancellationToken);
 
         var dtos = items
             .Where(w => w.Course is not null)
@@ -154,12 +169,12 @@ internal sealed class GetMyLearningProfileQueryHandler(
         return new LearningProfileSection<WishlistCourseAiDto>(total, total > dtos.Count, dtos);
     }
 
-    private async Task<AchievementsSummaryDto> BuildAchievementsAsync(Guid userId, CancellationToken ct)
+    private async Task<AchievementsSummaryDto> BuildAchievementsAsync(Guid userId, CancellationToken cancellationToken)
     {
         var unlocked = await achievementRepository.ListAsync(
-            new UserAchievementsByUserSpecification(userId), ct);
+            new UserAchievementsByUserSpecification(userId), cancellationToken);
 
-        var progress = await achievementProgressRepository.GetAsync(userId, ct);
+        var progress = await achievementProgressRepository.GetAsync(userId, cancellationToken);
 
         return new AchievementsSummaryDto(
             unlocked.Count,
@@ -172,14 +187,14 @@ internal sealed class GetMyLearningProfileQueryHandler(
 
     private async Task<IReadOnlyDictionary<Guid, string>> ResolveCategoryNamesAsync(
         IEnumerable<Guid> categoryIds,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var ids = categoryIds.Distinct().ToList();
 
         if (ids.Count == 0)
             return new Dictionary<Guid, string>();
 
-        var categories = await categoryRepository.ListAsync(new CategoriesByIdsSpecification(ids), ct);
+        var categories = await categoryRepository.ListAsync(new CategoriesByIdsSpecification(ids), cancellationToken);
         return categories.ToDictionary(c => c.Id, c => c.Name);
     }
 

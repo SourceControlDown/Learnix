@@ -12,7 +12,7 @@ public static class RateLimitingExtensions
         services.AddRateLimiter(options =>
         {
             // Unified 429 response for all rate-limited policies
-            options.OnRejected = async (context, ct) =>
+            options.OnRejected = async (context, cancellationToken) =>
             {
                 context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
 
@@ -31,7 +31,7 @@ public static class RateLimitingExtensions
                 };
 
                 context.HttpContext.Response.ContentType = "application/problem+json";
-                await context.HttpContext.Response.WriteAsJsonAsync(problem, ct);
+                await context.HttpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
             };
 
             // auth-strict: 5 requests per 15 minutes per IP

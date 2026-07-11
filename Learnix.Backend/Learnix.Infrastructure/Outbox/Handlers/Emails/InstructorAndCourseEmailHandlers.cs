@@ -9,9 +9,9 @@ internal sealed class InstructorApprovedEmailHandler(IEmailSender emailSender)
 {
     public override string MessageType => OutboxMessageTypes.InstructorApprovedEmail;
 
-    protected override Task HandleAsync(SendInstructorApprovedEmailPayload payload, CancellationToken ct) =>
+    protected override Task HandleAsync(SendInstructorApprovedEmailPayload payload, CancellationToken cancellationToken) =>
         emailSender.SendInstructorApplicationApprovedAsync(
-            payload.ToEmail, payload.FirstName, payload.Language, ct);
+            payload.ToEmail, payload.FirstName, payload.Language, cancellationToken);
 }
 
 internal sealed class InstructorRejectedEmailHandler(IEmailSender emailSender)
@@ -19,9 +19,9 @@ internal sealed class InstructorRejectedEmailHandler(IEmailSender emailSender)
 {
     public override string MessageType => OutboxMessageTypes.InstructorRejectedEmail;
 
-    protected override Task HandleAsync(SendInstructorRejectedEmailPayload payload, CancellationToken ct) =>
+    protected override Task HandleAsync(SendInstructorRejectedEmailPayload payload, CancellationToken cancellationToken) =>
         emailSender.SendInstructorApplicationRejectedAsync(
-            payload.ToEmail, payload.FirstName, payload.RejectionReason, payload.Language, ct);
+            payload.ToEmail, payload.FirstName, payload.RejectionReason, payload.Language, cancellationToken);
 }
 
 internal sealed class CourseAdminUnpublishedEmailHandler(IEmailSender emailSender)
@@ -29,9 +29,9 @@ internal sealed class CourseAdminUnpublishedEmailHandler(IEmailSender emailSende
 {
     public override string MessageType => OutboxMessageTypes.CourseAdminUnpublishedEmail;
 
-    protected override Task HandleAsync(SendCourseAdminActionEmailPayload payload, CancellationToken ct) =>
+    protected override Task HandleAsync(SendCourseAdminActionEmailPayload payload, CancellationToken cancellationToken) =>
         emailSender.SendCourseAdminUnpublishedAsync(
-            payload.ToEmail, payload.InstructorFirstName, payload.CourseTitle, payload.Language, ct);
+            payload.ToEmail, payload.InstructorFirstName, payload.CourseTitle, payload.Language, cancellationToken);
 }
 
 internal sealed class CourseAdminDeletedEmailHandler(IEmailSender emailSender)
@@ -39,7 +39,7 @@ internal sealed class CourseAdminDeletedEmailHandler(IEmailSender emailSender)
 {
     public override string MessageType => OutboxMessageTypes.CourseAdminDeletedEmail;
 
-    protected override Task HandleAsync(SendCourseAdminActionEmailPayload payload, CancellationToken ct) =>
+    protected override Task HandleAsync(SendCourseAdminActionEmailPayload payload, CancellationToken cancellationToken) =>
         emailSender.SendCourseAdminDeletedAsync(
-            payload.ToEmail, payload.InstructorFirstName, payload.CourseTitle, payload.Language, ct);
+            payload.ToEmail, payload.InstructorFirstName, payload.CourseTitle, payload.Language, cancellationToken);
 }

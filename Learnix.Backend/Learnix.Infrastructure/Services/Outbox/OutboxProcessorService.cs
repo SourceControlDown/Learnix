@@ -39,7 +39,7 @@ internal sealed class OutboxProcessorService(
         }
     }
 
-    private async Task ProcessBatchAsync(CancellationToken ct)
+    private async Task ProcessBatchAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -55,7 +55,7 @@ internal sealed class OutboxProcessorService(
 
             // Explicit transaction: FOR UPDATE locks are held until COMMIT,
             // preventing other instances from picking the same messages.
-            await using var transaction = await db.Database.BeginTransactionAsync(ct);
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
 
             // FOR UPDATE SKIP LOCKED — row-level distributed lock:
             // if another instance already locked a row, skip it instead of waiting.
@@ -67,13 +67,13 @@ internal sealed class OutboxProcessorService(
                     ORDER BY ""OccurredAt""
                     LIMIT {1}
                     FOR UPDATE SKIP LOCKED", now, BatchSize)
-                .ToListAsync(ct);
+                .ToListAsync(cancellationToken);
 
             foreach (var message in messages)
             {
                 try
                 {
-                    await dispatcher.DispatchAsync(message, ct);
+                    await dispatcher.DispatchAsync(message, cancellationToken);
                     message.ProcessedAt = DateTime.UtcNow;
                 }
                 catch (Exception ex)
@@ -91,10 +91,10 @@ internal sealed class OutboxProcessorService(
                     message.NextRetryAt = DateTime.UtcNow.AddSeconds(delaySeconds);
                 }
 
-                await db.SaveChangesAsync(ct);
+                await db.SaveChangesAsync(cancellationToken);
             }
 
-            await transaction.CommitAsync(ct);
+            await transaction.CommitAsync(cancellationToken);
 
             // If we processed any messages, there might be more (either from a full batch,
             // or new ones generated during processing of this batch).
@@ -102,7 +102,7 @@ internal sealed class OutboxProcessorService(
             if (messages.Count > 0)
                 outboxSignal.Notify();
         }
-        catch (Exception ex) when (!ct.IsCancellationRequested)
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
         {
             logger.LogError(ex, "Outbox processor batch failed.");
         }

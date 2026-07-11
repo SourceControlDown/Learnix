@@ -12,7 +12,7 @@ internal sealed class UserRoleChangedHandler(OutboxDbContextHolder holder)
 {
     public async Task Handle(
         DomainEventNotification<UserRoleChangedDomainEvent> notification,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var e = notification.DomainEvent;
         var db = holder.DbContext!;
@@ -22,7 +22,7 @@ internal sealed class UserRoleChangedHandler(OutboxDbContextHolder holder)
             .AsNoTracking()
             .Where(u => u.Id == e.UserId)
             .Select(u => new { u.Email, u.FirstName, u.Language })
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (user is null) return;
 

@@ -17,10 +17,10 @@ internal sealed class CreateVideoLessonCommandHandler(
         courseRepository, currentUser, lessonsBySectionId: true)
 {
     protected override async Task<Result<Guid>> HandleAsync(
-        CreateVideoLessonCommand request, Course course, CancellationToken ct)
+        CreateVideoLessonCommand request, Course course, CancellationToken cancellationToken)
     {
         var commitResult = await blobStorage.CommitUploadAsync(
-            request.VideoBlobPath, UploadTarget.LessonVideo, ct);
+            request.VideoBlobPath, UploadTarget.LessonVideo, cancellationToken);
 
         if (commitResult.IsFailed)
             return Result.Fail(commitResult.Errors);
@@ -34,7 +34,7 @@ internal sealed class CreateVideoLessonCommandHandler(
 
         course.AddLesson(lesson);
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok(lesson.Id);
     }

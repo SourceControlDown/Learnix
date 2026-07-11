@@ -36,10 +36,10 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
 
     [HttpPost("register")]
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
-    public async Task<IActionResult> Register([FromBody] RegisterCommand command, CancellationToken ct)
+    public async Task<IActionResult> Register([FromBody] RegisterCommand command, CancellationToken cancellationToken)
     {
         var language = ParseAcceptLanguage(Request.Headers.AcceptLanguage.ToString());
-        var result = await sender.Send(command with { Language = language }, ct);
+        var result = await sender.Send(command with { Language = language }, cancellationToken);
 
         return result.ToActionResult(onSuccess: response =>
         {
@@ -59,9 +59,9 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
 
     [HttpPost("confirm-email")]
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
-    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailCommand command, CancellationToken ct)
+    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailCommand command, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult(onSuccess: response =>
         {
@@ -78,9 +78,9 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
 
     [HttpPost("resend-confirmation")]
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
-    public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationEmailCommand command, CancellationToken ct)
+    public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationEmailCommand command, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
 
         // Manual check to preserve anti-enumeration
         if (result.HasError<ValidationError>(out var validationErrors))
@@ -96,35 +96,35 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
     // =================================
     [HttpPost("forgot-password")]
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
-    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordCommand command, CancellationToken ct)
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordCommand command, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpPost("reset-password")]
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command, CancellationToken ct)
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpPost("change-password")]
     [Microsoft.AspNetCore.Authorization.Authorize]
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
-    public async Task<IActionResult> ChangePassword([FromBody] Learnix.Application.Auth.Commands.ChangePassword.ChangePasswordCommand command, CancellationToken ct)
+    public async Task<IActionResult> ChangePassword([FromBody] Learnix.Application.Auth.Commands.ChangePassword.ChangePasswordCommand command, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpPost("set-password")]
     [Microsoft.AspNetCore.Authorization.Authorize]
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
-    public async Task<IActionResult> SetPassword([FromBody] Learnix.Application.Auth.Commands.SetPassword.SetPasswordCommand command, CancellationToken ct)
+    public async Task<IActionResult> SetPassword([FromBody] Learnix.Application.Auth.Commands.SetPassword.SetPasswordCommand command, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
         return result.ToActionResult();
     }
 
@@ -133,9 +133,9 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
 
     [HttpPost("login")]
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
-    public async Task<IActionResult> Login([FromBody] LoginCommand command, CancellationToken ct)
+    public async Task<IActionResult> Login([FromBody] LoginCommand command, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult(onSuccess: response =>
         {
@@ -151,7 +151,7 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
     }
 
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh(CancellationToken ct)
+    public async Task<IActionResult> Refresh(CancellationToken cancellationToken)
     {
         if (!Request.Cookies.TryGetValue(RefreshCookieName, out var refreshToken) || string.IsNullOrEmpty(refreshToken))
         {
@@ -161,7 +161,7 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
             });
         }
 
-        var result = await sender.Send(new RefreshTokenCommand(refreshToken), ct);
+        var result = await sender.Send(new RefreshTokenCommand(refreshToken), cancellationToken);
 
         // Manual check to preserve the side-effect of clearing the cookie
         // Using AuthenticationError since we migrated from ForbiddenError in previous steps
@@ -185,9 +185,9 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
 
     [HttpPost("google")]
     [EnableRateLimiting(RateLimitPolicies.AuthStrict)]
-    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginCommand command, CancellationToken ct)
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginCommand command, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
 
         return result.ToActionResult(onSuccess: value =>
         {
@@ -202,10 +202,10 @@ public sealed class AuthController(ISender sender, IHostEnvironment environment)
     }
 
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout(CancellationToken ct)
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
         Request.Cookies.TryGetValue(RefreshCookieName, out var refreshToken);
-        var result = await sender.Send(new LogoutCommand(refreshToken ?? string.Empty), ct);
+        var result = await sender.Send(new LogoutCommand(refreshToken ?? string.Empty), cancellationToken);
         ClearRefreshTokenCookie();
 
         return result.ToActionResult();

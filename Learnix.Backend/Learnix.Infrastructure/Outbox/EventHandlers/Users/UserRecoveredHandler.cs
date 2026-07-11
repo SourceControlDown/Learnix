@@ -12,7 +12,7 @@ internal sealed class UserRecoveredHandler(OutboxDbContextHolder holder)
 {
     public async Task Handle(
         DomainEventNotification<UserRecoveredDomainEvent> notification,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var e = notification.DomainEvent;
         var db = holder.DbContext!;
@@ -24,7 +24,7 @@ internal sealed class UserRecoveredHandler(OutboxDbContextHolder holder)
             .AsNoTracking()
             .Where(u => u.Id == e.UserId)
             .Select(u => new { u.Email, u.FirstName, u.Language })
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (user is null) return;
 

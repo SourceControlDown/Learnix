@@ -14,7 +14,7 @@ internal sealed class LessonProgressRepository(ApplicationDbContext context)
     public async Task<IReadOnlyDictionary<Guid, CourseProgressCounts>> GetProgressCountsAsync(
         Guid studentId,
         IReadOnlyCollection<Guid> courseIds,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         if (courseIds.Count == 0)
             return new Dictionary<Guid, CourseProgressCounts>();
@@ -27,7 +27,7 @@ internal sealed class LessonProgressRepository(ApplicationDbContext context)
             where ids.Contains(section.CourseId) && !lesson.IsHidden
             group lesson by section.CourseId into grouped
             select new { CourseId = grouped.Key, Count = grouped.Count() }
-        ).ToDictionaryAsync(x => x.CourseId, x => x.Count, ct);
+        ).ToDictionaryAsync(x => x.CourseId, x => x.Count, cancellationToken);
 
         var completed = await (
             from lp in context.Set<LessonProgressEntity>()
@@ -37,7 +37,7 @@ internal sealed class LessonProgressRepository(ApplicationDbContext context)
                   && lp.IsCompleted && !lesson.IsHidden
             group lp by section.CourseId into grouped
             select new { CourseId = grouped.Key, Count = grouped.Count() }
-        ).ToDictionaryAsync(x => x.CourseId, x => x.Count, ct);
+        ).ToDictionaryAsync(x => x.CourseId, x => x.Count, cancellationToken);
 
         return ids.ToDictionary(
             id => id,
@@ -49,7 +49,7 @@ internal sealed class LessonProgressRepository(ApplicationDbContext context)
     public async Task<IReadOnlyDictionary<Guid, DateTime>> GetLastActivityByCourseAsync(
         Guid studentId,
         IReadOnlyCollection<Guid> courseIds,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         if (courseIds.Count == 0)
             return new Dictionary<Guid, DateTime>();
@@ -61,6 +61,6 @@ internal sealed class LessonProgressRepository(ApplicationDbContext context)
             where lp.StudentId == studentId && ids.Contains(lp.CourseId)
             group lp by lp.CourseId into grouped
             select new { CourseId = grouped.Key, LastAccessedAt = grouped.Max(x => x.LastAccessedAt) }
-        ).ToDictionaryAsync(x => x.CourseId, x => x.LastAccessedAt, ct);
+        ).ToDictionaryAsync(x => x.CourseId, x => x.LastAccessedAt, cancellationToken);
     }
 }

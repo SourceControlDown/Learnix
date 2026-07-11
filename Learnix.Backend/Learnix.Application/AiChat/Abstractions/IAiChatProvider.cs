@@ -15,5 +15,5 @@ public interface IAiChatProvider
     /// headers are already out by the time this runs, so a throw would only sever the connection and leave
     /// the client guessing (ADR-CHAT-014).
     /// </summary>
-    IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(ChatRequest request, CancellationToken ct);
+    IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(ChatRequest request, CancellationToken cancellationToken);
 }

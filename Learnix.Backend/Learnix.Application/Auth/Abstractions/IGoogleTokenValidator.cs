@@ -9,5 +9,5 @@ public interface IGoogleTokenValidator
     /// Validates the Google ID token (signature, issuer, audience, expiry).
     /// Returns AuthenticationError if token is invalid/expired/untrusted.
     /// </summary>
-    Task<Result<GoogleUserInfo>> ValidateAsync(string idToken, CancellationToken ct = default);
+    Task<Result<GoogleUserInfo>> ValidateAsync(string idToken, CancellationToken cancellationToken = default);
 }
