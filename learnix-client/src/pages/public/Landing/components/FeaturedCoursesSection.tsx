@@ -23,6 +23,14 @@ export function FeaturedCoursesSection({
 }: FeaturedCoursesSectionProps) {
     const { t } = useTranslation('landing');
 
+    // Same rule as the categories above: no invitation to a catalog that is not answering.
+    const hasContent = !isLoading && !isError && courses.length > 0;
+
+    const viewAllLabel =
+        totalCount !== undefined
+            ? t('featuredCourses.viewMore', { count: totalCount })
+            : t('featuredCourses.viewAll');
+
     const renderContent = () => {
         if (isLoading) {
             return (
@@ -43,6 +51,7 @@ export function FeaturedCoursesSection({
                     message={t('featuredCourses.error')}
                     onRetry={onRetry}
                     retryLabel={t('common:actions.tryAgain')}
+                    className="min-h-0 py-10"
                 />
             );
         }
@@ -77,23 +86,30 @@ export function FeaturedCoursesSection({
                             {t('featuredCourses.subtitle')}
                         </p>
                     </div>
-                    <TextLink to={APP_ROUTES.public.courses} className="text-sm">
-                        {t('featuredCourses.viewAll')}
-                    </TextLink>
+                    {/* One link per breakpoint: this one on desktop, the one below the grid on mobile.
+                        Two identical links to the same page is not emphasis, it is noise. */}
+                    {hasContent && (
+                        <TextLink
+                            to={APP_ROUTES.public.courses}
+                            className="hidden text-sm sm:inline"
+                        >
+                            {viewAllLabel}
+                        </TextLink>
+                    )}
                 </div>
 
                 {renderContent()}
 
-                <div className="mt-10 text-center">
-                    <TextLink
-                        to={APP_ROUTES.public.courses}
-                        className="inline-flex items-center gap-2"
-                    >
-                        {totalCount !== undefined
-                            ? t('featuredCourses.viewMore', { count: totalCount })
-                            : t('featuredCourses.viewAll')}
-                    </TextLink>
-                </div>
+                {hasContent && (
+                    <div className="mt-10 text-center sm:hidden">
+                        <TextLink
+                            to={APP_ROUTES.public.courses}
+                            className="inline-flex items-center gap-2 text-sm"
+                        >
+                            {viewAllLabel}
+                        </TextLink>
+                    </div>
+                )}
             </div>
         </section>
     );

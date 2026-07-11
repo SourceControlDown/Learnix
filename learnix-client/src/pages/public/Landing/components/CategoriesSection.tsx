@@ -46,6 +46,11 @@ export function CategoriesSection({
 }: CategoriesSectionProps) {
     const { t } = useTranslation('landing');
 
+    // "Browse all categories" is an invitation, and an invitation only makes sense when there is somewhere to
+    // go. With the list failing to load, the catalog behind that link is failing too — the last thing to do is
+    // send the user into a second error.
+    const hasContent = !isLoading && !isError && categories.length > 0;
+
     const renderContent = () => {
         if (isLoading) {
             return (
@@ -66,6 +71,8 @@ export function CategoriesSection({
                     message={t('categories.error')}
                     onRetry={onRetry}
                     retryLabel={t('common:actions.tryAgain')}
+                    // A failed section must not hold the height of a full grid — it looks more broken than it is.
+                    className="min-h-0 py-10"
                 />
             );
         }
@@ -159,21 +166,26 @@ export function CategoriesSection({
                             {t('categories.heading')}
                         </h2>
                     </div>
-                    <TextLink to={APP_ROUTES.public.courses} className="hidden text-sm md:inline">
-                        {t('categories.viewAll')}
-                    </TextLink>
+                    {/* One link per breakpoint: this one on desktop, the one below the grid on mobile. */}
+                    {hasContent && (
+                        <TextLink
+                            to={APP_ROUTES.public.courses}
+                            className="hidden text-sm md:inline"
+                        >
+                            {t('categories.viewAll')}
+                        </TextLink>
+                    )}
                 </div>
 
                 {renderContent()}
 
-                <div className="mt-8 flex justify-center md:hidden">
-                    <Link
-                        to={APP_ROUTES.public.courses}
-                        className="rounded-full bg-primary/10 px-6 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
-                    >
-                        {t('categories.viewAll')}
-                    </Link>
-                </div>
+                {hasContent && (
+                    <div className="mt-8 flex justify-center md:hidden">
+                        <TextLink to={APP_ROUTES.public.courses} className="text-sm">
+                            {t('categories.viewAll')}
+                        </TextLink>
+                    </div>
+                )}
             </div>
         </section>
     );
