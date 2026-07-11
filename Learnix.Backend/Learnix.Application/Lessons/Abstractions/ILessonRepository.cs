@@ -18,14 +18,13 @@ public interface ILessonRepository : IRepositoryBase<Lesson>
     Task<TestLesson?> GetTestLessonInCourseAsync(Guid courseId, Guid lessonId, CancellationToken ct = default);
 
     /// <summary>
-    /// Returns the count of visible (non-hidden) lessons across all sections of the given course.
+    /// Every visible (non-hidden) lesson of the course, each flagged with whether the student has
+    /// completed it. One query, no counting — the caller decides what "finished" means.
     /// </summary>
-    Task<int> GetVisibleLessonCountAsync(Guid courseId, CancellationToken ct = default);
-
-    /// <summary>
-    /// Returns the count of completed visible lessons for a student in a given course.
-    /// </summary>
-    Task<int> GetCompletedVisibleLessonCountAsync(Guid studentId, Guid courseId, CancellationToken ct = default);
+    Task<IReadOnlyList<LessonCompletion>> GetVisibleLessonCompletionAsync(
+        Guid studentId,
+        Guid courseId,
+        CancellationToken ct = default);
 
     /// <summary>
     /// Returns a visible lesson that belongs to the given course, preserving the derived EF type
@@ -40,3 +39,5 @@ public interface ILessonRepository : IRepositoryBase<Lesson>
     /// </summary>
     Task<Guid?> GetResumeLessonIdAsync(Guid studentId, Guid courseId, CancellationToken ct = default);
 }
+
+public sealed record LessonCompletion(Guid LessonId, bool IsCompleted);

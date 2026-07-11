@@ -12,7 +12,29 @@ public class PostLesson : Lesson
         Content = content;
     }
 
+    /// <summary>Average adult reading speed for prose, in words per minute.</summary>
+    private const int WordsPerMinute = 200;
+
     public string Content { get; private set; } = null!;
+
+    /// <summary>
+    /// How long the post takes to read, so it can sit next to a video's real duration in the
+    /// curriculum. An estimate from the word count, never below a minute — a reader who opens a
+    /// lesson spends some time on it even if it is two sentences long.
+    /// </summary>
+    public int EstimatedReadingSeconds
+    {
+        get
+        {
+            var words = Content.Split(
+                [' ', '\t', '\n', '\r'],
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
+
+            var seconds = (int)Math.Ceiling(words * 60d / WordsPerMinute);
+
+            return Math.Max(seconds, 60);
+        }
+    }
 
     public override bool IsPublishReady() => !string.IsNullOrWhiteSpace(Content);
 

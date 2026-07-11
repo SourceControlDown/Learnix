@@ -4,11 +4,16 @@ export type NotificationEventType =
     | 'InstructorApproved'
     | 'InstructorRejected';
 
+/**
+ * Values the translation needs — `{ courseTitle }`, `{ code }` — or absent when the type is the whole
+ * message. The server reports what happened; the wording is ours (ADR-NOTIF-001).
+ */
+export type NotificationParams = Record<string, string>;
+
 export interface NotificationDto {
     id: string;
     type: NotificationEventType;
-    title: string;
-    body: string;
+    parameters: NotificationParams | null;
     isRead: boolean;
     createdAt: string;
 }
@@ -20,7 +25,6 @@ export interface UnreadNotificationCountDto {
 export interface NotificationReceivedPayload {
     notificationId: string;
     type: NotificationEventType;
-    title: string;
-    body: string;
+    parameters: NotificationParams | null;
     createdAt: string;
 }

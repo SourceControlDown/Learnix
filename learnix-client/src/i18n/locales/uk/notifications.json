@@ -7,6 +7,24 @@
     "typeCertificateReady": "Сертифікат",
     "typeInstructorApproved": "Заявка",
     "typeInstructorRejected": "Заявка",
+    "items": {
+        "AchievementEarned": {
+            "title": "Отримано досягнення",
+            "body": "Ви здобули нове досягнення: {{achievement}}"
+        },
+        "CertificateReady": {
+            "title": "Сертифікат видано",
+            "body": "Ви отримали сертифікат за курс «{{courseTitle}}»."
+        },
+        "InstructorApproved": {
+            "title": "Заявку схвалено",
+            "body": "Вашу заявку на інструктора схвалено. Вітаємо на борту!"
+        },
+        "InstructorRejected": {
+            "title": "Заявку відхилено",
+            "body": "Вашу заявку на інструктора цього разу не схвалено."
+        }
+    },
     "error": {
         "title": "Не вдалося завантажити сповіщення"
     }

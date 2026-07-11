@@ -12,6 +12,14 @@
     <ProjectReference Include="..\Learnix.Application\Learnix.Application.csproj" />
   </ItemGroup>
 
+  <!-- The outbox dispatcher and its handlers are internal by design: nothing outside this layer routes them.
+       The tests still have to reach them. -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Learnix.Infrastructure.UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Anthropic.SDK" Version="5.10.0" />
     <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" Version="9.3.1" />

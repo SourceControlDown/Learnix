@@ -82,6 +82,7 @@ export const queryKeys = {
         count: () => [...queryKeys.wishlist.all, 'count'] as const,
     },
     aiChat: {
+        status: ['ai-chat', 'status'] as const,
         session: (scope: ChatScope) =>
             scope.kind === 'platform'
                 ? (['ai-chat', 'session', 'platform'] as const)

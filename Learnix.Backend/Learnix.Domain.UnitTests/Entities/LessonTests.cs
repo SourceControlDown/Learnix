@@ -160,6 +160,38 @@ public class PostLessonTests
     }
 
     [Fact]
+    public void EstimatedReadingSeconds_ShouldScaleWithTheWordCount()
+    {
+        // Arrange — 400 words at 200 wpm is two minutes
+        var lesson = Create(string.Join(' ', Enumerable.Repeat("word", 400)));
+
+        // Act & Assert
+        lesson.EstimatedReadingSeconds.Should().Be(120);
+    }
+
+    [Theory]
+    [InlineData("Short.")]
+    [InlineData("")]
+    public void EstimatedReadingSeconds_ShouldNeverFallBelowAMinute(string content)
+    {
+        // Act — a floor keeps a one-line post from claiming it takes zero time
+        var lesson = Create(content);
+
+        // Assert
+        lesson.EstimatedReadingSeconds.Should().Be(60);
+    }
+
+    [Fact]
+    public void EstimatedReadingSeconds_ShouldIgnoreExtraWhitespaceBetweenWords()
+    {
+        // Arrange — markdown content is full of blank lines and indentation
+        var lesson = Create("  one\n\n two \t three   \r\n four  ");
+
+        // Act & Assert — four words, well under the floor
+        lesson.EstimatedReadingSeconds.Should().Be(60);
+    }
+
+    [Fact]
     public void UpdatePost_WhenContentIsCleared_ShouldHideTheLesson()
     {
         // Arrange — content is what makes a post lesson publishable; losing it must hide it again

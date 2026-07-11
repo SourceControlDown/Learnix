@@ -39,25 +39,20 @@ internal sealed class LessonRepository(ApplicationDbContext context)
         ).FirstOrDefaultAsync(ct);
     }
 
-    public Task<int> GetVisibleLessonCountAsync(Guid courseId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<LessonCompletion>> GetVisibleLessonCompletionAsync(
+        Guid studentId,
+        Guid courseId,
+        CancellationToken ct = default)
     {
-        return (
+        return await (
             from lesson in context.Set<Lesson>()
             join section in context.Set<Section>() on lesson.SectionId equals section.Id
             where section.CourseId == courseId && !lesson.IsHidden
-            select lesson
-        ).CountAsync(ct);
-    }
-
-    public Task<int> GetCompletedVisibleLessonCountAsync(Guid studentId, Guid courseId, CancellationToken ct = default)
-    {
-        return (
-            from lp in context.Set<LessonProgress>()
-            join lesson in context.Set<Lesson>() on lp.LessonId equals lesson.Id
-            join section in context.Set<Section>() on lesson.SectionId equals section.Id
-            where lp.StudentId == studentId && section.CourseId == courseId && lp.IsCompleted && !lesson.IsHidden
-            select lp
-        ).CountAsync(ct);
+            select new LessonCompletion(
+                lesson.Id,
+                context.Set<LessonProgress>()
+                    .Any(lp => lp.LessonId == lesson.Id && lp.StudentId == studentId && lp.IsCompleted))
+        ).AsNoTracking().ToListAsync(ct);
     }
 
     public Task<Lesson?> GetVisibleLessonInCourseAsync(Guid courseId, Guid lessonId, CancellationToken ct = default)

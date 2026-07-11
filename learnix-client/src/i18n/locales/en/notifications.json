@@ -7,6 +7,24 @@
     "typeCertificateReady": "Certificate",
     "typeInstructorApproved": "Application",
     "typeInstructorRejected": "Application",
+    "items": {
+        "AchievementEarned": {
+            "title": "Achievement unlocked",
+            "body": "You've earned a new achievement: {{achievement}}"
+        },
+        "CertificateReady": {
+            "title": "Certificate issued",
+            "body": "You've earned a certificate for \"{{courseTitle}}\"."
+        },
+        "InstructorApproved": {
+            "title": "Application approved",
+            "body": "Your instructor application has been approved. Welcome aboard!"
+        },
+        "InstructorRejected": {
+            "title": "Application rejected",
+            "body": "Your instructor application was not approved at this time."
+        }
+    },
     "error": {
         "title": "Failed to load notifications"
     }

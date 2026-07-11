@@ -4,6 +4,8 @@ using FluentValidation;
 using Learnix.Application.Categories.Services;
 using Learnix.Application.Common.Behaviors;
 using Learnix.Application.Common.Caching;
+using Learnix.Application.Enrollments.Abstractions;
+using Learnix.Application.Enrollments.Services;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,6 +27,7 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(assembly);
         services.AddScoped<CategoryCoursesCountUpdater>();
+        services.AddScoped<ICourseCompletionService, CourseCompletionService>();
         services.AddCachingBehaviors(assembly);
 
         return services;
