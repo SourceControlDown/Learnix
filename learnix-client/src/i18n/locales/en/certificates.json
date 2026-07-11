@@ -17,8 +17,8 @@
         "linkCopied": "Verification link copied"
     },
     "notification": {
-        "title": "Certificate ready!",
-        "descriptionPrefix": "Your certificate for ",
+        "title": "Certificate issued!",
+        "descriptionPrefix": "You've earned a certificate for ",
         "action": "View certificates"
     },
     "error": {

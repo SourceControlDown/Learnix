@@ -1,5 +1,7 @@
 using Learnix.Domain.Common;
 using Learnix.Domain.Common.Exceptions;
+using Learnix.Domain.Enums;
+using Learnix.Domain.Events.Certificates;
 
 namespace Learnix.Domain.Entities;
 
@@ -22,22 +24,63 @@ public class Certificate : BaseEntity
 
     public Course? Course { get; private set; }
     public string Code { get; private set; } = null!;
-    public string? FileUrl { get; private set; }
+    public string? FilePath { get; private set; }
     public DateTime IssuedAt { get; private set; }
 
-    public static Certificate Create(Guid courseId, Guid studentId, Guid enrollmentId, string code)
+    /// <summary>
+    /// A certificate is proof of a completed enrollment, so the enrollment is what it is issued
+    /// from: every id and the completion itself come from one consistent source. The course is
+    /// passed alongside — rather than read off <c>enrollment.Course</c>, which is only populated if
+    /// the query happened to include it — so the issued event can name the course without a second
+    /// lookup. It must be the very course the student enrolled in.
+    /// </summary>
+    public static Certificate Issue(Enrollment enrollment, Course course)
     {
-        if (string.IsNullOrWhiteSpace(code))
-            throw new DomainException("Certificate code cannot be empty.");
+        if (enrollment.Status != EnrollmentStatus.Completed)
+            throw new DomainException("Certificate cannot be issued for an enrollment that is not completed.");
 
-        return new Certificate(courseId, studentId, enrollmentId, code);
+        if (course.Id != enrollment.CourseId)
+            throw new DomainException("Certificate course does not match the enrolled course.");
+
+        var certificate = new Certificate(
+            enrollment.CourseId,
+            enrollment.StudentId,
+            enrollment.Id,
+            GenerateCode());
+
+        certificate.RaiseDomainEvent(new CertificateIssuedDomainEvent(
+            certificate.Id,
+            certificate.StudentId,
+            course.Id,
+            course.Title));
+
+        return certificate;
     }
 
-    public void AttachFile(string fileUrl)
+    /// <summary>
+    /// Replaces the rendered PDF. Regenerating a certificate writes to the same deterministic blob
+    /// path, overwriting the file in place — so only a genuinely different path orphans the old blob
+    /// and needs an event to reap it. Raising one unconditionally would enqueue a delete for the
+    /// file that was just uploaded.
+    /// </summary>
+    public void AttachFile(string filePath)
     {
-        if (string.IsNullOrWhiteSpace(fileUrl))
-            throw new DomainException("Certificate file URL cannot be empty.");
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new DomainException("Certificate file path cannot be empty.");
 
-        FileUrl = fileUrl;
+        if (FilePath == filePath)
+            return;
+
+        if (FilePath is not null)
+            RaiseDomainEvent(new CertificateFileReplacedDomainEvent(Id, FilePath));
+
+        FilePath = filePath;
+    }
+
+    private static string GenerateCode()
+    {
+        var date = DateTime.UtcNow.ToString("yyyyMMdd");
+        var random = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+        return $"CERT-{date}-{random}";
     }
 }

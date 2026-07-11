@@ -15,7 +15,7 @@ public sealed class CertificateConfiguration : IEntityTypeConfiguration<Certific
         builder.Property(c => c.StudentId).IsRequired();
         builder.Property(c => c.EnrollmentId).IsRequired();
         builder.Property(c => c.Code).IsRequired().HasMaxLength(32);
-        builder.Property(c => c.FileUrl).HasMaxLength(512);
+        builder.Property(c => c.FilePath).HasMaxLength(512);
         builder.Property(c => c.IssuedAt).IsRequired();
 
         builder.HasIndex(c => c.Code).IsUnique();

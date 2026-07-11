@@ -38,14 +38,14 @@ public sealed class GetCourseCertificateQueryHandler(
         var verificationUrl = $"{appSettings.Value.ClientBaseUrl}/verify/{certificate.Code}";
 
         string? downloadUrl = null;
-        if (certificate.FileUrl is not null)
-            downloadUrl = blobStorageService.GenerateReadUrl(certificate.FileUrl, BlobUrlTtlConstants.CertificateReadUrl);
+        if (certificate.FilePath is not null)
+            downloadUrl = blobStorageService.GenerateReadUrl(certificate.FilePath, BlobUrlTtlConstants.CertificateReadUrl);
 
         return Result.Ok(new CourseCertificateResponse(
             certificate.Id,
             certificate.Code,
             certificate.IssuedAt,
-            IsReady: certificate.FileUrl is not null,
+            IsReady: certificate.FilePath is not null,
             DownloadUrl: downloadUrl,
             VerificationUrl: verificationUrl));
     }
