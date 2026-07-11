@@ -70,6 +70,19 @@
   <data name="UserRoleChanged_BodyAssigned" xml:space="preserve"><value>You have been granted the {0} role on Learnix. Log in to your account to access new features.</value></data>
   <data name="UserRoleChanged_BodyRevoked" xml:space="preserve"><value>The {0} role has been removed from your Learnix account.</value></data>
 
+  <!-- AccountDeleted -->
+  <data name="AccountDeleted_Subject" xml:space="preserve"><value>Account deleted</value></data>
+  <data name="AccountDeleted_Greeting" xml:space="preserve"><value>Hi, {0}!</value></data>
+  <data name="AccountDeleted_Body" xml:space="preserve"><value>Your Learnix account has been deleted. You can no longer sign in, and your profile is no longer visible on the platform.</value></data>
+  <data name="AccountDeleted_Recovery" xml:space="preserve"><value>Nothing is erased yet. Your courses, progress and certificates are kept until {0}, and the account can still be restored up to that date. After it, your personal data is erased for good.</value></data>
+  <data name="AccountDeleted_Support" xml:space="preserve"><value>If this was a mistake, or you want your account back, reply to this email before that date and an administrator will restore it.</value></data>
+
+  <!-- AccountRecovered -->
+  <data name="AccountRecovered_Subject" xml:space="preserve"><value>Account restored</value></data>
+  <data name="AccountRecovered_Greeting" xml:space="preserve"><value>Hi, {0}!</value></data>
+  <data name="AccountRecovered_Body" xml:space="preserve"><value>Your Learnix account has been restored by an administrator. Your courses, progress and certificates are exactly where you left them.</value></data>
+  <data name="AccountRecovered_SignIn" xml:space="preserve"><value>You can sign in again with your usual email and password.</value></data>
+
   <!-- CourseAdminUnpublished -->
   <data name="CourseAdminUnpublished_Subject" xml:space="preserve"><value>Course unpublished</value></data>
   <data name="CourseAdminUnpublished_Greeting" xml:space="preserve"><value>Hi, {0}!</value></data>

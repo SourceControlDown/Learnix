@@ -71,6 +71,19 @@
   <data name="UserRoleChanged_BodyRevoked" xml:space="preserve"><value>З вашого акаунта на платформі Learnix було знято роль {0}.</value></data>
 
   <!-- CourseAdminUnpublished -->
+  <!-- AccountDeleted -->
+  <data name="AccountDeleted_Subject" xml:space="preserve"><value>Акаунт видалено</value></data>
+  <data name="AccountDeleted_Greeting" xml:space="preserve"><value>Привіт, {0}!</value></data>
+  <data name="AccountDeleted_Body" xml:space="preserve"><value>Ваш акаунт на Learnix видалено. Ви більше не зможете увійти, а ваш профіль не відображається на платформі.</value></data>
+  <data name="AccountDeleted_Recovery" xml:space="preserve"><value>Поки що нічого не стерто. Ваші курси, прогрес і сертифікати зберігаються до {0}, і до цієї дати акаунт ще можна відновити. Після неї ваші персональні дані буде стерто остаточно.</value></data>
+  <data name="AccountDeleted_Support" xml:space="preserve"><value>Якщо це сталося помилково або ви хочете повернути акаунт — дайте відповідь на цей лист до вказаної дати, і адміністратор його відновить.</value></data>
+
+  <!-- AccountRecovered -->
+  <data name="AccountRecovered_Subject" xml:space="preserve"><value>Акаунт відновлено</value></data>
+  <data name="AccountRecovered_Greeting" xml:space="preserve"><value>Привіт, {0}!</value></data>
+  <data name="AccountRecovered_Body" xml:space="preserve"><value>Адміністратор відновив ваш акаунт на Learnix. Курси, прогрес і сертифікати — там, де ви їх залишили.</value></data>
+  <data name="AccountRecovered_SignIn" xml:space="preserve"><value>Ви можете знову увійти зі своєю звичною поштою та паролем.</value></data>
+
   <data name="CourseAdminUnpublished_Subject" xml:space="preserve"><value>Курс знято з публікації</value></data>
   <data name="CourseAdminUnpublished_Greeting" xml:space="preserve"><value>Привіт, {0}!</value></data>
   <data name="CourseAdminUnpublished_Body" xml:space="preserve"><value>Адміністратор платформи Learnix зняв ваш курс з публікації:</value></data>

@@ -103,6 +103,35 @@ internal sealed class SmtpEmailSender(
         await SendAsync(toEmail, subject, html, ct);
     }
 
+    public async Task SendAccountDeletedAsync(string toEmail, string firstName, DateTime purgeAfterUtc, string language = "en", CancellationToken ct = default)
+    {
+        var culture = new CultureInfo(language);
+        CultureInfo.CurrentUICulture = culture;
+
+        var subject = $"{_localizer["AccountDeleted_Subject"]} — Learnix";
+        var html = await renderer.RenderAsync("AccountDeleted.cshtml", new AccountDeletedModel
+        {
+            FirstName = firstName,
+            PurgeDate = purgeAfterUtc.ToString("d MMMM yyyy", culture),
+            ClientBaseUrl = _appSettings.ClientBaseUrl,
+            Strings = _localizer
+        });
+        await SendAsync(toEmail, subject, html, ct);
+    }
+
+    public async Task SendAccountRecoveredAsync(string toEmail, string firstName, string language = "en", CancellationToken ct = default)
+    {
+        CultureInfo.CurrentUICulture = new CultureInfo(language);
+        var subject = $"{_localizer["AccountRecovered_Subject"]} — Learnix";
+        var html = await renderer.RenderAsync("AccountRecovered.cshtml", new AccountRecoveredModel
+        {
+            FirstName = firstName,
+            ClientBaseUrl = _appSettings.ClientBaseUrl,
+            Strings = _localizer
+        });
+        await SendAsync(toEmail, subject, html, ct);
+    }
+
     public async Task SendUserRoleChangedAsync(string toEmail, string firstName, string role, bool assigned, string language = "en", CancellationToken ct = default)
     {
         CultureInfo.CurrentUICulture = new CultureInfo(language);
