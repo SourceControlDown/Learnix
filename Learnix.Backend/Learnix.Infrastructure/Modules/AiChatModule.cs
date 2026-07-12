@@ -20,6 +20,7 @@ namespace Learnix.Infrastructure.Modules;
 public static class AiChatModule
 {
     private const string AnthropicProvider = "Anthropic";
+    private const string GeminiProvider = "Gemini";
 
     public static IServiceCollection AddAiChat(
         this IServiceCollection services,
@@ -43,7 +44,7 @@ public static class AiChatModule
                 sp.GetRequiredService<IOptions<AnthropicOptions>>().Value.ApiKey)));
             services.AddScoped<IAiChatProvider, AnthropicChatProvider>();
         }
-        else
+        else if (GeminiProvider.Equals(aiChatOptions.Provider, StringComparison.OrdinalIgnoreCase))
         {
             // Gemini is the default provider.
             services.AddSingleton<IAiChatProvider, GeminiChatProvider>();

@@ -2,7 +2,7 @@ namespace Learnix.Application.Common.Options;
 
 public sealed class AiChatOptions
 {
-    public string Provider { get; init; } = "Anthropic";
+    public string Provider { get; init; } = string.Empty;
 
     /// <summary>
     /// How many messages a session keeps. Older ones are dropped on write; the session itself never ends.
