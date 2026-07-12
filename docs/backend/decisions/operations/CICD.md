@@ -273,6 +273,67 @@ GitHub Secrets (encrypted) → workflow ${{ secrets.PROD_POSTGRES_CONN }}
 
 ---
 
+## ADR-BACK-CICD-010: Secrets reach a `run:` block through `env:`, never through `${{ }}`
+
+**Decision:** A secret is never interpolated inside a `run:` script. It is bound to an environment variable in the step's `env:` block and the script reads the shell variable, quoted:
+
+```yaml
+# Wrong — the secret is pasted into the script text
+run: az containerapp registry set --password ${{ secrets.DOCKERHUB_TOKEN }}
+
+# Right — the secret arrives as data, through the environment
+env:
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+run: az containerapp registry set --password "$DOCKERHUB_TOKEN"
+```
+
+**Why:** `${{ }}` is expanded by the Actions runner **before** the shell exists. The runner takes the `run:` block, substitutes the secret **as text**, writes the resulting file to disk, and only then executes it. Three consequences follow:
+
+- **Injection.** The substitution is textual, so the value is parsed as shell code. A quote, a backtick, a `$(…)` or a newline inside the secret would not corrupt a password — it would *execute*. This is the actual point of the rule: any `${{ }}` inside `run:` is a template splice into a program, and it is safe only for as long as the value happens to contain no metacharacters.
+- **A copy on disk.** The expanded script sits on the runner's filesystem for the life of the job, readable by every later step in that job.
+- **Leaks through diagnostics.** `set -x`, a shell error trace, anything that echoes the command — and the secret is in the command line. GitHub masks secrets in logs, but masking matches the exact value: base64-encode it, slice it, or otherwise transform it, and the mask no longer applies.
+
+Passing through `env:` has none of these properties. The script contains only `$DOCKERHUB_TOKEN` — the characters `$`, `D`, `O`… — and the shell substitutes it at runtime as ordinary data, so metacharacters inside the value stay data. The secret never becomes part of the script text.
+
+**Scope:** the rule applies to every *interpreted* context, not only `run:` — `script:` in `actions/github-script` and any other input that is evaluated as code. Expanding `${{ }}` into a **value**, including inside `env:` itself, is safe:
+
+```yaml
+env:
+  ConnectionStrings__Postgres: ${{ secrets.PROD_POSTGRES_CONN }}   # fine — a value, not code
+```
+
+**What this does not buy:**
+- The variable is visible to every process in the step. `env:` prevents *injection and the on-disk copy*; it does not hide the secret inside the job. There is no way to pass it in and hide it.
+- Quote it in the shell — `"$VAR"`, never bare `$VAR` — or a value with spaces splits into several arguments.
+- `az containerapp update --set-env-vars …` still passes values as **command-line arguments**, which are visible in the process list. On an ephemeral single-tenant runner this is an accepted risk; removing it entirely would mean a Key Vault reference (see ADR-BACK-CICD-007, alternatives).
+
+**Alternatives:**
+- Inline `${{ secrets.* }}` in `run:` — the original form. Works until a secret is rotated to one containing a shell metacharacter, at which point it silently becomes remote code execution on the runner. Rejected.
+
+---
+
+## ADR-BACK-CICD-011: Third-party actions pinned to a commit SHA, GitHub-owned ones to a tag
+
+**Decision:** Every action published by someone other than GitHub is referenced by a full commit SHA, with the human-readable tag kept as a trailing comment:
+
+```yaml
+uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+```
+
+`actions/checkout`, `actions/setup-node` and `actions/setup-dotnet` stay on tags — they are GitHub-owned and share the platform's trust boundary.
+
+**Why:** a tag is a mutable pointer. Whoever controls the action's repository can move `v2` to a different commit at any time, and every workflow that referenced `@v2` runs the new code on the next build — with the job's secrets in its environment. A SHA is immutable: the code that runs is the code that was reviewed. This is the standard mitigation for the supply-chain attacks that have repeatedly hit the Actions marketplace.
+
+**Cost:** updates are no longer automatic. A pinned action stays pinned until someone bumps it deliberately — which is the point, but it does mean security patches to those actions do not arrive on their own. The trailing `# v2` comment exists so a reader can tell what version a SHA corresponds to without querying the API.
+
+**A note on resolving the SHA:** a release tag is usually an *annotated* tag object, so `git/ref/tags/v2` returns the SHA of the tag, not of the commit it points at. It has to be dereferenced (`git/tags/<sha>` → `.object.sha`) or the pin is meaningless. Do not copy a SHA from a comment or an old README — resolve it: while pinning this repo's actions, the SHA that had been sitting commented next to `Azure/static-web-apps-deploy@v1` turned out to be stale.
+
+**Alternatives:**
+- Tags everywhere — convenient, and the default in most examples. It means trusting every future maintainer of every action with the deploy credentials. Rejected.
+- Dependabot on top of SHA pins — the right long-term answer: it raises PRs that bump the SHA and the comment together, restoring automatic updates without giving up immutability. Not configured yet.
+
+---
+
 ## Summary — CI/CD Pipeline at a Glance
 
 ```
