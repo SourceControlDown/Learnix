@@ -23,7 +23,9 @@ async function loadDotEnv() {
         return;
     }
     for (const line of contents.split('\n')) {
-        const match = /^\s*([\w.-]+)\s*=\s*(.*)?\s*$/.exec(line);
+        // The value is trimmed below, so it needs no \s* tail here — one that follows a greedy
+        // (.*)? only gives the engine something to backtrack over.
+        const match = /^\s*([\w.-]+)\s*=(.*)$/.exec(line);
         if (!match) continue;
         const key = match[1];
         if (process.env[key] === undefined) {

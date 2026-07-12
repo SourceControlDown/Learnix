@@ -63,12 +63,18 @@ jobs:
     # indexes, so anything above it — learnix-client — would never be analysed at all.
     #
     # sonar.exclusions: EF migrations are generated code; the Razor email templates are table-layout
-    # HTML whose "deprecated" attributes are what makes them render in Outlook; the rest is frontend
-    # build output and vendored code.
+    # HTML whose "deprecated" attributes are what makes them render in Outlook; mockups/ is a static
+    # design artifact that ships to nobody; the rest is frontend build output and vendored code.
     #
     # sonar.coverage.exclusions: coverage is a backend metric. There are no frontend tests, so
     # without this the client's ~20k untested lines would count as "lines to cover" and drag the
     # project's coverage down by roughly half while telling us nothing new.
+    #
+    # sonar.issue.ignore: two React rules we disagree with.
+    #   S6759 (props must be Readonly<T>) — props are immutable by contract in React; wrapping every
+    #   props type adds noise and catches nothing.
+    #   S6479 (no array index as key) — every hit is a fixed-length list that is never reordered
+    #   (4 avatars, 6 OTP boxes, JSON-LD blocks), so the index *is* the identity.
     - name: Begin SonarScanner
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -76,11 +82,16 @@ jobs:
       run: >
         dotnet sonarscanner begin
         /k:"Learnix" /o:"oleh-bashtovyi"
-        /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        /d:sonar.token="$SONAR_TOKEN"
         /d:sonar.host.url="https://sonarcloud.io"
         /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml"
-        /d:sonar.exclusions="**/Persistence/EntityFramework/Migrations/**,**/Email/Templates/**,learnix-client/node_modules/**,learnix-client/dist/**,learnix-client/src/components/ui/**,**/*.min.js"
+        /d:sonar.exclusions="**/Persistence/EntityFramework/Migrations/**,**/Email/Templates/**,mockups/**,learnix-client/node_modules/**,learnix-client/dist/**,learnix-client/src/components/ui/**,**/*.min.js"
         /d:sonar.coverage.exclusions="learnix-client/**,infrastructure/**,**/*.mjs,**/*.config.*"
+        /d:sonar.issue.ignore.multicriteria="e1,e2"
+        /d:sonar.issue.ignore.multicriteria.e1.ruleKey="typescript:S6759"
+        /d:sonar.issue.ignore.multicriteria.e1.resourceKey="**/*.tsx"
+        /d:sonar.issue.ignore.multicriteria.e2.ruleKey="typescript:S6479"
+        /d:sonar.issue.ignore.multicriteria.e2.resourceKey="**/*.tsx"
 
     # 6. Build the backend application
     - name: Build
@@ -100,7 +111,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+      run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
   frontend:
     name: Frontend Build & Lint
@@ -158,7 +169,7 @@ jobs:
 
     # 3. Install root dependencies to get the duplication script
     - name: Install root dependencies
-      run: npm install
+      run: npm ci
 
     # 4. Execute duplication analysis across the codebase
     - name: Run code duplication check
@@ -186,7 +197,8 @@ jobs:
 
       # 2. Run Gitleaks action to scan for committed secrets
       - name: Scan git history for secrets
-        uses: gitleaks/gitleaks-action@v2
+        # Pinned to the commit v2 pointed at — a mutable tag would let the action change under us.
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml

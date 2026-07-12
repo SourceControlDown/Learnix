@@ -65,7 +65,7 @@ async function parseControllers() {
     const files = (await readdir(CONTROLLERS_DIR)).filter((f) => f.endsWith('Controller.cs'));
     const endpoints = [];
 
-    for (const file of files.sort()) {
+    for (const file of files.toSorted()) {
         const source = await readFile(path.join(CONTROLLERS_DIR, file), 'utf8');
         const name = file.replace('Controller.cs', '');
 
@@ -164,7 +164,7 @@ function render(endpoints, descriptions) {
         '',
     ];
 
-    for (const [controller, list] of [...byController].sort()) {
+    for (const [controller, list] of [...byController].toSorted(([a], [b]) => a.localeCompare(b))) {
         out.push(`## ${controller}`, '');
         out.push('| Method | Endpoint | Auth | Rate limit | Description |');
         out.push('|---|---|---|---|---|');
