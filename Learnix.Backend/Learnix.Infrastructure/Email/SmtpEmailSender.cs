@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Net;
+using System.Text.RegularExpressions;
 using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Application.Common.Options;
 using Learnix.Infrastructure.Email.Models;
@@ -11,7 +13,7 @@ using MimeKit;
 
 namespace Learnix.Infrastructure.Email;
 
-internal sealed class SmtpEmailSender(
+internal sealed partial class SmtpEmailSender(
     IOptions<SmtpSettings> options,
     IOptions<AppOptions> appSettings,
     EmailRenderer renderer,
@@ -181,7 +183,15 @@ internal sealed class SmtpEmailSender(
         message.From.Add(new MailboxAddress(_settings.SenderName, _settings.SenderEmail));
         message.To.Add(MailboxAddress.Parse(toEmail));
         message.Subject = subject;
-        var builder = new BodyBuilder { HtmlBody = htmlBody };
+        // An HTML-only body is one of the oldest spam signals there is: legitimate senders offer a plain
+        // text alternative, bulk mailers rarely bother. It also is what a client with images or HTML
+        // turned off actually shows the reader.
+        var builder = new BodyBuilder
+        {
+            HtmlBody = htmlBody,
+            TextBody = HtmlToPlainText(htmlBody)
+        };
+
         var logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Email", "Resources", "logo.png");
         if (System.IO.File.Exists(logoPath))
         {
@@ -215,6 +225,34 @@ internal sealed class SmtpEmailSender(
         }
 #pragma warning restore S2139
     }
+
+    /// <summary>
+    /// The templates are the source of truth for wording, so the text part is derived from the rendered
+    /// HTML rather than maintained twice — a second copy would drift, and a stale text part is worse than
+    /// none. Crude on purpose: strip the head, turn block boundaries into line breaks, drop the tags.
+    /// </summary>
+    private static string HtmlToPlainText(string html)
+    {
+        var text = HeadOrScriptOrStyle().Replace(html, string.Empty);
+        text = BlockBoundary().Replace(text, "\n");
+        text = AnyTag().Replace(text, string.Empty);
+        text = WebUtility.HtmlDecode(text);
+        text = ExcessBlankLines().Replace(text, "\n\n");
+
+        return text.Trim();
+    }
+
+    [GeneratedRegex(@"<(head|script|style)\b[^>]*>.*?</\1>", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
+    private static partial Regex HeadOrScriptOrStyle();
+
+    [GeneratedRegex(@"</(p|div|tr|h[1-6]|li)>|<br\s*/?>", RegexOptions.IgnoreCase)]
+    private static partial Regex BlockBoundary();
+
+    [GeneratedRegex("<[^>]+>")]
+    private static partial Regex AnyTag();
+
+    [GeneratedRegex(@"[ \t]*\n\s*\n\s*")]
+    private static partial Regex ExcessBlankLines();
 
     private static string MaskEmail(string email)
     {
