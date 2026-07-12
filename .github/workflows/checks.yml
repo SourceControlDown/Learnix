@@ -70,11 +70,19 @@ jobs:
     # without this the client's ~20k untested lines would count as "lines to cover" and drag the
     # project's coverage down by roughly half while telling us nothing new.
     #
-    # sonar.issue.ignore: two React rules we disagree with.
+    # sonar.issue.ignore: rules that are wrong *for this codebase*, each with its reason.
     #   S6759 (props must be Readonly<T>) — props are immutable by contract in React; wrapping every
     #   props type adds noise and catches nothing.
     #   S6479 (no array index as key) — every hit is a fixed-length list that is never reordered
     #   (4 avatars, 6 OTP boxes, JSON-LD blocks), so the index *is* the identity.
+    #   S3358 (no nested ternary) — in JSX the loading/empty/data chain is the idiom; hoisting each one
+    #   into a statement would push 25 render bodies out of the markup they describe.
+    #   S7018 / S6473 (npm --ignore-scripts) — the frontend build *needs* lifecycle scripts: esbuild
+    #   installs its platform binary in postinstall, and `npm ci --ignore-scripts` breaks vite build.
+    #   S6437 (hard-coded password in PasswordInput.tsx) — it is the string "password", the input's
+    #   type attribute, not a credential.
+    #   S125 (commented-out code in index.html) — the SEO fallback tags are documented in a comment
+    #   block that the analyser mistakes for dead markup.
     - name: Begin SonarScanner
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -87,11 +95,21 @@ jobs:
         /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml"
         /d:sonar.exclusions="**/Persistence/EntityFramework/Migrations/**,**/Email/Templates/**,mockups/**,learnix-client/node_modules/**,learnix-client/dist/**,learnix-client/src/components/ui/**,**/*.min.js"
         /d:sonar.coverage.exclusions="learnix-client/**,infrastructure/**,**/*.mjs,**/*.config.*"
-        /d:sonar.issue.ignore.multicriteria="e1,e2"
+        /d:sonar.issue.ignore.multicriteria="e1,e2,e3,e4,e5,e6,e7"
         /d:sonar.issue.ignore.multicriteria.e1.ruleKey="typescript:S6759"
         /d:sonar.issue.ignore.multicriteria.e1.resourceKey="**/*.tsx"
         /d:sonar.issue.ignore.multicriteria.e2.ruleKey="typescript:S6479"
         /d:sonar.issue.ignore.multicriteria.e2.resourceKey="**/*.tsx"
+        /d:sonar.issue.ignore.multicriteria.e3.ruleKey="typescript:S3358"
+        /d:sonar.issue.ignore.multicriteria.e3.resourceKey="**/*.tsx"
+        /d:sonar.issue.ignore.multicriteria.e4.ruleKey="docker:S7018"
+        /d:sonar.issue.ignore.multicriteria.e4.resourceKey="**/Dockerfile"
+        /d:sonar.issue.ignore.multicriteria.e5.ruleKey="githubactions:S7018"
+        /d:sonar.issue.ignore.multicriteria.e5.resourceKey="**/*.yml"
+        /d:sonar.issue.ignore.multicriteria.e6.ruleKey="typescript:S2068"
+        /d:sonar.issue.ignore.multicriteria.e6.resourceKey="**/PasswordInput.tsx"
+        /d:sonar.issue.ignore.multicriteria.e7.ruleKey="Web:S125"
+        /d:sonar.issue.ignore.multicriteria.e7.resourceKey="learnix-client/index.html"
 
     # 6. Build the backend application
     - name: Build
