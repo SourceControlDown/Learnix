@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Learnix.API.Constants;
 using Learnix.API.Extensions;
 using Learnix.Application.Reviews.Commands.CreateReview;
 using Learnix.Application.Reviews.Commands.DeleteReview;
@@ -36,7 +37,7 @@ public sealed class CourseReviewsController(ISender sender) : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "EmailConfirmed")]
+    [Authorize(Policy = AuthPolicies.EmailConfirmed)]
     public async Task<IActionResult> Create(
         Guid courseId,
         [FromBody] CreateReviewRequest body,
@@ -47,7 +48,7 @@ public sealed class CourseReviewsController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{reviewId:guid}")]
-    [Authorize(Policy = "EmailConfirmed")]
+    [Authorize(Policy = AuthPolicies.EmailConfirmed)]
     public async Task<IActionResult> Update(
         Guid courseId,
         Guid reviewId,

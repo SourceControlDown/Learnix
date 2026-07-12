@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Text;
 using Anthropic.SDK;
 using Azure.Storage.Blobs;
 using Learnix.Application.Achievements.Abstractions;
@@ -49,13 +48,11 @@ using Learnix.Infrastructure.Services.HostedServices.Cleanup;
 using Learnix.Infrastructure.Services.HostedServices.Maintenance;
 using Learnix.Infrastructure.Services.Outbox;
 using Learnix.Infrastructure.Storage;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 
 namespace Learnix.Infrastructure;
@@ -195,54 +192,9 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(ConfigurationSectionNameConstants.Jwt));
         services.Configure<GoogleOptions>(configuration.GetSection(ConfigurationSectionNameConstants.Google));
 
-        // JWT Authentication
-        var jwtOptions = configuration.GetSection(ConfigurationSectionNameConstants.Jwt).Get<JwtOptions>()
-            ?? throw new InvalidOperationException("Missing 'Jwt' configuration section.");
-
-        if (string.IsNullOrWhiteSpace(jwtOptions.Secret))
-            throw new InvalidOperationException("JWT secret is not configured.");
-
-        services
-            .AddAuthentication(options =>
-            {
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.MapInboundClaims = false;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtOptions.Issuer,
-                    ValidAudience = jwtOptions.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret)),
-                    ClockSkew = TimeSpan.FromSeconds(30),
-                    NameClaimType = "name",
-                    RoleClaimType = "role"
-                };
-
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        var token = context.Request.Query["access_token"].ToString();
-                        if (!string.IsNullOrEmpty(token) &&
-                            context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
-                        {
-                            context.Token = token;
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
-            });
-
-        services.AddAuthorizationBuilder()
-            .AddPolicy("EmailConfirmed", policy => policy.RequireClaim("email_verified", "true"));
+        // The authentication/authorization pipeline (JWT bearer validation, policies) is an HTTP
+        // concern and is wired in the API layer — see Learnix.API/Extensions/AuthenticationExtensions.cs.
+        // This layer only issues tokens (ITokenService) and backs the auth use cases.
 
         // Fail-fast validation
         var googleOptions = configuration.GetSection(ConfigurationSectionNameConstants.Google).Get<GoogleOptions>()

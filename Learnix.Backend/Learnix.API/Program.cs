@@ -1,3 +1,4 @@
+using Learnix.API.Constants;
 using Learnix.API.Extensions;
 using Learnix.API.Hubs;
 using Learnix.API.Middleware;
@@ -30,6 +31,7 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddPresentation();
+builder.Services.AddLearnixAuthentication(builder.Configuration);
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -171,6 +173,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<NotificationsHub>("/hubs/notifications");
+app.MapHub<NotificationsHub>(HubRoutes.Notifications);
 
 await app.RunAsync();

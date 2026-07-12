@@ -124,7 +124,7 @@ HTTP Request
   → Domain event handlers enqueue Outbox messages; a background worker drains them
 ```
 
-**Dependency rule:** `API → Application → Domain`, `Infrastructure → Application`. `Application → Infrastructure` is forbidden — only via interfaces.
+**Dependency rule:** `Application → Domain`, `Infrastructure → Application`, `API → Application + Infrastructure` (the API is the composition root, so it references Infrastructure to register it). `Application → Infrastructure` is forbidden — only via interfaces.
 
 **Feature folder structure** (inside Application):
 ```

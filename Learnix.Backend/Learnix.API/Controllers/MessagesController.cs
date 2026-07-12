@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Learnix.API.Constants;
 using Learnix.API.Extensions;
 using Learnix.API.RateLimiting;
 using Learnix.Application.Messaging.Commands.MarkConversationRead;
@@ -42,7 +43,7 @@ public sealed class MessagesController(ISender sender) : ControllerBase
     }
 
     [HttpPost("conversations/start-or-get")]
-    [Authorize(Policy = "EmailConfirmed")]
+    [Authorize(Policy = AuthPolicies.EmailConfirmed)]
     [EnableRateLimiting(RateLimitPolicies.ChatMessages)]
     public async Task<IActionResult> StartOrGet(
         [FromBody] StartConversationRequest body,
@@ -53,7 +54,7 @@ public sealed class MessagesController(ISender sender) : ControllerBase
     }
 
     [HttpPost("conversations/{conversationId:guid}/messages")]
-    [Authorize(Policy = "EmailConfirmed")]
+    [Authorize(Policy = AuthPolicies.EmailConfirmed)]
     [EnableRateLimiting(RateLimitPolicies.ChatMessages)]
     public async Task<IActionResult> SendMessage(
         Guid conversationId,
