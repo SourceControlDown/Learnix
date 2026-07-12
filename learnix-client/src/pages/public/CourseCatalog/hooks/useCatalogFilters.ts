@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { REVIEW_LIMITS } from '@/const/review.constants';
 import { CATALOG_PAGE_SIZES, PAGINATION } from '@/const/ui.constants';
 
 export type SortBy = 'popular' | 'newest' | 'rating';
@@ -15,18 +16,41 @@ function useDebounce<T>(value: T, delay: number): T {
     return debounced;
 }
 
+/**
+ * The query string is user input — it survives sharing, bookmarking and hand-editing. A value the API
+ * would reject has to be dropped here, not forwarded: the backend answers 400, TanStack Query has no
+ * data to show, and the page renders an empty catalog with no explanation (a `?minRating=abc` used to
+ * put a literal "NaN★ & up" chip on screen). An unparseable filter means *no filter*.
+ */
+function parseRating(value: string | null): number | undefined {
+    if (!value) return undefined;
+    const rating = Number.parseFloat(value);
+    if (!Number.isFinite(rating)) return undefined;
+    return rating >= 0 && rating <= REVIEW_LIMITS.RATING_MAX ? rating : undefined;
+}
+
+const SORT_VALUES: readonly SortBy[] = ['popular', 'newest', 'rating'];
+
+function parseSortBy(value: string | null): SortBy {
+    return SORT_VALUES.includes(value as SortBy) ? (value as SortBy) : 'popular';
+}
+
+function parsePage(value: string | null): number {
+    const page = Number.parseInt(value ?? '1', 10);
+    return Number.isFinite(page) && page >= 1 ? page : 1;
+}
+
 export function useCatalogFilters() {
     const [searchParams, setSearchParams] = useSearchParams();
     const searchParam = searchParams.get('search') ?? '';
     const categoryId = searchParams.get('categoryId') ?? '';
-    const sortBy = (searchParams.get('sortBy') as SortBy) ?? 'popular';
+    const sortBy = parseSortBy(searchParams.get('sortBy'));
     const isFreeParam = searchParams.get('isFree');
     const isFree: boolean | undefined =
         isFreeParam === '1' ? true : isFreeParam === '0' ? false : undefined;
-    const minRatingParam = searchParams.get('minRating');
-    const minRating: number | undefined = minRatingParam ? parseFloat(minRatingParam) : undefined;
-    const page = parseInt(searchParams.get('page') ?? '1', 10) || 1;
-    const sizeParam = parseInt(searchParams.get('size') ?? '', 10);
+    const minRating = parseRating(searchParams.get('minRating'));
+    const page = parsePage(searchParams.get('page'));
+    const sizeParam = Number.parseInt(searchParams.get('size') ?? '', 10);
     const pageSize = ALLOWED_PAGE_SIZES.includes(sizeParam) ? sizeParam : PAGINATION.CATALOG;
 
     // Local search input state (debounced before hitting URL/API)

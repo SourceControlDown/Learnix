@@ -47,8 +47,8 @@ export default function CourseCatalogPage() {
     const isDesktop = useMediaQuery('(min-width: 640px)');
     const pageSizeOptions = isDesktop ? CATALOG_PAGE_SIZES.desktop : CATALOG_PAGE_SIZES.mobile;
     useEffect(() => {
-        const max = pageSizeOptions[pageSizeOptions.length - 1];
-        if (pageSize > max) setPageSize(max);
+        const max = pageSizeOptions.at(-1);
+        if (max !== undefined && pageSize > max) setPageSize(max);
     }, [pageSizeOptions, pageSize, setPageSize]);
 
     const { data: categoriesData } = useCategories();
