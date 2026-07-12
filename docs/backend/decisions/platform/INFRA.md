@@ -433,3 +433,34 @@ Concretely, and this was found the hard way: drop and re-create PostgreSQL (a ro
 - Every `dotnet run --project Learnix.DbMigrator` and every `docker compose --profile init up migrator` leaves Redis empty. In CI/CD that means the first requests after a deploy are cold — which they largely are anyway, since the deploy replaced the containers.
 - The migrator now needs `AllowAdmin = true` on its Redis connection (`FLUSHDB` is an admin command). It is the only component that does; the API's client cannot issue one.
 - A Redis that is unreachable during a migration leaves stale entries behind, and says so in a warning rather than failing a deployment that has otherwise succeeded.
+
+---
+
+## ADR-BACK-INFRA-015: `DomainEventsInterceptor` does not swallow handler exceptions
+
+**Decision:** there is no `try-catch` around `publisher.Publish(...)` in `DomainEventsInterceptor`. An
+exception from a domain-event handler propagates, `SavingChangesAsync` fails, and EF Core rolls the
+transaction back.
+
+**Why:**
+- The interceptor runs **before** the write (`SavingChangesAsync` → `base.SavingChangesAsync()`), and the
+  domain-event handlers it invokes write `OutboxMessage` rows into *the same* DbContext — that is what
+  makes the side effect atomic with the entity change (ADR-BACK-INFRA-005).
+- A `try-catch` therefore had a very specific failure mode: the Outbox insert throws (a serialization
+  bug, say), the exception is swallowed, the entity is written anyway — and the email or notification
+  that was supposed to follow simply never exists. Nothing is logged as broken because nothing *looks*
+  broken. Silent divergence between what happened and what the system remembers happening.
+- Letting it throw turns that into a 500 and an untouched database. A loud failure beats a lost message.
+
+**Alternatives:**
+- **Keep the `try-catch` and add a dead-letter path** — a second delivery guarantee bolted onto the one
+  the Outbox already provides. And the failures it would catch are bugs, not transient faults: retrying
+  a serialization error accomplishes nothing.
+- **Dispatch events after the save** — then the Outbox row is in a different transaction from the entity,
+  which is precisely the guarantee we are trying to keep.
+
+**Consequences:**
+- `ILogger<DomainEventsInterceptor>` was removed with the catch block — there is nothing left to log.
+- A domain-event handler doing something non-critical (cache invalidation, say) must **not** throw:
+  inside this interceptor, throwing means rolling back the business transaction that caused it. Handle
+  and log it locally.

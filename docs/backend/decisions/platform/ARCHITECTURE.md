@@ -475,9 +475,17 @@ go to `Application/Common/Constants/`.
   stores a hash; the minimum length is a policy of the authentication feature, and it lives with it.
   The test is not "does it look domain-ish" but "would the entity be invalid without it".
 
+**What deliberately stays inline** — a constant is for a value with a *second reader*. These have none:
+- One-off regexes used by a single validator (`[A-Z]`, `[a-z]` in the password rules).
+- Validation messages in `WithMessage("...")`.
+- Identity's own implementation details (hash length and the like) — ASP.NET Identity owns those.
+
 **Alternatives:**
 - **One global `Constants` class per project** — rejected: it becomes a junk drawer nobody can delete
   from, and it puts the domain's rules and the API's rate-limit names in the same namespace.
+- **Everything in Application** — rejected: the domain would stop being able to enforce its own rules.
+- **Everything in Domain** — rejected: it drags SMTP limits and password policy into a layer that is
+  supposed to be about the business.
 - **Magic numbers inline, with a comment** — rejected: a comment cannot be reused by the second caller,
   which is exactly how the two ratings above drifted apart.
 
@@ -486,3 +494,46 @@ go to `Application/Common/Constants/`.
   the domain enforces, it already exists in `Learnix.Domain/Constants/`.
 - A new invariant on an entity means a constant in Domain **and** the entity actually enforcing it —
   a constant nobody checks is documentation, not a rule.
+
+---
+
+## ADR-BACK-ARCH-019: `CourseCommandHandler` — a base class for course structure mutations
+
+**Decision:** `CourseCommandHandler<TCommand, TResult>` (`Application/Common/Commands/`) is an abstract
+base class that runs the fixed prelude of every course-structure mutation and then delegates to the
+handler's own logic:
+
+1. authenticated?
+2. load the `Course` (with as much structure as the operation needs — ADR-BACK-DOMAIN-005), tracked
+3. `IsOwnerOrAdmin`?
+4. `EnsureStructureMutable()`
+5. → `abstract HandleAsync(request, course, ct)`
+
+`CourseSectionCommandHandler<TCommand, TResult>` extends it with a section-existence check and can load
+only the targeted section's lessons.
+
+**Why:**
+- Fifteen-odd handlers run exactly steps 1–4. Copy-pasted, they are fifteen chances to forget the
+  ownership check — and a forgotten ownership check is not a bug, it is a vulnerability.
+- Template Method: the base class owns the algorithm, the subclass owns only what is specific to it.
+  What a reviewer then reads in a handler is the business step, not the ceremony around it.
+
+**How it is wired:**
+- `where TCommand : IRequest<TResult>, ICommandWithCourseId` — the course id is reachable without
+  reflection. Commands that also need a section implement `ICommandWithCourseAndSectionId`.
+- `where TResult : ResultBase, new()` — lets the base class build a failed `TResult` when auth or
+  loading fails, without knowing what `TResult` is.
+- MediatR still resolves the concrete handler as `IRequestHandler<TCommand, TResult>`; the base class is
+  invisible to it.
+
+**Alternatives:**
+- **Inline the prelude in every handler** — the duplication is the *point* of the rejection: it is what
+  makes a missing check possible.
+- **ASP.NET Core resource-based authorization** — rejected in ADR-BACK-AUTH-013: it would need the
+  resource loaded inside an authorization handler, i.e. loading the course twice or threading it through.
+- **Extension methods on `ICurrentUserService`** — removes some of the duplication, none of the sequence.
+
+**Consequences:**
+- A handler is ~20–30 lines shorter and starts at the interesting line.
+- The loading mode is a constructor argument, which means the *decision* about how much of the aggregate
+  to load is visible in the handler's declaration rather than buried in its body.

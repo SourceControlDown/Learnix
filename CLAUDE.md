@@ -209,7 +209,7 @@ refactor(courses): extract pagination to shared hook
 
 ## Documentation Map
 
-Docs live under `docs/` and are predominantly **English**. Several backend ADR files still carry Ukrainian sections (`platform/DOMAIN.md` most of all, plus parts of `CHAT.md`, `PAYMENT.md`, `MESSAGING.md`, `REVIEWS.md`, `INFRA.md`, `AUTH.md`, `CICD.md`) — match the local language when editing them; translation to English is planned.
+All documentation under `docs/` is in **English**.
 
 | Doc | Purpose |
 |---|---|

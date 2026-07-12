@@ -14,7 +14,7 @@ built, shipped and observed. Start at the top of `platform/` and go down only as
 | Document | What it decides |
 |---|---|
 | [Architecture & CQRS](platform/ARCHITECTURE.md) | Layering, MediatR pipeline, `Result<T>`, error → HTTP mapping |
-| [Domain Model](platform/DOMAIN.md) | Entities, value objects, domain events, invariants *(still written in Ukrainian)* |
+| [Domain Model](platform/DOMAIN.md) | Entities, aggregate, invariants, lifecycle — read top-down |
 | [Infrastructure & Data Access](platform/INFRA.md) | PostgreSQL + MongoDB, Redis cache, EF interceptors, Outbox, repositories, PII masking |
 | [Migrations & Seeding](platform/MIGRATIONS.md) | `Learnix.DbMigrator`, seed data, seed assets |
 | [Authentication & Security](platform/AUTH.md) | JWT, refresh rotation, roles, Google OAuth, email confirmation |
@@ -26,12 +26,12 @@ built, shipped and observed. Start at the top of `platform/` and go down only as
 |---|---|
 | [LMS & Course Structure](features/LMS.md) | Course as the single aggregate root, TPH lesson types, tests as JSONB, progress |
 | [AI Chat](features/CHAT.md) | `IAiChatProvider` abstraction, MongoDB sessions, scoped sessions, rolling context windows |
-| [Payments](features/PAYMENT.md) | `Payment` as its own entity, atomic payment + enrollment *(Ukrainian)* |
+| [Payments](features/PAYMENT.md) | `Payment` as its own entity, atomic payment + enrollment |
 | [Achievements](features/ACHIEVEMENTS.md) | Outbox-driven evaluation, idempotent counters, unlock deduplication |
 | [Certificates](features/CERTIFICATES.md) | QuestPDF, QR codes via QRCoder, synchronous generation |
-| [Direct Messaging](features/MESSAGING.md) | PostgreSQL over MongoDB, REST history + SignalR delivery, unread counts *(Ukrainian)* |
+| [Direct Messaging](features/MESSAGING.md) | PostgreSQL over MongoDB, REST history + SignalR delivery, unread counts |
 | [In-App Notifications](features/NOTIFICATIONS.md) | A notification is data, not a sentence |
-| [Course Reviews](features/REVIEWS.md) | Denormalized rating arithmetic, visibility rules *(Ukrainian)* |
+| [Course Reviews](features/REVIEWS.md) | Denormalized rating arithmetic, visibility rules |
 | [Users, Deletion & Retention](features/USERS.md) | Soft delete, a promised date, anonymization at the end |
 | [Email](features/EMAILS.md) | MailKit + RazorLight + PreMailer, localization via `.resx` |
 

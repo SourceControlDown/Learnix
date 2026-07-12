@@ -1,436 +1,388 @@
-# Learnix — ADR: Доменна модель
+# Learnix — ADR: Domain Model
 
-Суміжні файли: [ARCHITECTURE.md](ARCHITECTURE.md) · [AUTH.md](AUTH.md) · [INFRA.md](INFRA.md)
+> Format: what was decided → why → what alternatives were rejected.
 
----
+Related files: [ARCHITECTURE.md](ARCHITECTURE.md) · [AUTH.md](AUTH.md) · [INFRA.md](INFRA.md)
 
-## ADR-BACK-DOMAIN-001: Domain entities — private setters + domain methods
+The records are ordered the way the model is built up: first what an entity *is*, then how it refuses
+invalid state, then the aggregate and how it is loaded, then the lifecycle it moves through, and only
+then the individual modelling choices. Read from the top if you are new to the domain.
 
-**Рішення:** Entity properties мають private set. Зміна стану —
-через методи що відповідають бізнес-операціям.
-
-**Чому:**
-- Інваріанти перевіряються в одному місці (всередині entity)
-- Не анемічна модель — entity несе поведінку
-
-**Правила:**
-- Один метод = одна бізнес-дія (course.UpdateDetails(), course.Publish())
-- НЕ метод на кожне поле (SetTitle, SetPrice — антипатерн)
-- Масове оновлення через Update(...) з усіма полями — допустимо
+> **This file was renumbered once**, during the audit that reordered it — the one exception to
+> "numbers are never reused". It was safe because nothing outside this file referenced a
+> `ADR-BACK-DOMAIN-NNN` id. Two records left: the `CourseCommandHandler` base class was an Application
+> decision, not a domain one (now [ADR-BACK-ARCH-019](ARCHITECTURE.md)), and the domain-event
+> interceptor is Infrastructure (now [ADR-BACK-INFRA-015](INFRA.md)). The constants ADR was dropped as
+> a duplicate of [ADR-BACK-ARCH-018](ARCHITECTURE.md). From here on the numbers are stable.
 
 ---
 
-## ADR-BACK-DOMAIN-002: Soft delete для Users і Courses, hard delete для решти
+## ADR-BACK-DOMAIN-001: `BaseEntity` split into `IAuditable` + `IHasDomainEvents`
 
-**Рішення:**
-- User: soft delete (ISoftDeletable), фізичне видалення через 30 днів background job
-- Course: soft delete (30 днів) або Archive (без видалення, залишається в БД)
-- LessonProgress, Likes, інше дрібне: hard delete
+**Decision:** `BaseEntity` is an abstract class providing `Id : Guid` and implementing two interfaces:
+`IAuditable` (`CreatedAt`, `UpdatedAt`) and `IHasDomainEvents` (`DomainEvents`, `ClearDomainEvents`).
+`User : IdentityUser<Guid>` cannot inherit `BaseEntity` — both would supply `Id` — so it implements
+the two interfaces directly.
 
-**Деталі:**
-- ISoftDeletable: IsDeleted + DeletedAt
-- EF global query filter: HasQueryFilter(e => !e.IsDeleted)
-- SoftDeleteInterceptor встановлює IsDeleted/DeletedAt автоматично
-- Background job (IHostedService або Hangfire) видаляє записи старші 30 днів
+**Why:**
+- The interceptors key off the *interfaces*, not the base class: `AuditableInterceptor` stamps anything
+  that is `IAuditable`, `DomainEventsInterceptor` dispatches from anything that is `IHasDomainEvents`.
+  One mechanism covers both `BaseEntity` descendants and `User`.
+- The alternative — duplicating the audit fields and the event list inside `User` — means every new
+  audit field has to be added in two places, and the day someone forgets is the day `User` stops being
+  audited silently.
 
----
-
-## ADR-BACK-DOMAIN-003: Розщеплення BaseEntity на IAuditable + IHasDomainEvents
-
-**Рішення:** `BaseEntity` декомпозовано на два інтерфейси: `IAuditable` (CreatedAt, UpdatedAt) і `IHasDomainEvents` (DomainEvents, ClearDomainEvents). `BaseEntity` тепер просто абстрактний клас що імплементує обидва + дає `Id : Guid`. `User : IdentityUser<Guid>` імплементує обидва інтерфейси вручну, бо не може успадкувати `BaseEntity` через конфлікт `Id` з `IdentityUser<Guid>`.
-
-**Чому:**
-- `User` не може жити з двох баз (`IdentityUser<Guid>` і `BaseEntity` — обидва дають `Id`)
-- Дублювати audit/events код в `User` вручну — антипатерн, копіпаста
-- `AuditableInterceptor` тепер ловить будь-який `IAuditable` (і `BaseEntity`-нащадків, і `User`), domain events публікація — будь-який `IHasDomainEvents`. Один уніфікований механізм
-- Решта entities (Course, Enrollment, …) продовжують успадковувати `BaseEntity` — для них API не змінюється
-
-**Альтернативи:**
-- Лишити `BaseEntity` як абстрактний клас, дублювати audit/events у `User` вручну — працює, але копіпаста полів і методів. При додаванні нового аудит-поля треба міняти і `BaseEntity`, і `User`
-- `User` без audit і events — втрачаємо trace коли юзер створений/оновлений
+**Alternatives:**
+- **`User` without audit and events** — we would lose the creation/update trail on the one entity whose
+  history matters most.
 
 ---
 
-## ADR-BACK-DOMAIN-004: Гібридний поділ констант — Domain для інваріантів entity, Application для політик валідації
+## ADR-BACK-DOMAIN-002: Private setters, state changes only through business methods
 
-**Рішення:** Константи розділені за рівнем і змістом:
-- **Domain** (`Learnix.Domain/Constants/{Entity}Constants.cs`) — обмеження які є інваріантами сутності (FirstName max length, Bio max length). Використовуються EF configuration, domain методами (якщо потрібно), Application validators.
-- **Application** (`Learnix.Application/{Feature}/Constants/{Feature}ValidationConstants.cs`) — обмеження які є політикою валідації входу: довжина пароля, regex вимоги, технічні стандарти типу email RFC 5321 max length. Використовуються тільки валідаторами в межах фічі.
+**Decision:** every entity property has a `private set`. State changes go through methods named after
+business operations.
 
-**Що НЕ виноситься в константи взагалі:**
-- Унікальні regex які зустрічаються один раз (`[A-Z]`, `[a-z]` в password validator)
-- Повідомлення помилок (`WithMessage("...")`) — лишаються inline до появи локалізації
-- Деталі реалізації Identity (PasswordHash length, etc.) — Identity сама керує
+**Rules:**
+- One method = one business action (`course.UpdateDetails()`, `course.Publish()`).
+- **Not** a setter per field. `SetTitle` / `SetPrice` are the anemic model wearing a hat.
+- A bulk `Update(...)` taking every editable field at once is fine — it is still one business action.
 
-**Чому:**
-- Single source of truth: max length у валідаторі і в EF configuration читаються з одної константи. Зміна — в одному місці. Розсинхрон неможливий.
-- Розділення Domain/Application відображає дві різні відповідальності: "що entity вважає валідним станом" (Domain) vs "що ми готові прийняти на вході в систему" (Application)
-- Email max length — не інваріант User, а обмеження SMTP стандарту → Application. Password constraints — не інваріант User (зберігається hash), а політика безпеки реєстрації → Application
-
-**Альтернативи:**
-- Усі константи в Application — простіше, але втрачає DDD-аргумент про інваріанти. Для проєкту з 30+ entities стане плутаниною
-- Усі константи в Domain — погано: затягує знання про SMTP, password policy в Domain, який має бути про бізнес
-- Inline magic numbers — категорично ні, синхронізація валідатор↔EF↔domain метод стає неможливою
-
-**Наслідки:**
-- Нова конвенція: створюючи нову entity — створювати `{Entity}Constants` у Domain з усіма обмеженнями що використовуються EF configuration
-- Створюючи нову feature з валідацією — створювати `{Feature}ValidationConstants` в Application якщо є feature-specific обмеження (інакше — лишити inline)
-- Domain методи не дублюють валідацію (свідоме спрощення — див. вище)
+**Why:**
+- An invariant can only be enforced in one place if there is only one way in. A public setter is a
+  second way in, and it does not check anything.
+- The entity carries behaviour, so the rules live next to the state they constrain rather than being
+  scattered across handlers.
 
 ---
 
-## ADR-BACK-DOMAIN-005: Course lifecycle — three states + invariants for Publish
+## ADR-BACK-DOMAIN-003: `DomainException` for invariant violations — never `InvalidOperationException`
 
-**Рішення:** Course має три видимих стани + один службовий:
-- `Draft` — default на Create; може бути оновлений, секції/уроки додаються; не видно нікому окрім власника і Admin
-- `Published` — видно всім, можна enroll'итись
-- `Archived` — видно власнику і Admin (read-only), не можна enroll; переходи в інший стан заборонені через Unpublish (тільки Draft ↔ Published + будь-який → Archived)
-- soft-deleted (через `ISoftDeletable`) — лише власник і Admin можуть бачити через `IgnoreQueryFilters`
+**Decision:** invariant checks in entities throw `DomainException` (`Learnix.Domain.Common.Exceptions`).
+Handlers that mutate an aggregate catch **that** exception and turn it into `ConflictError` → 409.
 
-Інваріанти Publish (перевіряються в handler і в domain методі як last-line defence):
-1. `CoverImageUrl` != null
-2. Має щонайменше одну секцію
-3. Хоча б одна секція має щонайменше один урок
+**Why:**
+- Catching `InvalidOperationException` in the Application layer would be catching the framework: a
+  `.First()` on an empty sequence, an EF Core failure, and a deliberate business rule violation all
+  arrive as the same type. Two of those are bugs and must produce a 500, not a 409.
+- A dedicated exception type *is* the contract: if it reaches the handler, a business rule said no.
 
-Переходи:
-- Create → Draft (автоматично)
-- Draft → Published (`Publish()`, всі інваріанти)
-- Published → Draft (`Unpublish()`, без інваріантів)
-- Будь-який → Archived (`Archive()`, без інваріантів)
-- Будь-який → soft-deleted (`Delete`, без інваріантів, навіть з активними enrollments)
+**Alternatives:**
+- **Return `Result` from domain methods** — rejected: the domain would then depend on FluentResults, a
+  control-flow library, for the sake of a case that is exceptional by definition.
 
-**Чому:**
-- Без інваріантів Publish — порожні курси з'являться в пошуку. Поганий UX, погана репутація платформи
-- `CoverImageUrl` опціональний на Create (драфт без обкладинки — нормально), обов'язковий на Publish. Інструктор може працювати над контентом, потім підключити обкладинку
-- Archive без інваріантів — це "прибрати з пошуку, залишити для власника". Не має бути обмежень що блокують це
-
-**Альтернативи:**
-- Publish без інваріантів — пробіг по бізнес-правилу, швидко, але платформа показує порожні курси. Не беру.
-- Інваріанти як DB CHECK constraint — unenforceable для "хоча б одна секція з хоча б одним уроком" без триггерів. Відкинуто.
-
-**Наслідки:**
-- Handler Publish fetch'ить course з повною структурою (`CourseByIdWithStructureSpecification`), інші mutations — тільки course без nav
-- До реалізації Section/Lesson CRUD (наступні чати) Publish завжди падає з `ConflictError("Course cannot be published without at least one section.")`. Це очікувана проміжна поведінка
-- FEATURES.md оновлено з lifecycle-таблицею
+**Consequences:**
+- Everything else propagates to `ExceptionHandlingMiddleware` and becomes a 500. That is intended:
+  an unexpected exception is not a business outcome.
 
 ---
 
-## ADR-BACK-DOMAIN-006: EnrollmentsCount — денормалізоване поле, стратегія оновлення TBD
+## ADR-BACK-DOMAIN-004: `Course` is the aggregate root for structure
 
-**Рішення:** `Course.EnrollmentsCount` існує як колонка в БД з default 0. Поле **не оновлюється** в Phase 3. Стратегія оновлення (event handler vs nightly job vs raw SQL update) обирається в Phase 4 разом з реалізацією Enrollment (B-26) — коли буде конкретний сценарій навантаження.
+**Decision:** every structural mutation — create/update/delete/reorder of sections and lessons — goes
+through a public method on `Course`. `Section` and `Lesson` mutators are `internal`, reachable only
+from inside the Domain assembly, i.e. only from `Course`.
 
-**Чому зараз так:**
-- Додавання поля зараз = одна міграція. Додавання пізніше = ще одна міграція + backfill всіх існуючих записів. Дешевше закласти зараз.
-- Рішення про стратегію оновлення потребує знання: скільки очікувано enrollments per course per day, чи допустима затримка в отображенні, чи буде sort by EnrollmentsCount в hot path. Це все стане ясно в Phase 4.
+The handler shape for any structure mutation:
 
-**Альтернативи для майбутньої розмови (Phase 4):**
-1. **Event handler (in-process) після EnrollInCourse**: синхронно інкрементує колонку через raw SQL `UPDATE "Courses" SET "EnrollmentsCount" = "EnrollmentsCount" + 1 WHERE "Id" = ...`. Плюс: завжди актуально. Мінус: write amplification, тупик при race condition якщо не атомарно.
-2. **Integration event через MassTransit** (Phase 6+): async consumer оновлює через raw SQL. Плюс: не блокує enrollment. Мінус: eventual consistency (user щойно enroll'ився — counter ще старий)
-3. **Nightly job** (Hangfire / IHostedService): один `UPDATE ... SET EnrollmentsCount = (SELECT COUNT(*) FROM Enrollments WHERE ...)` вночі. Плюс: простий, один запит, завжди correct. Мінус: максимальна затримка 24h у counter.
-4. **COUNT() on read**: без денормалізованого поля взагалі. Відкидаємо — сенсу в полі нема.
+1. Load `Course` with the structure it needs (ADR-BACK-DOMAIN-005), tracked.
+2. Owner-or-admin check.
+3. Call the domain method (`course.AddSection(...)`, `course.RemoveLesson(...)`).
+4. `SaveChangesAsync()`.
+5. `DomainException` → `ConflictError` (ADR-BACK-DOMAIN-003).
 
-**Наслідки:**
-- Запит `GetCourseById` повертає `EnrollmentsCount = 0` для всіх курсів до реалізації в Phase 4
-- Якщо Phase 4 обере варіант 3 (nightly job) — треба записати інтервал і допустиму затримку у цей ADR як update, або супер-ADR (не створювати новий)
-- Sort by EnrollmentsCount в B-21 (list with sorting) — використовуватиме це поле в readonly режимі
+Steps 1–2 are not written by hand in each handler — they are the base class `CourseCommandHandler`
+(ADR-BACK-ARCH-019).
 
----
+**Why:**
+- The publish invariants (ADR-BACK-DOMAIN-007) are statements about the *whole* course. Checking them
+  after a mutation requires the in-memory state of the structure, which only the root can see.
+- Section and Lesson have no life of their own: a lesson outside a course is meaningless.
 
-## ADR-BACK-DOMAIN-007: Category.IsSystem flag — захист seeded категорій від видалення/перейменування
+**Alternatives:**
+- **Section/Lesson as separate aggregates.** Simpler create/update — but deleting a lesson from a
+  Published course would still have to load the Course to re-check the invariant, so the invariant
+  logic would live in the handler as well as the domain. Two paths, one of which is easy to forget.
 
-**Рішення:** `Category` має поле `IsSystem: bool`. Seeded через `CategorySeederHostedService` категорії створюються з `IsSystem = true`. Domain метод `Category.Rename` кидає `InvalidOperationException` якщо `IsSystem`. Майбутній `DeleteCategoryCommand` валідуватиме `!IsSystem` перед видаленням. Admin UI приховує кнопки edit/delete для системних.
-
-**Чому:**
-- Seeded категорії — частина domain data platform'и. Їх видалення має бути неможливим, не тільки UI-приховуванням
-- Flag на entity = перевірка в одному місці (domain), не розмазана по UI + API validation
-- Admin міг випадково зробити DELETE через Swagger/curl — flag захищає
-
-**Альтернативи:**
-- Окрема таблиця `SystemCategories` — overkill для однобітового концепта
-- Hardcoded list seeded slugs у коді + перевірка проти нього — працює, але розсинхрон між seeder і validator можливий
-- Без захисту взагалі, "Admin не тупий" — не беру, explicit > implicit
-
-**Наслідки:**
-- Додатковий bit per row — незначно
-- Категорія яка була створена як user-level (`IsSystem = false`) і її slug потім додали в seeder — залишиться IsSystem=false (seeder пропускає дублікати). Документовано: щоб "підвищити" категорію — треба ручний UPDATE
+**Consequences:**
+- `Course` is a large entity (~15 mutating methods). That is the shape of a rich model, not a smell.
+- `ILessonRepository` and `ISectionRepository` **do** exist — but only for persistence of a mutation
+  the root has already authorized and validated (see ADR-BACK-DOMAIN-005). They are not a second door
+  into the aggregate.
 
 ---
 
-## ADR-BACK-DOMAIN-008: IsFree як computed property на DTO, не окреме поле на entity
+## ADR-BACK-DOMAIN-005: Aggregate loading — full for invariants, point-loaded for content
 
-**Рішення:** `Course` має тільки поле `Price: decimal`. Семантика "free course" = `Price == 0`. Жодного окремого `IsFree: bool` на entity. У `CourseDetailDto` є computed поле `IsFree => Price == 0m` для зручності фронтенду.
+**Decision:** how much of the aggregate a handler loads depends on whether the operation can break a
+lifecycle invariant.
 
-**Чому:**
-- Два поля що мають узгоджуватись — гарантований розсинхрон у довгій перспективі (Price = 10, IsFree = true — баг легкий, ціна виправлення висока)
-- Price як single source of truth — явний і прозорий
-- Фронтенд все одно рендерить "Free" на основі price, окреме поле не дає value
+**Full load** (`includeLessons: true`) — the operation can violate `EnsurePublishableInvariants()`:
 
-**Альтернативи:**
-- Поле `IsFree: bool` на entity — обмежений upside (швидший фільтр за вільними курсами в SQL — можна додати індекс по Price, стане дешево), гарантований downside (розсинхрон)
-- Computed column в DB `IsFree AS (CASE WHEN Price = 0 THEN TRUE ELSE FALSE END)` — можливо у майбутньому, якщо фільтр "тільки безкоштовні" стане hot path. Поки що — не треба.
-
----
-
-## ADR-BACK-DOMAIN-009: Course як aggregate root для structure mutations
-
-**Рішення:** Усі структурні операції (create/update/delete/reorder sections, create/update/delete/reorder lessons) проходять через публічні методи `Course`. `Section` і `Lesson` мають `internal` setters/mutators — доступні тільки з Domain assembly (тобто тільки з `Course`). Не створюємо `ISectionRepository` / `ILessonRepository` — єдиний repo `ICourseRepository` вже достатній.
-
-Handler pattern для будь-якої structure mutation:
-1. Fetch `Course` через `CourseByIdWithStructureSpecification(id, forUpdate: true)` (з tracking, включає `Sections.Lessons`)
-2. Owner check через `ICurrentUserService` + `course.InstructorId`
-3. Викликати domain метод (`course.AddSection(...)`, `course.RemoveLesson(...)` тощо)
-4. `unitOfWork.SaveChangesAsync()`
-5. Catch `DomainException` → `ConflictError` (див. ADR-BACK-DOMAIN-014)
-
-**Чому:**
-- Invariants (`Published course must have cover + ≥1 section + ≥1 lesson`) мусять завжди лишатись true для Published курсу (ADR-BACK-DOMAIN-010). Щоб їх перевірити після mutation — треба бачити in-memory стан усієї структури. Це можливо тільки якщо mutation проходить через aggregate root, який володіє цією структурою
-- Canonical DDD: aggregate root є єдиним gateway до свого aggregate. Section/Lesson — частина Course aggregate, не окремі aggregates
-- Single source of truth для invariants. Вони живуть у `Course.EnsurePublishableInvariants()` і викликаються з кожного mutation-методу який може їх порушити
-
-**Альтернативи:**
-- **Section/Lesson як окремі aggregates з окремими репозиторіями.** Простіший код для create/update, але invariant enforcement для delete на Published вимагав би fetch'у Course все одно + ручний виклик invariant checker у handler. Два шляхи замість одного, invariant logic дублюється між domain і handler
-- **Hybrid.** Create/Update через Section/Lesson aggregates, Delete/Reorder через Course. Два шляхи для структурно схожих операцій — антипатерн на code review
-
-**Наслідки:**
-- Course entity розрісся на ~12 нових methods. Rich domain model — явний сигнал DDD на code review. Зворотний бік — Course.cs стане кандидатом на partial classes якщо перевалить 500 рядків (зараз ~230)
-- Кожна structure mutation — fetch повного курсу (Sections + Lessons). Для курсу з 10 секцій × 50 уроків — 510 записів. Прийнятно; операції рідкісні (інструктор редагує курс не у hot path)
-- `Section.UpdateTitle`, `Section.SetOrder`, `Section.AddLesson`, `Section.RemoveLesson`, `Section.ReorderLessons`, `Lesson.UpdateTitle`, `Lesson.SetOrder`, `VideoLesson.Create`, `VideoLesson.UpdateVideo`, `PostLesson.Create`, `PostLesson.UpdatePost` — усі тепер `internal`. Зовнішні споживачі (Application / API) не можуть викликати їх напряму — тільки через Course methods
-- `InternalsVisibleTo` для test-проекту знадобиться коли дійдемо до Domain unit tests (щоб тестувати internal методи Section/Lesson напряму)
-
----
-
-## ADR-BACK-DOMAIN-010: Publish invariants enforced continuously — не тільки на Publish
-
-**Рішення:** Інваріанти публікації (`CoverImageUrl != null`, `≥1 section`, `≥1 lesson across all sections`) мають **завжди** лишатись true поки `Course.Status == Published`. Перевірка триває не тільки при переході Draft → Published (команда Publish), а після **кожної** mutation що може їх порушити. Конкретно:
-
-- `Course.SetCoverImage(null)` на Published → throw
-- `Course.RemoveSection(id)` що залишає 0 секцій на Published → throw
-- `Course.RemoveSection(id)` що залишає секції без жодного уроку на Published → throw
-- `Course.RemoveLesson(id)` що залишає курс без жодного уроку на Published → throw
-
-Archived — повністю read-only (всі structure mutations reject'яться через `EnsureStructureMutable()`). Draft — дозволено все без invariant checks.
-
-**Чому:**
-- UX без тертя для Published курсів: інструктор може додавати секції/уроки без Unpublish → Publish циклу
-- Invariants залишаються під захистом. Published курс ніколи не може бути в стані "порожній у пошуку"
-
-**Альтернативи розглянуті:**
-- **Draft only (strict).** Будь-які structure mutations на Published заборонені, треба Unpublish. Простіше на один інваріант, гірше для UX
-- **Additive only.** Додавання OK на Published, видалення/reorder — ні. Половинчасте правило, довелося б explicitly блокувати кожен delete handler — складніше у коді ніж continuous invariant
-
-**Наслідки:**
-- `Course.EnsurePublishableInvariants()` — private method, викликається з `SetCoverImage`, `RemoveSection`, `RemoveLesson`, `Publish`
-- `SetCoverImage(null)` на Published вперше отримує invariant check (раніше просто присвоював)
-- При виконанні mutation що порушить invariant: domain throw `DomainException` (ADR-BACK-DOMAIN-014), handler catch → `ConflictError` (409). In-memory state entity може бути modified, але `SaveChangesAsync` не викликається → в БД без змін. DbContext scoped per request → при наступному запиті новий DbContext з актуальним станом з БД
-- Нові mutating operations на Course / Section / Lesson у майбутньому зобов'язані викликати `EnsurePublishableInvariants()` якщо потенційно можуть порушити один з трьох інваріантів. Документовано як конвенцію
-
----
-
-## ADR-BACK-DOMAIN-011: Bulk reorder через окремий endpoint + set-equality validation
-
-**Рішення:** Reorder секцій і уроків виконується через окремі endpoints (`POST /api/courses/{id}/sections/reorder`, `POST /api/courses/{id}/sections/{id}/lessons/reorder`), а не через PATCH `/Order` на окремих сутностях. Payload — масив `{ id, order }` пар. Domain вимагає **full set equality**: payload мусить містити рівно всі існуючі секції/уроки — ні більше, ні менше. Validator перевіряє shape (non-empty, cap на кількість, unique IDs per payload, orders ≥ 0), domain перевіряє semantic set equality через `ReorderValidation.EnsureValid`.
-
-**Чому:**
-- **Атомарність.** Один transaction. Альтернатива — N окремих PATCH'ів — створює проміжні стани де order дублюється (A.Order=1, B.Order=1 на якусь мить). Неможливо підтримувати унікальність без складних lock'ів
-- **Full set equality.** Клієнт посилає повний знімок бажаного порядку. Простіша логіка: "ось як має виглядати — застосуй". Альтернатива (partial reorder з ретельним зсувом) — джерело багів
-- **Domain-level validation.** Інваріанти "unique IDs, unique orders, matches existing set" — це aggregate invariants, не shape-checks. Валідатор може лише приблизно перевірити shape, domain гарантує semantics
-
-**Альтернативи:**
-- **PATCH /sections/{id}** з полем `Order` — потребує ручного обробника колізій або lock'у. Не робиться в production-grade системах
-- **Dedicated `order` fractional indexing** (Lexorank, arbitrary-precision) — уникає перепису всіх Order при вставці. Overkill для LMS де reorder — явна операція користувача, не continuous drag
-
-**Наслідки:**
-- Reorder cost: `UPDATE ... SET Order = ... WHERE Id = ...` × N — один `SaveChangesAsync` породить N UPDATE statements в транзакції EF. Прийнятно для десятків секцій/уроків
-- `ReorderValidation.EnsureValid` — internal shared helper у `Learnix.Domain.Common`. Переюзабельний для майбутніх reorder'ів (questions в тесті, options в choice question, тощо)
-- Validator cap: 500 секцій, 1000 уроків за один reorder. Arbitrary, але захищає від DoS запитів з мільйоном IDs
-
----
-
-## ADR-BACK-DOMAIN-012: Question, QuestionOption, TextAnswerConfig — value objects (owned entities), не окремі таблиці
-
-**Рішення:** `Question`, `QuestionOption`, `TextAnswerConfig` є **value objects** що зберігаються як JSONB всередині `TestLesson`. `StudentAnswer` — record що зберігається як JSONB всередині `TestAttempt`. Окремих таблиць для цих типів немає.
-
-**Чому:**
-- Питання не мають незалежного life cycle від TestLesson. Питання без тесту — безглуздо
-- Варіанти відповіді не мають незалежного life cycle від Question
-- Заміна питань відбувається bulk-операцією (`ReplaceQuestions`) — не patch окремого питання. JSONB це підтримує природно
-- Студентські відповіді прив'язані до конкретної спроби і ніколи не реюзаються — JSONB ідеально
-- Складна EF schema (Question → QuestionOption + TextAnswerConfig з FK, cascade delete, ordering) vs простий JSON array — значна різниця у складності міграцій і query logic
-
-**Scoring logic в value object:**
-`Question.IsAnsweredCorrectly(StudentAnswer)` — повна логіка скорингу живе всередині value object, включаючи Levenshtein distance для fuzzy match текстових відповідей
-
-**Альтернативи:**
-- Окремі таблиці `Questions`, `QuestionOptions`, `TextAnswerConfigs` — стандартний реляційний підхід. Відкинуто: join-heavy query для читання тесту, складний cascade delete, bulk replace вимагав би delete-all + insert-all в транзакції
-- JSONB для питань, окрема таблиця для відповідей — гібрид, складніший без виграшу
-
-**Наслідки:**
-- EF конфігурація: `OwnsMany<Question>` → `OwnsMany<QuestionOption>` + `OwnsOne<TextAnswerConfig>` (JSONB)
-- `TestAttempt` owns `IReadOnlyList<StudentAnswer>` через `OwnsMany` (JSONB)
-- Scoring: `testLesson.Score(attempt.Answers)` — метод на TestLesson обчислює результат
-- При рефакторингу питань (додавання поля) — не потрібна окрема міграція таблиці, тільки JSONB schema зміна (backward compatible через nullable fields)
-
----
-
-## ADR-BACK-DOMAIN-013: CourseCommandHandler як base class для скорочення boilerplate structure mutations
-
-**Рішення:** `CourseCommandHandler<TCommand, TResult>` — абстрактний base class в `Application/Common/Commands/`. Автоматично виконує стандартну послідовність для structure mutations: перевірка автентифікації → fetch course з tracking → перевірка власника/адміна → `EnsureStructureMutable()` → делегує до `abstract HandleAsync()`. `CourseSectionCommandHandler<TCommand, TResult>` розширює цей клас додатковою перевіркою існування секції.
-
-**Чому:**
-- Кожен з 10+ structure mutation handlers (CreateSection, DeleteLesson, ReorderLessons, etc.) виконує ідентичні кроки 1-4. Без base class — copy-paste в кожному handler
-- Помилка в одному handler (пропущена ownership check) = security bug. Base class гарантує що ці перевірки не пропустити
-- Template Method pattern: base клас визначає алгоритм, subclass надає тільки бізнес-логіку
-
-**Технічні деталі:**
-- Generic constraints: `where TCommand : IRequest<TResult>, ICommandWithCourseId` — дає доступ до `CourseId` без reflection
-- `where TResult : ResultBase, new()` — дозволяє конструювати failed result типу TResult через `new()` коли auth/fetch fails
-- Handler реєструється в DI через `IRequestHandler<TCommand, TResult>` — MediatR не знає про base class
-
-**Альтернативи:**
-- Inline в кожному handler — повторення, ризик security bug. Відкинуто
-- Authorization policy через ASP.NET Core resource-based authorization — складніший механізм, потребує fetch resource в authorization handler. Відкинуто (AUTH.md ADR-BACK-AUTH-013)
-- Extension methods на `ICurrentUserService` + shared static helper — частково вирішує, але не виключає дублювання самої послідовності кроків
-
-**Наслідки:**
-- Команди що потребують ownership check і structure mutability реалізують `ICommandWithCourseId`
-- Commands що додатково потребують section context реалізують `ICommandWithCourseAndSectionId`
-- Handler успадковує `CourseCommandHandler` замість прямого `IRequestHandler` — розмір handler файлу скорочується на ~20-30 рядків boilerplate
-- `InternalsVisibleTo` для тестів: base class може знадобитись для unit testing через `CourseCommandHandler` напряму (з mock ICourseRepository)
-
----
-
-## ADR-BACK-DOMAIN-014: Custom DomainException для захисту бізнес-інваріантів
-
-**Рішення:** Створено кастомний `DomainException` у `Learnix.Domain.Common.Exceptions`. Усі перевірки інваріантів у сутностях (наприклад, `EnsurePublishableInvariants` у `Course`, ADR-BACK-DOMAIN-009/ADR-BACK-DOMAIN-010) кидають саме цей виняток замість стандартного `InvalidOperationException`.
-
-**Чому:**
-- Перехоплення базового `InvalidOperationException` в Application-шарі є небезпечним антипатерном. Воно маскує реальні системні баги (наприклад, падіння `.First()` при відсутності елемента, або збої Entity Framework) і перетворює їх на бізнес-помилки.
-- Кастомний `DomainException` створює чіткий контракт: хендлер точно знає, що перехоплює виключно свідоме порушення бізнес-правил домену, а не технічний збій.
-
-**Альтернативи:**
-- Повертати `Result` з доменних методів — відкинуто. Доменна модель має залишатись чистою і не залежати від бібліотек контролю потоку (FluentResults).
-- Ловити `InvalidOperationException` — відкинуто через ризик приховування багів і втрати stack trace.
-
-**Наслідки:**
-- Усі мутаційні Command Handlers, що працюють з агрегатом `Course`, обгортають виклики доменних методів у `try-catch (DomainException)` і повертають `Result.Fail(new ConflictError(ex.Message))`.
-- Усі інші системні винятки не перехоплюються хендлерами і вільно спливають до `ExceptionHandlingMiddleware` для генерації 500 Internal Server Error.
-
----
-
-## ADR-BACK-DOMAIN-015: DomainEventsInterceptor — видалення try-catch навколо publisher.Publish()
-
-**Рішення:** `try-catch` навколо `await publisher.Publish(notification, ct)` у `DomainEventsInterceptor` видалено. Будь-який виняток з domain event handler тепер вільно спливає, що перериває `SavingChangesAsync` і відкочує транзакцію.
-
-**Чому:**
-- `DomainEventsInterceptor` викликається **до** фактичного запису в БД (`SavingChangesAsync` → `base.SavingChangesAsync()`). Відповідальність Outbox-хендлера — записати `OutboxMessage` у **той самий** DbContext в рамках тієї ж транзакції.
-- Якщо Outbox-хендлер падає (наприклад, помилка серіалізації), `try-catch` приховував цей збій і продовжував зберігати зміни в БД. Результат: дані в PostgreSQL записані, але `OutboxMessage` не існує → side-effect (email, нотифікація) ніколи не відбудеться. Silent data inconsistency.
-- Без `try-catch`: виняток → `SavingChangesAsync` кидає → EF Core відкочує транзакцію → клієнт отримує 500. Явна помилка краща за приховану втрату повідомлення.
-
-**Альтернативи:**
-- Залишити `try-catch`, але додати dead-letter механізм для missed events — надмірна складність. Outbox вже є гарантованою доставкою; якщо він сам падає — це баг серіалізації, а не transient збій.
-- Перемістити dispatch подій **після** `base.SavingChangesAsync()` (post-save) — не підходить: запис в Outbox мусить бути атомарним разом із змінами entity в тій же транзакції.
-
-**Наслідки:**
-- `ILogger<DomainEventsInterceptor>` більше не потрібен і видалений з конструктора.
-- Event handlers, що виконують некритичні side-effects (наприклад, кеш-інвалідація), не повинні кидати виключення — треба обробляти помилки всередині самого хендлера і логувати.
-
----
-
-## ADR-BACK-DOMAIN-016: Гібридна стратегія завантаження агрегату Course — "AR для інваріантів" vs "AR для авторизації"
-
-**Рішення:** Операції над `Course` поділені на дві категорії із різними вимогами до завантаження агрегату:
-
-### Категорія A — Повне завантаження (`includeLessons: true`)
-Операції, що можуть порушити lifecycle-інваріанти `EnsurePublishableInvariants()`. Агрегат завантажується з усіма секціями і уроками.
-
-| Операція | Причина |
+| Operation | Why |
 |---|---|
-| `Publish` | Перевіряє `≥1 section`, `≥1 visible lesson`, `CoverImageUrl != null` |
-| `DeleteLesson` | Може залишити курс без видимих уроків |
-| `ToggleLessonVisibility` | `isHidden=true` може залишити курс без видимих уроків |
-| `RemoveSection` | Може залишити курс без секцій або без уроків |
+| `Publish` | Checks cover + ≥1 section + ≥1 **visible** lesson |
+| `DeleteLesson` | Can leave the course with no visible lesson |
+| `ToggleLessonVisibility` | Hiding the last visible lesson breaks the invariant |
+| `RemoveSection` | Can leave the course with no sections or no lessons |
 
-### Категорія Б — Точкове завантаження (hybrid, AR тільки для авторизації)
-Операції над вмістом уроку, що не впливають на lifecycle-стан курсу. Агрегат завантажується лише для перевірки власника та `EnsureStructureMutable()`. Мутація уроку відбувається через окремий `ILessonRepository`.
+**Point load** — content edits that cannot change the course's lifecycle state (`UpdateVideoLesson`,
+`UpdatePostLesson`, `UpdateTestLesson`). The aggregate is loaded **only** to authorize the caller and
+to check `EnsureStructureMutable()`; the lesson itself is then fetched and saved through
+`ILessonRepository`. `CourseSectionCommandHandler` adds a third mode, `lessonsBySectionId`, which
+loads only the targeted section's lessons — enough to validate a section-scoped operation without
+dragging in the rest of the course.
 
-| Операція | Чому hybrid безпечний |
-|---|---|
-| `UpdateVideoLesson` | Зміна title/video/description не торкається `CourseStatus` |
-| `UpdatePostLesson` | Зміна markdown-контенту не торкається `CourseStatus` |
-| `UpdateTestLesson` | Зміна питань не торкається `CourseStatus` |
+**Why:**
+- Canonical DDD says every mutation goes through the root. Loading 10 sections × 50 lessons to change
+  a video's `DurationSeconds` is the letter of that rule with none of its value.
+- Safety does not depend on the loading mode: `CourseCommandHandler` runs `IsOwnerOrAdmin` and
+  `EnsureStructureMutable()` before any handler body executes, whatever was loaded.
 
-**Чому:**
-- Canonical DDD вимагає усі мутації через AR. Але завантажувати 10 секцій × 50 уроків заради зміни `DurationSeconds` у відео — waste. Операції категорії Б не мають жодних аргументів за повне завантаження.
-- Hybrid підхід є свідомим компромісом: AR використовується там де він дає цінність (enforcement інваріантів), а не скрізь як догма.
-- Безпека операцій категорії Б підтверджується кодом: `CourseCommandHandler` завжди перевіряє `IsOwnerOrAdmin` і `EnsureStructureMutable()` перед делегацією до `HandleAsync`. Ownership і mutable-check не обходяться.
+**Alternatives:**
+- **Always load everything** — safe, and pointless: ~500 rows read to update one text field.
+- **Denormalize `CourseId` onto `Lesson`** to skip the join — does not help: `InstructorId` still lives
+  on `Course`, so the course must be loaded anyway to answer "may this user touch it?".
 
-**Альтернативи:**
-- Завжди завантажувати повний агрегат — безпечно, але додає ~500 зайвих SQL рядків на кожен UPDATE вмісту уроку. Відхилено як передчасна коректність без реального захисту.
-- Денормалізувати `CourseId` у `Lesson` для прямого доступу без JOIN — не вирішує проблему: `InstructorId` все одно живе тільки в `Course`. Потрібен JOIN у будь-якому разі. Відхилено.
-
-**Наслідки:**
-- `CourseCommandHandler<TCommand, TResult>` має параметр `includeLessons` (default `false`). Handlers категорії А передають `includeLessons: true`.
-- Новий handler що оновлює вміст уроку → категорія Б (hybrid). Новий handler що може вплинути на видимість або видалити уроки/секції → категорія А (повне завантаження).
-- Це задокументована конвенція, а не автоматичний enforcement. При review нових handlers — перевіряти правильність категорії.
-
----
-
-## ADR-BACK-DOMAIN-017: Виправлення дірки в enforcement інваріантів — DeleteLesson і ToggleLessonVisibility
-
-**Рішення:** `DeleteLessonCommandHandler` і `ToggleLessonVisibilityCommandHandler` змінено: тепер передають `includeLessons: true` до базового `CourseCommandHandler`. Це гарантує, що при перевірці `EnsurePublishableInvariants()` агрегат бачить реальний стан уроків курсу.
-
-**Контекст (знайдена дірка):**
-- Обидва handlers успадковували `CourseCommandHandler` з `includeLessons: false` (default).
-- `EnsurePublishableInvariants()` перевіряє `_sections.Any(s => s.Lessons.Any(l => !l.IsHidden))`.
-- Якщо `Lessons` не завантажені → колекція порожня → `_sections.Any(...)` повертає `false` → метод **завжди** кинув би `DomainException("Published course must have at least one visible lesson.")` навіть для курсу з 50 видимими уроками.
-- На практиці: `EnsurePublishableInvariants()` взагалі не викликається ні в `DeleteLessonCommandHandler`, ні в `ToggleLessonVisibilityCommandHandler` — мутації відбуваються поза агрегатом через `lessonRepository` напряму. Тому дірка в поведінці не проявлялась. Але вона є архітектурною міною: якщо хтось додасть виклик `EnsurePublishableInvariants()` чи перенесе мутацію в AR — зламає Published курси.
-
-**Чому виправлено саме так (includeLessons: true):**
-- Найменше втручання: один параметр в конструкторі base class.
-- Завантаження уроків курсу в цих операціях — правильна вимога за семантикою (ми перевіряємо глобальний інваріант "≥1 visible lesson across all sections").
-
-**Альтернативи:**
-- Додати `Course.RemoveLesson()` метод що сам виконує `DeleteAsync` через domain service — ускладнює доменну модель залежністю від persistence. Відхилено: domain не знає про репозиторії.
-- Перевіряти інваріант окремим SQL `EXISTS` запитом у хендлері — розмиває відповідальність. Інваріанти живуть в доменній моделі, а не в хендлерах.
-
-**Наслідки:**
-- `DeleteLesson`: завантажує всі секції з усіма уроками. Для великого курсу (~500 уроків) — трохи важче, але операція видалення уроку рідкісна і не є hot path.
-- `ToggleLessonVisibility`: аналогічно.
-- `EnsurePublishableInvariants()` відтепер гарантовано бачить коректний стан при цих двох операціях.
+**Consequences:**
+- `DeleteLesson` and `ToggleLessonVisibility` pass `includeLessons: true` — and they must. Both once
+  defaulted to `false`, and `EnsurePublishableInvariants()` reading an unloaded (therefore empty)
+  `Lessons` collection would have thrown *"must have at least one visible lesson"* on a course with
+  fifty of them. The bug never fired only because those handlers did not call the invariant at all —
+  an accident, not a design. This is why the loading mode is part of the decision and not an
+  optimization detail.
+- A new handler that can delete or hide lessons is a full load. A new handler that only edits content
+  is a point load. This is a convention, not something the compiler enforces — check it in review.
 
 ---
 
-## ADR-BACK-DOMAIN-018: Виправлення fuzzy match текстових відповідей — поріг Levenshtein і trim
+## ADR-BACK-DOMAIN-006: Course lifecycle — three states, invariants gate Publish
 
-**Рішення:** Поріг Levenshtein у `Question.IsFuzzyMatch` винесено в `FuzzyThresholdFor(int correctLength)` і задано за довжиною **очікуваної** відповіді: `<= 2` символи → `0` правок, `<= 5` → `1`, довші → `2`. Обрізання пробілів (`Trim()`) застосовується до обох рядків **завжди**, а не лише коли увімкнено `IgnoreCase`.
+**Decision:** `Course` has three states, plus soft-deleted:
 
-**Контекст (знайдений баг):**
-Попередня умова була записана так:
+- **Draft** — on create; editable; visible only to the owner and Admin.
+- **Published** — visible to everyone, open for enrollment.
+- **Archived** — visible to owner and Admin, read-only, closed for enrollment.
+- soft-deleted — visible only via `IgnoreQueryFilters` (ADR-BACK-DOMAIN-010).
 
-```csharp
-int threshold = b.Length > 2 ? 0 : (b.Length <= 5 ? 1 : 2);
-```
+Transitions: `Create → Draft`; `Draft → Published` (`Publish()`, invariants checked);
+`Published → Draft` (`Unpublish()`); `any → Archived` (`Archive()`); `any → soft-deleted` (`Delete()`,
+even with active enrollments).
 
-де `b` — правильна відповідь. Це давало дві помилки одразу, в протилежні боки:
+**Publish invariants** — exactly what `Course.EnsurePublishableInvariants()` enforces:
 
-- **Довгі відповіді не мали жодної толерантності.** Усе, довше за 2 символи, отримувало `threshold = 0`, тобто вимагало точного збігу. Прапорець `AllowFuzzy` фактично нічого не робив для будь-якої реальної відповіді — `"Pariss"` не зараховувалось для `"Paris"`.
-- **Дуже короткі відповіді були надто поблажливі.** При `b.Length <= 2` поріг дорівнював `1`, тому для правильної відповіді `"C#"` зараховувалась відповідь `"C"`.
-- Гілка з `2` була **недосяжна**: потрапити в неї можна лише коли `b.Length <= 2`, а тоді `b.Length <= 5` завжди істина.
+1. `CoverBlobPath` is set (the entity stores the blob path; the DTO exposes it as `coverImageUrl`).
+2. At least one section.
+3. At least one **visible** lesson across all sections (`!l.IsHidden`).
 
-Коментар над рядком (`1 edit for short answers, 2 for longer`) описував намір, протилежний до коду — тобто це була одруківка `>` замість `<=`, а не свідоме рішення. Умова була прикрита `#pragma warning disable S3358` (вкладений тернарний оператор), що й ховало її від рев'ю; після рефакторингу в `switch` прагма більше не потрібна.
+**Why:**
+- Without them, empty courses reach the catalog. That is a platform-quality problem, not a user error.
+- A cover is optional in Draft and mandatory on Publish: the instructor can write the content first and
+  attach the artwork later.
+- Archive is "take it out of the catalog, keep it for the owner" — there is nothing to validate.
 
-`Trim()` всередині `if (TextAnswer.IgnoreCase)` означав, що при вимкненому ignore-case відповідь `"Paris "` з кінцевим пробілом вважалась неправильною. Пробіли навколо відповіді ніколи не є частиною змісту, тож обрізаються завжди.
+**Alternatives:**
+- **Publish without invariants** — the catalog fills with empty shells.
+- **Invariants as DB CHECK constraints** — "at least one visible lesson across all sections" is not
+  expressible without triggers.
 
-**Чому саме такі пороги:**
-- `<= 2` → `0`: одна правка перетворює `"C#"` на `"C"` або `"C++"`, а `"Go"` на `"Do"`. Для таких відповідей будь-яка толерантність міняє зміст.
-- `3-5` → `1`: класичний захист від однієї одруківки (`"cat"` / `"bat"` — межа, `"bet"` уже ні).
-- `> 5` → `2`: довші відповіді дають більше місця для одруківок, не втрачаючи розпізнаваності (`"JavaScrip"` для `"JavaScript"`).
+---
 
-**Наслідки:**
-- Поведінка оцінювання змінилась для наявних курсів з увімкненим `AllowFuzzy`. Раніше такі тести оцінювались фактично як exact match; тепер одруківки прощаються, як і обіцяє UI (`"Дозволити одруківки (Fuzzy)"`).
-- Текст у `GetPlatformInfoTool` (секція `tests`) оновлено — він обіцяв «1 character error» і тепер описує реальні пороги.
-- Покрито тестами: `Learnix.Domain.UnitTests/ValueObjects/QuestionTests.cs` фіксує всі три рівні порогу на межах та trim при вимкненому `IgnoreCase`.
+## ADR-BACK-DOMAIN-007: Publish invariants hold continuously, not just at Publish
 
-**Альтернативи:**
-- Завжди `1` правка — збігалося б з попереднім текстом `get_platform_info`, але не з коментарем у коді й гірше працює на довгих відповідях.
-- Поріг пропорційний довжині (`length / 5`) — масштабується плавніше, але це нова поведінка, якої ніхто не закладав, і вона суворіша за поточну для 3-4-символьних відповідей.
+**Decision:** while `Status == Published`, the three invariants must hold *at all times*. They are
+re-checked after every mutation that could break them, not only during the Draft → Published
+transition:
+
+- `SetCoverImage(null)` on a Published course → throw.
+- `RemoveSection(...)` that leaves zero sections, or leaves no visible lesson → throw.
+- `RemoveLesson(...)` / hiding a lesson that leaves no visible lesson → throw.
+
+Archived is fully read-only (`EnsureStructureMutable()` rejects every structure mutation). Draft
+allows anything.
+
+**Why:**
+- The instructor can keep working on a Published course without an Unpublish → edit → Publish dance,
+  and the course still cannot become an empty shell.
+
+**Alternatives:**
+- **Structure frozen while Published** — one invariant fewer, considerably worse UX.
+- **Additive only** (adds allowed, deletes not) — a half-rule that would have to be enforced in every
+  delete handler individually; a continuous invariant in the entity is less code and harder to forget.
+
+**Consequences:**
+- `EnsurePublishableInvariants()` is private and called from `SetCoverImage`, `RemoveSection`,
+  `RemoveLesson` and `Publish`.
+- When it throws, the in-memory entity may already be modified — but `SaveChangesAsync` is never
+  reached, the DbContext is scoped per request, and nothing is written.
+- **Convention:** any new mutation that could touch cover, sections or lesson visibility must call it.
+
+---
+
+## ADR-BACK-DOMAIN-008: `Question`, `QuestionOption`, `TextAnswerConfig` are value objects in JSONB
+
+**Decision:** these three, plus `StudentAnswer`, are value objects persisted as JSONB — `OwnsMany` /
+`OwnsOne` with `ToJson()` — inside `TestLesson` and `TestAttempt`. They have no tables of their own.
+
+**Why:**
+- None of them has a lifecycle independent of its owner. A question without its test is meaningless,
+  an option without its question likewise, an answer belongs to exactly one attempt and is never reused.
+- Questions are replaced wholesale (`ReplaceQuestions`), never patched one at a time — which is exactly
+  what a JSON document does well and what a relational child table does badly (delete-all + insert-all
+  in a transaction, plus cascade rules and ordering columns).
+
+**Scoring lives with the data:** `Question.IsAnsweredCorrectly(StudentAnswer)` holds the full scoring
+rule, including the fuzzy text match (ADR-BACK-DOMAIN-014).
+
+**Alternatives:**
+- **Separate tables** — join-heavy reads for something always fetched as a whole, and a bulk replace
+  that becomes a small transaction script.
+
+**Consequences:**
+- Adding a field to a question is a JSON shape change, not a migration — backward compatible as long as
+  it is nullable.
+
+---
+
+## ADR-BACK-DOMAIN-009: Reorder is a bulk operation with full set equality
+
+**Decision:** reordering is its own endpoint (`.../sections/reorder`, `.../lessons/reorder`) taking an
+array of `{ id, order }`. The domain requires the payload to contain **exactly** the existing set — no
+more, no fewer. The validator checks shape (non-empty, ≤500 sections / ≤1000 lessons, unique ids,
+`order >= 0`); the domain checks set equality via `ReorderValidation.EnsureValid`.
+
+**Why:**
+- **Atomicity.** One transaction. N individual `PATCH /order` calls pass through states where two
+  siblings share an order, and keeping that consistent needs locks nobody wants to write.
+- **A complete snapshot is simpler than a diff.** "This is the order it should be in" beats "shift these
+  three and hope".
+- Set equality is an aggregate invariant, not a shape check — hence the domain, not the validator.
+
+**Alternatives:**
+- **`PATCH` an individual order** — collisions, and a lock to resolve them.
+- **Fractional indexing (Lexorank)** — avoids rewriting every row on insert; overkill for an LMS where
+  reorder is an explicit, occasional action, not a continuous drag.
+
+---
+
+## ADR-BACK-DOMAIN-010: Soft delete for `User` and `Course`, hard delete for the rest
+
+**Decision:**
+- `User` — soft delete, then **anonymization** after a 30-day recovery window
+  (`UserConstants.AccountRecoveryWindowDays`, executed by `DeletedAccountPurgeService`).
+- `Course` — soft delete, or Archive when the owner just wants it out of the catalog. A soft-deleted
+  course stays in the database indefinitely; nothing purges it.
+- Everything else (`LessonProgress`, wishlist rows, …) — hard delete.
+
+`ISoftDeletable` gives `IsDeleted` + `DeletedAt`; a global EF query filter hides the rows;
+`SoftDeleteInterceptor` turns a `Remove()` into a flag update.
+
+**Why:**
+- Deleting a user for real is not possible today and possibly never should be: reviews, conversations
+  and payments reference them. Anonymization keeps the deletion promise for the personal data while the
+  records that other people depend on survive. The full reasoning, and the FK graph that forces it,
+  is in `ADR-BACK-USERS-001` and TD-001.
+- A course carries enrollments, progress and certificates. Erasing it would erase somebody else's
+  history of having learned from it.
+
+**Consequences:**
+- "Deleted" means two different things for a user (recoverable for 30 days, then anonymized) and for a
+  course (recoverable indefinitely, by an admin). That asymmetry is deliberate — and it is the reason
+  no background job purges courses.
+
+---
+
+## ADR-BACK-DOMAIN-011: `EnrollmentsCount` is denormalized on `Course`
+
+**Decision:** `Course.EnrollmentsCount` is a column, incremented by the domain method
+`IncrementEnrollmentsCount()` in the same transaction as the enrollment that caused it — from
+`EnrollInCourse` (free courses) and from `InitiateMockPayment` (paid ones).
+
+**Why:**
+- The catalog sorts and filters by popularity on its hottest path. `COUNT(*)` over `Enrollments` per
+  course per page render is the wrong shape of query for that.
+- Incrementing inside the same `SaveChangesAsync` as the `Enrollment` insert means the counter cannot
+  drift from the rows it counts: either both land or neither does.
+
+**Alternatives:**
+- **`COUNT(*)` on read** — correct by construction, and a join on every catalog page.
+- **A nightly recount job** — simple, but the counter is wrong for up to 24 hours right after the event
+  a user is most likely to look at.
+- **Async update via an integration event** — eventual consistency where none is needed: the user who
+  just enrolled would see the old number.
+
+**Consequences:**
+- Un-enrolling is not supported, so there is no decrement. If it is ever added, it must decrement in the
+  same transaction — and the seeder (`StudentSeeder`) has to keep doing the same.
+
+---
+
+## ADR-BACK-DOMAIN-012: `IsFree` is computed, not stored
+
+**Decision:** `Course` stores `Price : decimal`. "Free" means `Price == 0`. There is no `IsFree` column;
+the DTO exposes a computed `IsFree => Price == 0m`.
+
+**Why:**
+- Two fields that must agree will eventually disagree — `Price = 10, IsFree = true` is a one-line bug
+  and a support nightmare. One source of truth cannot desynchronize with itself.
+
+**Alternatives:**
+- **An `IsFree` column** — buys a marginally cheaper filter (an index on `Price` gets the same result)
+  and guarantees a class of bug.
+- **A computed column in PostgreSQL** — available if the free-courses filter ever becomes hot. It is not.
+
+---
+
+## ADR-BACK-DOMAIN-013: `Category.IsSystem` protects seeded categories
+
+**Decision:** `Category.IsSystem : bool`. The seeder (`CategorySeeder` in `Learnix.DbMigrator`) creates
+its categories with `IsSystem = true`. `Category.Rename` refuses to rename them, and
+`DeleteCategoryCommandHandler` refuses to delete them.
+
+**Why:**
+- Seeded categories are platform data that courses are attached to. Hiding the delete button in the
+  admin UI is not protection — a `DELETE` via curl would still go through.
+- One flag on the entity means one place to check, rather than a rule re-implemented in the UI and in
+  the API.
+
+**Alternatives:**
+- **A hardcoded list of protected slugs** — works until the seeder and the list disagree.
+- **A separate `SystemCategories` table** — a table for one bit.
+
+**Consequences:**
+- A user-created category whose slug is later added to the seeder stays `IsSystem = false` (the seeder
+  skips duplicates). Promoting it is a manual `UPDATE`.
+
+---
+
+## ADR-BACK-DOMAIN-014: Fuzzy text answers — threshold by expected-answer length
+
+**Decision:** `Question.IsFuzzyMatch` derives its Levenshtein threshold from the length of the
+**expected** answer: `<= 2` chars → `0` edits, `<= 5` → `1`, longer → `2`. Both strings are always
+`Trim()`-ed, regardless of `IgnoreCase`.
+
+**Why these thresholds:**
+- `<= 2 → 0`: one edit turns `"C#"` into `"C"` and `"Go"` into `"Do"`. At that length any tolerance
+  changes the answer.
+- `3–5 → 1`: one typo forgiven. (`"cat"`/`"bat"` is the boundary; `"bet"` is not.)
+- `> 5 → 2`: long answers can absorb two typos and still be unmistakable — `"JavaScrip"` for
+  `"JavaScript"`.
+
+**What this replaced** — the previous line was `b.Length > 2 ? 0 : (b.Length <= 5 ? 1 : 2)`, which got
+it wrong in both directions at once: everything longer than two characters demanded an exact match (so
+`AllowFuzzy` did nothing for any real answer), two-character answers got a *whole* edit of tolerance
+(`"C"` passed for `"C#"`), and the `2` branch was unreachable. The comment above it described the
+opposite of what it did, and a `#pragma warning disable S3358` kept the nested ternary out of review.
+`Trim()` living inside `if (IgnoreCase)` meant `"Paris "` was wrong when case-sensitivity was on.
+
+**Consequences:**
+- Grading changed for existing courses with `AllowFuzzy` on: they used to be graded as exact matches,
+  and now behave the way the UI has always promised ("Allow typos").
+- `GetPlatformInfoTool` used to tell the AI tutor "1 character error" — it now describes the real
+  thresholds.
+- `Learnix.Domain.UnitTests/ValueObjects/QuestionTests.cs` pins all three levels at their boundaries.
+
+**Alternatives:**
+- **Always 1 edit** — matches the old marketing copy, serves long answers badly.
+- **Proportional (`length / 5`)** — smoother, but stricter than today for 3–4 character answers and a
+  behaviour nobody asked for.
