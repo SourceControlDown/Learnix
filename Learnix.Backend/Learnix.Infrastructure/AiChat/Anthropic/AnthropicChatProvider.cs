@@ -14,28 +14,66 @@ internal sealed class AnthropicChatProvider(
     AnthropicClient client,
     IOptions<AnthropicSettings> options) : IAiChatProvider
 {
+    public string Name => "Anthropic";
+
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(options.Value.ApiKey);
+
+    /// <summary>
+    /// Driven by hand rather than with <c>await foreach</c>: a rate limit or a rejected key surfaces as an
+    /// exception out of <c>MoveNextAsync</c>, and an iterator cannot yield from inside a catch. See
+    /// <see cref="AiProviderErrors"/> and ADR-CHAT-014.
+    /// </summary>
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
-        IReadOnlyList<ChatMessage> conversation,
-        IReadOnlyList<ToolDefinition> tools,
-        [EnumeratorCancellation] CancellationToken ct)
+        ChatRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var parameters = new MessageParameters
         {
             Model = options.Value.Model,
             MaxTokens = options.Value.MaxTokens,
             Stream = true,
-            System = [new SystemMessage(AiChatConstants.SystemPrompt)],
-            Messages = BuildMessages(conversation),
-            Tools = tools.Count > 0 ? BuildTools(tools) : null
+            System = [new SystemMessage(request.SystemPrompt)],
+            Messages = BuildMessages(request.Conversation),
+            Tools = request.Tools.Count > 0 ? BuildTools(request.Tools) : null
         };
 
         var outputs = new List<MessageResponse>();
+        var responses = client.Messages.StreamClaudeMessageAsync(parameters, cancellationToken).GetAsyncEnumerator(cancellationToken);
 
-        await foreach (var res in client.Messages.StreamClaudeMessageAsync(parameters, ct))
+        try
         {
-            if (res.Delta?.Text is not null)
-                yield return new TextDeltaEvent(res.Delta.Text);
-            outputs.Add(res);
+            while (true)
+            {
+                MessageResponse? res = null;
+                ChatStreamEvent? failure = null;
+
+                try
+                {
+                    if (!await responses.MoveNextAsync())
+                        break;
+
+                    res = responses.Current;
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    failure = AiProviderErrors.Classify(ex);
+                }
+
+                if (failure is not null)
+                {
+                    yield return failure;
+                    yield break;
+                }
+
+                if (res!.Delta?.Text is not null)
+                    yield return new TextDeltaEvent(res.Delta.Text);
+
+                outputs.Add(res);
+            }
+        }
+        finally
+        {
+            await responses.DisposeAsync();
         }
 
         // Tool use blocks are fully accumulated after streaming ends

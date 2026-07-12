@@ -39,7 +39,10 @@ export function AiChatWidget() {
     }
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6">
+        // When radix locks scroll (Select/Dialog), react-remove-scroll removes the scrollbar and
+        // exposes its width as --removed-body-scroll-bar-size. This is fixed to the viewport, so
+        // without compensation it would jump sideways by that width. Offset it to stay put.
+        <div className="fixed bottom-4 right-[calc(1rem+var(--removed-body-scroll-bar-size,0px))] z-50 sm:bottom-6 sm:right-[calc(1.5rem+var(--removed-body-scroll-bar-size,0px))]">
             <AiChatPanel
                 isOpen={isChatOpen}
                 onClose={handleClose}
@@ -53,13 +56,15 @@ export function AiChatWidget() {
                     aria-label={t('ariaToggle')}
                     aria-expanded={isChatOpen}
                     className={cn(
-                        'flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-200',
-                        'bg-primary text-primary-foreground hover:bg-primary/90',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+                        'flex size-[3.75rem] items-center justify-center rounded-full shadow-lg transition-all duration-200',
+                        // Brand, not primary: the widget floats over the panel sections too,
+                        // and --primary collapses into their background in dark mode.
+                        'bg-brand text-brand-foreground hover:bg-brand/90',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
                         isChatOpen && 'rotate-12 scale-95',
                     )}
                 >
-                    <Bot size={24} />
+                    <Bot className="size-8" />
                 </button>
             )}
         </div>

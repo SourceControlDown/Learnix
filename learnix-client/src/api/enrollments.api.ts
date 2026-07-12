@@ -1,5 +1,5 @@
 import type { PaginatedResult } from '@/types/api.types';
-import type { EnrolledCourseDto } from '@/types/enrollment.types';
+import type { ContinueLearningDto, EnrolledCourseDto } from '@/types/enrollment.types';
 import { api } from './axios.instance';
 
 export const enrollmentsApi = {
@@ -12,4 +12,10 @@ export const enrollmentsApi = {
 
     enroll: (courseId: string) =>
         api.post<{ enrollmentId: string }>('/enrollments', { courseId }).then((r) => r.data),
+
+    /** The backend answers 204 when there is no course in progress. */
+    getContinueLearning: () =>
+        api
+            .get<ContinueLearningDto>('/enrollments/continue')
+            .then((r) => (r.status === 204 ? null : r.data)),
 };

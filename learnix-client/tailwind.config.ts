@@ -25,6 +25,11 @@ export default {
                     DEFAULT: 'hsl(var(--brand))',
                     foreground: 'hsl(var(--brand-foreground))',
                 },
+                panel: {
+                    DEFAULT: 'hsl(var(--panel))',
+                    foreground: 'hsl(var(--panel-foreground))',
+                },
+                link: 'hsl(var(--link))',
                 secondary: {
                     DEFAULT: 'hsl(var(--secondary))',
                     foreground: 'hsl(var(--secondary-foreground))',
@@ -46,6 +51,18 @@ export default {
                 border: 'hsl(var(--border))',
                 input: 'hsl(var(--input))',
                 ring: 'hsl(var(--ring))',
+                // Form-field palette — see --field-* in styles/index.css. Every input,
+                // select, textarea, checkbox and radio draws from these; nothing else should.
+                field: {
+                    DEFAULT: 'hsl(var(--field))',
+                    hover: 'hsl(var(--field-hover))',
+                    card: 'hsl(var(--field-card))',
+                    'card-hover': 'hsl(var(--field-card-hover))',
+                    border: 'hsl(var(--field-border))',
+                    focus: 'hsl(var(--field-border-focus))',
+                    error: 'hsl(var(--field-border-error))',
+                    accent: 'hsl(var(--field-accent))',
+                },
                 'chat-user-bubble': {
                     DEFAULT: 'hsl(var(--chat-user-bubble))',
                     foreground: 'hsl(var(--chat-user-bubble-foreground))',

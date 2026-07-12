@@ -22,7 +22,7 @@ export function QueryError({ message, onRetry, retryLabel, className }: QueryErr
                 <button
                     type="button"
                     onClick={onRetry}
-                    className="text-sm text-primary underline hover:text-primary/80"
+                    className="text-sm text-link underline hover:text-link/80"
                 >
                     {retryLabel}
                 </button>

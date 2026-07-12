@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle, Clock, XCircle } from 'lucide-react';
+import { CheckCircle, Clock, ShieldAlert, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormInput } from '@/components/common/form/FormInput';
 import { FormTextarea } from '@/components/common/form/FormTextarea';
@@ -15,12 +15,19 @@ import {
     instructorApplicationSchema,
 } from '@/schemas/instructorApplication.schema';
 import { useAuthStore } from '@/store/auth.store';
+import { isInstructorOrAdmin } from '@/utils/roles';
 
 export default function BecomeInstructorPage() {
     const { t } = useTranslation('instructor');
     const user = useAuthStore((s) => s.user);
     const { data: application, isLoading } = useMyApplication();
     const submitApplication = useSubmitApplication();
+
+    // The two cards below need to tell instructors and admins apart; the form only cares
+    // that neither of them may apply.
+    const isInstructor = user?.roles.includes(UserRole.Instructor) ?? false;
+    const isAdmin = user?.roles.includes(UserRole.Admin) ?? false;
+    const canApply = !!user && !isInstructorOrAdmin(user);
 
     const {
         register,
@@ -60,7 +67,11 @@ export default function BecomeInstructorPage() {
                     </h2>
                     <p className="mb-6 text-muted-foreground">{t('notLoggedInBody')}</p>
                     <Link
-                        to="/login?redirect=/become-instructor"
+                        to={
+                            APP_ROUTES.public.login +
+                            '?redirect=' +
+                            APP_ROUTES.public.becomeInstructor
+                        }
                         className="inline-block rounded-lg bg-primary px-6 py-2.5 font-medium text-primary-foreground hover:bg-primary/90"
                     >
                         {t('btnSignIn')}
@@ -69,7 +80,7 @@ export default function BecomeInstructorPage() {
             )}
 
             {/* Already an instructor */}
-            {user?.roles.includes('Instructor') && (
+            {isInstructor && (
                 <div className="rounded-xl border border-border bg-card p-8 text-center">
                     <CheckCircle className="mx-auto mb-3 text-success" size={40} />
                     <h2 className="mb-2 font-heading text-xl font-semibold">
@@ -85,86 +96,90 @@ export default function BecomeInstructorPage() {
                 </div>
             )}
 
+            {/* Admin — the API rejects their applications; they can self-assign the role instead */}
+            {isAdmin && !isInstructor && (
+                <div className="rounded-xl border border-border bg-card p-8 text-center">
+                    <ShieldAlert className="mx-auto mb-3 text-warning" size={40} />
+                    <h2 className="mb-2 font-heading text-xl font-semibold">
+                        {t('adminCannotApplyTitle')}
+                    </h2>
+                    <p className="text-muted-foreground">{t('adminCannotApplyBody')}</p>
+                </div>
+            )}
+
             {/* Loading application status */}
-            {user && user.roles.includes(UserRole.Student) && isLoading && (
-                <div className="py-16 text-center text-sm text-muted-foreground">Loading...</div>
+            {canApply && isLoading && (
+                <div className="py-16 text-center text-sm text-muted-foreground">
+                    {t('common:status.loading')}
+                </div>
             )}
 
             {/* Pending application */}
-            {user &&
-                user.roles.includes(UserRole.Student) &&
-                !isLoading &&
-                application?.status === 'Pending' && (
-                    <div className="rounded-xl border border-border bg-card p-8 text-center">
-                        <Clock className="mx-auto mb-3 text-warning" size={40} />
-                        <h2 className="mb-2 font-heading text-xl font-semibold">
-                            {t('applicationPendingTitle')}
-                        </h2>
-                        <p className="text-muted-foreground">{t('applicationPendingBody')}</p>
-                    </div>
-                )}
+            {canApply && !isLoading && application?.status === 'Pending' && (
+                <div className="rounded-xl border border-border bg-card p-8 text-center">
+                    <Clock className="mx-auto mb-3 text-warning" size={40} />
+                    <h2 className="mb-2 font-heading text-xl font-semibold">
+                        {t('applicationPendingTitle')}
+                    </h2>
+                    <p className="text-muted-foreground">{t('applicationPendingBody')}</p>
+                </div>
+            )}
 
-            {/* Approved */}
-            {user &&
-                user.roles.includes(UserRole.Student) &&
-                !isLoading &&
-                application?.status === 'Approved' && (
-                    <div className="rounded-xl border border-border bg-card p-8 text-center">
-                        <CheckCircle className="mx-auto mb-3 text-success" size={40} />
-                        <h2 className="mb-2 font-heading text-xl font-semibold">
-                            {t('applicationApprovedTitle')}
-                        </h2>
-                        <p className="mb-6 text-muted-foreground">{t('applicationApprovedBody')}</p>
-                        <Link
-                            to={APP_ROUTES.instructor.dashboard}
-                            className="inline-block rounded-lg bg-primary px-6 py-2.5 font-medium text-primary-foreground hover:bg-primary/90"
-                        >
-                            {t('btnGoToDashboard')}
-                        </Link>
-                    </div>
-                )}
+            {/* Approved, but the role is not in the token yet */}
+            {canApply && !isLoading && application?.status === 'Approved' && (
+                <div className="rounded-xl border border-border bg-card p-8 text-center">
+                    <CheckCircle className="mx-auto mb-3 text-success" size={40} />
+                    <h2 className="mb-2 font-heading text-xl font-semibold">
+                        {t('applicationApprovedTitle')}
+                    </h2>
+                    <p className="mb-6 text-muted-foreground">{t('applicationApprovedBody')}</p>
+                    <Link
+                        to={APP_ROUTES.instructor.dashboard}
+                        className="inline-block rounded-lg bg-primary px-6 py-2.5 font-medium text-primary-foreground hover:bg-primary/90"
+                    >
+                        {t('btnGoToDashboard')}
+                    </Link>
+                </div>
+            )}
 
             {/* Rejected */}
-            {user &&
-                user.roles.includes(UserRole.Student) &&
-                !isLoading &&
-                application?.status === 'Rejected' && (
-                    <div className="space-y-6">
-                        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
-                            <div className="flex items-start gap-3">
-                                <XCircle className="mt-0.5 shrink-0 text-destructive" size={20} />
-                                <div>
-                                    <h2 className="font-semibold text-foreground">
-                                        {t('applicationRejectedTitle')}
-                                    </h2>
-                                    {application.rejectionReason && (
-                                        <p className="mt-1 text-sm text-muted-foreground">
-                                            <span className="font-medium">
-                                                {t('applicationRejectedReasonLabel')}
-                                            </span>{' '}
-                                            {application.rejectionReason}
-                                        </p>
-                                    )}
-                                </div>
+            {canApply && !isLoading && application?.status === 'Rejected' && (
+                <div className="space-y-6">
+                    <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
+                        <div className="flex items-start gap-3">
+                            <XCircle className="mt-0.5 shrink-0 text-destructive" size={20} />
+                            <div>
+                                <h2 className="font-semibold text-foreground">
+                                    {t('applicationRejectedTitle')}
+                                </h2>
+                                {application.rejectionReason && (
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        <span className="font-medium">
+                                            {t('applicationRejectedReasonLabel')}
+                                        </span>{' '}
+                                        {application.rejectionReason}
+                                    </p>
+                                )}
                             </div>
                         </div>
-                        <ApplicationForm
-                            defaultValues={{
-                                motivationText: application.motivationText,
-                                portfolioUrl: application.portfolioUrl ?? '',
-                            }}
-                            register={register}
-                            handleSubmit={handleSubmit}
-                            errors={errors}
-                            onSubmit={onSubmit}
-                            isPending={submitApplication.isPending}
-                            submitLabel={t('btnResubmit')}
-                        />
                     </div>
-                )}
+                    <ApplicationForm
+                        defaultValues={{
+                            motivationText: application.motivationText,
+                            portfolioUrl: application.portfolioUrl ?? '',
+                        }}
+                        register={register}
+                        handleSubmit={handleSubmit}
+                        errors={errors}
+                        onSubmit={onSubmit}
+                        isPending={submitApplication.isPending}
+                        submitLabel={t('btnResubmit')}
+                    />
+                </div>
+            )}
 
             {/* No application yet */}
-            {user && user.roles.includes(UserRole.Student) && !isLoading && !application && (
+            {canApply && !isLoading && !application && (
                 <ApplicationForm
                     register={register}
                     handleSubmit={handleSubmit}

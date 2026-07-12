@@ -14,7 +14,7 @@ internal sealed class PasswordResetService(
     IUnitOfWork unitOfWork)
     : IPasswordResetService
 {
-    public async Task<Result> InitiateResetAsync(string email, CancellationToken ct = default)
+    public async Task<Result> InitiateResetAsync(string email, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(email);
 
@@ -27,7 +27,7 @@ internal sealed class PasswordResetService(
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
 
         user.RaisePasswordResetRequested(token);
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok();
     }
@@ -36,7 +36,7 @@ internal sealed class PasswordResetService(
         string email,
         string token,
         string newPassword,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         // By this point the user already knows the email is registered (they got the reset email).
         // Anti-enumeration is not a concern here — return real errors for better UX.

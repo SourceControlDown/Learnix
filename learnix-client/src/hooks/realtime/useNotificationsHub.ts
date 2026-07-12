@@ -5,8 +5,9 @@ import * as signalR from '@microsoft/signalr';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { queryKeys } from '@/api/queryKeys';
+import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
-import type { CertificateReadyNotification } from '@/types/certificate.types';
+import type { CertificateIssuedNotification } from '@/types/certificate.types';
 import type { NewMessageNotification, UnreadCountNotification } from '@/types/message.types';
 import type { NotificationReceivedPayload } from '@/types/notification.types';
 import { env } from '@/utils/env';
@@ -69,13 +70,13 @@ export function useNotificationsHub() {
             queryClient.invalidateQueries({ queryKey: queryKeys.achievements.mine() });
         });
 
-        connection.on('CertificateReady', (payload: CertificateReadyNotification) => {
+        connection.on('CertificateIssued', (payload: CertificateIssuedNotification) => {
             toast.success(t('notification.title'), {
                 description: `${t('notification.descriptionPrefix')}"${payload.courseTitle}"`,
                 duration: 8000,
                 action: {
                     label: t('notification.action'),
-                    onClick: () => navigateRef.current('/certificates'),
+                    onClick: () => navigateRef.current(APP_ROUTES.student.certificates),
                 },
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.certificates.mine() });

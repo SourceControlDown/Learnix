@@ -9,7 +9,7 @@ internal sealed class SignalRAchievementNotifier(
     IHubContext<NotificationsHub, INotificationsHubClient> hubContext)
     : IAchievementNotifier
 {
-    public Task NotifyAsync(Guid userId, Guid achievementId, string code, DateTime unlockedAt, CancellationToken ct)
+    public Task NotifyAsync(Guid userId, Guid achievementId, string code, DateTime unlockedAt, CancellationToken cancellationToken)
         => hubContext
             .Clients
             .Group(NotificationsHub.UserGroup(userId.ToString()))

@@ -11,7 +11,7 @@ const safeComponents: Components = {
 
         if (href.startsWith('/')) {
             return (
-                <Link to={href} className="font-medium text-primary hover:underline">
+                <Link to={href} className="font-medium text-link hover:underline">
                     {children}
                 </Link>
             );
@@ -24,7 +24,7 @@ const safeComponents: Components = {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-primary hover:underline"
+                className="font-medium text-link hover:underline"
             >
                 {children}
             </a>

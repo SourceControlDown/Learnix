@@ -1,6 +1,7 @@
 using Learnix.Application.Common.Events;
 using Learnix.Domain.Entities;
 using Learnix.Domain.Events;
+using Learnix.Infrastructure.Outbox.Payloads.Users;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,7 @@ internal sealed class UserRegisteredOutboxHandler(
 {
     public async Task Handle(
         DomainEventNotification<UserRegisteredDomainEvent> notification,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var e = notification.DomainEvent;
         var db = holder.DbContext!;
@@ -22,7 +23,7 @@ internal sealed class UserRegisteredOutboxHandler(
             .AsNoTracking()
             .Where(u => u.Id == e.UserId)
             .Select(u => new { u.Language })
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(cancellationToken);
 
         var language = user?.Language ?? "en";
         var confirmationCode = e.EmailConfirmationToken;

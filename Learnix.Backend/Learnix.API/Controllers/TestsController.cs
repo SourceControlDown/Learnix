@@ -19,9 +19,9 @@ public sealed class TestsController(ISender sender) : ControllerBase
     /// <summary>Gets test metadata and the current student's status (attempts used, cooldown, etc.).</summary>
     [HttpGet]
     public async Task<IActionResult> GetTestLesson(
-        Guid courseId, Guid lessonId, CancellationToken ct)
+        Guid courseId, Guid lessonId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetTestLessonQuery(courseId, lessonId), ct);
+        var result = await sender.Send(new GetTestLessonQuery(courseId, lessonId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -32,9 +32,9 @@ public sealed class TestsController(ISender sender) : ControllerBase
     [HttpPost("attempts/start")]
     [EnableRateLimiting(RateLimitPolicies.TestAttempts)]
     public async Task<IActionResult> StartAttempt(
-        Guid courseId, Guid lessonId, CancellationToken ct)
+        Guid courseId, Guid lessonId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new StartTestAttemptCommand(courseId, lessonId), ct);
+        var result = await sender.Send(new StartTestAttemptCommand(courseId, lessonId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -44,19 +44,19 @@ public sealed class TestsController(ISender sender) : ControllerBase
     public async Task<IActionResult> SubmitAttempt(
         Guid courseId, Guid lessonId, Guid attemptId,
         [FromBody] SubmitAttemptRequest request,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var command = new SubmitTestAttemptCommand(courseId, lessonId, attemptId, request.Answers);
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     /// <summary>Returns all submitted attempts for the current student on this test.</summary>
     [HttpGet("attempts")]
     public async Task<IActionResult> GetMyAttempts(
-        Guid courseId, Guid lessonId, CancellationToken ct)
+        Guid courseId, Guid lessonId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetMyTestAttemptsQuery(courseId, lessonId), ct);
+        var result = await sender.Send(new GetMyTestAttemptsQuery(courseId, lessonId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 }

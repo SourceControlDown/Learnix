@@ -136,7 +136,7 @@ export default function InstructorApplicationsPage() {
                                                         href={a.portfolioUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                                                        className="inline-flex items-center gap-1 text-sm text-link hover:underline"
                                                     >
                                                         {a.portfolioUrl}
                                                         <ExternalLink size={12} />

@@ -27,10 +27,10 @@
 | B-08 | ASP.NET Core Identity setup (User entity, role seeding) | done | |
 | B-09 | Register command (+ validator + handler + email verification event) | done | |
 | B-10 | Login command (JWT generation + refresh token creation) | done | |
-| B-10.5 | Document Authentication pipeline in ARCHITECTURE.md | done | |
+| B-10.5 | Document Authentication pipeline | done | |
 | B-11 | Refresh token endpoint (rotation + revocation logic) | done | |
 | B-11.5 | Refresh token cleanup background service (deletes tokens older than expiry + 7 days) | done | |
-| B-12 | Email confirmation flow (confirm endpoint + resend) | done | Real SMTP via MailKit + RazorLight .cshtml templates; ConsoleEmailSender removed (ADR-INFRA-016); email localization (EN/UK) via IStringLocalizer + .resx (ADR-INFRA-017) |
+| B-12 | Email confirmation flow (confirm code + resend) | done | |
 | B-13 | Password reset flow (forgot + reset endpoints) | done | |
 | B-14 | Google OAuth integration | done | |
 | B-15 | Rate limiting middleware (auth endpoints) | done | |
@@ -50,7 +50,6 @@
 | B-23 | Lesson CRUD (Video/Post) + reordering | done | |
 | B-24 | File upload service (Azure Blob): video + cover image | done | |
 | B-25 | Instructor application flow (submit, admin approve/reject) | done | |
-| B-25.1 | Admin seeding: `AdminSeederHostedService` — creates first admin from `SeedAdmin:Email`/`SeedAdmin:Password` config on startup if no Admin exists. Dev defaults in `appsettings.Development.json` (`admin@learnix.dev` / `Admin123!`). Admin can promote others via existing `POST /api/admin/users/{id}/roles/{role}`. | done | |
 
 ### Phase 4 — Student Features
 
@@ -63,7 +62,7 @@
 | B-30 | Course completion detection + Certificate generation (PDF) | done | Async PDF gen via BackgroundService (PeriodicTimer 30s); QuestPDF; Azure Blob upload; SAS URL for download |
 | B-31 | Student profile (edit name, avatar, bio, category preferences) | done | |
 
-### Phase 5 — Payments
+### Phase 5 — Payments - MOCK
 
 | # | Task | Status | Notes |
 |---|---|---|---|
@@ -71,7 +70,6 @@
 | B-33 | Stripe webhook handler (payment completed → activate enrollment) | CANCELED | Mock payment remains |
 | B-34 | Payment history queries | done | GetMyPayments, GetInstructorEarnings, GetAdminPayments |
 | B-34.5 | Outbox pattern: OutboxMessage entity + EF config + background publisher worker (replace direct domain events publishing in ApplicationDbContext) | done | OutboxProcessorService + OutboxDbContextHolder |
-| B-34.6 | Split `UserRegisteredDomainEvent` into two events: `UserRegistered` (raised in Register flow) and `EmailConfirmationRequested` (raised in Resend flow). Current implementation uses `RaiseUserRegistered` in both places — semantic smell. | not started | |
 
 ### Phase 6 — Async Processing ~~(MassTransit)~~
 
@@ -79,8 +77,8 @@
 |---|---|---|---|
 | B-35 | MassTransit + Azure Service Bus setup | CANCELED | Overkill for a pet project. Email and achievements are already handled via Outbox + BackgroundService |
 | B-36 | Email consumers (verification, enrollment, approval) | CANCELED | Replaced by Outbox (OutboxMessageTypes + OutboxProcessorService) |
-| B-37 | Certificate generation consumer | CANCELED | Replaced by CertificatePdfGenerationService (BackgroundService + PeriodicTimer) |
-| B-38 | Achievement checking consumer | CANCELED | Replaced by Outbox (EvaluateLessonCompleted, EvaluateEnrollmentCompleted, etc.) |
+| B-37 | Certificate generation consumer | CANCELED | |
+| B-38 | Achievement checking consumer | CANCELED | Replaced by Outbox |
 
 ### Phase 7 — Achievements & Notifications
 
@@ -101,6 +99,13 @@
 | B-45 | AI chat: Multi-provider integration (Anthropic + Gemini, streaming SSE, tool use) | Done | |
 | B-46 | Chat session persistence (MongoDB) | Done | |
 | B-46.5 | Background job: cleanup closed AI chat sessions older than 30 days | Done | |
+| B-46.6 | AI chat tools: `get_my_learning_profile`, `get_instructor_courses` | Done | Profile tool is caller-scoped — takes no user id, to keep prompt injection from reading other students. `ILessonProgressRepository.GetProgressCountsAsync` added for bulk progress. See ADR-CHAT-011 |
+| B-46.7 | Course tutor: course + outline in the system prompt, stale lesson bodies superseded | Done | The tutor could not name its own course — it only had a GUID. Course facts and the outline go in the prompt, not a tool: stable data must not be persisted and replayed per turn. `ChatToolResultCompactor` keeps one live lesson body in the window. See ADR-CHAT-013 |
+| B-46.12 | `DbMigrator` flushes Redis after seeding | Done | Dropping Postgres while Redis kept running left `categories:all` serving ids that no longer existed — the catalog filter then returned zero courses, with nothing wrong in the code. Everything in Redis is derived data, so the migrator wipes it wholesale. See ADR-INFRA-014 |
+| B-46.11 | Notifications as data: `Type` + `Parameters` (jsonb), client-side i18n rendering | Done | The server used to compose and store English sentences ("Achievement Unlocked"), while emails were localized. It now reports only what happened; the bell renders it through react-i18next, so yesterday's notification re-renders in today's language. Drops `Title`/`Body`. See ADR-NOTIF-001 |
+| B-46.10 | Outbox dispatch: handler per message type, dead `OutboxMessageDispatcher` removed, startup validation of type coverage | Done | The processor carried a 20-case switch and seven injected services; adding a message type meant editing the class responsible for not losing messages. Now a class per type + assembly scan; the dispatcher refuses to start if a declared type has no handler. First tests for the Infrastructure layer. See ADR-INFRA-013 |
+| B-46.9 | Account deletion lifecycle: deleted/restored emails, `PurgeAfter`, `DeletedAccountPurgeService` | Done | `SoftDelete`/`Recover` raised no domain events, so neither email existed. The purge date is a column, not a calculation — the email promises a day, and changing the constant must not move it. The job anonymizes rather than deletes: the schema makes a hard delete either fail (RESTRICT on reviews/messages), destroy payments (CASCADE), or orphan certificates and courses (no FK). See ADR-USERS-001 and TD-001 |
+| B-46.8 | AI availability: `GET /ai-chat/status`, provider error classification, real status in the chat UI | Done | Providers used to let SDK exceptions escape mid-stream, so a Gemini 429 just killed the SSE connection and the UI said "Active" forever. Failures are now classified into an outage kept in Redis, learned from real turns — never probed, since a free-tier ping spends the quota it checks. See ADR-CHAT-014 |
 
 ### Phase 9 — Reviews & Recommendations
 
@@ -224,13 +229,13 @@
 
 | # | Task | Status | Notes |
 |---|---|---|---|
-| D-06 | Azure Container Apps for API | not started | See docs/deployment/README.md Steps 8-9 |
+| D-06 | Azure Container Apps for API | done | |
 | D-06.5 | Configure ForwardedHeaders for rate limiting partition-by-real-IP behind reverse proxy | done | Prerequisite for rate limiter to work correctly in Azure |
-| D-07 | Azure Static Web Apps for frontend | not started | `staticwebapp.config.json` + `.env.production` created; see deployment/README.md Step 10 |
-| D-08 | Azure Database for PostgreSQL (Flexible Server) | not started | See deployment/README.md Step 3 |
-| D-09 | Azure Cosmos DB for MongoDB API | not started | See deployment/README.md Step 4 |
-| D-10 | Azure Cache for Redis | not started | See deployment/README.md Step 5 |
-| D-11 | Azure Blob Storage account + containers | not started | See deployment/README.md Step 6; containers: avatars, course-covers, course-videos, certificates |
+| D-07 | Azure Static Web Apps for frontend | done | `staticwebapp.config.json` created; see deployment/README.md |
+| D-08 | Azure Database for PostgreSQL (Flexible Server) | done | |
+| D-09 | Azure Cosmos DB for MongoDB API | done | |
+| D-10 | Azure Cache for Redis | done | |
+| D-11 | Azure Blob Storage account + containers | done |  |
 | D-12 | Azure Service Bus namespace + queues | CANCELED | MassTransit is not used |
 | D-13 | Azure Key Vault for secrets | not started | Deferred — secrets stored in Container Apps env vars for now |
 | D-14 | Custom domain + SSL | not started | After D-06, D-07 done |

@@ -13,12 +13,12 @@ internal sealed class CourseAdminDeletedHandler(OutboxDbContextHolder holder)
 {
     public async Task Handle(
         DomainEventNotification<CourseAdminDeletedDomainEvent> notification,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var e = notification.DomainEvent;
         var message = await CourseAdminActionEmailHelper.BuildAsync(
             holder.DbContext!, e.EventId, OutboxMessageTypes.CourseAdminDeletedEmail,
-            e.InstructorId, e.CourseId, ct);
+            e.InstructorId, e.CourseId, cancellationToken);
 
         if (message is not null)
             holder.DbContext!.OutboxMessages.Add(message);
@@ -30,12 +30,12 @@ internal sealed class CourseAdminUnpublishedHandler(OutboxDbContextHolder holder
 {
     public async Task Handle(
         DomainEventNotification<CourseAdminUnpublishedDomainEvent> notification,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var e = notification.DomainEvent;
         var message = await CourseAdminActionEmailHelper.BuildAsync(
             holder.DbContext!, e.EventId, OutboxMessageTypes.CourseAdminUnpublishedEmail,
-            e.InstructorId, e.CourseId, ct);
+            e.InstructorId, e.CourseId, cancellationToken);
 
         if (message is not null)
             holder.DbContext!.OutboxMessages.Add(message);
@@ -50,14 +50,14 @@ file static class CourseAdminActionEmailHelper
         string messageType,
         Guid instructorId,
         Guid courseId,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var instructor = await db.Set<User>()
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(u => u.Id == instructorId)
             .Select(u => new { u.Email, u.FirstName, u.Language })
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (instructor is null) return null;
 
@@ -66,7 +66,7 @@ file static class CourseAdminActionEmailHelper
             .AsNoTracking()
             .Where(c => c.Id == courseId)
             .Select(c => c.Title)
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (courseTitle is null) return null;
 

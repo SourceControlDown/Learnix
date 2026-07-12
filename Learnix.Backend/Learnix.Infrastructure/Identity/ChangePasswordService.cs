@@ -12,7 +12,7 @@ internal sealed class ChangePasswordService(UserManager<User> userManager) : ICh
         Guid userId,
         string currentPassword,
         string newPassword,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user is null)

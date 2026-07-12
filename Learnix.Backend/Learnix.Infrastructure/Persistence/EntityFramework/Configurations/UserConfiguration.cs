@@ -37,5 +37,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.IsDeleted).IsRequired().HasDefaultValue(false);
         builder.Property(u => u.DeletedAt);
+        builder.Property(u => u.PurgeAfter);
+
+        // The cleanup service scans for accounts whose window has run out. Filtered, because deleted users
+        // are the rare case and the index has no business carrying the live ones.
+        builder.HasIndex(u => u.PurgeAfter)
+            .HasFilter($"\"{nameof(User.PurgeAfter)}\" IS NOT NULL");
     }
 }

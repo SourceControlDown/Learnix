@@ -83,7 +83,7 @@ export default function MessagesPage({ displayTitle = true }: MessagesPageProps)
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onClear={() => setSearchQuery('')}
-                        variant="muted"
+                        variant="card"
                     />
                 </div>
             </div>

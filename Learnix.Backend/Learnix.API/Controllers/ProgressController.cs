@@ -16,16 +16,16 @@ public sealed class ProgressController(ISender sender) : ControllerBase
     public async Task<IActionResult> MarkLessonComplete(
         Guid courseId,
         Guid lessonId,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new MarkLessonCompleteCommand(courseId, lessonId), ct);
+        var result = await sender.Send(new MarkLessonCompleteCommand(courseId, lessonId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpGet("courses/{courseId:guid}")]
-    public async Task<IActionResult> GetCourseProgress(Guid courseId, CancellationToken ct)
+    public async Task<IActionResult> GetCourseProgress(Guid courseId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetCourseProgressQuery(courseId), ct);
+        var result = await sender.Send(new GetCourseProgressQuery(courseId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 }

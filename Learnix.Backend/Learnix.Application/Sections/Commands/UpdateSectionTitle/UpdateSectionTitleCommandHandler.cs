@@ -14,13 +14,13 @@ internal sealed class UpdateSectionTitleCommandHandler(
     : CourseSectionCommandHandler<UpdateSectionTitleCommand, Result>(courseRepository, currentUser)
 {
     protected override async Task<Result> HandleAsync(
-        UpdateSectionTitleCommand request, Course course, CancellationToken ct)
+        UpdateSectionTitleCommand request, Course course, CancellationToken cancellationToken)
     {
         var section = course.FindSection(request.SectionId);
 
         section.UpdateTitle(request.Title);
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok();
     }

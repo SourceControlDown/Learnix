@@ -12,6 +12,13 @@ public sealed record SectionProgressDto(
     int DisplayOrder,
     IReadOnlyList<LessonProgressItemDto> Lessons);
 
+/// <param name="DurationSeconds">
+/// A video's real length, or a post's estimated reading time. Null for a test, whose length is up
+/// to the student, and for a video that was uploaded without a duration.
+/// </param>
+/// <param name="QuestionCount">
+/// Only for a test — how many questions it asks, which is the closest thing it has to a length.
+/// </param>
 public sealed record LessonProgressItemDto(
     Guid LessonId,
     string Title,
@@ -19,4 +26,6 @@ public sealed record LessonProgressItemDto(
     int DisplayOrder,
     bool IsCompleted,
     DateTime? CompletedAt,
-    DateTime? LastAccessedAt);
+    DateTime? LastAccessedAt,
+    int? DurationSeconds,
+    int? QuestionCount);

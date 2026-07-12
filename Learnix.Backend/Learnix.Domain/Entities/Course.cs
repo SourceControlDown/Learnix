@@ -183,6 +183,11 @@ public class Course : SoftDeletableEntity
         return section;
     }
 
+    /// <remarks>
+    /// Runs the full published-course invariant check, not just the section count: removing a
+    /// section also removes its lessons, which can strip a published course of its last visible
+    /// lesson while other sections remain. Callers must load the course with all lessons.
+    /// </remarks>
     public void RemoveSection(Guid sectionId)
     {
         EnsureStructureMutable();
@@ -190,8 +195,7 @@ public class Course : SoftDeletableEntity
         var section = FindSection(sectionId);
         _sections.Remove(section);
 
-        if (Status == CourseStatus.Published && _sections.Count == 0)
-            throw new DomainException("Published course must have at least one section.");
+        EnsurePublishableInvariants();
     }
 
     public void ReorderSections(IReadOnlyList<(Guid Id, int Order)> pairs)
@@ -217,6 +221,21 @@ public class Course : SoftDeletableEntity
         section.ReorderLessons(pairs);
     }
 
+    /// <remarks>
+    /// The lesson's DisplayOrder is assigned here, from the section it targets. Callers must load
+    /// the course with that section's lessons — otherwise the section looks empty and the new
+    /// lesson collides with an existing one on the unique (SectionId, DisplayOrder) index.
+    /// </remarks>
+    public void AddLesson(Lesson lesson)
+    {
+        EnsureStructureMutable();
+
+        var section = _sections.FirstOrDefault(s => s.Id == lesson.SectionId)
+            ?? throw new DomainException($"Lesson {lesson.Id} does not belong to course {Id}.");
+
+        section.AddLesson(lesson);
+    }
+
     public void RemoveLesson(Lesson lesson)
     {
         EnsureStructureMutable();
@@ -235,8 +254,8 @@ public class Course : SoftDeletableEntity
     {
         EnsureStructureMutable();
 
-        var section = _sections.FirstOrDefault(s => s.Id == lesson.SectionId)
-            ?? throw new DomainException($"Lesson {lesson.Id} does not belong to course {Id}.");
+        if (!SectionExists(lesson.SectionId))
+            throw new DomainException($"Lesson {lesson.Id} does not belong to course {Id}.");
 
         lesson.SetVisibility(isVisible);
 

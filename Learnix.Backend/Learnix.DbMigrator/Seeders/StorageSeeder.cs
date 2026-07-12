@@ -12,7 +12,7 @@ internal sealed class StorageSeeder(
     ILogger<StorageSeeder> logger
 )
 {
-    public async Task SeedAsync(CancellationToken ct = default)
+    public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         // IMPORTANT: This seeder is used ONLY for local development (Azurite).
         // It provides a "Zero-Click Setup" for developers when running locally.
@@ -45,17 +45,17 @@ internal sealed class StorageSeeder(
                 ? PublicAccessType.Blob
                 : PublicAccessType.None;
 
-            var response = await container.CreateIfNotExistsAsync(accessType, cancellationToken: ct);
+            var response = await container.CreateIfNotExistsAsync(accessType, cancellationToken: cancellationToken);
 
             if (response is not null)
                 logger.LogInformation("Created blob container: {Container} with access {Access}", name, accessType);
         }
 
         // Configure local host CORS
-        var blobProperties = await blobServiceClient.GetPropertiesAsync(ct);
+        var blobProperties = await blobServiceClient.GetPropertiesAsync(cancellationToken);
 
-        blobProperties.Value.Cors = new List<BlobCorsRule>
-        {
+        blobProperties.Value.Cors =
+        [
             new()
             {
                 AllowedOrigins = "http://localhost:5173",
@@ -64,9 +64,9 @@ internal sealed class StorageSeeder(
                 ExposedHeaders = "*",
                 MaxAgeInSeconds = 3600,
             }
-        };
+        ];
 
-        await blobServiceClient.SetPropertiesAsync(blobProperties.Value, ct);
+        await blobServiceClient.SetPropertiesAsync(blobProperties.Value, cancellationToken);
 
         logger.LogInformation("Blob Storage initialization completed successfully.");
     }

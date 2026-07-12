@@ -1,8 +1,12 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Download, GraduationCap, Link as LinkIcon, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { QueryError } from '@/components/common/system/QueryError';
+import { EmptyState } from '@/components/common/ui/EmptyState';
 import { useGenerateCertificate } from '@/hooks/user/useGenerateCertificate';
 import { useMyCertificates } from '@/hooks/user/useMyCertificates';
+import { APP_ROUTES } from '@/routes/paths';
 import type { MyCertificateDto } from '@/types/certificate.types';
 import { cn } from '@/utils/cn';
 
@@ -30,8 +34,11 @@ function CertificateCard({ cert }: CertificateCardProps) {
 
     return (
         <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm sm:flex-row sm:items-center sm:gap-5 sm:p-5">
-            {/* Info */}
-            <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-5">
+            {/* Info — the cover and the title lead back to the course the certificate is for. */}
+            <Link
+                to={APP_ROUTES.public.courseDetail(cert.courseId)}
+                className="group flex min-w-0 flex-1 items-center gap-3 sm:gap-5"
+            >
                 <div
                     className={cn(
                         'flex h-12 w-12 shrink-0 items-center justify-center rounded-lg sm:h-16 sm:w-16',
@@ -49,7 +56,7 @@ function CertificateCard({ cert }: CertificateCardProps) {
                     )}
                 </div>
                 <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 font-heading text-sm font-semibold text-foreground sm:line-clamp-1 sm:text-base">
+                    <p className="line-clamp-2 font-heading text-sm font-semibold text-foreground transition-colors group-hover:text-primary sm:line-clamp-1 sm:text-base">
                         {cert.courseTitle}
                     </p>
                     <p className="mt-0.5 text-sm text-muted-foreground">
@@ -61,7 +68,7 @@ function CertificateCard({ cert }: CertificateCardProps) {
                         })}
                     </p>
                 </div>
-            </div>
+            </Link>
 
             {/* Actions */}
             <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto sm:justify-start">
@@ -123,7 +130,7 @@ function CertificateCard({ cert }: CertificateCardProps) {
 
 export default function CertificatesPage() {
     const { t } = useTranslation('certificates');
-    const { data: certificates, isLoading } = useMyCertificates();
+    const { data: certificates, isLoading, isError, refetch } = useMyCertificates();
 
     if (isLoading) {
         return (
@@ -138,16 +145,28 @@ export default function CertificatesPage() {
         );
     }
 
+    // Ahead of the empty state: a failed request left `certificates` undefined, and the page
+    // then told the student they had earned none.
+    if (isError) {
+        return (
+            <div className="mx-auto max-w-7xl px-4 pb-12 pt-6 sm:px-6 sm:pb-16 sm:pt-8">
+                <QueryError
+                    message={t('error.title')}
+                    onRetry={refetch}
+                    retryLabel={t('common:actions.tryAgain')}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="mx-auto max-w-7xl px-4 pb-12 pt-6 sm:px-6 sm:pb-16 sm:pt-8">
             {!certificates || certificates.length === 0 ? (
-                <div className="mt-16 text-center">
-                    <div className="mx-auto flex size-24 items-center justify-center rounded-full bg-accent/10">
-                        <GraduationCap className="size-12 text-accent" />
-                    </div>
-                    <h2 className="mt-6 font-heading text-2xl font-bold">{t('emptyTitle')}</h2>
-                    <p className="mt-2 text-muted-foreground">{t('emptyDescription')}</p>
-                </div>
+                <EmptyState
+                    icon={GraduationCap}
+                    title={t('emptyTitle')}
+                    description={t('emptyDescription')}
+                />
             ) : (
                 <div className="max-w-4xl space-y-4">
                     {certificates.map((cert) => (

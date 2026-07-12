@@ -14,6 +14,10 @@
         --primary-foreground: 0 0% 100%;
         --brand: 217 91% 60%;
         --brand-foreground: 0 0% 100%;
+        /* Full-bleed feature bands. Dark in both themes: inverting --foreground would turn
+           these into a white slab in dark mode, and collapse every --primary laid on top. */
+        --panel: 222 47% 11%;
+        --panel-foreground: 210 40% 98%;
         --secondary: 210 40% 96%;
         --secondary-foreground: 222 47% 11%;
         --muted: 210 40% 96%;
@@ -31,6 +35,25 @@
         /* Chat bubble tokens — separate from primary to avoid glare on large surfaces */
         --chat-user-bubble: 217 91% 60%;
         --chat-user-bubble-foreground: 0 0% 100%;
+        /* Inline links — must not follow --primary, which flips to near-white in dark.
+           Darker than --brand so body-size text clears WCAG AA on white (5.2:1). */
+        --link: 221 83% 53%;
+        /* Form-field tokens — the single source of truth for every input, select,
+           textarea, checkbox and radio. Deliberately independent of --primary/--brand:
+           restyle (or rebrand) all controls by editing these values.
+
+           Two surfaces: the `default` fill is for controls that sit on the page
+           background; the `card` fill is for controls inside a card (auth forms, the
+           messages search, instructor forms) and is tuned to stand apart from the card
+           behind it. Light theme: blue focus/accent, black text. */
+        --field: 0 0% 100%;
+        --field-hover: 210 40% 96%;
+        --field-card: 210 40% 96%;
+        --field-card-hover: 210 40% 93%;
+        --field-border: 214 32% 91%;
+        --field-border-focus: 217 91% 60%;
+        --field-border-error: 0 72% 51%;
+        --field-accent: 217 91% 60%;
     }
 
     .dark {
@@ -38,12 +61,18 @@
         --foreground: 210 40% 98%;
         --card: 222 47% 11%;
         --card-foreground: 210 40% 98%;
-        --popover: 222 47% 11%;
+        /* Lifted above --card: a drop shadow is invisible on this background, so a floating
+           surface has to separate itself from the cards underneath by tone alone. */
+        --popover: 222 47% 16%;
         --popover-foreground: 210 40% 98%;
         --primary: 210 40% 98%;
         --primary-foreground: 222 47% 11%;
         --brand: 217 91% 60%;
         --brand-foreground: 0 0% 100%;
+        /* Deeper than --background, mirroring the light theme where the band is the darkest
+           surface on the page. Going lighter instead would sink --card below it. */
+        --panel: 222 47% 2%;
+        --panel-foreground: 210 40% 98%;
         --secondary: 217 33% 17%;
         --secondary-foreground: 210 40% 98%;
         --muted: 217 33% 17%;
@@ -60,6 +89,20 @@
         /* Chat bubble tokens — muted blue instead of near-white primary to reduce eye strain */
         --chat-user-bubble: 217 55% 52%;
         --chat-user-bubble-foreground: 210 40% 96%;
+        /* Lighter than --brand, which only reaches 4.9:1 on --card here. This clears 7:1. */
+        --link: 213 94% 68%;
+        /* Form-field tokens (see :root). Dark theme: the `default` fill sits a touch ABOVE
+           the page (soft grey, raised); the `card` fill sits BELOW the card (11%) so an input
+           inside a card reads as a recessed well. Borders are neutral grey and turn near-white
+           on focus; the checkbox/radio accent is near-white too — no blue in the dark UI. */
+        --field: 222 47% 13%;
+        --field-hover: 222 47% 16%;
+        --field-card: 222 47% 7%;
+        --field-card-hover: 222 47% 9%;
+        --field-border: 217 33% 20%;
+        --field-border-focus: 210 40% 98%;
+        --field-border-error: 0 63% 55%;
+        --field-accent: 210 40% 98%;
     }
 
     * {
@@ -77,6 +120,59 @@
             background-color 5000s ease-in-out 0s,
             color 5000s ease-in-out 0s;
         caret-color: hsl(var(--foreground));
+    }
+
+    /*
+     * Sonner toasts. The library paints itself from its own CSS variables, so it cannot be styled
+     * with utility classes — these bindings are what tie it to the design tokens, in both themes.
+     * Its action button is hardcoded to `background: var(--normal-text); color: var(--normal-bg)`,
+     * so the neutral pair below is also what makes that button legible on every toast type.
+     */
+    [data-sonner-toaster] {
+        --normal-bg: hsl(var(--card));
+        --normal-text: hsl(var(--card-foreground));
+        --normal-border: hsl(var(--border));
+
+        --success-bg: color-mix(in srgb, hsl(var(--success)) 10%, hsl(var(--card)));
+        --success-border: hsl(var(--success) / 0.4);
+        --success-text: hsl(var(--card-foreground));
+
+        --error-bg: color-mix(in srgb, hsl(var(--destructive)) 10%, hsl(var(--card)));
+        --error-border: hsl(var(--destructive) / 0.4);
+        --error-text: hsl(var(--card-foreground));
+
+        --warning-bg: color-mix(in srgb, hsl(var(--warning)) 10%, hsl(var(--card)));
+        --warning-border: hsl(var(--warning) / 0.4);
+        --warning-text: hsl(var(--card-foreground));
+
+        --info-bg: color-mix(in srgb, hsl(var(--primary)) 10%, hsl(var(--card)));
+        --info-border: hsl(var(--primary) / 0.4);
+        --info-text: hsl(var(--card-foreground));
+    }
+
+    /* Body copy stays neutral; the semantic colour is carried by the icon and the border. */
+    [data-sonner-toast] [data-description] {
+        color: hsl(var(--muted-foreground));
+    }
+
+    [data-sonner-toast][data-type='success'] [data-icon] {
+        color: hsl(var(--success));
+    }
+    [data-sonner-toast][data-type='error'] [data-icon] {
+        color: hsl(var(--destructive));
+    }
+    [data-sonner-toast][data-type='warning'] [data-icon] {
+        color: hsl(var(--warning));
+    }
+    [data-sonner-toast][data-type='info'] [data-icon] {
+        color: hsl(var(--primary));
+    }
+
+    /* Hold the scrollbar's lane open even on pages short enough not to need one. Otherwise the
+       viewport widens by the scrollbar's width the moment such a page loads, and everything
+       centred — the header above all — slides sideways on the way in and back on the way out. */
+    html {
+        scrollbar-gutter: stable;
     }
 
     body {

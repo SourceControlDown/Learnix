@@ -10,6 +10,14 @@ export function isValidationError(error: unknown): error is AxiosError<ProblemDe
     );
 }
 
+/**
+ * A 404 means the resource genuinely does not exist — tell the user that, rather than
+ * offering a retry that can never succeed.
+ */
+export function isNotFoundError(error: unknown): error is AxiosError<ProblemDetails> {
+    return error instanceof AxiosError && error.response?.status === 404;
+}
+
 export function getErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
     if (error instanceof AxiosError) {
         const problem = error.response?.data as ProblemDetails | undefined;

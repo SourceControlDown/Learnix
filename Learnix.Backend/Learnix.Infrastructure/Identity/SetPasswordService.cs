@@ -11,7 +11,7 @@ internal sealed class SetPasswordService(UserManager<User> userManager) : ISetPa
     public async Task<Result> SetPasswordAsync(
         Guid userId,
         string newPassword,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user is null)

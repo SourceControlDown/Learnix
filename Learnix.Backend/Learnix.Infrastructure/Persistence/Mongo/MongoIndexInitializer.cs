@@ -9,25 +9,33 @@ internal sealed class MongoIndexInitializer(
     MongoDbContext context,
     ILogger<MongoIndexInitializer> logger) : IHostedService
 {
-    public async Task StartAsync(CancellationToken ct)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         try
         {
+            // (userId, scope, courseId) identifies a session. Unique, so a concurrent first message fails
+            // with a duplicate key instead of quietly forking the history into two documents.
             var indexKeys = Builders<ChatSessionDocument>.IndexKeys
                 .Ascending(s => s.UserId)
-                .Ascending(s => s.IsActive);
+                .Ascending(s => s.Scope)
+                .Ascending(s => s.CourseId);
 
             var indexModel = new CreateIndexModel<ChatSessionDocument>(
                 indexKeys,
-                new CreateIndexOptions { Name = "IX_chat_sessions_userId_isActive" });
+                new CreateIndexOptions { Name = "UX_chat_sessions_userId_scope_courseId", Unique = true });
 
-            await context.ChatSessions.Indexes.CreateOneAsync(indexModel, cancellationToken: ct);
+            await context.ChatSessions.Indexes.CreateOneAsync(indexModel, cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to ensure MongoDB indexes. Continuing startup.");
+            // Most likely cause: pre-scope documents already in the collection, several per user, so the
+            // unique index cannot be built. Startup continues, but sessions can fork until it is resolved.
+            logger.LogError(
+                ex,
+                "Failed to create the unique chat session index. Session uniqueness is NOT enforced. "
+                + "If the collection holds legacy documents without a scope, drop it: db.chat_sessions.drop()");
         }
     }
 
-    public Task StopAsync(CancellationToken ct) => Task.CompletedTask;
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

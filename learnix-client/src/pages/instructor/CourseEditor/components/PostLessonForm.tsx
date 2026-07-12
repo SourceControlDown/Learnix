@@ -41,6 +41,7 @@ export function PostLessonForm({ lesson, isPending, onSubmit, onCancel, onDirtyC
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <FormInput
+                variant="card"
                 label={
                     <div className="flex w-full items-center justify-between">
                         <span>{t('fieldTitle')}</span>

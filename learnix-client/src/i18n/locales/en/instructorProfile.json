@@ -1,5 +1,9 @@
 {
-  "coursesHeading": "Courses by this instructor",
-  "noCourses": "No published courses yet.",
-  "notFound": "Instructor not found."
+    "coursesHeading": "Courses by this instructor",
+    "noCourses": "No published courses yet.",
+    "notFound": "Instructor not found.",
+    "error": "Failed to load instructor profile.",
+    "coursesError": "Failed to load courses.",
+    "coursesCount_one": "{{count}} course",
+    "coursesCount_other": "{{count}} courses"
 }

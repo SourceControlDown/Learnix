@@ -1,48 +1,62 @@
 {
-  "header": {
-    "backToCatalog": "До курсів",
-    "messageInstructor": "Написати інструктору"
-  },
-  "sidebar": {
-    "progressLabel": "{{completed}} / {{total}} завершено",
-    "sectionPrefix": "Секція",
-    "courseContent": "Вміст курсу"
-  },
-  "actions": {
-    "markComplete": "Позначити як пройдений",
-    "takeTest": "Пройти тест",
-    "viewResults": "Переглянути результати"
-  },
-  "video": {
-    "noVideoAttached": "До цього уроку ще не додано відео."
-  },
-  "post": {
-    "noContent": "Вміст для цього уроку ще не додано."
-  },
-  "testPreview": {
-    "heading": "Тестовий урок",
-    "questionsCount_one": "{{count}} питання",
-    "questionsCount_few": "{{count}} питання",
-    "questionsCount_many": "{{count}} питань",
-    "passThreshold": "Прохідний бал: {{pct}}%",
-    "attemptsLimit": "Ліміт спроб: {{n}}",
-    "unlimitedAttempts": "Необмежена кількість спроб",
-    "attemptsUsed": "Використано спроб: {{n}}",
-    "cooldownRemaining": "Наступна спроба через {{min}} хв",
-    "lastResult": "Останній результат",
-    "score": "{{score}} / {{max}}",
-    "startTest": "Почати тест",
-    "retakeTest": "Пройти повторно",
-    "markComplete": "Позначити як пройдений",
-    "noQuestions": "У цьому тесті ще немає питань.",
-    "noAttemptsLeft": "Спроби для цього тесту вичерпано."
-  },
-  "loading": "Завантаження уроку...",
-  "lessonNotFound": "Урок не знайдено в цьому курсі.",
-  "autoplay": {
-    "label": "Автовідтворення",
-    "upNext": "Далі: {{title}}",
-    "startingIn": "Почнеться через {{seconds}}...",
-    "playNow": "Почати зараз"
-  }
+    "header": {
+        "myLearning": "Мої курси",
+        "messageInstructor": "Написати інструктору",
+        "aiAssistant": "AI-асистент"
+    },
+    "assistant": {
+        "tabs": {
+            "ai": "Асистент",
+            "instructor": "Інструктор"
+        },
+        "close": "Закрити панель",
+        "instructorUnavailable": "Не вдалося відкрити розмову. Спробуйте ще раз."
+    },
+    "sidebar": {
+        "progressLabel": "{{completed}} / {{total}} завершено",
+        "sectionPrefix": "Секція",
+        "courseContent": "Вміст курсу",
+        "lessonNumber": "{{n}}.",
+        "durationMinutes": "{{n}}хв",
+        "durationHours": "{{h}}год {{m}}хв",
+        "collapse": "Сховати вміст курсу",
+        "durationSeconds": "{{n}}с"
+    },
+    "actions": {
+        "markComplete": "Позначити як пройдений",
+        "takeTest": "Пройти тест",
+        "viewResults": "Переглянути результати"
+    },
+    "video": {
+        "noVideoAttached": "До цього уроку ще не додано відео."
+    },
+    "post": {
+        "noContent": "Вміст для цього уроку ще не додано."
+    },
+    "testPreview": {
+        "heading": "Тестовий урок",
+        "questionsCount_one": "{{count}} питання",
+        "questionsCount_few": "{{count}} питання",
+        "questionsCount_many": "{{count}} питань",
+        "passThreshold": "Прохідний бал: {{pct}}%",
+        "attemptsLimit": "Ліміт спроб: {{n}}",
+        "unlimitedAttempts": "Необмежена кількість спроб",
+        "attemptsUsed": "Використано спроб: {{n}}",
+        "cooldownRemaining": "Наступна спроба через {{min}} хв",
+        "lastResult": "Останній результат",
+        "score": "{{score}} / {{max}}",
+        "startTest": "Почати тест",
+        "retakeTest": "Пройти повторно",
+        "markComplete": "Позначити як пройдений",
+        "noQuestions": "У цьому тесті ще немає питань.",
+        "noAttemptsLeft": "Спроби для цього тесту вичерпано."
+    },
+    "loading": "Завантаження уроку...",
+    "lessonNotFound": "Урок не знайдено в цьому курсі.",
+    "autoplay": {
+        "label": "Автовідтворення",
+        "upNext": "Далі: {{title}}",
+        "startingIn": "Почнеться через {{seconds}}...",
+        "playNow": "Почати зараз"
+    }
 }

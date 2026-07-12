@@ -23,9 +23,9 @@ public sealed class SectionsController(ISender sender) : ControllerBase
     public async Task<IActionResult> Create(
         Guid courseId,
         [FromBody] CreateSectionRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new CreateSectionCommand(courseId, body.Title), ct);
+        var result = await sender.Send(new CreateSectionCommand(courseId, body.Title), cancellationToken);
         return result.ToActionResult(id => CreatedAtAction(nameof(Create), new { courseId }, new { id }));
     }
 
@@ -34,17 +34,17 @@ public sealed class SectionsController(ISender sender) : ControllerBase
         Guid courseId,
         Guid sectionId,
         [FromBody] UpdateSectionTitleRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var result = await sender.Send(
-            new UpdateSectionTitleCommand(courseId, sectionId, body.Title), ct);
+            new UpdateSectionTitleCommand(courseId, sectionId, body.Title), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpDelete("courses/{courseId:guid}/sections/{sectionId:guid}")]
-    public async Task<IActionResult> Delete(Guid courseId, Guid sectionId, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid courseId, Guid sectionId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new DeleteSectionCommand(courseId, sectionId), ct);
+        var result = await sender.Send(new DeleteSectionCommand(courseId, sectionId), cancellationToken);
         return result.ToActionResult();
     }
 
@@ -52,9 +52,9 @@ public sealed class SectionsController(ISender sender) : ControllerBase
     public async Task<IActionResult> Reorder(
         Guid courseId,
         [FromBody] ReorderSectionsRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new ReorderSectionsCommand(courseId, body.Items), ct);
+        var result = await sender.Send(new ReorderSectionsCommand(courseId, body.Items), cancellationToken);
         return result.ToActionResult();
     }
 }

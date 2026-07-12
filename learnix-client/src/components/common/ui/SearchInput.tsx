@@ -1,22 +1,23 @@
 import React, { forwardRef } from 'react';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { Search, X } from 'lucide-react';
+import { FIELD_BASE, FIELD_SURFACE_CARD } from '@/components/common/form/fieldStyles';
 import { cn } from '@/utils/cn';
 
-const searchInputVariants = cva(
-    'w-full rounded-lg border bg-background pl-9 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-2',
-    {
-        variants: {
-            variant: {
-                default: 'border-input py-2 pr-10 focus:ring-ring',
-                muted: 'border-transparent bg-muted/30 py-2 pr-10 hover:border-primary/50 focus:border-primary focus:bg-background focus:ring-primary/20',
-            },
-        },
-        defaultVariants: {
-            variant: 'default',
+// Border/focus/fill come from the shared field tokens; the only choice is the surface.
+// py-2.5 keeps search bars the same height as every other field (FormInput/FormSelect);
+// pl-9 clears the search icon, pr-10 the clear button.
+const searchInputVariants = cva(`${FIELD_BASE} py-2.5 pl-9 pr-10`, {
+    variants: {
+        variant: {
+            default: '',
+            card: FIELD_SURFACE_CARD,
         },
     },
-);
+    defaultVariants: {
+        variant: 'default',
+    },
+});
 
 export interface SearchInputProps
     extends
@@ -42,7 +43,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
                     <button
                         type="button"
                         onClick={onClear}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-field-focus"
                         aria-label="Clear search"
                     >
                         <X size={14} />

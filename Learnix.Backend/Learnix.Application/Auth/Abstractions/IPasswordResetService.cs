@@ -8,7 +8,7 @@ public interface IPasswordResetService
     /// Always returns Result.Ok — anti-enumeration.
     /// Raises PasswordResetRequestedDomainEvent only if user exists and has a confirmed email.
     /// </summary>
-    Task<Result> InitiateResetAsync(string email, CancellationToken ct = default);
+    Task<Result> InitiateResetAsync(string email, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Resets the user's password using a token previously issued by InitiateResetAsync.
@@ -19,5 +19,5 @@ public interface IPasswordResetService
         string email,
         string token,
         string newPassword,
-        CancellationToken ct = default);
+        CancellationToken cancellationToken = default);
 }

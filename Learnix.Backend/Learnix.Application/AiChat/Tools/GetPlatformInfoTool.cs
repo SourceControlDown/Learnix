@@ -1,11 +1,14 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Learnix.Application.AiChat.Abstractions.Models;
+using Learnix.Application.AiChat.Constants;
 
 namespace Learnix.Application.AiChat.Tools;
 
 public sealed class GetPlatformInfoTool : IChatTool
 {
+    private static readonly JsonSerializerOptions ArgumentsOptions = new() { PropertyNameCaseInsensitive = true };
+
     private static readonly string ParametersSchema = JsonSerializer.Serialize(new
     {
         type = "object",
@@ -58,7 +61,10 @@ public sealed class GetPlatformInfoTool : IChatTool
                 "Question types:\n" +
                 "- Single choice — pick one correct answer from options.\n" +
                 "- Multiple choice — pick one or more correct answers.\n" +
-                "- Text input — type a written answer (supports exact match, case-insensitive match, or fuzzy match allowing 1 character error).\n" +
+                "- Text input — type a written answer. The instructor picks how it is checked: exact match, " +
+                "case-insensitive match, or fuzzy match that forgives typos. Fuzzy tolerance depends on how long " +
+                "the expected answer is: none for answers of 1-2 characters, one typo for 3-5 characters, " +
+                "two typos for longer answers. Surrounding whitespace is always ignored.\n" +
                 "After submission: score is shown as a percentage, and correct answers are revealed.\n" +
                 "Retry policy (set per test by the instructor):\n" +
                 "- Unlimited — retake anytime.\n" +
@@ -150,10 +156,10 @@ public sealed class GetPlatformInfoTool : IChatTool
         }
     });
 
-    public string Name => "get_platform_info";
+    public string Name => ChatToolNames.GetPlatformInfo;
 
     public ToolDefinition Definition => new(
-        Name: "get_platform_info",
+        Name: Name,
         Description:
             "Returns information about how the Learnix platform works — enrollment, lessons, tests, " +
             "achievements, certificates, becoming an instructor, payment, chat, and account features. " +
@@ -161,15 +167,20 @@ public sealed class GetPlatformInfoTool : IChatTool
             "Pass a specific section for focused info, or omit it to get a list of available sections.",
         ParametersJsonSchema: ParametersSchema);
 
-    public Task<string> ExecuteAsync(string argumentsJson, CancellationToken ct)
+    /// <summary>Static reference content — useful to the tutor and to the platform assistant alike.</summary>
+    public bool IsAvailableIn(ChatScopeType scope) => true;
+
+    public Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken cancellationToken)
     {
         SectionArgs? args = null;
         try
         {
-            args = JsonSerializer.Deserialize<SectionArgs>(argumentsJson,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            args = JsonSerializer.Deserialize<SectionArgs>(invocation.ArgumentsJson, ArgumentsOptions);
         }
-        catch { }
+        catch (JsonException)
+        {
+            // Malformed arguments from the model: fall through and return the sections index.
+        }
 
         if (string.IsNullOrWhiteSpace(args?.Section))
             return Task.FromResult(SectionsIndex);

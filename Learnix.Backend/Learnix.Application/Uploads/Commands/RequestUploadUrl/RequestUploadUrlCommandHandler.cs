@@ -18,17 +18,25 @@ public sealed class RequestUploadUrlCommandHandler(
 {
     public async Task<Result<UploadUrlResponse>> Handle(
         RequestUploadUrlCommand request,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         if (currentUser.UserId is null)
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
 
-        if (request.Target == UploadTarget.LessonVideo && !currentUser.IsInRole(Roles.Instructor))
+        // Course material follows course authorization, which is owner-or-admin everywhere else.
+        // An admin who may edit somebody else's course must be able to upload into it, and the URL alone
+        // grants nothing — the blob is only claimed by a handler that re-checks ownership.
+        var canUploadCourseMaterial =
+            currentUser.IsInRole(Roles.Instructor) || currentUser.IsInRole(Roles.Admin);
+
+        if (request.Target == UploadTarget.LessonVideo && !canUploadCourseMaterial)
             return Result.Fail(new ForbiddenError(UploadMessages.OnlyInstructorsUploadVideos));
 
-        if (request.Target == UploadTarget.CourseCover && !currentUser.IsInRole(Roles.Instructor))
+        if (request.Target == UploadTarget.CourseCover && !canUploadCourseMaterial)
             return Result.Fail(new ForbiddenError(UploadMessages.OnlyInstructorsUploadCovers));
 
+        // No role at all: a certificate is the platform's own signature, and one uploaded by hand would be
+        // indistinguishable from one it issued.
         if (request.Target == UploadTarget.Certificate)
             return Result.Fail(new ForbiddenError(UploadMessages.CertificatesGeneratedBySystem));
 
@@ -38,7 +46,7 @@ public sealed class RequestUploadUrlCommandHandler(
         var response = await blobStorage.GenerateUploadUrlAsync(
             request.Target,
             request.ContentType,
-            ct);
+            cancellationToken);
 
         logger.LogInformation(
             "Upload URL generated for user {UserId}, target {Target}, path {Path}",

@@ -10,10 +10,10 @@ when_to_use: backend, C#, .NET, handler, command, query, controller, entity, dom
 
 Before implementing **any** backend feature, complete these steps in order:
 
-1. **Read `TODO.md`** — identify the exact task(s), their phase, and current status.
+1. **Read `docs/TODO.md`** — identify the exact task(s), their phase, and current status.
 2. **Read `docs/FEATURES.md`** — understand the functional spec for the feature being built.
-3. **Read `docs/ARCHITECTURE.md`** — review layer rules, request flow, and relevant patterns.
-4. **Check relevant ADR files in `docs/`** — read only those that apply to the current task scope (Auth → `DECISIONS_AUTH.md`, Domain → `DECISIONS_DOMAIN.md`, Infra → `DECISIONS_INFRA.md`, etc.).
+3. **Read `docs/backend/ARCHITECTURE.md`** — review layer rules, request flow, and relevant patterns.
+4. **Check relevant ADR files in `docs/backend/decisions/`** — read only those that apply to the current task scope (Auth → `AUTH.md`, Domain → `DOMAIN.md`, Infra → `INFRA.md`, Blob → `BLOB.md`, etc.). The index is `docs/backend/decisions/README.md`.
 5. **Check the relevant `Controllers/*.cs`** — verify route prefix, HTTP method, request/response shape, and auth requirements before writing any handler or DTO.
 6. **Look at an existing similar handler** — find a handler in the same feature folder or a nearby one that does something similar. Match its style exactly.
 
@@ -31,7 +31,7 @@ Learnix.API           → depends on Application; thin, no business logic
 - **Domain** has zero NuGet dependencies. No MediatR, no EF, no FluentValidation.
 - **Application** never references `DbContext`, `EF Core`, or any Infrastructure type directly — only via interfaces.
 - **Controllers** never call repositories, never call domain methods, never contain `if` based on domain state. They delegate to `ISender` and call `result.ToActionResult()`.
-- **Infrastructure** never makes business decisions. It only performs technical side-effects (write to DB, call Azure, write Outbox). If Infrastructure code contains an `if` based on a domain entity's state — it's a bug (see ADR-010).
+- **Infrastructure** never makes business decisions. It only performs technical side-effects (write to DB, call Azure, write Outbox). If Infrastructure code contains an `if` based on a domain entity's state — it's a bug (see ADR-BACK-ARCH-010).
 
 ---
 
@@ -103,7 +103,7 @@ if (course.InstructorId != currentUser.UserId && !currentUser.IsInRole(Roles.Adm
     return Result.Fail(new ForbiddenError("You are not the owner of this course."));
 ```
 
-Authorization decisions belong **in handlers**, not in controllers (see ADR-039).
+Resource-based authorization (owner checks) belongs **in handlers**, not in controllers (see ADR-BACK-AUTH-013). Static rules — role membership, confirmed email — stay as `[Authorize]` / `[Authorize(Policy = "EmailConfirmed")]` attributes on the controller.
 
 ### Typical command handler shape
 ```csharp
@@ -291,7 +291,7 @@ await unitOfWork.SaveChangesAsync(ct); // Always via IUnitOfWork, never DbContex
 - Most entities extend `BaseEntity` (provides `Id`, `CreatedAt`, `UpdatedAt`, domain events). Exception: `User` extends `IdentityUser<Guid>` and implements the interfaces directly.
 
 ### Soft delete
-- Soft-deletable entities extend `SoftDeletableEntity` (currently: `Course`).
+- Soft-deletable entities implement `ISoftDeletable` (currently: `Course` via `SoftDeletableEntity`, and `User`, which implements it directly since it extends `IdentityUser<Guid>`).
 - `SoftDeleteInterceptor` intercepts `Remove()` — sets `IsDeleted + DeletedAt`.
 - Global EF query filter auto-excludes soft-deleted records.
 - Use `.IgnoreQueryFilters()` only for admin queries that intentionally need deleted records.
@@ -327,41 +327,53 @@ public class CoursePublishedHandler
 }
 ```
 
-`IDomainEvent` has no MediatR dependency — the `DomainEventNotification<T>` wrapper lives in `Application/Common/Events/` (see ADR-008).
+`IDomainEvent` has no MediatR dependency — the `DomainEventNotification<T>` wrapper lives in `Application/Common/Events/` (see ADR-BACK-ARCH-008).
 
 ---
 
 ## Blob Storage — Upload Pattern
 
-All file uploads follow a 3-step SAS URL flow. **Never use `IFormFile` or server-side uploads** for user-initiated files.
+All file uploads follow the **temp → final** SAS flow (ADR-BLOB-003). **Never use `IFormFile` or server-side uploads** for user-initiated files.
 
 ```
 1. Client → POST /api/uploads/request-url { target, contentType }
-   ← returns { uploadUrl (SAS, 15 min), blobPath }
+   ← returns { uploadUrl (SAS, Create-only, 15 min), blobPath: "temp-uploads/{guid}" }
 
-2. Client → PUT {uploadUrl}   (direct to Azure Blob)
+2. Client → PUT {uploadUrl}   (direct to Azure Blob, into temp-uploads)
 
-3. Client → PUT /api/{resource}/me { blobPath: "avatars/users/..." }
-   Handler → IBlobStorageService.ValidateAsync(blobPath, target)  ← magic byte check
-   Handler → entity.SetAvatar(blobPath)  ← raises domain event
+3. Client → PUT /api/{resource} { blobPath: "temp-uploads/{guid}" }
+   Handler → IBlobStorageService.CommitUploadAsync(tempBlobPath, target)   ← SYNCHRONOUS
+              ├─ size check, magic-byte content-type check (a bad file deletes the temp blob → Result.Fail)
+              ├─ copy temp → final container, delete temp, rewrite Content-Type with the trusted value
+              └─ returns the PERMANENT blobPath
+   Handler → entity.SetAvatar(commitResult.Value.BlobPath)   ← store the permanent path, not the temp one
    Handler → unitOfWork.SaveChangesAsync()
-   DomainEventsInterceptor → handler writes OutboxMessage(MarkBlobConfirmed)
-   OutboxWorker → confirms blob in Azure
+   DomainEventsInterceptor → the *Removed/*Released event handler enqueues OutboxMessage(DeleteBlob, oldPath)
+   OutboxWorker → IBlobStorageService.DeleteAsync(oldPath)   ← deletes the REPLACED blob
 ```
 
-Blob paths (e.g. `avatars/users/{userId}/{uploadId}.jpg`) are stored in entities, **not** full SAS URLs. Read URLs are generated on demand via `IBlobStorageService.GenerateReadUrl()`.
+**The Outbox never confirms a blob — it only deletes one.** There is no `MarkBlobConfirmed` message type and no `IBlobStorageService.ValidateAsync`. Promotion to the permanent container happens synchronously, in the handler, before `SaveChangesAsync`. Abandoned uploads are reaped by an Azure lifecycle policy that clears `temp-uploads` after 24 h.
+
+Entities store the relative path `{container}/{blobName}` (e.g. `avatars/9f2c...`), **not** a full SAS URL. The container prefix is mandatory — `DeleteAsync` / `GenerateReadUrl` / `GetPublicUrl` all call `ParseBlobPath`, which throws without a `/`. That is also why domain events carry only the path and no entity type: the consumer derives the container from the value itself.
+
+`{blobName}` is opaque; its shape depends on the producer (`CommitUploadAsync` → bare `guid:N`; the seeder → `{guid}-cover.webp`; certificates → `{code}.pdf`). Never parse it — never assume it is a GUID.
+
+Read URLs are generated on demand: `GetPublicUrl()` for public containers (avatars, covers, category images), `GenerateReadUrl(path, ttl)` for protected ones (videos, certificates).
 
 ---
 
 ## MediatR Pipeline Order
 
 ```
-LoggingBehavior          ← outermost; logs request name + duration; warns >3s
-  ValidationBehavior     ← rejects invalid requests; returns Result.Fail(ValidationError)
-    DomainExceptionBehavior ← innermost; catches DomainException → ConflictError
-      Handler            ← happy path only; no try/catch for domain rules
+LoggingBehavior            ← outermost; logs request name + duration; warns >3s
+  ValidationBehavior       ← rejects invalid requests; returns Result.Fail(ValidationError)
+    DomainExceptionBehavior ← catches DomainException → ConflictError
+      CachingBehavior      ← innermost; only for requests implementing ICacheable<TValue>
+        Handler            ← happy path only; no try/catch for domain rules
 ```
 
+- Order is defined by registration order in `Application/DependencyInjection.cs`.
+- `CachingBehavior` is registered as a **closed** generic per request type — only queries implementing `ICacheable<TValue>` get it. Cache keys live in `Application/Common/Constants/CacheKeys.cs` (ADR-BACK-ARCH-013), backed by Redis.
 - Request payload is **never logged** (prevents PII leaks — passwords, tokens).
 - `ExceptionHandlingMiddleware` catches only unexpected infrastructure failures (500).
 
@@ -382,14 +394,50 @@ Never inject `IConfiguration` directly into Application layer classes.
 dotnet ef migrations add {Name} \
     --project Learnix.Infrastructure \
     --startup-project Learnix.API \
-    --output-dir Persistence/Migrations
+    --output-dir Persistence/EntityFramework/Migrations
 
-# Apply
-dotnet ef database update --project Learnix.Infrastructure --startup-project Learnix.API
+# Apply — via the standalone migrator, NOT `dotnet ef database update`
+dotnet run --project Learnix.DbMigrator --launch-profile Development -- --create-blob --seed-demo
+# or, through Docker Compose:
+docker compose --profile init up migrator
 ```
 
-- Dev: auto-applied on startup (`app.ApplyMigrationsAsync()` when `IsDevelopment()`).
-- Staging/Prod: controlled step in CI/CD — never auto-apply.
+- **Migrations are never auto-applied on API startup.** `Learnix.API/Program.cs` does not call `ApplyMigrationsAsync()`; `Learnix.DbMigrator` runs `Database.MigrateAsync()` as a separate step in dev and in CI/CD (see ADR MIGRATIONS.md).
+- `--create-blob` initializes local blob containers; `--seed-demo` seeds fake courses + a demo student. Role, admin and category seeders always run.
+- The API image ships without EF tooling by design — it has no DDL rights at runtime.
+
+---
+
+## Unit Tests
+
+Two projects: `Learnix.Domain.UnitTests` (entity invariants, domain methods) and `Learnix.Application.UnitTests` (handlers, validators, behaviors).
+
+Stack: **xUnit + FluentAssertions + NSubstitute**. `Xunit`, `FluentAssertions` and `NSubstitute` are global usings via `<Using Include="..." />` — don't re-import them.
+
+- Mirror the production namespace in the test folder: `Application/Auth/Commands/Logout/` → `Application.UnitTests/Auth/Commands/Logout/LogoutCommandHandlerTests.cs`.
+- Test class: `{TypeUnderTest}Tests`. Dependencies substituted in the constructor, handler built once into a `_handler` field.
+- Test name: `Handle_When{Condition}_Should{ExpectedOutcome}`.
+- Body uses explicit `// Arrange` / `// Act` / `// Assert` comments.
+- Assert with FluentAssertions (`result.IsSuccess.Should().BeTrue()`), and verify collaborators with `Received()` / `DidNotReceive()`.
+- Never mock `ApplicationDbContext` — substitute the repository interface instead.
+
+```csharp
+[Fact]
+public async Task Handle_WhenRefreshTokenIsEmpty_ShouldReturnOkWithoutRevoking()
+{
+    // Arrange
+    var command = new LogoutCommand(string.Empty);
+
+    // Act
+    var result = await _handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    result.IsSuccess.Should().BeTrue();
+    await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+}
+```
+
+Coverage is collected in CI (`coverage.runsettings`) and reported to SonarCloud.
 
 ---
 
@@ -416,5 +464,9 @@ dotnet ef database update --project Learnix.Infrastructure --startup-project Lea
 
 After completing **any** backend task:
 
-1. **Update `TODO.md`** — mark the task(s) as `[x]`. Add a short note if the implementation deviated from the spec or introduced constraints worth remembering.
-2. **Update ADR files** — if a new architectural decision was made, a pattern was changed, or a constraint was added: write a new ADR entry in the appropriate `docs/DECISIONS_*.md` file using `ADR-<SCOPE>-NNN` numbering. If an existing ADR was superseded, mark it `Superseded by ADR-<SCOPE>-NNN`.
+1. **Build and test** — `dotnet build Learnix.Backend.slnx` then `dotnet test Learnix.Backend.slnx`. Every project sets `TreatWarningsAsErrors` and `EnforceCodeStyleInBuild`, so an unused using or unused private member **fails the build**.
+2. **Format** — `dotnet format Learnix.Backend.slnx`. CI runs `--verify-no-changes` and fails otherwise.
+3. **Update `docs/TODO.md`** — set the task's `Status` column to `done` (the file uses status tables, not `[x]` checkboxes). Add a note in the `Notes` column if the implementation deviated from the spec or introduced constraints worth remembering.
+4. **Update ADR files** — if a new architectural decision was made, a pattern was changed, or a constraint was added: add an entry to the appropriate file in `docs/backend/decisions/` using `ADR-BACK-<SCOPE>-NNN` numbering. Numbering is **scoped per file** — read the file first and take the next free number after its current highest. If an existing ADR was superseded, mark it `Superseded by ADR-BACK-<SCOPE>-NNN`. A brand-new topic gets a new file from `TEMPLATE.md`, registered in `decisions/README.md`.
+
+> Note: `docs/backend/decisions/DOMAIN.md` still uses the legacy un-scoped `ADR-NNN` numbering and is written in Ukrainian. Follow its existing local convention when editing that file; use `ADR-BACK-<SCOPE>-NNN` everywhere else.

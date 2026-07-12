@@ -20,7 +20,7 @@ internal sealed class PasswordResetRequestedOutboxHandler(
 
     public async Task Handle(
         DomainEventNotification<PasswordResetRequestedDomainEvent> notification,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var e = notification.DomainEvent;
         var db = holder.DbContext!;
@@ -30,7 +30,7 @@ internal sealed class PasswordResetRequestedOutboxHandler(
             .AsNoTracking()
             .Where(u => u.Id == e.UserId)
             .Select(u => new { u.Language })
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(cancellationToken);
 
         var language = user?.Language ?? "en";
 

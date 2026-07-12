@@ -20,113 +20,165 @@ internal sealed class GeminiChatProvider : IAiChatProvider
         _client = new Client(apiKey: _settings.ApiKey);
     }
 
+    public string Name => "Gemini";
+
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(_settings.ApiKey);
+
+    /// <summary>
+    /// The stream is driven by hand rather than with <c>await foreach</c>: a quota refusal surfaces as an
+    /// exception out of <c>MoveNextAsync</c>, and an iterator cannot yield from inside a catch. Classifying
+    /// it into a <see cref="ProviderErrorEvent"/> is the whole point — a throw here would just kill an SSE
+    /// connection whose headers are already out (ADR-CHAT-014).
+    /// </summary>
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
-        IReadOnlyList<ChatMessage> conversation,
-        IReadOnlyList<ToolDefinition> tools,
-        [EnumeratorCancellation] CancellationToken ct)
+        ChatRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var contents = MapContents(conversation);
-        var config = BuildConfig(tools);
+        var contents = MapContents(request.Conversation);
+        var config = BuildConfig(request.Tools, request.SystemPrompt);
         string? finishReason = null;
 
-        await foreach (var chunk in _client.Models
-            .GenerateContentStreamAsync(_settings.Model, contents, config)
-            .WithCancellation(ct))
+        var chunks = _client.Models
+            .GenerateContentStreamAsync(_settings.Model, contents, config, cancellationToken)
+            .GetAsyncEnumerator(cancellationToken);
+
+        try
         {
-            if (chunk.Candidates is null) continue;
-
-            foreach (var candidate in chunk.Candidates)
+            while (true)
             {
-                if (candidate.Content?.Parts is not null)
-                {
-                    foreach (var part in candidate.Content.Parts)
-                    {
-                        if (part.Text is not null)
-                            yield return new TextDeltaEvent(part.Text);
+                List<ChatStreamEvent> events;
+                ChatStreamEvent? failure = null;
 
-                        if (part.FunctionCall is not null)
-                        {
-                            var callId = Guid.NewGuid().ToString("N")[..8];
-                            var argsJson = JsonSerializer.Serialize(part.FunctionCall.Args);
-                            var toolName = part.FunctionCall.Name ?? string.Empty;
-                            yield return new ToolUseStartEvent(callId, toolName);
-                            yield return new ToolUseEndEvent(callId, toolName, argsJson);
-                        }
-                    }
+                try
+                {
+                    if (!await chunks.MoveNextAsync())
+                        break;
+
+                    events = MapChunk(chunks.Current, ref finishReason);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    events = [];
+                    failure = AiProviderErrors.Classify(ex);
                 }
 
-                if (candidate.FinishReason is not null)
-                    finishReason = candidate.FinishReason.ToString();
+                if (failure is not null)
+                {
+                    yield return failure;
+                    yield break;
+                }
+
+                foreach (var streamEvent in events)
+                    yield return streamEvent;
             }
+        }
+        finally
+        {
+            await chunks.DisposeAsync();
         }
 
         yield return new MessageEndEvent(finishReason ?? "stop");
     }
 
-    private static List<Content> MapContents(IReadOnlyList<ChatMessage> conversation)
+    private static List<ChatStreamEvent> MapChunk(GenerateContentResponse chunk, ref string? finishReason)
     {
-        var contents = new List<Content>();
+        var events = new List<ChatStreamEvent>();
 
-        foreach (var msg in conversation)
+        if (chunk.Candidates is null)
+            return events;
+
+        foreach (var candidate in chunk.Candidates)
         {
-            if (msg.Role == "tool_result")
-            {
-                var parts = msg.ToolCalls!.Select(tc =>
-                {
-                    var response = tc.ResultJson is not null
-                        ? JsonSerializer.Deserialize<Dictionary<string, object>>(tc.ResultJson)
-                        : new Dictionary<string, object>();
+            foreach (var part in candidate.Content?.Parts ?? [])
+                events.AddRange(MapPart(part));
 
-                    return new Part
-                    {
-                        FunctionResponse = new FunctionResponse
-                        {
-                            Name = tc.ToolName,
-                            Response = response
-                        }
-                    };
-                }).ToList();
-
-                contents.Add(new Content { Role = "user", Parts = parts });
-            }
-            else if (msg.Role == "assistant" && msg.ToolCalls is { Count: > 0 })
-            {
-                var parts = new List<Part>();
-
-                if (!string.IsNullOrEmpty(msg.Content))
-                    parts.Add(new Part { Text = msg.Content });
-
-                foreach (var tc in msg.ToolCalls)
-                {
-                    var args = tc.ArgumentsJson.Length > 0
-                        ? JsonSerializer.Deserialize<Dictionary<string, object>>(tc.ArgumentsJson)
-                        : new Dictionary<string, object>();
-
-                    parts.Add(new Part
-                    {
-                        FunctionCall = new FunctionCall { Name = tc.ToolName, Args = args }
-                    });
-                }
-
-                contents.Add(new Content { Role = "model", Parts = parts });
-            }
-            else
-            {
-                var role = msg.Role == "assistant" ? "model" : "user";
-                contents.Add(new Content { Role = role, Parts = [new Part { Text = msg.Content }] });
-            }
+            if (candidate.FinishReason is not null)
+                finishReason = candidate.FinishReason.ToString();
         }
 
-        return contents;
+        return events;
     }
 
-    private GenerateContentConfig BuildConfig(IReadOnlyList<ToolDefinition> tools)
+    /// <summary>A part carries either streamed text or a tool call — a tool call becomes a start/end pair.</summary>
+    private static IEnumerable<ChatStreamEvent> MapPart(Part part)
+    {
+        if (part.Text is not null)
+            yield return new TextDeltaEvent(part.Text);
+
+        if (part.FunctionCall is null)
+            yield break;
+
+        var callId = Guid.NewGuid().ToString("N")[..8];
+        var toolName = part.FunctionCall.Name ?? string.Empty;
+        var argsJson = JsonSerializer.Serialize(part.FunctionCall.Args);
+
+        yield return new ToolUseStartEvent(callId, toolName);
+        yield return new ToolUseEndEvent(callId, toolName, argsJson);
+    }
+
+    private static List<Content> MapContents(IReadOnlyList<ChatMessage> conversation)
+        => [.. conversation.Select(MapMessage)];
+
+    /// <summary>
+    /// Gemini has no "tool" role: tool results are sent back as a user turn of FunctionResponse parts,
+    /// and the assistant's own tool calls as a model turn of FunctionCall parts.
+    /// </summary>
+    private static Content MapMessage(ChatMessage message)
+    {
+        if (message.Role == "tool_result")
+        {
+            var parts = message.ToolCalls!
+                .Select(tc => new Part
+                {
+                    FunctionResponse = new FunctionResponse
+                    {
+                        Name = tc.ToolName,
+                        Response = DeserializeArgs(tc.ResultJson)
+                    }
+                })
+                .ToList();
+
+            return new Content { Role = "user", Parts = parts };
+        }
+
+        if (message.Role == "assistant" && message.ToolCalls is { Count: > 0 })
+        {
+            var parts = new List<Part>();
+
+            if (!string.IsNullOrEmpty(message.Content))
+                parts.Add(new Part { Text = message.Content });
+
+            parts.AddRange(message.ToolCalls.Select(tc => new Part
+            {
+                FunctionCall = new FunctionCall
+                {
+                    Name = tc.ToolName,
+                    Args = DeserializeArgs(tc.ArgumentsJson)
+                }
+            }));
+
+            return new Content { Role = "model", Parts = parts };
+        }
+
+        return new Content
+        {
+            Role = message.Role == "assistant" ? "model" : "user",
+            Parts = [new Part { Text = message.Content }]
+        };
+    }
+
+    private static Dictionary<string, object>? DeserializeArgs(string? json)
+        => string.IsNullOrEmpty(json)
+            ? new Dictionary<string, object>()
+            : JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+
+    private GenerateContentConfig BuildConfig(IReadOnlyList<ToolDefinition> tools, string systemPrompt)
     {
         var config = new GenerateContentConfig
         {
             SystemInstruction = new Content
             {
-                Parts = [new Part { Text = AiChatConstants.SystemPrompt }]
+                Parts = [new Part { Text = systemPrompt }]
             },
             MaxOutputTokens = _settings.MaxTokens
         };

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Learnix.Application.AiChat.Abstractions.Models;
+using Learnix.Application.AiChat.Constants;
 using Learnix.Application.AiChat.Queries.SearchCourses;
 using MediatR;
 
@@ -8,6 +9,8 @@ namespace Learnix.Application.AiChat.Tools;
 
 public sealed class SearchCoursesTool(IMediator mediator) : IChatTool
 {
+    private static readonly JsonSerializerOptions ArgumentsOptions = new() { PropertyNameCaseInsensitive = true };
+
     private static readonly string ParametersSchema = JsonSerializer.Serialize(new
     {
         type = "object",
@@ -20,24 +23,24 @@ public sealed class SearchCoursesTool(IMediator mediator) : IChatTool
         required = new[] { "query" }
     });
 
-    public string Name => "search_courses";
+    public string Name => ChatToolNames.SearchCourses;
 
     public ToolDefinition Definition => new(
-        Name: "search_courses",
+        Name: Name,
         Description: "Search published courses by keyword and optional category. Use when user asks for course recommendations.",
         ParametersJsonSchema: ParametersSchema);
 
-    public async Task<string> ExecuteAsync(string argumentsJson, CancellationToken ct)
+    public bool IsAvailableIn(ChatScopeType scope) => scope is ChatScopeType.Platform;
+
+    public async Task<string> ExecuteAsync(ChatToolInvocation invocation, CancellationToken cancellationToken)
     {
+        var argumentsJson = invocation.ArgumentsJson;
         SearchArgs? args = null;
         try
         {
-            args = JsonSerializer.Deserialize<SearchArgs>(argumentsJson, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            args = JsonSerializer.Deserialize<SearchArgs>(argumentsJson, ArgumentsOptions);
         }
-        catch
+        catch (JsonException)
         {
             return JsonSerializer.Serialize(new { error = "Invalid arguments" });
         }
@@ -47,7 +50,7 @@ public sealed class SearchCoursesTool(IMediator mediator) : IChatTool
 
         var result = await mediator.Send(
             new SearchCoursesQuery(args.Query, args.Category, args.MaxResults ?? 10),
-            ct);
+            cancellationToken);
 
         if (result.IsFailed)
             return JsonSerializer.Serialize(new { error = "Search failed" });

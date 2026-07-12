@@ -39,7 +39,7 @@ export function WishlistCard({ course, className }: WishlistCardProps) {
     const removeMutation = useMutation({
         mutationFn: wishlistApi.remove,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.wishlist.mine() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.wishlist.all });
             toast.success(t('removedSuccess'));
         },
         onError: () => {

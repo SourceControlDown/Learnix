@@ -1,3 +1,5 @@
+import type { ChatScope } from '@/types/aiChat.types';
+
 /**
  * Related ADRs:
  * - ADR-FRONT-API-003: React Query Structure & Defaults
@@ -60,6 +62,7 @@ export const queryKeys = {
     },
     enrollments: {
         mine: () => ['enrollments', 'mine'] as const,
+        continueLearning: () => ['enrollments', 'continue'] as const,
     },
     messages: {
         all: ['messages'] as const,
@@ -74,10 +77,16 @@ export const queryKeys = {
         unreadCount: () => [...queryKeys.notifications.all, 'unread-count'] as const,
     },
     wishlist: {
-        mine: () => ['wishlist', 'mine'] as const,
+        all: ['wishlist'] as const,
+        mine: () => [...queryKeys.wishlist.all, 'mine'] as const,
+        count: () => [...queryKeys.wishlist.all, 'count'] as const,
     },
     aiChat: {
-        session: () => ['ai-chat', 'session'] as const,
+        status: ['ai-chat', 'status'] as const,
+        session: (scope: ChatScope) =>
+            scope.kind === 'platform'
+                ? (['ai-chat', 'session', 'platform'] as const)
+                : (['ai-chat', 'session', 'course', scope.courseId] as const),
     },
     admin: {
         all: ['admin'] as const,

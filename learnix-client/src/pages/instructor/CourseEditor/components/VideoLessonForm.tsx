@@ -46,6 +46,7 @@ export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel, onDirty
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <FormInput
+                variant="card"
                 label={
                     <div className="flex w-full items-center justify-between">
                         <span>{t('fieldTitle')}</span>
@@ -73,6 +74,7 @@ export function VideoLessonForm({ lesson, isPending, onSubmit, onCancel, onDirty
             )}
 
             <FormTextarea
+                variant="card"
                 label={
                     <div className="flex w-full items-center justify-between">
                         <span>{t('fieldDescription')}</span>

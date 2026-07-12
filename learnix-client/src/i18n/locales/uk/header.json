@@ -1,12 +1,13 @@
 {
-  "navInstructorPanel": "Панель інструктора",
-  "navAdminPanel": "Панель адміна",
-  "getStarted": "Почати",
-  "menuProfile": "Профіль",
-  "menuTheme": "Тема",
-  "menuLanguage": "Мова",
-  "emailNotVerifiedAlert": "Будь ласка, підтвердіть вашу електронну пошту, щоб розблокувати всі функції.",
-  "resendEmail": "Надіслати ще раз",
-  "resendCooldown": "Зачекайте {{seconds}}с",
-  "resendSuccess": "Лист успішно надіслано!"
+    "navInstructorPanel": "Панель інструктора",
+    "navAdminPanel": "Панель адміна",
+    "getStarted": "Почати",
+    "menuProfile": "Профіль",
+    "menuTheme": "Тема",
+    "menuLanguage": "Мова",
+    "emailNotVerifiedAlert": "Будь ласка, підтвердіть вашу електронну пошту, щоб розблокувати всі функції.",
+    "resendEmail": "Надіслати ще раз",
+    "resendCooldown": "Зачекайте {{seconds}}с",
+    "resendSuccess": "Лист успішно надіслано!",
+    "menuHelp": "Довідка та FAQ"
 }

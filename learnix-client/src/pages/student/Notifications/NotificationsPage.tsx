@@ -5,8 +5,14 @@ import { Award, CheckCircle2, MessageSquare, Trophy, XCircle } from 'lucide-reac
 import { messagesApi } from '@/api/messages.api';
 import { notificationsApi } from '@/api/notifications.api';
 import { queryKeys } from '@/api/queryKeys';
+import { QueryError } from '@/components/common/system/QueryError';
+import { APP_ROUTES } from '@/routes/paths';
 import type { ConversationSummary } from '@/types/message.types';
-import type { NotificationDto, NotificationEventType } from '@/types/notification.types';
+import type {
+    NotificationDto,
+    NotificationEventType,
+    NotificationParams,
+} from '@/types/notification.types';
 import { cn } from '@/utils/cn';
 import { formatRelativeTime } from '@/utils/formatDate';
 
@@ -18,10 +24,10 @@ const TYPE_ICON: Record<NotificationEventType, React.ReactNode> = {
 };
 
 const TYPE_ROUTE: Record<NotificationEventType, string> = {
-    AchievementEarned: '/achievements',
-    CertificateReady: '/certificates',
-    InstructorApproved: '/become-instructor',
-    InstructorRejected: '/become-instructor',
+    AchievementEarned: APP_ROUTES.student.achievements,
+    CertificateReady: APP_ROUTES.student.certificates,
+    InstructorApproved: APP_ROUTES.public.becomeInstructor,
+    InstructorRejected: APP_ROUTES.public.becomeInstructor,
 };
 
 type NotificationItemProps = {
@@ -31,10 +37,22 @@ type NotificationItemProps = {
 
 function NotificationItem({ notification, onRead }: NotificationItemProps) {
     const navigate = useNavigate();
+    const { t } = useTranslation('notifications');
+    const { t: tAchievements } = useTranslation('achievements');
 
     function handleClick() {
         if (!notification.isRead) onRead(notification.id);
         navigate(TYPE_ROUTE[notification.type]);
+    }
+
+    // The server sends the type and the facts; the words are ours (ADR-NOTIF-001). An achievement arrives as
+    // its code, which the achievements namespace already knows a name for — the server never sent one.
+    const params: NotificationParams = { ...notification.parameters };
+
+    if (params.code) {
+        params.achievement = tAchievements(`meta.${params.code}.name`, {
+            defaultValue: params.code,
+        });
     }
 
     return (
@@ -48,9 +66,11 @@ function NotificationItem({ notification, onRead }: NotificationItemProps) {
             <div className="mt-0.5 shrink-0">{TYPE_ICON[notification.type]}</div>
             <div className="min-w-0 flex-1">
                 <p className={cn('text-sm text-foreground', !notification.isRead && 'font-medium')}>
-                    {notification.title}
+                    {t(`items.${notification.type}.title`)}
                 </p>
-                <p className="mt-0.5 text-sm text-muted-foreground">{notification.body}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                    {t(`items.${notification.type}.body`, params)}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                     {formatRelativeTime(notification.createdAt)}
                 </p>
@@ -68,11 +88,10 @@ type ConversationItemProps = {
 
 function ConversationItem({ conversation }: ConversationItemProps) {
     const navigate = useNavigate();
-    const messagesPath = '/messages';
 
     return (
         <button
-            onClick={() => navigate(messagesPath)}
+            onClick={() => navigate(APP_ROUTES.student.messages)}
             className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
         >
             <div className="mt-0.5 shrink-0">
@@ -109,16 +128,27 @@ export default function NotificationsPage() {
     const { t } = useTranslation('notifications');
     const queryClient = useQueryClient();
 
-    const { data: notifications = [] } = useQuery({
+    const {
+        data: notifications = [],
+        isError: isNotificationsError,
+        refetch: refetchNotifications,
+    } = useQuery({
         queryKey: queryKeys.notifications.list(),
         queryFn: notificationsApi.getAll,
     });
 
-    const { data: conversationsData } = useQuery({
+    const {
+        data: conversationsData,
+        isError: isConversationsError,
+        refetch: refetchConversations,
+    } = useQuery({
         queryKey: queryKeys.messages.conversations(),
         queryFn: () => messagesApi.getConversations(),
     });
     const conversations = conversationsData?.items || [];
+
+    // Either half failing makes the card lie by omission, so the whole card gives way.
+    const isError = isNotificationsError || isConversationsError;
 
     const markReadMutation = useMutation({
         mutationFn: notificationsApi.markRead,
@@ -142,7 +172,7 @@ export default function NotificationsPage() {
         <div className="mx-auto max-w-2xl px-4 py-8">
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="font-heading text-2xl font-bold text-foreground">
-                    {t('common:navigation.myLearning')}
+                    {t('common:navigation.notifications')}
                 </h1>
                 {hasUnread && (
                     <button
@@ -155,47 +185,59 @@ export default function NotificationsPage() {
                 )}
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-border bg-card">
-                {/* System notifications */}
-                <div className="border-b border-border px-4 py-2.5">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {t('systemSection')}
-                    </p>
-                </div>
-                {notifications.length === 0 ? (
-                    <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-                        {t('emptySystem')}
-                    </p>
-                ) : (
-                    <div className="divide-y divide-border">
-                        {notifications.map((n) => (
-                            <NotificationItem
-                                key={n.id}
-                                notification={n}
-                                onRead={(id) => markReadMutation.mutate(id)}
-                            />
-                        ))}
+            {isError ? (
+                <QueryError
+                    message={t('error.title')}
+                    onRetry={() => {
+                        refetchNotifications();
+                        refetchConversations();
+                    }}
+                    retryLabel={t('common:actions.tryAgain')}
+                    className="rounded-xl border border-border bg-card"
+                />
+            ) : (
+                <div className="overflow-hidden rounded-xl border border-border bg-card">
+                    {/* System notifications */}
+                    <div className="border-b border-border px-4 py-2.5">
+                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            {t('systemSection')}
+                        </p>
                     </div>
-                )}
+                    {notifications.length === 0 ? (
+                        <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                            {t('emptySystem')}
+                        </p>
+                    ) : (
+                        <div className="divide-y divide-border">
+                            {notifications.map((n) => (
+                                <NotificationItem
+                                    key={n.id}
+                                    notification={n}
+                                    onRead={(id) => markReadMutation.mutate(id)}
+                                />
+                            ))}
+                        </div>
+                    )}
 
-                {/* Messages */}
-                <div className="border-y border-border px-4 py-2.5">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {t('common:navigation.messages')}
-                    </p>
-                </div>
-                {conversations.length === 0 ? (
-                    <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-                        {t('emptyMessages')}
-                    </p>
-                ) : (
-                    <div className="max-h-72 divide-y divide-border overflow-y-auto">
-                        {conversations.map((c) => (
-                            <ConversationItem key={c.id} conversation={c} />
-                        ))}
+                    {/* Messages */}
+                    <div className="border-y border-border px-4 py-2.5">
+                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            {t('common:navigation.messages')}
+                        </p>
                     </div>
-                )}
-            </div>
+                    {conversations.length === 0 ? (
+                        <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                            {t('emptyMessages')}
+                        </p>
+                    ) : (
+                        <div className="max-h-72 divide-y divide-border overflow-y-auto">
+                            {conversations.map((c) => (
+                                <ConversationItem key={c.id} conversation={c} />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

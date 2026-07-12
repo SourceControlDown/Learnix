@@ -17,15 +17,15 @@ public sealed class UnpublishCourseCommandHandler(
     : CourseCommandHandler<UnpublishCourseCommand, Result>(courseRepository, currentUser)
 {
     protected override async Task<Result> HandleAsync(
-        UnpublishCourseCommand request, Course course, CancellationToken ct)
+        UnpublishCourseCommand request, Course course, CancellationToken cancellationToken)
     {
         course.Unpublish();
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await Task.WhenAll(
-            cache.RemoveAsync(CacheKeys.Course(request.CourseId), ct),
-            cache.RemoveAsync(CacheKeys.CoursesFeatured, ct));
+            cache.RemoveAsync(CacheKeys.Courses.ById(request.CourseId), cancellationToken),
+            cache.RemoveAsync(CacheKeys.Courses.Featured, cancellationToken));
 
         return Result.Ok();
     }

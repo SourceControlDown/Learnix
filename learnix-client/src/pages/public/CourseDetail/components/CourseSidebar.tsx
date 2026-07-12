@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { BookOpen, Heart } from 'lucide-react';
+import { TextLink } from '@/components/common/ui/TextLink';
 import { APP_ROUTES } from '@/routes/paths';
 import type { UserSummary } from '@/store/auth.store';
 import type { CourseDetailDto } from '@/types/course.types';
@@ -136,12 +137,12 @@ export function CourseSidebar({
                     <p>
                         <span className="font-medium text-foreground">{t('instructor.label')}</span>
                         {course.instructorFullName && (
-                            <Link
+                            <TextLink
                                 to={APP_ROUTES.public.instructorProfile(course.instructorId)}
-                                className="ml-1 text-primary hover:underline"
+                                className="ml-1"
                             >
                                 {course.instructorFullName}
-                            </Link>
+                            </TextLink>
                         )}
                     </p>
                 </div>

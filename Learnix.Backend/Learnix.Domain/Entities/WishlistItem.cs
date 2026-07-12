@@ -14,9 +14,10 @@ public class WishlistItem : IAuditable
 
     public Guid UserId { get; private set; }
     public Guid CourseId { get; private set; }
-    public Course? Course { get; private set; }
 
+    // S1144: the setters are never called from code — EF Core materializes these.
 #pragma warning disable S1144
+    public Course? Course { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
 #pragma warning restore S1144

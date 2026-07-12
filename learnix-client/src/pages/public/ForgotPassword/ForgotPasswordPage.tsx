@@ -91,7 +91,8 @@ export default function ForgotPasswordPage() {
                         id="email"
                         type="email"
                         autoComplete="email"
-                        variant="auth"
+                        variant="card"
+                        reserveErrorSpace
                         label={t('forgotPassword.email.label')}
                         placeholder={t('forgotPassword.email.placeholder')}
                         error={errors.email}

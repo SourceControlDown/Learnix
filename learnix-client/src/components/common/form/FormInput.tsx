@@ -3,29 +3,28 @@ import type { FieldError } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { type VariantProps, cva } from 'class-variance-authority';
 import { AlertCircle } from 'lucide-react';
+import { FIELD_BASE, FIELD_ERROR, FIELD_SURFACE_CARD } from '@/components/common/form/fieldStyles';
 import { cn } from '@/utils/cn';
 import { getFieldErrors } from '@/utils/errors';
 
-const formInputVariants = cva(
-    'w-full rounded-lg border bg-background text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-2',
-    {
-        variants: {
-            variant: {
-                default: 'border-input px-3 py-2 focus:ring-ring',
-                auth: 'border-border px-3.5 py-2.5 placeholder:text-muted-foreground/50 focus:border-primary focus:ring-primary/10',
-                muted: 'border-transparent bg-muted/30 px-3 py-2.5 hover:border-primary/50 focus:border-primary focus:bg-background focus:ring-primary',
-            },
-            hasError: {
-                true: 'border-destructive focus:border-destructive focus:ring-destructive/10',
-                false: '',
-            },
+// Border/focus/fill come from the shared field tokens. The only choice a caller makes is the
+// surface: `default` (on the page) or `card` (inside a card) — never border/focus colours.
+const formInputVariants = cva(`${FIELD_BASE} px-3 py-2.5`, {
+    variants: {
+        variant: {
+            default: '',
+            card: FIELD_SURFACE_CARD,
         },
-        defaultVariants: {
-            variant: 'default',
-            hasError: false,
+        hasError: {
+            true: FIELD_ERROR,
+            false: '',
         },
     },
-);
+    defaultVariants: {
+        variant: 'default',
+        hasError: false,
+    },
+});
 
 interface FormInputProps
     extends React.InputHTMLAttributes<HTMLInputElement>, VariantProps<typeof formInputVariants> {
@@ -33,6 +32,12 @@ interface FormInputProps
     labelRightAction?: React.ReactNode;
     error?: string | FieldError;
     containerClassName?: string;
+    /**
+     * Keep a fixed-height slot under the field even when there is no error, so the form does
+     * not shift as validation messages appear/disappear. Opt-in — set it on layouts where the
+     * jump is noticeable (e.g. auth forms), not by default.
+     */
+    reserveErrorSpace?: boolean;
 }
 
 /**
@@ -41,7 +46,17 @@ interface FormInputProps
  */
 export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
     (
-        { label, labelRightAction, error, variant, className, containerClassName, id, ...props },
+        {
+            label,
+            labelRightAction,
+            error,
+            variant,
+            className,
+            containerClassName,
+            reserveErrorSpace,
+            id,
+            ...props
+        },
         ref,
     ) => {
         const { t } = useTranslation('zod');
@@ -78,8 +93,8 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
                         </div>
                     )}
                 </div>
-                {(errorMessages.length > 0 || variant === 'auth') && (
-                    <div className={cn('mt-1 space-y-1', variant === 'auth' && 'min-h-[20px]')}>
+                {(errorMessages.length > 0 || reserveErrorSpace) && (
+                    <div className={cn('mt-1 space-y-1', reserveErrorSpace && 'min-h-[20px]')}>
                         {errorMessages.map((msg, idx) => (
                             <p key={idx} className="text-[13px] leading-tight text-destructive">
                                 {t(msg)}

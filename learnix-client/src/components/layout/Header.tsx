@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Compass, GraduationCap, LogOut, Shield, User } from 'lucide-react';
-import { authApi } from '@/api/auth.api';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { BookOpen, CircleHelp, Compass, GraduationCap, LogOut, Shield, User } from 'lucide-react';
 import { BrandLogo } from '@/components/common/ui/BrandLogo';
 import { LanguageSwitcher } from '@/components/common/ui/LanguageSwitcher';
 import { ThemeSwitcher } from '@/components/common/ui/ThemeSwitcher';
+import { UserRole } from '@/enums/user.enums';
+import { useLogout } from '@/hooks/auth/useLogout';
 import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/utils/cn';
@@ -25,9 +25,7 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
     const { t } = useTranslation('header');
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
-    const navigate = useNavigate();
-    const { logout } = useAuthStore();
-    const queryClient = useQueryClient();
+    const signOut = useLogout();
 
     const initials = fullName
         .split(' ')
@@ -45,17 +43,6 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-    /**
-     * Related ADRs:
-     * - ADR-FRONT-AUTH-004: Explicit Logout & State Clearing
-     */
-    function handleSignOut() {
-        authApi.logout().catch(() => {});
-        logout();
-        queryClient.clear();
-        navigate(APP_ROUTES.public.login);
-    }
 
     const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -106,7 +93,7 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
 
             {open && (
                 <div className="absolute right-0 top-full z-50 hidden pt-2 sm:block">
-                    <div className="w-64 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+                    <div className="w-64 overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl">
                         <div className="flex items-center gap-3 px-4 py-3">
                             <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-sm font-semibold text-primary">
                                 {avatarUrl ? (
@@ -130,7 +117,7 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
                         <Link
                             to={APP_ROUTES.student.profile}
                             onClick={() => setOpen(false)}
-                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-foreground/10"
                         >
                             <User size={14} className="text-muted-foreground" />
                             {t('menuProfile')}
@@ -138,16 +125,25 @@ function UserMenu({ fullName, email, avatarUrl }: UserMenuProps) {
                         <Link
                             to={APP_ROUTES.student.myLearning}
                             onClick={() => setOpen(false)}
-                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-foreground/10"
                         >
                             <BookOpen size={14} className="text-muted-foreground" />
                             {t('common:navigation.myLearning')}
                         </Link>
+                        {/* Signed-in users never see the landing page, where the other FAQ entry lives. */}
+                        <Link
+                            to={APP_ROUTES.public.faq}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-foreground/10"
+                        >
+                            <CircleHelp size={14} className="text-muted-foreground" />
+                            {t('menuHelp')}
+                        </Link>
                         <div className="my-1 border-t border-border" />
                         <button
                             type="button"
-                            onClick={handleSignOut}
-                            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                            onClick={signOut}
+                            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
                         >
                             <LogOut size={14} />
                             {t('common:actions.signOut')}
@@ -170,7 +166,7 @@ export function Header() {
             label: t('common:navigation.courses'),
             icon: <Compass size={20} />,
         },
-        ...(user?.roles.includes('Instructor')
+        ...(user?.roles.includes(UserRole.Instructor)
             ? [
                   {
                       to: APP_ROUTES.instructor.dashboard,
@@ -179,7 +175,7 @@ export function Header() {
                   },
               ]
             : []),
-        ...(user?.roles.includes('Admin')
+        ...(user?.roles.includes(UserRole.Admin)
             ? [
                   {
                       to: APP_ROUTES.admin.dashboard,
@@ -190,6 +186,20 @@ export function Header() {
             : []),
     ];
 
+    // Desktop only: on mobile "My Learning" already has its own entry in the drawer's user
+    // section, and the avatar dropdown that holds it on desktop only opens on hover.
+    const desktopNavItems = user
+        ? [
+              navItems[0],
+              {
+                  to: APP_ROUTES.student.myLearning,
+                  label: t('common:navigation.myLearning'),
+                  icon: <BookOpen size={20} />,
+              },
+              ...navItems.slice(1),
+          ]
+        : navItems;
+
     return (
         <header className="sticky top-0 z-40 border-b border-border bg-card/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/60">
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
@@ -199,7 +209,7 @@ export function Header() {
                     </div>
                     <BrandLogo />
                     <nav className="hidden items-center gap-7 text-sm sm:flex">
-                        {navItems.map((item) => (
+                        {desktopNavItems.map((item) => (
                             <NavLink
                                 key={item.to}
                                 to={item.to}

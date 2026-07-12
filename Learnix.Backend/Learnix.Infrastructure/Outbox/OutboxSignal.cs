@@ -21,6 +21,6 @@ internal sealed class OutboxSignal
     /// Wait until signalled or <paramref name="timeout"/> expires.
     /// Returns <c>true</c> if signalled, <c>false</c> on timeout.
     /// </summary>
-    public Task<bool> WaitAsync(TimeSpan timeout, CancellationToken ct)
-        => _semaphore.WaitAsync(timeout, ct);
+    public Task<bool> WaitAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        => _semaphore.WaitAsync(timeout, cancellationToken);
 }

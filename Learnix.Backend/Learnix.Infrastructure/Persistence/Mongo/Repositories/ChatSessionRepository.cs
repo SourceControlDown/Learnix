@@ -1,84 +1,85 @@
 using Learnix.Application.AiChat.Abstractions;
 using Learnix.Application.AiChat.Abstractions.Models;
 using Learnix.Infrastructure.Persistence.Mongo.Documents;
-using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Learnix.Infrastructure.Persistence.Mongo.Repositories;
 
 internal sealed class ChatSessionRepository(MongoDbContext context) : IChatSessionRepository
 {
-    public async Task<ChatSession?> GetActiveByUserIdAsync(Guid userId, CancellationToken ct = default)
+    public async Task<ChatSession?> GetByScopeAsync(Guid userId, ChatScope scope, CancellationToken cancellationToken = default)
     {
-        var filter = Builders<ChatSessionDocument>.Filter.And(
-            Builders<ChatSessionDocument>.Filter.Eq(s => s.UserId, userId),
-            Builders<ChatSessionDocument>.Filter.Eq(s => s.IsActive, true));
-
         var doc = await context.ChatSessions
-            .Find(filter)
-            .FirstOrDefaultAsync(ct);
+            .Find(ScopeFilter(userId, scope))
+            .FirstOrDefaultAsync(cancellationToken);
 
         return doc is null ? null : MapToModel(doc);
     }
 
-    public async Task<ChatSession> CreateAsync(Guid userId, CancellationToken ct = default)
+    public async Task<ChatSession> GetOrCreateAsync(Guid userId, ChatScope scope, CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
-        var doc = new ChatSessionDocument
+
+        // UserId, Scope and CourseId come from the filter's equality terms, so Mongo writes them on insert.
+        // Restating them in $setOnInsert would conflict.
+        var update = Builders<ChatSessionDocument>.Update
+            .SetOnInsert(s => s.CreatedAt, now)
+            .SetOnInsert(s => s.UpdatedAt, now)
+            .SetOnInsert(s => s.Messages, []);
+
+        var options = new FindOneAndUpdateOptions<ChatSessionDocument>
         {
-            Id = ObjectId.GenerateNewId(),
-            UserId = userId,
-            IsActive = true,
-            Messages = [],
-            CreatedAt = now,
-            UpdatedAt = now
+            IsUpsert = true,
+            ReturnDocument = ReturnDocument.After
         };
 
-        await context.ChatSessions.InsertOneAsync(doc, cancellationToken: ct);
+        var doc = await context.ChatSessions.FindOneAndUpdateAsync(
+            ScopeFilter(userId, scope), update, options, cancellationToken);
+
         return MapToModel(doc);
     }
 
-    public async Task AppendMessagesAsync(string sessionId, IEnumerable<ChatMessage> messages, CancellationToken ct = default)
+    public async Task AppendMessagesAsync(
+        string sessionId,
+        IEnumerable<ChatMessage> messages,
+        int storedMessagesLimit,
+        CancellationToken cancellationToken = default)
     {
-        var id = ObjectId.Parse(sessionId);
         var docs = messages.Select(MapMessageToDocument).ToList();
 
+        // $push + $each + $slice trims to the newest N in the same atomic write, so two tabs appending
+        // at once cannot lose each other's messages the way a read-trim-write would.
         var update = Builders<ChatSessionDocument>.Update
-            .PushEach(s => s.Messages, docs)
+            .PushEach(s => s.Messages, docs, slice: -storedMessagesLimit)
             .Set(s => s.UpdatedAt, DateTime.UtcNow);
 
-        var filter = Builders<ChatSessionDocument>.Filter.Eq(s => s.Id, id);
-        await context.ChatSessions.UpdateOneAsync(filter, update, cancellationToken: ct);
+        var filter = Builders<ChatSessionDocument>.Filter.Eq(s => s.Id, MongoDB.Bson.ObjectId.Parse(sessionId));
+        await context.ChatSessions.UpdateOneAsync(filter, update, cancellationToken: cancellationToken);
     }
 
-    public async Task CloseSessionAsync(string sessionId, CancellationToken ct = default)
+    public async Task DeleteAsync(Guid userId, ChatScope scope, CancellationToken cancellationToken = default)
     {
-        var id = ObjectId.Parse(sessionId);
-        var now = DateTime.UtcNow;
-
-        var update = Builders<ChatSessionDocument>.Update
-            .Set(s => s.IsActive, false)
-            .Set(s => s.ClosedAt, now)
-            .Set(s => s.UpdatedAt, now);
-
-        var filter = Builders<ChatSessionDocument>.Filter.Eq(s => s.Id, id);
-        await context.ChatSessions.UpdateOneAsync(filter, update, cancellationToken: ct);
+        await context.ChatSessions.DeleteOneAsync(ScopeFilter(userId, scope), cancellationToken);
     }
 
-    public async Task DeleteOlderThanAsync(DateTime threshold, CancellationToken ct = default)
+    public async Task<long> DeleteAllForUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var filter = Builders<ChatSessionDocument>.Filter.And(
-            Builders<ChatSessionDocument>.Filter.Eq(s => s.IsActive, false),
-            Builders<ChatSessionDocument>.Filter.Lt(s => s.UpdatedAt, threshold));
+        var filter = Builders<ChatSessionDocument>.Filter.Eq(s => s.UserId, userId);
+        var result = await context.ChatSessions.DeleteManyAsync(filter, cancellationToken);
 
-        await context.ChatSessions.DeleteManyAsync(filter, ct);
+        return result.DeletedCount;
     }
+
+    private static FilterDefinition<ChatSessionDocument> ScopeFilter(Guid userId, ChatScope scope) =>
+        Builders<ChatSessionDocument>.Filter.And(
+            Builders<ChatSessionDocument>.Filter.Eq(s => s.UserId, userId),
+            Builders<ChatSessionDocument>.Filter.Eq(s => s.Scope, scope.Type),
+            Builders<ChatSessionDocument>.Filter.Eq(s => s.CourseId, scope.CourseId));
 
     private static ChatSession MapToModel(ChatSessionDocument doc) => new()
     {
         Id = doc.Id.ToString(),
         UserId = doc.UserId,
-        IsActive = doc.IsActive,
         Messages = doc.Messages.Select(MapMessageToModel).ToList(),
         CreatedAt = doc.CreatedAt,
         UpdatedAt = doc.UpdatedAt
@@ -88,13 +89,15 @@ internal sealed class ChatSessionRepository(MongoDbContext context) : IChatSessi
         doc.Role,
         doc.Content,
         doc.SentAt,
-        doc.ToolCalls?.Select(t => new ToolCall(t.CallId, t.ToolName, t.ArgumentsJson, t.ResultJson)).ToList());
+        doc.ToolCalls?.Select(t => new ToolCall(t.CallId, t.ToolName, t.ArgumentsJson, t.ResultJson)).ToList(),
+        doc.LessonId);
 
     private static ChatMessageDocument MapMessageToDocument(ChatMessage msg) => new()
     {
         Role = msg.Role,
         Content = msg.Content,
         SentAt = msg.SentAt,
+        LessonId = msg.LessonId,
         ToolCalls = msg.ToolCalls?.Select(t => new ToolCallDocument
         {
             CallId = t.CallId,

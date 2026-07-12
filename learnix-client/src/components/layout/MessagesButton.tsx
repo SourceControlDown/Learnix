@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { MessageSquare } from 'lucide-react';
 import { messagesApi } from '@/api/messages.api';
 import { queryKeys } from '@/api/queryKeys';
+import { CountBadge } from '@/components/common/ui/CountBadge';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/utils/cn';
 
@@ -31,11 +32,7 @@ export function MessagesButton() {
             aria-label={t('common:navigation.messages')}
         >
             <MessageSquare className="size-5" />
-            {unread > 0 && (
-                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                    {unread > 99 ? '99+' : unread}
-                </span>
-            )}
+            <CountBadge count={unread} />
         </Link>
     );
 }

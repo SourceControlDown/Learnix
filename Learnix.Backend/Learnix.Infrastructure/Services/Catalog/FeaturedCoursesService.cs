@@ -16,7 +16,7 @@ internal sealed class FeaturedCoursesService(
     private const int BestsellerSlots = 2;
     private static readonly TimeSpan NewCourseCutoff = TimeSpan.FromDays(90);
 
-    public async Task<IReadOnlyList<FeaturedCourseDto>> GetTopFeaturedAsync(int count, CancellationToken ct)
+    public async Task<IReadOnlyList<FeaturedCourseDto>> GetTopFeaturedAsync(int count, CancellationToken cancellationToken)
     {
         var raw = await (
             from c in context.Courses
@@ -39,7 +39,7 @@ internal sealed class FeaturedCoursesService(
                 InstructorFirstName = u.FirstName,
                 InstructorLastName = u.LastName,
             }
-        ).Take(count).ToListAsync(ct);
+        ).Take(count).ToListAsync(cancellationToken);
 
         if (raw.Count == 0)
             return [];
@@ -55,15 +55,18 @@ internal sealed class FeaturedCoursesService(
                 (s, l) => new { s.CourseId, DurationSeconds = l.DurationSeconds ?? 0 })
             .GroupBy(x => x.CourseId)
             .Select(g => new { CourseId = g.Key, TotalSeconds = g.Sum(x => x.DurationSeconds) })
-            .ToDictionaryAsync(x => x.CourseId, x => x.TotalSeconds, ct);
+            .ToDictionaryAsync(x => x.CourseId, x => x.TotalSeconds, cancellationToken);
 
         var cutoff = DateTime.UtcNow - NewCourseCutoff;
 
         return raw.Select((item, idx) =>
         {
-            var badge = idx < BestsellerSlots ? "bestseller"
-                : item.CreatedAt >= cutoff ? "new"
-                : (string?)null;
+            string? badge = null;
+
+            if (idx < BestsellerSlots)
+                badge = "bestseller";
+            else if (item.CreatedAt >= cutoff)
+                badge = "new";
 
             var totalSeconds = durationByCourse.TryGetValue(item.Id, out var secs) ? secs : 0;
             var durationHours = Math.Round(totalSeconds / 3600.0, 1);

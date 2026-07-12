@@ -30,14 +30,14 @@ export function ProfileFormSection({
                 <FormInput
                     label={t('common:general.firstName')}
                     error={form.formState.errors.firstName?.message}
-                    variant="muted"
+                    variant="card"
                     {...form.register('firstName')}
                 />
 
                 <FormInput
                     label={t('common:general.lastName')}
                     error={form.formState.errors.lastName?.message}
-                    variant="muted"
+                    variant="card"
                     {...form.register('lastName')}
                 />
             </div>
@@ -50,7 +50,7 @@ export function ProfileFormSection({
                     <FormInput
                         value={user?.email ?? ''}
                         readOnly
-                        variant="muted"
+                        variant="card"
                         className={cn(
                             'cursor-not-allowed pl-9 pr-9',
                             user?.emailVerified ? 'border-success/50' : 'border-border',
@@ -116,7 +116,7 @@ export function ProfileFormSection({
                 rows={4}
                 placeholder={t('fields.bioPlaceholder')}
                 error={form.formState.errors.bio?.message}
-                variant="muted"
+                variant="card"
                 {...form.register('bio')}
             />
         </div>

@@ -1,4 +1,6 @@
 using Learnix.Domain.Common;
+using Learnix.Domain.Common.Exceptions;
+using Learnix.Domain.Constants;
 using Learnix.Domain.Events;
 using Learnix.Domain.Events.User;
 using Microsoft.AspNetCore.Identity;
@@ -34,6 +36,14 @@ public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents, ISoftDelet
     public string? GoogleId { get; private set; }
     public bool IsDeleted { get; private set; } = false;
     public DateTime? DeletedAt { get; private set; } = null;
+
+    /// <summary>
+    /// When the personal data of a deleted account is erased for good. Written at deletion time rather than
+    /// computed from <see cref="UserConstants.AccountRecoveryWindowDays"/> on demand: the date is a promise
+    /// made to a person in an email, so shortening the window later must not shorten it for them.
+    /// Null while the account is live.
+    /// </summary>
+    public DateTime? PurgeAfter { get; private set; } = null;
 
 #pragma warning disable S1144
     public DateTime CreatedAt { get; private set; }
@@ -99,13 +109,71 @@ public class User : IdentityUser<Guid>, IAuditable, IHasDomainEvents, ISoftDelet
     {
         IsDeleted = true;
         DeletedAt = DateTime.UtcNow;
+        PurgeAfter = DeletedAt.Value.AddDays(UserConstants.AccountRecoveryWindowDays);
+
+        // The date travels with the event: domain events are dispatched before the UPDATE runs, so a
+        // handler that went looking for PurgeAfter in the database would still read null.
+        RaiseDomainEvent(new UserDeletedDomainEvent(Id, PurgeAfter.Value));
     }
 
     public void Recover()
     {
         IsDeleted = false;
         DeletedAt = null;
+        PurgeAfter = null;
+
+        RaiseDomainEvent(new UserRecoveredDomainEvent(Id));
     }
+
+    /// <summary>
+    /// Strips every trace of the person from an account whose recovery window has run out, and leaves the row
+    /// behind. What survives is not theirs any more: a review, a message in somebody else's thread, a payment
+    /// another party's books are built from. Erasing the row would either be refused by the database or
+    /// silently orphan those records — see <c>DeletedAccountPurgeService</c> for the full account of why.
+    /// <para>
+    /// The account stays deleted and stays unusable: no password, no Google link, a dead email, a fresh
+    /// security stamp to invalidate anything still holding a token. <see cref="PurgeAfter"/> is cleared so
+    /// the purge never picks it up twice.
+    /// </para>
+    /// </summary>
+    public void Anonymize()
+    {
+        if (!IsDeleted)
+            throw new DomainException("Only a deleted account can be anonymized.");
+
+        if (AvatarBlobPath is not null)
+        {
+            RaiseDomainEvent(new UserAvatarRemovedDomainEvent(Id, AvatarBlobPath));
+            AvatarBlobPath = null;
+        }
+
+        // Unroutable by design (RFC 6761): nothing can ever be sent to it, and it cannot collide with a
+        // real address a returning user might register.
+        var placeholder = $"deleted-{Id:N}@learnix.invalid";
+
+        Email = placeholder;
+        NormalizedEmail = placeholder.ToUpperInvariant();
+        UserName = placeholder;
+        NormalizedUserName = placeholder.ToUpperInvariant();
+        EmailConfirmed = false;
+
+        FirstName = AnonymizedFirstName;
+        LastName = AnonymizedLastName;
+        Bio = null;
+        GoogleId = null;
+        PhoneNumber = null;
+        PhoneNumberConfirmed = false;
+        PasswordHash = null;
+        SecurityStamp = Guid.NewGuid().ToString();
+
+        PurgeAfter = null;
+
+        RaiseDomainEvent(new UserAnonymizedDomainEvent(Id));
+    }
+
+    /// <summary>What the platform calls someone whose account is gone — shown wherever their reviews remain.</summary>
+    public const string AnonymizedFirstName = "Deleted";
+    public const string AnonymizedLastName = "user";
 
     /// <summary>Raise domain event from outside the entity (e.g. from a command handler after UserManager creates user).</summary>
     /// <remarks>Required because UserManager.CreateAsync persists immediately, before handler can raise events through normal flow.</remarks>

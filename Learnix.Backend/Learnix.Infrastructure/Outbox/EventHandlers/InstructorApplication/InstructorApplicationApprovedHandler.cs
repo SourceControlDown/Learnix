@@ -13,7 +13,7 @@ internal sealed class InstructorApplicationApprovedHandler(OutboxDbContextHolder
 {
     public async Task Handle(
         DomainEventNotification<InstructorApplicationApprovedDomainEvent> notification,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var e = notification.DomainEvent;
         var db = holder.DbContext!;
@@ -22,7 +22,7 @@ internal sealed class InstructorApplicationApprovedHandler(OutboxDbContextHolder
             .AsNoTracking()
             .Where(u => u.Id == e.UserId)
             .Select(u => new { u.Email, u.FirstName, u.Language })
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (user is null) return;
 

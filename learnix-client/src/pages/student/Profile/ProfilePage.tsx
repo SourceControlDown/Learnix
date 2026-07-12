@@ -7,7 +7,6 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { authApi } from '@/api/auth.api';
 import { AUTH_LIMITS } from '@/const/auth.constants';
-import { UserRole } from '@/enums/user.enums';
 import { useRequestUploadUrl } from '@/hooks/shared/useRequestUploadUrl';
 import { useMyAchievements } from '@/hooks/user/useMyAchievements';
 import { useMyProfile } from '@/hooks/user/useMyProfile';
@@ -16,6 +15,7 @@ import { APP_ROUTES } from '@/routes/paths';
 import { type ProfileFormValues, profileSchema } from '@/schemas/profile.schema';
 import { useAuthStore } from '@/store/auth.store';
 import { isValidationError } from '@/utils/errors';
+import { isInstructorOrAdmin } from '@/utils/roles';
 import { AchievementsSection } from './components/AchievementsSection';
 import { AvatarUpload } from './components/AvatarUpload';
 import { ChangePasswordDialog } from './components/ChangePasswordDialog';
@@ -193,7 +193,7 @@ export default function ProfilePage() {
                 />
 
                 {/* Certificates and Become Instructor */}
-                <QuickNavSection isStudent={user?.roles.includes(UserRole.Student) ?? false} />
+                <QuickNavSection canBecomeInstructor={!!user && !isInstructorOrAdmin(user)} />
             </div>
         </div>
     );

@@ -5,5 +5,5 @@ namespace Learnix.Application.Achievements.Abstractions;
 
 public interface IUserAchievementRepository : IRepositoryBase<UserAchievement>
 {
-    Task<bool> HasAchievementAsync(Guid userId, string code, CancellationToken ct);
+    Task<bool> HasAchievementAsync(Guid userId, string code, CancellationToken cancellationToken);
 }

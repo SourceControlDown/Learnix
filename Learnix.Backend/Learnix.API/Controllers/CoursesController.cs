@@ -25,6 +25,10 @@ namespace Learnix.API.Controllers;
 [Authorize]
 public sealed class CoursesController(ISender sender) : ControllerBase
 {
+    // S107: these are the catalog's query-string parameters, not a call signature we chose. Binding them
+    // through a record would drop the C# default values (the MVC binder ignores them, so take would come
+    // in as 0 instead of 20) and Swagger would still list them one by one.
+#pragma warning disable S107
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetPublicList(
@@ -36,26 +40,27 @@ public sealed class CoursesController(ISender sender) : ControllerBase
         [FromQuery] string? sortBy = null,
         [FromQuery] bool? isFree = null,
         [FromQuery] decimal? minRating = null,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         var result = await sender.Send(
-            new GetPublicCoursesQuery(search, skip, take, categoryId, instructorId, sortBy, isFree, minRating), ct);
+            new GetPublicCoursesQuery(search, skip, take, categoryId, instructorId, sortBy, isFree, minRating), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
+#pragma warning restore S107
 
     [HttpGet("featured")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetFeatured(CancellationToken ct)
+    public async Task<IActionResult> GetFeatured(CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetFeaturedCoursesQuery(), ct);
+        var result = await sender.Send(new GetFeaturedCoursesQuery(), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetCourseByIdQuery(id), ct);
+        var result = await sender.Send(new GetCourseByIdQuery(id), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -66,9 +71,9 @@ public sealed class CoursesController(ISender sender) : ControllerBase
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
         [FromQuery] Guid? categoryId = null,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        var result = await sender.Send(new GetInstructorCoursesQuery(search, skip, take, categoryId), ct);
+        var result = await sender.Send(new GetInstructorCoursesQuery(search, skip, take, categoryId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -79,17 +84,17 @@ public sealed class CoursesController(ISender sender) : ControllerBase
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
         [FromQuery] Guid? categoryId = null,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        var result = await sender.Send(new GetAdminCoursesQuery(search, skip, take, categoryId), ct);
+        var result = await sender.Send(new GetAdminCoursesQuery(search, skip, take, categoryId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpGet("{id:guid}/edit")]
     [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
-    public async Task<IActionResult> GetForEdit(Guid id, CancellationToken ct)
+    public async Task<IActionResult> GetForEdit(Guid id, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetCourseForEditByIdQuery(id), ct);
+        var result = await sender.Send(new GetCourseForEditByIdQuery(id), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -97,9 +102,9 @@ public sealed class CoursesController(ISender sender) : ControllerBase
     [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
     public async Task<IActionResult> Create(
         [FromBody] CreateCourseCommand command,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
         return result.ToActionResult(onSuccess: value =>
             CreatedAtAction(nameof(GetById), new { id = value.CourseId }, value));
     }
@@ -109,7 +114,7 @@ public sealed class CoursesController(ISender sender) : ControllerBase
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateCourseRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         var command = new UpdateCourseDetailsCommand(
             id,
@@ -120,47 +125,47 @@ public sealed class CoursesController(ISender sender) : ControllerBase
             body.CoverImageUrl,
             body.Tags);
 
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpPost("{id:guid}/publish")]
     [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
-    public async Task<IActionResult> Publish(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Publish(Guid id, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new PublishCourseCommand(id), ct);
+        var result = await sender.Send(new PublishCourseCommand(id), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpPost("{id:guid}/unpublish")]
     [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
-    public async Task<IActionResult> Unpublish(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Unpublish(Guid id, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new UnpublishCourseCommand(id), ct);
+        var result = await sender.Send(new UnpublishCourseCommand(id), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpPost("{id:guid}/archive")]
     [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
-    public async Task<IActionResult> Archive(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Archive(Guid id, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new ArchiveCourseCommand(id), ct);
+        var result = await sender.Send(new ArchiveCourseCommand(id), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpPost("{id:guid}/unarchive")]
     [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
-    public async Task<IActionResult> Unarchive(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Unarchive(Guid id, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new UnarchiveCourseCommand(id), ct);
+        var result = await sender.Send(new UnarchiveCourseCommand(id), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new DeleteCourseCommand(id), ct);
+        var result = await sender.Send(new DeleteCourseCommand(id), cancellationToken);
         return result.ToActionResult();
     }
 }

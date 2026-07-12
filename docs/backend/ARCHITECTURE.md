@@ -48,7 +48,8 @@ Controller               (routes to MediatR, returns IActionResult)
 MediatR Pipeline
     ├── LoggingBehavior         (logs request name + duration, warns >3s)
     ├── ValidationBehavior      (FluentValidation → Result.Fail if invalid)
-    └── DomainExceptionBehavior (catches DomainException → ConflictError)
+    ├── DomainExceptionBehavior (catches DomainException → ConflictError)
+    └── CachingBehavior         (only for queries implementing ICacheable<T>)
     ↓
 Command / Query Handler  (business logic, happy path only)
     ↓
@@ -56,10 +57,18 @@ Command / Query Handler  (business logic, happy path only)
     │             → map to DTO → return Result<T>
     │
     └── [Command] → repository.FirstOrDefaultAsync(specification, forUpdate: true)
-                  → call entity method (entity raises Domain Event + enqueues Outbox messages)
+                  → call entity method (entity raises Domain Event)
                   → unitOfWork.SaveChangesAsync()
                        ↓ (DomainEventsInterceptor fires after commit)
                   → Domain Event dispatched via MediatR INotificationHandler (in-process)
-                  → Outbox worker (background) processes blob confirm/delete messages
+                  → those handlers enqueue Outbox messages (emails, achievement evaluation,
+                    notifications, DeleteBlob for a replaced/removed blob)
+                  → Outbox worker (background) drains them
 ```
+
+> **Blob uploads are not part of the Outbox.** Promoting an uploaded file from the temp
+> container to its permanent one happens **synchronously**, inside the command handler, via
+> `IBlobStorageService.CommitUploadAsync()` before `SaveChangesAsync()`. The Outbox only ever
+> *deletes* blobs (`OutboxMessageTypes.DeleteBlob`) — there is no "confirm" message type.
+> See [Blob Storage & Uploads](decisions/BLOB.md).
 

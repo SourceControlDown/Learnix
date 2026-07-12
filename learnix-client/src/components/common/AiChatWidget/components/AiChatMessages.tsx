@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search } from 'lucide-react';
+import { AI_CHAT_TOOLS } from '@/const/aiChat.constants';
 import type { LocalChatMessage } from '@/types/aiChat.types';
 import { cn } from '@/utils/cn';
 import { AiChatMessage } from './AiChatMessage';
@@ -27,11 +28,15 @@ export function AiChatMessages({
 
     function getToolLabel(toolName: string): string {
         switch (toolName) {
-            case 'search_courses':
-            case 'get_categories':
+            case AI_CHAT_TOOLS.searchCourses:
+            case AI_CHAT_TOOLS.getCategories:
                 return t('searching');
-            case 'get_platform_info':
+            case AI_CHAT_TOOLS.getPlatformInfo:
                 return t('lookingUpInfo');
+            case AI_CHAT_TOOLS.getCurrentLesson:
+                return t('readingLesson');
+            case AI_CHAT_TOOLS.getMyTestReview:
+                return t('reviewingAttempt');
             default:
                 return t('thinking');
         }
@@ -73,7 +78,7 @@ export function AiChatMessages({
                 ) : (
                     <>
                         {validMessages.map((msg) => (
-                            <AiChatMessage key={msg.id} message={msg} isExpanded={isExpanded} />
+                            <AiChatMessage key={msg.id} message={msg} />
                         ))}
                         {activeToolName && (
                             <div className="flex items-center gap-1.5 px-2 text-xs text-muted-foreground">
@@ -82,35 +87,20 @@ export function AiChatMessages({
                             </div>
                         )}
                         {isTyping && (
-                            <div className="flex justify-start">
-                                <div
-                                    className={cn(
-                                        'px-3.5 py-2.5 shadow-sm',
-                                        isExpanded
-                                            ? 'max-w-full'
-                                            : 'max-w-[85%] rounded-2xl rounded-tl-sm border border-border/50 bg-muted',
-                                    )}
-                                >
-                                    <span className="inline-flex items-center gap-1">
-                                        <span className="size-1.5 animate-pulse rounded-full bg-foreground/40" />
-                                        <span
-                                            className="size-1.5 animate-pulse rounded-full bg-foreground/40"
-                                            style={{ animationDelay: '0.2s' }}
-                                        />
-                                        <span
-                                            className="size-1.5 animate-pulse rounded-full bg-foreground/40"
-                                            style={{ animationDelay: '0.4s' }}
-                                        />
-                                    </span>
-                                </div>
-                            </div>
+                            <span className="inline-flex items-center gap-1 px-0.5 py-1">
+                                <span className="size-1.5 animate-pulse rounded-full bg-foreground/40" />
+                                <span
+                                    className="size-1.5 animate-pulse rounded-full bg-foreground/40"
+                                    style={{ animationDelay: '0.2s' }}
+                                />
+                                <span
+                                    className="size-1.5 animate-pulse rounded-full bg-foreground/40"
+                                    style={{ animationDelay: '0.4s' }}
+                                />
+                            </span>
                         )}
                         {streamingMessage && (
-                            <AiChatMessage
-                                message={streamingMessage}
-                                isStreaming
-                                isExpanded={isExpanded}
-                            />
+                            <AiChatMessage message={streamingMessage} isStreaming />
                         )}
                     </>
                 )}

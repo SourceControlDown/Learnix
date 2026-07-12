@@ -18,6 +18,10 @@ using Microsoft.Extensions.Options;
 
 namespace Learnix.Application.Certificates.Commands.GenerateCertificate;
 
+// S107: issuing a certificate genuinely needs all of these — the enrollment, the course, the student,
+// the PDF generator and blob storage. They are injected dependencies, not call arguments a reader has
+// to keep in their head at the call site.
+#pragma warning disable S107
 public sealed class GenerateCertificateCommandHandler(
     ICurrentUserService currentUser,
     IEnrollmentRepository enrollmentRepository,
@@ -26,9 +30,11 @@ public sealed class GenerateCertificateCommandHandler(
     IUserRepository userRepository,
     ICertificatePdfGenerator pdfGenerator,
     IBlobStorageService blobStorageService,
+    ICourseCompletionService courseCompletion,
     IUnitOfWork unitOfWork,
     IOptions<AppSettings> appSettings)
     : IRequestHandler<GenerateCertificateCommand, Result<string>>
+#pragma warning restore S107
 {
     public async Task<Result<string>> Handle(
         GenerateCertificateCommand request,
@@ -38,6 +44,13 @@ public sealed class GenerateCertificateCommandHandler(
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
 
         var studentId = currentUser.UserId.Value;
+
+        // Completion is normally recorded the moment the last lesson is finished. Re-checking here
+        // costs one query and closes the gap left by two lessons being completed concurrently, where
+        // neither request could see the other's uncommitted progress row.
+        await courseCompletion.TryCompleteAsync(
+            studentId, request.CourseId, justCompletedLessonId: null, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Check if student completed the course via Enrollment status
         var enrollment = await enrollmentRepository.FirstOrDefaultAsync(

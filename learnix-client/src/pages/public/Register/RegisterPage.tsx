@@ -119,7 +119,8 @@ export default function RegisterPage() {
                     <FormInput
                         id="firstName"
                         autoComplete="given-name"
-                        variant="auth"
+                        variant="card"
+                        reserveErrorSpace
                         label={t('common:general.firstName')}
                         placeholder={t('register.firstName.placeholder')}
                         error={errors.firstName}
@@ -130,7 +131,8 @@ export default function RegisterPage() {
                     <FormInput
                         id="lastName"
                         autoComplete="family-name"
-                        variant="auth"
+                        variant="card"
+                        reserveErrorSpace
                         label={t('common:general.lastName')}
                         placeholder={t('register.lastName.placeholder')}
                         error={errors.lastName}
@@ -143,7 +145,8 @@ export default function RegisterPage() {
                     id="email"
                     type="email"
                     autoComplete="email"
-                    variant="auth"
+                    variant="card"
+                    reserveErrorSpace
                     label={t('register.email.label')}
                     placeholder={t('register.email.placeholder')}
                     error={errors.email}
@@ -155,7 +158,8 @@ export default function RegisterPage() {
                     <PasswordInput
                         id="password"
                         autoComplete="new-password"
-                        variant="auth"
+                        variant="card"
+                        reserveErrorSpace
                         label={t('register.password.label')}
                         placeholder={t('register.password.placeholder')}
                         error={errors.password}
@@ -190,7 +194,8 @@ export default function RegisterPage() {
                 <PasswordInput
                     id="confirmPassword"
                     autoComplete="new-password"
-                    variant="auth"
+                    variant="card"
+                    reserveErrorSpace
                     label={t('register.confirmPassword.label')}
                     placeholder={t('register.confirmPassword.placeholder')}
                     error={errors.confirmPassword}

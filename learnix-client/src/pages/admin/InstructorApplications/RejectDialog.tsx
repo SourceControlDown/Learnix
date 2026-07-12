@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
+import { FormTextarea } from '@/components/common/form/FormTextarea';
 
 interface Props {
     applicantName: string;
@@ -42,12 +43,12 @@ export function RejectDialog({ applicantName, onConfirm, onCancel, isLoading }: 
                         <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
                             {t('rejectReasonLabel')}
                         </label>
-                        <textarea
+                        <FormTextarea
+                            variant="card"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             placeholder={t('rejectReasonPlaceholder')}
                             rows={3}
-                            className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         />
                     </div>
                 </div>

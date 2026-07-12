@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { ChatComposer } from '@/components/common/chat/ChatComposer';
 import { usePublicConfig } from '@/hooks/shared/usePublicConfig';
 
 export function AIAssistantSection() {
@@ -9,7 +10,10 @@ export function AIAssistantSection() {
     const features = t('aiAssistant.features', { returnObjects: true }) as string[];
 
     return (
-        <section id="features" className="bg-foreground py-20 text-background">
+        <section
+            id="features"
+            className="border-y border-border bg-panel py-20 text-panel-foreground"
+        >
             <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 md:grid-cols-2">
                 <div>
                     <span className="inline-flex items-center gap-2 rounded-full bg-accent/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent">
@@ -20,12 +24,12 @@ export function AIAssistantSection() {
                         <br />
                         {t('aiAssistant.heading.line2')}
                         <br />
-                        <span className="text-primary">{t('aiAssistant.heading.highlight')}</span>
+                        <span className="text-brand">{t('aiAssistant.heading.highlight')}</span>
                     </h2>
-                    <p className="mt-6 max-w-lg text-lg leading-relaxed text-background/70">
+                    <p className="mt-6 max-w-lg text-lg leading-relaxed text-panel-foreground/70">
                         {t('aiAssistant.subtitle')}
                     </p>
-                    <ul className="mt-8 space-y-4 text-background/80">
+                    <ul className="mt-8 space-y-4 text-panel-foreground/80">
                         {features.map((f) => (
                             <li key={f} className="flex gap-3">
                                 <span className="mt-0.5 text-success">✓</span>
@@ -62,14 +66,13 @@ export function AIAssistantSection() {
                                 {t('aiAssistant.chat.messages.q1End')}
                             </div>
                         </div>
-                        <div className="flex justify-start">
-                            <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/50 bg-muted px-3.5 py-2.5 text-sm text-foreground shadow-sm">
-                                {t('aiAssistant.chat.messages.a1')}{' '}
-                                <strong>{t('aiAssistant.chat.messages.a1Bold')}</strong>{' '}
-                                {t('aiAssistant.chat.messages.a1End')}
-                                <div className="mt-2 text-xs text-muted-foreground">
-                                    {t('aiAssistant.chat.messages.a1Note')}
-                                </div>
+                        {/* No bubble on the assistant's side — the real chat renders it the same way. */}
+                        <div className="px-0.5 text-sm text-foreground">
+                            {t('aiAssistant.chat.messages.a1')}{' '}
+                            <strong>{t('aiAssistant.chat.messages.a1Bold')}</strong>{' '}
+                            {t('aiAssistant.chat.messages.a1End')}
+                            <div className="mt-2 text-xs text-muted-foreground">
+                                {t('aiAssistant.chat.messages.a1Note')}
                             </div>
                         </div>
                         <div className="flex justify-end">
@@ -77,34 +80,25 @@ export function AIAssistantSection() {
                                 {t('aiAssistant.chat.messages.q2')}
                             </div>
                         </div>
-                        <div className="flex justify-start">
-                            <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/50 bg-muted px-3.5 py-2.5 text-sm text-foreground shadow-sm">
-                                <span className="inline-flex gap-1 py-1">
-                                    <span className="size-1.5 animate-pulse rounded-full bg-foreground/40" />
-                                    <span
-                                        className="size-1.5 animate-pulse rounded-full bg-foreground/40"
-                                        style={{ animationDelay: '0.2s' }}
-                                    />
-                                    <span
-                                        className="size-1.5 animate-pulse rounded-full bg-foreground/40"
-                                        style={{ animationDelay: '0.4s' }}
-                                    />
-                                </span>
-                            </div>
-                        </div>
+                        <span className="inline-flex gap-1 px-0.5 py-1">
+                            <span className="size-1.5 animate-pulse rounded-full bg-foreground/40" />
+                            <span
+                                className="size-1.5 animate-pulse rounded-full bg-foreground/40"
+                                style={{ animationDelay: '0.2s' }}
+                            />
+                            <span
+                                className="size-1.5 animate-pulse rounded-full bg-foreground/40"
+                                style={{ animationDelay: '0.4s' }}
+                            />
+                        </span>
                     </div>
 
-                    <div className="border-t border-border bg-secondary/30 p-4">
-                        <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
-                            <input
-                                type="text"
-                                placeholder={t('aiAssistant.chat.inputPlaceholder')}
-                                className="flex-1 bg-transparent text-sm outline-none"
-                            />
-                            <button type="button" className="text-primary">
-                                ↑
-                            </button>
-                        </div>
+                    {/* Presentational only — `inert` keeps the mock out of tab order and the a11y tree. */}
+                    <div inert className="border-t border-border bg-secondary/30 p-4">
+                        <ChatComposer
+                            onSend={() => {}}
+                            placeholder={t('aiAssistant.chat.inputPlaceholder')}
+                        />
                     </div>
                 </div>
             </div>

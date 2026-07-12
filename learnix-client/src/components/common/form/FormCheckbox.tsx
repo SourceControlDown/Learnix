@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import type { FieldError } from 'react-hook-form';
+import { ChoiceIndicator } from '@/components/common/form/ChoiceIndicator';
 import { cn } from '@/utils/cn';
 import { getFieldErrors } from '@/utils/errors';
 
@@ -10,6 +11,14 @@ interface FormCheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
     labelClassName?: string;
 }
 
+/**
+ * The input is real but hidden, and the box beside it is drawn (`ChoiceIndicator`): a native checkbox styled
+ * with `accent-*` still paints its own unchecked box, which is white on a dark background.
+ *
+ * The indicator runs in `peer` mode rather than off a `checked` prop, because this component is used both
+ * controlled and through `register()` — and a registered input is uncontrolled, so nothing here re-renders
+ * when it is ticked. CSS sees `:checked` either way.
+ */
 export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
     ({ label, error, className, containerClassName, labelClassName, id, ...props }, ref) => {
         const errorMessages = getFieldErrors(error);
@@ -19,7 +28,8 @@ export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
                 <label
                     htmlFor={id}
                     className={cn(
-                        'flex cursor-pointer items-center gap-2 text-sm text-foreground',
+                        'group flex cursor-pointer items-center gap-2 text-sm text-foreground',
+                        props.disabled && 'cursor-not-allowed opacity-50',
                         labelClassName,
                     )}
                 >
@@ -27,13 +37,10 @@ export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
                         type="checkbox"
                         id={id}
                         ref={ref}
-                        className={cn(
-                            'size-4 cursor-pointer rounded border-border text-primary accent-primary outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-1 focus:ring-offset-background',
-                            errorMessages.length > 0 && 'border-destructive',
-                            className,
-                        )}
+                        className={cn('peer sr-only', className)}
                         {...props}
                     />
+                    <ChoiceIndicator type="checkbox" peer hasError={errorMessages.length > 0} />
                     {label}
                 </label>
                 {errorMessages.length > 0 && (

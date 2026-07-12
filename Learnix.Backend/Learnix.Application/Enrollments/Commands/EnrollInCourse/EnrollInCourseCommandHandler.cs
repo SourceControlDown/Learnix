@@ -45,6 +45,11 @@ public sealed class EnrollInCourseCommandHandler(
         if (course.InstructorId == studentId)
             return Result.Fail(new ForbiddenError(EnrollmentMessages.InstructorsCannotEnrollOwnCourses));
 
+        // This endpoint enrolls; it does not sell. A paid course goes through InitiateMockPayment, which is
+        // where the Payment row is written — the row instructor earnings and the admin ledger are built from.
+        if (course.Price > 0m)
+            return Result.Fail(new ConflictError(EnrollmentMessages.CourseIsPaidUsePayment));
+
         var alreadyEnrolled = await enrollmentRepository.AnyAsync(
             new EnrollmentByStudentAndCourseSpecification(studentId, request.CourseId),
             cancellationToken);
@@ -52,11 +57,8 @@ public sealed class EnrollInCourseCommandHandler(
         if (alreadyEnrolled)
             return Result.Fail(new ConflictError(CommonMessages.AlreadyEnrolled));
 
+        // Free: Enrollment.Create already marks the payment Completed, since there is nothing to pay.
         var enrollment = Enrollment.Create(request.CourseId, studentId, course.Price);
-
-        // Mock payment: paid courses are auto-confirmed immediately (no Stripe yet).
-        if (course.Price > 0m)
-            enrollment.ConfirmPayment();
 
         course.IncrementEnrollmentsCount();
 

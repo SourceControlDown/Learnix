@@ -105,18 +105,21 @@ Unlike the Email Verification process (which utilizes a 6-digit OTP), the Passwo
 ## ADR-FRONT-AUTH-004: Explicit Logout & State Clearing
 
 **Decision:**
-Manual logout operations (e.g., clicking "Sign Out" in the Header) must perform a strict 4-step sequence:
+Manual logout is performed **only** through the `useLogout()` hook (`hooks/auth/useLogout.ts`), which runs a strict 4-step sequence:
 1. `authApi.logout()`: Calls the backend to invalidate and clear the HttpOnly refresh cookie.
 2. `useAuthStore().logout()`: Clears the in-memory access token and user profile from Zustand.
 3. `queryClient.clear()`: Purges all cached server state from TanStack Query.
-4. `navigate(APP_ROUTES.public.login)`: Redirects the user to the login screen.
+4. `navigate(APP_ROUTES.public.home)`: Redirects the user to the public landing page.
 
 **Why:**
 - Without `queryClient.clear()`, sensitive data fetched by the previous user would remain in the React Query cache, creating a severe data leak vulnerability if another user logs in on the same device.
 - The dual-logout approach (Zustand + Backend) guarantees that even if the backend call fails, the client is still forcefully logged out locally.
+- A sequence that every "Sign Out" button had to re-implement by hand was copied into four components, and the copies had already begun to diverge. A hook makes the correct sequence the only reachable one.
+- Landing rather than login: the user asked to leave, so answering with a sign-in form is a non sequitur. The landing page is public, is the natural signed-out home, and stays valid whether logout was triggered from a public page or from inside a role panel (where the route guard would bounce them out anyway).
 
 **Consequences:**
-- Any new component implementing a "Sign Out" button must strictly adhere to this sequence.
+- A "Sign Out" button calls `useLogout()`. Re-implementing the sequence inline is a defect.
+- Automatic logout on refresh failure (`axios.instance.ts`) is a separate path: it clears the store only, and lets the interceptor's queued-request handling decide what happens next.
 
 ---
 

@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Clock, Star, Tag, Users } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Clock, Star, Tag, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { QueryError } from '@/components/common/system/QueryError';
+import { BackLink } from '@/components/common/ui/BackLink';
 import { Pagination } from '@/components/common/ui/Pagination';
+import { TextLink } from '@/components/common/ui/TextLink';
 import { useCourseDetail } from '@/hooks/course/useCourseDetail';
 import { useCourseReviews } from '@/hooks/student/useCourseReviews';
 import { useEnroll } from '@/hooks/student/useEnroll';
@@ -53,7 +55,6 @@ export default function CourseDetailPage() {
     const totalLessons = course?.sections.reduce((sum, s) => sum + s.lessons.length, 0) ?? 0;
 
     const navigate = useNavigate();
-    const hasHistory = window.history.state && window.history.state.idx > 0;
 
     function handleEnroll() {
         if (!courseId) return;
@@ -84,23 +85,11 @@ export default function CourseDetailPage() {
     if (courseError) {
         return (
             <div className="mx-auto max-w-5xl p-6 sm:py-12">
-                {hasHistory ? (
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-                    >
-                        <ArrowLeft className="size-4" />
-                        {t('back', 'Back')}
-                    </button>
-                ) : (
-                    <Link
-                        to={APP_ROUTES.public.courses}
-                        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-                    >
-                        <ArrowLeft className="size-4" />
-                        {t('common:actions.backToCatalog')}
-                    </Link>
-                )}
+                <BackLink
+                    fallbackTo={APP_ROUTES.public.courses}
+                    fallbackLabel={t('common:actions.backToCatalog')}
+                    className="mb-6"
+                />
                 <QueryError
                     message={t('error.title')}
                     onRetry={refetchCourse}
@@ -114,12 +103,9 @@ export default function CourseDetailPage() {
         return (
             <div className="mx-auto max-w-5xl px-6 py-20 text-center">
                 <p className="text-muted-foreground">{t('notFound')}</p>
-                <Link
-                    to={APP_ROUTES.public.courses}
-                    className="mt-4 inline-block text-primary hover:underline"
-                >
+                <TextLink to={APP_ROUTES.public.courses} className="mt-4 inline-block">
                     {t('common:actions.backToCatalog')}
-                </Link>
+                </TextLink>
             </div>
         );
     }
@@ -140,23 +126,11 @@ export default function CourseDetailPage() {
                 <meta property="og:type" content="article" />
             </Helmet>
             <div className="mx-auto max-w-5xl p-6 sm:py-12">
-                {hasHistory ? (
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-                    >
-                        <ArrowLeft className="size-4" />
-                        {t('back', 'Back')}
-                    </button>
-                ) : (
-                    <Link
-                        to={APP_ROUTES.public.courses}
-                        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-                    >
-                        <ArrowLeft className="size-4" />
-                        {t('common:actions.backToCatalog')}
-                    </Link>
-                )}
+                <BackLink
+                    fallbackTo={APP_ROUTES.public.courses}
+                    fallbackLabel={t('common:actions.backToCatalog')}
+                    className="mb-6"
+                />
 
                 <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[1fr_320px]">
                     {/* Main content */}
@@ -212,12 +186,27 @@ export default function CourseDetailPage() {
                             <p className="text-sm text-muted-foreground">{t('curriculum.empty')}</p>
                         )}
 
-                        {/* Reviews */}
+                        {/* Reviews — writing one comes before reading the others, so the composer sits
+                            under the heading rather than at the end of a paginated list. */}
                         <div ref={reviewsRef} className="scroll-mt-24">
                             <ReviewsList
                                 reviews={reviewsData?.items ?? []}
                                 averageRating={course.averageRating}
                                 totalCount={course.reviewsCount}
+                                composer={
+                                    user && !isOwnCourse ? (
+                                        isEnrolled ? (
+                                            <ReviewForm
+                                                courseId={courseId!}
+                                                existing={myReview ?? null}
+                                            />
+                                        ) : (
+                                            <p className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+                                                {t('reviews.enrollToReview')}
+                                            </p>
+                                        )
+                                    ) : null
+                                }
                             />
                         </div>
 
@@ -232,18 +221,6 @@ export default function CourseDetailPage() {
                                     reviewsRef.current?.scrollIntoView({ behavior: 'smooth' });
                                 }}
                             />
-                        )}
-
-                        {/* Review form */}
-                        {user && !isOwnCourse && isEnrolled && (
-                            <ReviewForm courseId={courseId!} existing={myReview ?? null} />
-                        )}
-                        {user && !isOwnCourse && !isEnrolled && (
-                            <div className="mt-8 text-center">
-                                <p className="text-sm text-muted-foreground">
-                                    {t('reviews.enrollToReview')}
-                                </p>
-                            </div>
                         )}
                     </div>
 

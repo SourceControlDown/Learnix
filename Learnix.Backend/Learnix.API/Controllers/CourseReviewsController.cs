@@ -22,16 +22,16 @@ public sealed class CourseReviewsController(ISender sender) : ControllerBase
         Guid courseId,
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        var result = await sender.Send(new GetCourseReviewsQuery(courseId, skip, take), ct);
+        var result = await sender.Send(new GetCourseReviewsQuery(courseId, skip, take), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpGet("mine")]
-    public async Task<IActionResult> GetMine(Guid courseId, CancellationToken ct)
+    public async Task<IActionResult> GetMine(Guid courseId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetMyReviewQuery(courseId), ct);
+        var result = await sender.Send(new GetMyReviewQuery(courseId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -40,9 +40,9 @@ public sealed class CourseReviewsController(ISender sender) : ControllerBase
     public async Task<IActionResult> Create(
         Guid courseId,
         [FromBody] CreateReviewRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new CreateReviewCommand(courseId, body.Rating, body.Comment), ct);
+        var result = await sender.Send(new CreateReviewCommand(courseId, body.Rating, body.Comment), cancellationToken);
         return result.ToActionResult(onSuccess: value => CreatedAtAction(nameof(GetMine), new { courseId }, value));
     }
 
@@ -52,16 +52,16 @@ public sealed class CourseReviewsController(ISender sender) : ControllerBase
         Guid courseId,
         Guid reviewId,
         [FromBody] UpdateReviewRequest body,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new UpdateReviewCommand(courseId, reviewId, body.Rating, body.Comment), ct);
+        var result = await sender.Send(new UpdateReviewCommand(courseId, reviewId, body.Rating, body.Comment), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpDelete("{reviewId:guid}")]
-    public async Task<IActionResult> Delete(Guid courseId, Guid reviewId, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid courseId, Guid reviewId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new DeleteReviewCommand(courseId, reviewId), ct);
+        var result = await sender.Send(new DeleteReviewCommand(courseId, reviewId), cancellationToken);
         return result.ToActionResult();
     }
 }

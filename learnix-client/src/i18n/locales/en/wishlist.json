@@ -1,9 +1,12 @@
 {
-  "emptyTitle": "Your wishlist is empty",
-  "emptyDescription": "Explore our catalog and save courses you want to learn later.",
-  "addedOn": "Added on",
-  "removedSuccess": "Course removed from wishlist",
-  "removedError": "Failed to remove course",
-  "addedSuccess": "Course saved to wishlist",
-  "addedError": "Failed to save course"
+    "emptyTitle": "Your wishlist is empty",
+    "emptyDescription": "Explore our catalog and save courses you want to learn later.",
+    "addedOn": "Added on",
+    "removedSuccess": "Course removed from wishlist",
+    "removedError": "Failed to remove course",
+    "addedSuccess": "Course saved to wishlist",
+    "addedError": "Failed to save course",
+    "error": {
+        "title": "Failed to load your wishlist"
+    }
 }

@@ -59,6 +59,7 @@ builder.ConfigureServices((context, services) =>
     services.AddScoped<CourseSeeder>();
     services.AddScoped<StudentSeeder>();
     services.AddScoped<StorageSeeder>();
+    services.AddScoped<RedisCacheFlusher>();
 });
 
 var host = builder.Build();
@@ -67,6 +68,9 @@ using var scope = host.Services.CreateScope();
 var services = scope.ServiceProvider;
 var logger = services.GetRequiredService<ILogger<Program>>();
 
+// S6664: the migrator is a console tool whose log *is* its output. Each line reports a step an operator
+// is waiting on, so the count of Information calls is the point, not noise.
+#pragma warning disable S6664
 try
 {
     logger.LogInformation("Applying Entity Framework migrations...");
@@ -109,6 +113,11 @@ try
         logger.LogInformation("Skipping Demo Seeders. Use --seed-demo flag to generate fake content.");
     }
 
+    // Last, and only once the data is final: whatever Redis holds was cached against the database as it was
+    // before this run — and after a re-seed, the ids in it may not exist any more (ADR-INFRA-014).
+    var cacheFlusher = services.GetRequiredService<RedisCacheFlusher>();
+    await cacheFlusher.FlushAsync();
+
     logger.LogInformation("Database initialization completed successfully.");
 }
 catch (Exception ex)
@@ -116,5 +125,6 @@ catch (Exception ex)
     logger.LogCritical(ex, "An error occurred during database initialization.");
     Environment.Exit(1);
 }
+#pragma warning restore S6664
 
 Environment.Exit(0);

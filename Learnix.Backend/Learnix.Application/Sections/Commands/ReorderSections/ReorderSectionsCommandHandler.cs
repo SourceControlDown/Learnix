@@ -16,14 +16,14 @@ internal sealed class ReorderSectionsCommandHandler(
     : CourseCommandHandler<ReorderSectionsCommand, Result>(courseRepository, currentUser)
 {
     protected override async Task<Result> HandleAsync(
-        ReorderSectionsCommand request, Course course, CancellationToken ct)
+        ReorderSectionsCommand request, Course course, CancellationToken cancellationToken)
     {
         var pairs = request.Items.Select(i => (i.Id, i.Order)).ToList();
 
         course.ReorderSections(pairs); // domain validation
 
         await unitOfWork.ExecuteInTransactionAsync(
-            () => sectionRepository.BulkSetDisplayOrderAsync(pairs, ct), ct);
+            () => sectionRepository.BulkSetDisplayOrderAsync(pairs, cancellationToken), cancellationToken);
 
         return Result.Ok();
     }

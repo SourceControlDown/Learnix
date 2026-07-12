@@ -99,3 +99,55 @@ To prevent developers from reinstalling or reinventing components, this section 
 
 **Consequences:**
 - When a new `shadcn/ui` component is added to the project via `npx shadcn@latest add <component>`, this catalog MUST be updated.
+
+---
+
+## ADR-FRONT-UI-004: Surface Tokens — `--panel`, `--popover`, and Why `--primary` Is Not a Brand Colour
+
+**Decision:**
+- **`--primary` is a foreground-weight colour, not a brand colour.** It is blue in light mode (`217 91% 60%`) but flips to near-white in dark mode (`210 40% 98%`) — the exact value of `--foreground`. Use it only for controls sitting on `--background` or `--card`.
+- **`--brand` (`217 91% 60%` in both themes) is the brand colour.** Anything that must stay visible regardless of the surface beneath it — a floating action button, a CTA on a feature band, an accent word inside inverted copy — uses `bg-brand` / `text-brand`. `--link` already follows this rule for inline links.
+- **`--panel` / `--panel-foreground` are full-bleed feature bands** (the AI assistant section, the final CTA, the announcement bar). The band is dark in *both* themes: `222 47% 11%` in light, `222 47% 2%` in dark.
+- **`--popover` / `--popover-foreground` are floating surfaces** (the header user menu, shadcn `dropdown-menu` and `select`). In dark mode `--popover` (`222 47% 16%`) sits *above* `--card` (`222 47% 11%`); in light mode both are white.
+
+**Why:**
+- Before these tokens existed, the two feature bands used `bg-foreground text-background`. That inversion reads well in light mode and becomes a full-width near-white slab in dark mode. Worse, it silently destroys every token layered on top: measured contrast between the section background, the FAB, the heading accent word and the CTA button was **1.00** — all four resolved to `rgb(248, 250, 252)`, because in dark mode `--primary === --foreground`.
+- Dark themes do not invert, they deepen. Keeping the band dark in both themes preserves the visual intent (a striking band that cards lift off) and keeps `--panel-foreground` meaningful in one direction only.
+- `--popover` was a byte-for-byte duplicate of `--card` in dark mode, so a dropdown opened over a card was indistinguishable from it. A drop shadow cannot separate them either: a black shadow on a near-black background renders nothing. On dark surfaces, elevation must be expressed as tone, not shadow.
+
+**Alternatives:**
+- *Keep `bg-foreground` and patch the contents with `dark:` variants.* Discarded: it fixes the symptom per call site and leaves the next `bg-primary` placed on a band broken again.
+- *Make the dark band lighter than `--background` instead of darker.* Discarded by measurement: at `222 47% 14%` the band ends up lighter than `--card` (11%), so the chat-mock card inside it sinks below the surface it should be floating on.
+- *Give the dropdown a stronger `shadow-2xl` instead of a lighter surface.* Discarded: shadows are invisible against `--background` at 4% lightness.
+
+**Consequences:**
+- **Forbidden:** `bg-primary`, `text-primary` and `border-primary` on top of `bg-panel`. Use the `brand` family.
+- A full-bleed band uses `bg-panel text-panel-foreground` and styles its own copy with `text-panel-foreground/70`, never `text-background/70`.
+- Anything that floats over arbitrary content — a dropdown, a popover, a FAB — must be checked in dark mode against `--card`, not only against `--background`.
+- Interactive rows inside a popover cannot use `hover:bg-secondary`: in dark mode `--secondary` (`217 33% 17%`) is within one percentage point of `--popover`. Use a translucent overlay such as `hover:bg-foreground/10`, which works in both themes.
+
+---
+
+## ADR-FRONT-UI-005: Shared State Panels — `EmptyState`, `QueryError`, `CountBadge`
+
+**Decision:**
+Three recurring, non-`shadcn` UI states live in `src/components/common/`. They are the only sanctioned way to render their state:
+
+| Component | Renders | Notes |
+| :--- | :--- | :--- |
+| **`EmptyState`** (`ui/`) | The "nothing here yet" panel: circled icon, title, description, optional CTA. | Takes the icon as a `LucideIcon` and the action as `{ to, label }` **data**, not as `ReactNode` — sizing and spacing belong to the component. |
+| **`QueryError`** (`system/`) | A failed `useQuery`: alert icon, message, retry link. | Wire it to `isError` and `refetch`. |
+| **`CountBadge`** (`ui/`) | An unread/saved counter. | `placement="corner"` overlays an icon button (needs a `relative` parent); `placement="inline"` sits in a sidebar nav row. Renders `null` at `count <= 0` and clamps at `99+`. |
+
+**Why:**
+- Each of these existed as copy-pasted markup before extraction — the badge in five places, the empty panel in three. The copies had already drifted: the wishlist CTA was not full-width on mobile while the identical My Learning CTA was, and the corner badge covered ~60% of the heart icon it annotated.
+- A page that destructures only `data` and `isLoading` from `useQuery` does not merely look unfinished when the request fails — it *lies*. `!certificates` fell through to the empty state and told the student they had earned no certificates; `data?.items.length === 0` evaluates to `false` for `undefined`, leaving a blank grid.
+
+**Alternatives:**
+- *`EmptyState` accepting `action?: ReactNode`.* Discarded: every page would style its own button again, which is the duplication being removed.
+- *A single generic `<StatePanel variant="empty" | "error">`.* Discarded: the two have different props (retry callback vs. CTA route) and different semantics; merging them buys nothing.
+
+**Consequences:**
+- A page rendering a list from `useQuery` handles three states: loading, `isError` → `QueryError`, empty → `EmptyState`. The error branch must come **before** the empty branch, or a failed request silently renders as "you have nothing".
+- Each namespace that renders `QueryError` needs an `error.title` key (`catalog`, `courseDetail`, `wishlist`, `myLearning`, `certificates`, `achievements`, `notifications`).
+- When a page runs several queries, either half failing must fail the whole panel; showing one half and silently dropping the other is the same lie, partially told.

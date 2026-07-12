@@ -11,7 +11,7 @@ internal abstract class SimpleOutboxHandler<TEvent, TPayload>(OutboxDbContextHol
     protected abstract string MessageType { get; }
     protected abstract TPayload BuildPayload(TEvent e);
 
-    public Task Handle(DomainEventNotification<TEvent> notification, CancellationToken ct)
+    public Task Handle(DomainEventNotification<TEvent> notification, CancellationToken cancellationToken)
     {
         var e = notification.DomainEvent;
         holder.DbContext!.OutboxMessages.Add(

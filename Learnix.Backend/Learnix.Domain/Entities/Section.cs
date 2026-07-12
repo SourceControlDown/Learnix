@@ -32,7 +32,11 @@ public class Section : BaseEntity, IOrderable
 
     internal void SetOrder(int order) => DisplayOrder = order;
 
-    internal void AddLesson(Lesson lesson) => _lessons.Add(lesson);
+    internal void AddLesson(Lesson lesson)
+    {
+        lesson.SetOrder(NextLessonOrder());
+        _lessons.Add(lesson);
+    }
 
     internal void RemoveLesson(Guid lessonId)
     {

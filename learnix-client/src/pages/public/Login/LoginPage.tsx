@@ -89,7 +89,8 @@ export default function LoginPage() {
                     id="email"
                     type="email"
                     autoComplete="email"
-                    variant="auth"
+                    variant="card"
+                    reserveErrorSpace
                     label={t('login.email.label')}
                     placeholder={t('login.email.placeholder')}
                     error={errors.email}
@@ -100,7 +101,8 @@ export default function LoginPage() {
                 <PasswordInput
                     id="password"
                     autoComplete="current-password"
-                    variant="auth"
+                    variant="card"
+                    reserveErrorSpace
                     label={t('login.password.label')}
                     labelRightAction={
                         <TextLink to={APP_ROUTES.public.forgotPassword} className="text-sm">

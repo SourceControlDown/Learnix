@@ -27,6 +27,21 @@ public sealed class StudentSeeder(
     IOptions<BlobStorageOptions> blobOptions,
     ILogger<StudentSeeder> logger) : IDataSeeder
 {
+    // S2245: this randomness only picks demo reviewers and demo ratings — nothing here is a secret,
+    // a token, or a decision an attacker could exploit, so a PRNG is the right tool.
+#pragma warning disable S2245
+    private static readonly Random Rng = new();
+#pragma warning restore S2245
+
+    private static readonly string[] ReviewComments =
+    [
+        "Great course!",
+        "I really enjoyed this course. The materials were very clear and well organized.",
+        "This course completely exceeded my expectations. The instructor explained the complex topics in a very easy-to-understand manner, and the practical exercises were extremely helpful for solidifying my knowledge. Highly recommended to anyone looking to master this subject!",
+        "Very informative and engaging. Would recommend.",
+        "Good content but could be a bit slower in pace.",
+        "Excellent structure and practical examples."
+    ];
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
@@ -35,13 +50,17 @@ public sealed class StudentSeeder(
 
         if (string.IsNullOrWhiteSpace(email) || !System.Net.Mail.MailAddress.TryCreate(email, out _))
         {
-            logger.LogWarning($"Student seeder: {ConfigurationSectionNameConstants.SeedData}:StudentEmail is missing or invalid — skipping.");
+            logger.LogWarning(
+                "Student seeder: {Section}:StudentEmail is missing or invalid — skipping.",
+                ConfigurationSectionNameConstants.SeedData);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(password))
         {
-            logger.LogWarning($"Student seeder: {ConfigurationSectionNameConstants.SeedData}:StudentPassword is not set — skipping.");
+            logger.LogWarning(
+                "Student seeder: {Section}:StudentPassword is not set — skipping.",
+                ConfigurationSectionNameConstants.SeedData);
             return;
         }
 
@@ -68,73 +87,8 @@ public sealed class StudentSeeder(
         var courses = await db.Courses.ToListAsync(cancellationToken);
         if (courses.Count > 0 && dummyStudents.Count > 0)
         {
-            var random = new Random();
-            var dummyStudentIds = dummyStudents.Select(u => u.Id).ToList();
-
-            var existingEnrollments = await db.Set<Enrollment>()
-                .Where(e => dummyStudentIds.Contains(e.StudentId))
-                .Select(e => new { e.CourseId, e.StudentId })
-                .ToListAsync(cancellationToken);
-            var existingEnrollmentSet = existingEnrollments.Select(e => $"{e.CourseId}_{e.StudentId}").ToHashSet();
-
-            var existingReviews = await db.Set<CourseReview>()
-                .Where(r => dummyStudentIds.Contains(r.StudentId))
-                .Select(r => new { r.CourseId, r.StudentId })
-                .ToListAsync(cancellationToken);
-            var existingReviewSet = existingReviews.Select(r => $"{r.CourseId}_{r.StudentId}").ToHashSet();
-
-            foreach (var course in courses)
-            {
-                int numReviews = random.Next(4, 9); // 4 to 8 reviews
-                var selectedStudents = dummyStudents.OrderBy(x => random.Next()).Take(numReviews).ToList();
-
-                foreach (var dummyUser in selectedStudents)
-                {
-                    var enrollmentKey = $"{course.Id}_{dummyUser.Id}";
-                    if (!existingEnrollmentSet.Contains(enrollmentKey))
-                    {
-                        var enrollment = Enrollment.Create(course.Id, dummyUser.Id, 0m);
-                        db.Set<Enrollment>().Add(enrollment);
-                        course.IncrementEnrollmentsCount();
-                        existingEnrollmentSet.Add(enrollmentKey);
-
-                        if (!existingReviewSet.Contains(enrollmentKey))
-                        {
-                            int rating = random.Next(3, 6); // 3, 4 or 5
-                            string[] reviews = [
-                                "Great course!",
-                                "I really enjoyed this course. The materials were very clear and well organized.",
-                                "This course completely exceeded my expectations. The instructor explained the complex topics in a very easy-to-understand manner, and the practical exercises were extremely helpful for solidifying my knowledge. Highly recommended to anyone looking to master this subject!",
-                                "Very informative and engaging. Would recommend.",
-                                "Good content but could be a bit slower in pace.",
-                                "Excellent structure and practical examples."
-                            ];
-                            string comment = reviews[random.Next(reviews.Length)];
-                            var review = CourseReview.Create(course.Id, dummyUser.Id, rating, comment);
-                            db.Set<CourseReview>().Add(review);
-                            existingReviewSet.Add(enrollmentKey);
-                        }
-                    }
-                }
-            }
-            await db.SaveChangesAsync(cancellationToken);
-
-            // Re-sync ratings from DB for accuracy
-            var courseIds = courses.Select(c => c.Id).ToList();
-            var allStats = await db.Set<CourseReview>()
-                .Where(r => courseIds.Contains(r.CourseId))
-                .GroupBy(r => r.CourseId)
-                .Select(g => new { CourseId = g.Key, Count = g.Count(), Average = g.Average(r => (decimal)r.Rating) })
-                .ToDictionaryAsync(x => x.CourseId, cancellationToken);
-
-            foreach (var course in courses)
-            {
-                if (allStats.TryGetValue(course.Id, out var stats))
-                {
-                    course.SyncRating(stats.Count, Math.Round(stats.Average, 2));
-                }
-            }
-            await db.SaveChangesAsync(cancellationToken);
+            await SeedEnrollmentsAndReviewsAsync(db, courses, dummyStudents, cancellationToken);
+            await SyncCourseRatingsAsync(db, courses, cancellationToken);
         }
 
 
@@ -148,27 +102,10 @@ public sealed class StudentSeeder(
             return;
         }
 
-        // Avatar (best-effort) 
-        var avatarPath = $"{blobOptions.Value.AvatarContainer}/{Guid.NewGuid()}-student-avatar.webp";
-        try
-        {
-            var assembly = typeof(StudentSeeder).Assembly;
-            using var stream = assembly.GetManifestResourceStream("Learnix.DbMigrator.Assets.generic_thumbnail.webp");
+        // Avatar (best-effort)
+        var avatarPath = await UploadAvatarAsync(blobStorage, cancellationToken);
 
-            if (stream != null)
-            {
-                await blobStorage.UploadAsync(avatarPath, stream, "image/png", cancellationToken);
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex,
-                "Student seeder: could not upload avatar placeholder — " +
-                "is blob storage running? Proceeding without avatar.");
-            avatarPath = string.Empty;
-        }
-
-        // Profile 
+        // Profile
         student.UpdateProfile(
             "Dev", "Student",
             "A fully-seeded development student account with all achievements unlocked.");
@@ -217,6 +154,110 @@ public sealed class StudentSeeder(
     }
 
 
+
+    private async Task<string> UploadAvatarAsync(IBlobStorageService blobStorage, CancellationToken cancellationToken)
+    {
+        var avatarPath = $"{blobOptions.Value.AvatarContainer}/{Guid.NewGuid()}-student-avatar.webp";
+
+        try
+        {
+            var assembly = typeof(StudentSeeder).Assembly;
+            using var stream = assembly.GetManifestResourceStream("Learnix.DbMigrator.Assets.generic_thumbnail.webp");
+
+            if (stream is not null)
+                await blobStorage.UploadAsync(avatarPath, stream, "image/webp", cancellationToken);
+
+            return avatarPath;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "Student seeder: could not upload avatar placeholder — " +
+                "is blob storage running? Proceeding without avatar.");
+            return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Enrolls a random subset of the dummy students into every course and leaves a review from each.
+    /// Idempotent: existing (course, student) enrollments and reviews are skipped.
+    /// </summary>
+    private static async Task SeedEnrollmentsAndReviewsAsync(
+        ApplicationDbContext db,
+        List<Course> courses,
+        List<User> dummyStudents,
+        CancellationToken cancellationToken)
+    {
+        var dummyStudentIds = dummyStudents.Select(u => u.Id).ToList();
+
+        var existingEnrollmentSet = (await db.Set<Enrollment>()
+            .Where(e => dummyStudentIds.Contains(e.StudentId))
+            .Select(e => new { e.CourseId, e.StudentId })
+            .ToListAsync(cancellationToken))
+            .Select(e => $"{e.CourseId}_{e.StudentId}")
+            .ToHashSet();
+
+        var existingReviewSet = (await db.Set<CourseReview>()
+            .Where(r => dummyStudentIds.Contains(r.StudentId))
+            .Select(r => new { r.CourseId, r.StudentId })
+            .ToListAsync(cancellationToken))
+            .Select(r => $"{r.CourseId}_{r.StudentId}")
+            .ToHashSet();
+
+        foreach (var course in courses)
+        {
+            var reviewerIds = dummyStudents
+                .OrderBy(_ => Rng.Next())
+                .Take(Rng.Next(4, 9))
+                .Select(reviewer => reviewer.Id)
+                .ToList();
+
+            foreach (var reviewerId in reviewerIds)
+            {
+                var key = $"{course.Id}_{reviewerId}";
+
+                if (!existingEnrollmentSet.Add(key))
+                    continue;
+
+                db.Set<Enrollment>().Add(Enrollment.Create(course.Id, reviewerId, 0m));
+                course.IncrementEnrollmentsCount();
+
+                if (existingReviewSet.Add(key))
+                {
+                    db.Set<CourseReview>().Add(CourseReview.Create(
+                        course.Id,
+                        reviewerId,
+                        Rng.Next(3, 6),
+                        ReviewComments[Rng.Next(ReviewComments.Length)]));
+                }
+            }
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>Recomputes each course's rating from the reviews actually stored, so the counters match the rows.</summary>
+    private static async Task SyncCourseRatingsAsync(
+        ApplicationDbContext db,
+        List<Course> courses,
+        CancellationToken cancellationToken)
+    {
+        var courseIds = courses.Select(c => c.Id).ToList();
+
+        var stats = await db.Set<CourseReview>()
+            .Where(r => courseIds.Contains(r.CourseId))
+            .GroupBy(r => r.CourseId)
+            .Select(g => new { CourseId = g.Key, Count = g.Count(), Average = g.Average(r => (decimal)r.Rating) })
+            .ToDictionaryAsync(x => x.CourseId, cancellationToken);
+
+        foreach (var course in courses)
+        {
+            if (stats.TryGetValue(course.Id, out var courseStats))
+                course.SyncRating(courseStats.Count, Math.Round(courseStats.Average, 2));
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
 
     private async Task<User?> EnsureStudentAsync(
         UserManager<User> userManager,

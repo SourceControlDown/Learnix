@@ -15,31 +15,31 @@ namespace Learnix.API.Controllers;
 public sealed class CertificatesController(ISender sender) : ControllerBase
 {
     [HttpGet("mine")]
-    public async Task<IActionResult> GetMine(CancellationToken ct)
+    public async Task<IActionResult> GetMine(CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetMyCertificatesQuery(), ct);
+        var result = await sender.Send(new GetMyCertificatesQuery(), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpGet("courses/{courseId:guid}")]
-    public async Task<IActionResult> GetCourseCertificate(Guid courseId, CancellationToken ct)
+    public async Task<IActionResult> GetCourseCertificate(Guid courseId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetCourseCertificateQuery(courseId), ct);
+        var result = await sender.Send(new GetCourseCertificateQuery(courseId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpPost("courses/{courseId:guid}/generate")]
-    public async Task<IActionResult> GenerateCourseCertificate(Guid courseId, CancellationToken ct)
+    public async Task<IActionResult> GenerateCourseCertificate(Guid courseId, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GenerateCertificateCommand(courseId), ct);
+        var result = await sender.Send(new GenerateCertificateCommand(courseId), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(new { url = value }));
     }
 
     [HttpGet("verify/{code}")]
     [AllowAnonymous]
-    public async Task<IActionResult> Verify(string code, CancellationToken ct)
+    public async Task<IActionResult> Verify(string code, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new VerifyCertificateQuery(code), ct);
+        var result = await sender.Send(new VerifyCertificateQuery(code), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 }

@@ -23,57 +23,57 @@ public sealed class CategoriesController(ISender sender) : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll(CancellationToken ct)
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetAllCategoriesQuery(), ct);
+        var result = await sender.Send(new GetAllCategoriesQuery(), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpGet("admin")]
     [Authorize(Roles = Roles.Admin)]
-    public async Task<IActionResult> GetAllForAdmin(CancellationToken ct)
+    public async Task<IActionResult> GetAllForAdmin(CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetAdminCategoriesQuery(), ct);
+        var result = await sender.Send(new GetAdminCategoriesQuery(), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
     [HttpPost]
     [Authorize(Roles = Roles.Admin)]
-    public async Task<IActionResult> Create([FromBody] CreateCategoryRequest body, CancellationToken ct)
+    public async Task<IActionResult> Create([FromBody] CreateCategoryRequest body, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new CreateCategoryCommand(body.Name, body.Slug), ct);
+        var result = await sender.Send(new CreateCategoryCommand(body.Name, body.Slug), cancellationToken);
         return result.ToActionResult(onSuccess: id => CreatedAtAction(nameof(GetAllForAdmin), new { }, new { id }));
     }
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryRequest body, CancellationToken ct)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryRequest body, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new UpdateCategoryCommand(id, body.Name, body.Slug), ct);
+        var result = await sender.Send(new UpdateCategoryCommand(id, body.Name, body.Slug), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new DeleteCategoryCommand(id), ct);
+        var result = await sender.Send(new DeleteCategoryCommand(id), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpPost("{id:guid}/image")]
     [Authorize(Roles = Roles.Admin)]
-    public async Task<IActionResult> SetImage(Guid id, [FromBody] SetImageRequest body, CancellationToken ct)
+    public async Task<IActionResult> SetImage(Guid id, [FromBody] SetImageRequest body, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new SetCategoryImageCommand(id, body.BlobPath), ct);
+        var result = await sender.Send(new SetCategoryImageCommand(id, body.BlobPath), cancellationToken);
         return result.ToActionResult();
     }
 
     [HttpDelete("{id:guid}/image")]
     [Authorize(Roles = Roles.Admin)]
-    public async Task<IActionResult> DeleteImage(Guid id, CancellationToken ct)
+    public async Task<IActionResult> DeleteImage(Guid id, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new DeleteCategoryImageCommand(id), ct);
+        var result = await sender.Send(new DeleteCategoryImageCommand(id), cancellationToken);
         return result.ToActionResult();
     }
 }

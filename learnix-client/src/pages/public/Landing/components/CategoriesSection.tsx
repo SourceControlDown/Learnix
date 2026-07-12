@@ -1,12 +1,35 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 import { BookOpen } from 'lucide-react';
 import { QueryError } from '@/components/common/system/QueryError';
+import { TextLink } from '@/components/common/ui/TextLink';
 import { APP_ROUTES } from '@/routes/paths';
-import { fadeUpVariant, staggerContainer, viewportConfig } from '@/utils/animations';
+import { viewportConfig } from '@/utils/animations';
 import { cn } from '@/utils/cn';
 import type { LandingCategory } from '@/utils/mocks/landing.mock';
+
+// Faster than the shared fadeUpVariant/staggerContainer — with 8 tiles in this grid,
+// the default timing made the last cards visibly lag in on load.
+const categoryFadeUpVariant: Variants = {
+    initial: { opacity: 0, y: 16 },
+    animate: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1.0] },
+    },
+};
+
+const categoryStaggerContainer: Variants = {
+    initial: {},
+    animate: {
+        transition: {
+            staggerChildren: 0.05,
+            delayChildren: 0.05,
+        },
+    },
+};
 
 interface CategoriesSectionProps {
     categories: LandingCategory[];
@@ -22,6 +45,11 @@ export function CategoriesSection({
     onRetry,
 }: CategoriesSectionProps) {
     const { t } = useTranslation('landing');
+
+    // "Browse all categories" is an invitation, and an invitation only makes sense when there is somewhere to
+    // go. With the list failing to load, the catalog behind that link is failing too — the last thing to do is
+    // send the user into a second error.
+    const hasContent = !isLoading && !isError && categories.length > 0;
 
     const renderContent = () => {
         if (isLoading) {
@@ -43,6 +71,8 @@ export function CategoriesSection({
                     message={t('categories.error')}
                     onRetry={onRetry}
                     retryLabel={t('common:actions.tryAgain')}
+                    // A failed section must not hold the height of a full grid — it looks more broken than it is.
+                    className="min-h-0 py-10"
                 />
             );
         }
@@ -58,14 +88,14 @@ export function CategoriesSection({
 
         return (
             <motion.div
-                variants={staggerContainer}
+                variants={categoryStaggerContainer}
                 initial="initial"
                 whileInView="animate"
                 viewport={viewportConfig}
                 className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4"
             >
                 {categories.map((cat) => (
-                    <motion.div variants={fadeUpVariant} key={cat.id}>
+                    <motion.div variants={categoryFadeUpVariant} key={cat.id}>
                         <Link
                             to={`/courses?categoryId=${cat.id}`}
                             className="group relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-card/80 to-card/40 p-3 text-center backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_10px_40px_-10px_rgba(var(--primary),0.3)] sm:flex-row sm:items-start sm:gap-4 sm:p-4 sm:text-left"
@@ -136,24 +166,26 @@ export function CategoriesSection({
                             {t('categories.heading')}
                         </h2>
                     </div>
-                    <Link
-                        to={APP_ROUTES.public.courses}
-                        className="hidden text-sm text-primary hover:underline md:inline"
-                    >
-                        {t('categories.viewAll')}
-                    </Link>
+                    {/* One link per breakpoint: this one on desktop, the one below the grid on mobile. */}
+                    {hasContent && (
+                        <TextLink
+                            to={APP_ROUTES.public.courses}
+                            className="hidden text-sm md:inline"
+                        >
+                            {t('categories.viewAll')}
+                        </TextLink>
+                    )}
                 </div>
 
                 {renderContent()}
 
-                <div className="mt-8 flex justify-center md:hidden">
-                    <Link
-                        to={APP_ROUTES.public.courses}
-                        className="rounded-full bg-primary/10 px-6 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
-                    >
-                        {t('categories.viewAll')}
-                    </Link>
-                </div>
+                {hasContent && (
+                    <div className="mt-8 flex justify-center md:hidden">
+                        <TextLink to={APP_ROUTES.public.courses} className="text-sm">
+                            {t('categories.viewAll')}
+                        </TextLink>
+                    </div>
+                )}
             </div>
         </section>
     );

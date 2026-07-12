@@ -111,7 +111,7 @@ Learnix.Infrastructure/
 │   +-- Catalog/              < PublicCourseCatalogSearchService, FeaturedCoursesService
 │   +-- Certificates/         < CertificatePdfDocument
 │   +-- HostedServices/
-│   │   +-- Cleanup/          < ChatSessionCleanupService, RefreshTokenCleanupHostedService
+│   │   +-- Cleanup/          < RefreshTokenCleanupHostedService
 │   │   L-- Maintenance/      < CategoryCoursesCountReconciliationService
 │   L-- Outbox/               < OutboxProcessorService, OutboxNotificationListener
 +-- AiChat/                   < Semantic Kernel integrations

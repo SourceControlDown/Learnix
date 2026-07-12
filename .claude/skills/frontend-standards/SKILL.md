@@ -10,10 +10,10 @@ when_to_use: frontend, React, TypeScript, component, page, hook, store, Zustand,
 
 Before implementing **any** frontend feature, complete these steps in order:
 
-1. **Read `TODO.md`** — identify the exact task(s), their phase, and current status.
+1. **Read `docs/TODO.md`** — identify the exact task(s), their phase, and current status.
 2. **Read `docs/FEATURES.md`** — understand the functional spec for the feature being built.
-3. **Read `ARCHITECTURE_FRONTEND.md`** — review folder structure, component co-location rules, state split, and API layer conventions.
-4. **Read `DECISIONS_FRONTEND.md`** — review all FADRs; note any that apply to the current task (styling, routing, forms, error handling, localization, etc.).
+3. **Read `docs/frontend/ARCHITECTURE.md`** and **`docs/frontend/PROJECT_STRUCTURE.md`** — review folder structure, component co-location rules, state split, and API layer conventions. `docs/frontend/CODING_STYLE.md` covers component design details.
+4. **Check relevant ADR files in `docs/frontend/decisions/`** — read only those that apply to the current task scope (`UI.md`, `API.md`, `AUTH.md`, `FORMS.md`, `I18N_SEO.md`, `ARCHITECTURE.md`, `LINTING_FORMATTING.md`). The index is `docs/frontend/decisions/README.md`.
 5. **Check for mockups** — look in `mockups/` for the feature. If none exists, match the visual style of existing pages.
 6. **Check available backend endpoints** — read the relevant `Learnix.Backend/Learnix.API/Controllers/*.cs` files. Verify route prefix, HTTP methods, request/response shapes, and auth requirements before writing any API calls.
 
@@ -21,12 +21,13 @@ Before implementing **any** frontend feature, complete these steps in order:
 
 ## Post-Task Checklist
 
-After completing **any** frontend task:
+After completing **any** frontend task, from `learnix-client/`:
 
-1. Run `npx tsc --noEmit` in `learnix-client/` — fix all TypeScript errors before finishing.
-2. Run `npm run format` in `learnix-client/` — auto-format + Tailwind class sort.
-3. **Update `TODO.md`** — mark the task(s) as `[x]`. Add a note if the implementation deviated from the spec.
-4. **Update `DECISIONS_FRONTEND.md`** — if a new architectural decision was made, add a `FADR-XXX` entry.
+1. `npm run type-check` — fix all TypeScript errors before finishing.
+2. `npm run lint` — ESLint must pass (CI enforces it).
+3. `npm run format` — Prettier + Tailwind class sort.
+4. **Update `docs/TODO.md`** — set the task's `Status` column to `done` (the file uses status tables, not `[x]` checkboxes). Add a note if the implementation deviated from the spec.
+5. **Update ADR files** — if a new architectural decision was made, add an entry to the appropriate file in `docs/frontend/decisions/` using `ADR-FRONT-<SCOPE>-NNN` numbering. Numbering is **scoped per file** — read the file first and take the next free number after its current highest.
 
 ---
 
@@ -44,17 +45,20 @@ learnix-client/src/
 │   ├── student/      ← Student role
 │   ├── instructor/   ← Instructor role
 │   └── admin/        ← Admin role
-├── hooks/            ← custom React hooks (use*.ts)
+├── hooks/            ← custom React hooks, grouped by domain:
+│                       auth/ course/ instructor/ lesson/ realtime/ shared/ student/ user/
 ├── store/            ← Zustand stores (*.store.ts)
 ├── schemas/          ← Zod schemas (*.schema.ts) — source of truth for FormValues
 ├── types/            ← TypeScript DTO interfaces (*.types.ts)
-├── utils/            ← pure utilities (cn.ts, errors.ts, formatDate.ts, etc.)
-├── routes/           ← React Router config
-└── const/
-    └── localization/ ← ALL UI text — one file per page (*.ts)
+├── enums/            ← shared enums (*.enums.ts)
+├── utils/            ← pure utilities (cn.ts, errors.ts, formatDate.ts, env.ts, etc.)
+├── routes/           ← React Router config (index.tsx, paths.ts)
+├── i18n/             ← i18next config + locales/{en,uk}/*.json — ALL UI text
+├── styles/           ← index.css (Tailwind layers + design tokens)
+└── const/            ← non-text constants (*.constants.ts)
 ```
 
-### Component co-location rules (FADR-002)
+### Component co-location rules (ADR-FRONT-ARCH-002)
 
 - **1–3 ad-hoc components** for a page → flat files alongside the page file
 - **4+ ad-hoc components** → put in a `components/` subfolder inside the page folder
@@ -73,12 +77,14 @@ learnix-client/src/
 | API module | camelCase, `.api.ts` | `courses.api.ts` |
 | Schema | camelCase, `.schema.ts` | `course.schema.ts` |
 | Types | camelCase, `.types.ts` | `course.types.ts` |
-| Localization | camelCase | `landingPage.ts` |
+| Enums | camelCase, `.enums.ts` | `course.enums.ts` |
+| Constants | camelCase, `.constants.ts` | `course.constants.ts` |
+| Localization namespace | camelCase `.json`, in `en/` + `uk/` | `courseDetail.json` |
 | Utility | camelCase | `formatDate.ts` |
 
 ---
 
-## Styling (FADR-009)
+## Styling (ADR-FRONT-UI-001)
 
 **100% Tailwind. No SCSS, no CSS Modules.**
 
@@ -116,45 +122,52 @@ export function CourseCard({ course, className }: CourseCardProps) {
 
 ---
 
-## Localization (FADR-012)
+## Localization (ADR-FRONT-INTL-001)
 
-**All UI text lives in `src/const/localization/<page>.ts`. Zero hardcoded strings in components.**
+**All UI text lives in react-i18next JSON namespaces. Zero hardcoded strings in components.**
 
-```ts
-// src/const/localization/courseCatalog.ts
-export const COURSE_CATALOG = {
-  FILTERS: {
-    heading: 'Filters',
-    clear: 'Clear all',
-  },
-  EMPTY: {
-    title: 'No courses found',
-    subtitle: 'Try adjusting your filters',
-  },
-} as const;
+Translations: `src/i18n/locales/{en,uk}/<namespace>.json` — one namespace per page / feature area, mirrored in both languages. Config: `src/i18n/config.ts` (imported once in `main.tsx`).
+
+```json
+// src/i18n/locales/en/catalog.json
+{
+  "filters": { "heading": "Filters", "clear": "Clear all" },
+  "empty": { "title": "No courses found", "subtitle": "Try adjusting your filters" },
+  "courseCount_one": "{{count}} course",
+  "courseCount_other": "{{count}} courses"
+}
 ```
 
 ```tsx
 // In component:
-import { COURSE_CATALOG } from '@/const/localization/courseCatalog';
+import { useTranslation } from 'react-i18next';
 
-<h2>{COURSE_CATALOG.FILTERS.heading}</h2>
+const { t } = useTranslation('catalog');
+<h2>{t('filters.heading')}</h2>
+<p>{t('courseCount', { count: courses.length })}</p>
 ```
 
-- One file per page / feature area
-- `as const` — TypeScript catches typos at compile time
-- SCREAMING_SNAKE_CASE for top-level export, camelCase for nested keys
+- New page → new JSON file in **both** `en/` and `uk/`, registered in the `resources` object in `config.ts`.
+- Parameterized strings → `{{variable}}` interpolation, **not** JS template functions.
+- Plurals → i18next suffixes (`_one` / `_few` / `_many` / `_other`; Ukrainian follows CLDR) with a `{ count: n }` param.
+- Arrays (FAQ items, testimonials) → store in JSON, read with `{ returnObjects: true }`.
+- Never call `i18n.t()` directly in a component — always the `useTranslation` hook.
+- Zod validation messages are localized via `zod-i18n-map` (`locales/{en,uk}/zod.json`).
+- Active language lives in `locale.store.ts` (persisted to `localStorage`); `LanguageSwitcher` in the Header toggles EN/UK.
+- `src/const/*.constants.ts` holds **non-text** data only (icon maps, gradients, external links) — never UI copy.
 
 ---
 
-## State Management (FADR-005)
+## State Management (ADR-FRONT-API-002)
 
 | What | Where | Example |
 |---|---|---|
 | Server data (from API) | TanStack Query | courses list, user profile, enrollments |
-| Auth token + user | `auth.store` (Zustand) | `accessToken`, `user`, `isInitializing` |
-| UI state shared across components | `ui.store` (Zustand) | `isSidebarOpen`, `isChatOpen` |
+| Auth token + user | `auth.store` (Zustand, in-memory) | `accessToken`, `user`, `isInitializing` |
+| UI state shared across components | `ui.store` (Zustand) | AI chat widget open/closed |
 | Theme | `theme.store` (Zustand, persisted) | `'light' \| 'dark'` |
+| Active language | `locale.store` (Zustand, persisted) | `'en' \| 'uk'` |
+| Video autoplay preference | `player.store` (Zustand, persisted) | course player autoplay |
 | Local component state | `useState` | dropdown open, accordion expanded |
 | Form values + validation | `react-hook-form` | field values, errors, touched |
 
@@ -165,7 +178,7 @@ import { COURSE_CATALOG } from '@/const/localization/courseCatalog';
 
 ---
 
-## API Layer (FADR-004)
+## API Layer (ADR-FRONT-API-001, ADR-FRONT-API-007)
 
 **Components never import axios directly.** Always use typed API modules.
 
@@ -187,9 +200,9 @@ export const coursesApi = {
 };
 ```
 
-**React Query hook wrapping the API:**
+**React Query hook wrapping the API** — hooks live in a domain subfolder (`hooks/course/`, `hooks/instructor/`, `hooks/student/`, `hooks/user/`, `hooks/lesson/`, `hooks/auth/`, `hooks/realtime/`, `hooks/shared/`):
 ```ts
-// src/hooks/useCourses.ts
+// src/hooks/course/useCatalogCourses.ts
 import { useQuery } from '@tanstack/react-query';
 import { coursesApi } from '@/api/courses.api';
 import { queryKeys } from '@/api/queryKeys';
@@ -204,14 +217,15 @@ export function useCourses(filters: CourseFilters) {
 
 **Query invalidation on mutation:**
 ```ts
-// src/hooks/useCreateCourse.ts
+// src/hooks/instructor/useCourseMutations.ts
 export function useCreateCourse() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation('instructor');
   return useMutation({
     mutationFn: coursesApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.courses.lists() });
-      toast.success(SOME_PAGE.COURSE_CREATED);
+      toast.success(t('course.created'));
     },
   });
 }
@@ -221,7 +235,7 @@ export function useCreateCourse() {
 
 ---
 
-## Forms (FADR-006)
+## Forms (ADR-FRONT-FORMS-002)
 
 Zod schema is the **source of truth for form types**. DTO is a separate interface matching the backend contract.
 
@@ -257,7 +271,7 @@ const onSubmit = (values: CreateCourseFormValues) => {
 
 ---
 
-## Error Handling (FADR-007)
+## Error Handling (ADR-FRONT-FORMS-003, ADR-FRONT-FORMS-005)
 
 Three levels — match the level to the error type:
 
@@ -302,11 +316,14 @@ mutations: {
 
 ---
 
-## Routing (FADR-003)
+## Routing (ADR-FRONT-ARCH-003, ADR-FRONT-ARCH-005)
+
+React Router **v7**.
 
 - Route guards as **layout components** via `<Outlet />` — not per-page wrappers
 - Lazy loading for every page via `React.lazy()` + `Suspense`
 - `ProtectedRoute` handles: `isInitializing` spinner → auth check → role check
+- **Never hardcode a path string.** Use the centralized `APP_ROUTES` dictionary in `src/routes/paths.ts`
 
 ```tsx
 const router = createBrowserRouter([
@@ -322,28 +339,38 @@ const router = createBrowserRouter([
 
 ## SSE Streaming
 
-For streaming responses (AI chat), use `fetch` with `ReadableStream`. **Never use `EventSource`** — it doesn't support custom headers (Authorization).
+AI chat streams over SSE. **Never use `EventSource`** — it can't send an `Authorization` header.
+
+Use the shared axios instance with the **fetch adapter** so the interceptor-based token refresh still applies. The canonical implementation is `streamAiMessage()` in `src/api/aiChat.api.ts` — an async generator; consume it via `hooks/realtime/useAiChat.ts`.
 
 ```ts
-const response = await fetch(`${env.API_URL}/ai/chat`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${useAuthStore.getState().accessToken}`,
-  },
-  body: JSON.stringify({ message }),
-});
+const response = await api.post(
+  '/ai-chat/messages',
+  { message },
+  { responseType: 'stream', adapter: 'fetch', signal },
+);
 
-const reader = response.body!.getReader();
+const reader = (response.data as unknown as ReadableStream<Uint8Array>).getReader();
 const decoder = new TextDecoder();
+let buffer = '';
 
 while (true) {
   const { done, value } = await reader.read();
   if (done) break;
-  const chunk = decoder.decode(value);
-  // handle chunk
+  buffer += decoder.decode(value, { stream: true });
+  // SSE events are separated by \n\n — parse complete events out of `buffer`
 }
 ```
+
+---
+
+## Realtime — SignalR (ADR-FRONT-API-004)
+
+Notifications, chat and achievements push over SignalR (`@microsoft/signalr`), **not** SSE or polling.
+
+- One hook per hub in `hooks/realtime/`: `useNotificationsHub`, `useChatHub`, `useAchievementsHub`
+- The API hub endpoint is `/hubs/notifications`
+- On an incoming event, invalidate the relevant TanStack Query keys — never write server data into Zustand
 
 ---
 
@@ -351,18 +378,30 @@ while (true) {
 
 All uploads use the **3-step SAS URL flow**. Never send files directly to the backend via multipart form.
 
+Prefer the existing `useRequestUploadUrl()` hook (`hooks/shared/`) — it wraps steps 1–2 and returns the `blobPath`:
+
 ```ts
-// Step 1: Request upload URL
-const { uploadUrl, blobPath } = await uploadsApi.requestUrl({ target: 'CourseCover', contentType: 'image/jpeg' });
+const { uploadFile, isUploading, error } = useRequestUploadUrl();
 
-// Step 2: Upload directly to Azure Blob
-await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'x-ms-blob-type': 'BlockBlob' } });
+// Steps 1 + 2: request SAS URL, then PUT the file straight to Azure Blob
+const blobPath = await uploadFile('CourseCover', file);
 
-// Step 3: Send blobPath to backend in the relevant command
+// Step 3: send blobPath to the backend in the relevant command
 await coursesApi.update(courseId, { ...data, coverBlobPath: blobPath });
 ```
 
-Upload targets: `Avatar` (5MB, jpeg/png/webp), `CourseCover` (10MB, jpeg/png/webp), `LessonVideo` (2GB, mp4/webm), `Certificate` (5MB, pdf).
+Underneath: `uploadsApi.requestUploadUrl(target, contentType)` → `uploadsApi.uploadToBlob(uploadUrl, file)`.
+
+Upload targets (`UploadTarget` in `api/uploads.api.ts`, mirrored by the backend validator):
+
+| Target | Allowed content types |
+|---|---|
+| `Avatar` | `image/jpeg`, `image/png`, `image/webp` |
+| `CourseCover` | `image/jpeg`, `image/png`, `image/webp` |
+| `CategoryImage` | `image/jpeg`, `image/png`, `image/webp` |
+| `LessonVideo` | `video/mp4`, `video/webm` |
+
+Certificates are **generated server-side** (QuestPDF) — there is no certificate upload target.
 
 ---
 
@@ -393,12 +432,15 @@ export function CourseCard({ course }: { course: CourseDto }) { ... }
 
 | Anti-pattern | Correct approach |
 |---|---|
-| Hardcoded string in JSX | `const/localization/<page>.ts` export |
+| Hardcoded string in JSX | `t('key')` from a JSON namespace in `src/i18n/locales/` |
+| `src/const/localization/*.ts` for UI text | Removed — use i18next JSON namespaces |
 | Hardcoded color (`bg-blue-600`) | Semantic token (`bg-primary`) |
 | API data in Zustand | TanStack Query |
 | `import axios from 'axios'` in component | Import from `@/api/courses.api` (or relevant module) |
-| `EventSource` for SSE | `fetch` + `ReadableStream` |
-| `IFormFile` / multipart upload | 3-step SAS URL via `UploadsController` |
+| `EventSource` for SSE | `api.post(..., { responseType: 'stream', adapter: 'fetch' })` |
+| Polling for notifications | SignalR hook from `hooks/realtime/` |
+| Hardcoded route string (`/instructor/courses`) | `APP_ROUTES` from `@/routes/paths` |
+| `IFormFile` / multipart upload | 3-step SAS URL — use `useRequestUploadUrl()` |
 | Zod schema as DTO type for backend response | Plain TypeScript interface in `types/` |
 | Inline props type `{ course: CourseDto }` | Named `interface CourseCardProps` |
 | Default export for a component | Named export |
@@ -407,4 +449,4 @@ export function CourseCard({ course }: { course: CourseDto }) { ... }
 | Per-page guard (`<RequireAuth><Page />`) | `ProtectedRoute` layout with `<Outlet />` |
 | `const handler = () => {}` for local events | `function handler() {}` for hoisting |
 | Blindly using `useCallback` | Only use for memoized children or `useEffect` deps |
-| pnpm | npm only (FADR-011) |
+| pnpm | npm only |

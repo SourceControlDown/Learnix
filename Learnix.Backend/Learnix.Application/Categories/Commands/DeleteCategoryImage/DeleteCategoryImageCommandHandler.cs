@@ -19,7 +19,7 @@ internal sealed class DeleteCategoryImageCommandHandler(
     IDistributedCache cache)
     : IRequestHandler<DeleteCategoryImageCommand, Result>
 {
-    public async Task<Result> Handle(DeleteCategoryImageCommand request, CancellationToken ct)
+    public async Task<Result> Handle(DeleteCategoryImageCommand request, CancellationToken cancellationToken)
     {
         if (currentUser.UserId is null)
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
@@ -28,7 +28,7 @@ internal sealed class DeleteCategoryImageCommandHandler(
             return Result.Fail(new ForbiddenError(CommonMessages.OnlyAdminCanManageCategories));
 
         var category = await categoryRepository.FirstOrDefaultAsync(
-            new CategoryByIdSpecification(request.CategoryId, forUpdate: true), ct);
+            new CategoryByIdSpecification(request.CategoryId, forUpdate: true), cancellationToken);
 
         if (category is null)
             return Result.Fail(new NotFoundError(CommonMessages.CourseCategoryNotFound(request.CategoryId)));
@@ -37,9 +37,9 @@ internal sealed class DeleteCategoryImageCommandHandler(
             return Result.Fail(new NotFoundError(CategoryMessages.CategoryHasNoImage));
 
         category.RemoveImage();
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheKeys.CategoriesAll, ct);
+        await cache.RemoveAsync(CacheKeys.Categories.All, cancellationToken);
 
         return Result.Ok();
     }

@@ -1,0 +1,13 @@
+@model Learnix.Infrastructure.Email.Models.AccountRecoveredModel
+@{
+    Layout = "_Layout.cshtml";
+    ViewBag.Title = Model.Strings["AccountRecovered_Subject"].Value;
+}
+
+<h1 class="email-heading">@string.Format(Model.Strings["AccountRecovered_Greeting"], Model.FirstName)</h1>
+<p class="email-text">
+    @Model.Strings["AccountRecovered_Body"]
+</p>
+<p class="email-text">
+    @Model.Strings["AccountRecovered_SignIn"]
+</p>

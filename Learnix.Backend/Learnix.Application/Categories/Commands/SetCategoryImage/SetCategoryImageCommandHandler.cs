@@ -20,7 +20,7 @@ internal sealed class SetCategoryImageCommandHandler(
     IDistributedCache cache)
     : IRequestHandler<SetCategoryImageCommand, Result>
 {
-    public async Task<Result> Handle(SetCategoryImageCommand request, CancellationToken ct)
+    public async Task<Result> Handle(SetCategoryImageCommand request, CancellationToken cancellationToken)
     {
         if (currentUser.UserId is null)
             return Result.Fail(new AuthenticationError(CommonMessages.NotAuthenticated));
@@ -28,20 +28,20 @@ internal sealed class SetCategoryImageCommandHandler(
         if (!currentUser.IsInRole(Roles.Admin))
             return Result.Fail(new ForbiddenError(CommonMessages.OnlyAdminCanManageCategories));
 
-        var commitResult = await blobStorage.CommitUploadAsync(request.BlobPath, UploadTarget.CategoryImage, ct);
+        var commitResult = await blobStorage.CommitUploadAsync(request.BlobPath, UploadTarget.CategoryImage, cancellationToken);
         if (commitResult.IsFailed)
             return Result.Fail(commitResult.Errors);
 
         var category = await categoryRepository.FirstOrDefaultAsync(
-            new CategoryByIdSpecification(request.CategoryId, forUpdate: true), ct);
+            new CategoryByIdSpecification(request.CategoryId, forUpdate: true), cancellationToken);
 
         if (category is null)
             return Result.Fail(new NotFoundError(CommonMessages.CourseCategoryNotFound(request.CategoryId)));
 
         category.SetImage(commitResult.Value.BlobPath);
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheKeys.CategoriesAll, ct);
+        await cache.RemoveAsync(CacheKeys.Categories.All, cancellationToken);
 
         return Result.Ok();
     }

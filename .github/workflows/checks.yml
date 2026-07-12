@@ -50,7 +50,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: dotnet sonarscanner begin /k:"Learnix" /o:"oleh-bashtovyi" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml"
+      # Exclusions: EF migrations are generated code, and the Razor email templates are table-layout
+      # HTML whose "deprecated" attributes are what makes them render in Outlook.
+      run: dotnet sonarscanner begin /k:"Learnix" /o:"oleh-bashtovyi" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" /d:sonar.exclusions="**/Persistence/EntityFramework/Migrations/**,**/Email/Templates/**"
 
     # 6. Build the backend application
     - name: Build

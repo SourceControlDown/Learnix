@@ -6,7 +6,7 @@ public interface IUserCompletedCategoryRepository
     /// Idempotent insert. Returns true if a new row was added,
     /// false if the (UserId, CategoryId) pair already existed.
     /// </summary>
-    Task<bool> AddIfMissingAsync(Guid userId, Guid categoryId, CancellationToken ct);
+    Task<bool> AddIfMissingAsync(Guid userId, Guid categoryId, CancellationToken cancellationToken);
 
-    Task<int> CountDistinctCategoriesAsync(Guid userId, CancellationToken ct);
+    Task<int> CountDistinctCategoriesAsync(Guid userId, CancellationToken cancellationToken);
 }

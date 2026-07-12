@@ -1,4 +1,7 @@
-// learnix-client/src/types/wishlist.types.ts
+export interface WishlistCountDto {
+    count: number;
+}
+
 export interface WishlistCourseDto {
     courseId: string;
     title: string;

@@ -19,7 +19,7 @@ public sealed class PublishCourseCommandHandler(
     : CourseCommandHandler<PublishCourseCommand, Result>(courseRepository, currentUser, includeLessons: true)
 {
     protected override async Task<Result> HandleAsync(
-        PublishCourseCommand request, Course course, CancellationToken ct)
+        PublishCourseCommand request, Course course, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(course.CoverBlobPath))
             return Result.Fail(new ConflictError(CourseMessages.CannotPublishNoCoverImage));
@@ -32,11 +32,11 @@ public sealed class PublishCourseCommandHandler(
 
         course.Publish();
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await Task.WhenAll(
-            cache.RemoveAsync(CacheKeys.Course(request.CourseId), ct),
-            cache.RemoveAsync(CacheKeys.CoursesFeatured, ct));
+            cache.RemoveAsync(CacheKeys.Courses.ById(request.CourseId), cancellationToken),
+            cache.RemoveAsync(CacheKeys.Courses.Featured, cancellationToken));
 
         return Result.Ok();
     }

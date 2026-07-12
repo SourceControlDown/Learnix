@@ -1,0 +1,16 @@
+@model Learnix.Infrastructure.Email.Models.AccountDeletedModel
+@{
+    Layout = "_Layout.cshtml";
+    ViewBag.Title = Model.Strings["AccountDeleted_Subject"].Value;
+}
+
+<h1 class="email-heading">@string.Format(Model.Strings["AccountDeleted_Greeting"], Model.FirstName)</h1>
+<p class="email-text">
+    @Model.Strings["AccountDeleted_Body"]
+</p>
+<p class="email-text">
+    @string.Format(Model.Strings["AccountDeleted_Recovery"], Model.PurgeDate)
+</p>
+<p class="email-text">
+    @Model.Strings["AccountDeleted_Support"]
+</p>

@@ -25,7 +25,7 @@ internal sealed class UserRegistrationService(
         string firstName,
         string lastName,
         string language = "en",
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         var existing = await userManager.FindByEmailAsync(email);
         if (existing is not null)
@@ -45,12 +45,12 @@ internal sealed class UserRegistrationService(
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
 
         user.RaiseUserRegistered(token);
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok((user.Id, token));
     }
 
-    public async Task<Result> ConfirmEmailAsync(Guid userId, string token, CancellationToken ct = default)
+    public async Task<Result> ConfirmEmailAsync(Guid userId, string token, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user is null)
@@ -62,7 +62,7 @@ internal sealed class UserRegistrationService(
             : Result.Fail(result.Errors.Select(e => (IError)new Error(e.Description)).ToList());
     }
 
-    public async Task<Result> ResendConfirmationEmailAsync(string email, CancellationToken ct = default)
+    public async Task<Result> ResendConfirmationEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(email);
         if (user is null || user.EmailConfirmed)
@@ -70,18 +70,18 @@ internal sealed class UserRegistrationService(
 
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
         user.RaiseUserRegistered(token);
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok();
     }
 
     public async Task<Result<Guid>> FindOrCreateGoogleUserAsync(
         GoogleUserInfo googleUser,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         // Case 1: user with this GoogleId already exists → standard Google login
         var byGoogleId = await userManager.Users
-            .FirstOrDefaultAsync(u => u.GoogleId == googleUser.GoogleId, ct);
+            .FirstOrDefaultAsync(u => u.GoogleId == googleUser.GoogleId, cancellationToken);
 
         if (byGoogleId is not null)
             return Result.Ok(byGoogleId.Id);

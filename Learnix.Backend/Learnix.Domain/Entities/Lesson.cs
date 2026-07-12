@@ -8,11 +8,12 @@ public abstract class Lesson : BaseEntity, IOrderable
 {
     protected Lesson() { }
 
-    protected Lesson(Guid sectionId, string title, int order, LessonType lessonType)
+    // DisplayOrder is assigned by Section.AddLesson when the lesson joins the aggregate —
+    // only the section knows what the next free slot is.
+    protected Lesson(Guid sectionId, string title, LessonType lessonType)
     {
         SectionId = sectionId;
         Title = title;
-        DisplayOrder = order;
         LessonType = lessonType;
     }
 

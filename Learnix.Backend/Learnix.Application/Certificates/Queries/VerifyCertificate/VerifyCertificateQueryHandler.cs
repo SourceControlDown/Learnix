@@ -34,8 +34,8 @@ public sealed class VerifyCertificateQueryHandler(
         var instructor = await userRepository.GetByIdAsync(certificate.Course.InstructorId, cancellationToken);
 
         string? downloadUrl = null;
-        if (certificate.FileUrl is not null)
-            downloadUrl = blobStorageService.GenerateReadUrl(certificate.FileUrl, BlobUrlTtlConstants.CertificateReadUrl);
+        if (certificate.FilePath is not null)
+            downloadUrl = blobStorageService.GenerateReadUrl(certificate.FilePath, BlobUrlTtlConstants.CertificateReadUrl);
 
         return Result.Ok(new VerifyCertificateResponse(
             certificate.Code,
@@ -45,7 +45,7 @@ public sealed class VerifyCertificateQueryHandler(
             instructor?.FirstName ?? "Unknown",
             instructor?.LastName ?? "Instructor",
             certificate.IssuedAt,
-            IsReady: certificate.FileUrl is not null,
+            IsReady: certificate.FilePath is not null,
             DownloadUrl: downloadUrl));
     }
 }

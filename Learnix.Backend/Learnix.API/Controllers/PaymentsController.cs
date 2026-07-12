@@ -19,9 +19,9 @@ public sealed class PaymentsController(ISender sender) : ControllerBase
     [Authorize(Policy = "EmailConfirmed")]
     public async Task<IActionResult> InitiatePayment(
         [FromBody] InitiateMockPaymentCommand command,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, ct);
+        var result = await sender.Send(command, cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 
@@ -29,9 +29,9 @@ public sealed class PaymentsController(ISender sender) : ControllerBase
     public async Task<IActionResult> GetMine(
         [FromQuery] int skip = 0,
         [FromQuery] int take = 20,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
-        var result = await sender.Send(new GetMyPaymentsQuery(skip, take), ct);
+        var result = await sender.Send(new GetMyPaymentsQuery(skip, take), cancellationToken);
         return result.ToActionResult(onSuccess: value => Ok(value));
     }
 }

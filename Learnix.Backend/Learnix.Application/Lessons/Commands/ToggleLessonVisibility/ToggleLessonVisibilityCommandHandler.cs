@@ -16,7 +16,7 @@ internal sealed class ToggleLessonVisibilityCommandHandler(
     : CourseCommandHandler<ToggleLessonVisibilityCommand, Result>(courseRepository, currentUser, includeLessons: true)
 {
     protected override async Task<Result> HandleAsync(
-        ToggleLessonVisibilityCommand request, Course course, CancellationToken ct)
+        ToggleLessonVisibilityCommand request, Course course, CancellationToken cancellationToken)
     {
         var lesson = course.TryGetLesson(request.LessonId);
 
@@ -25,7 +25,7 @@ internal sealed class ToggleLessonVisibilityCommandHandler(
 
         course.ToggleLessonVisibility(lesson, request.IsVisible);
 
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Ok();
     }

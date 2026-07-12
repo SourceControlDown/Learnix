@@ -2,6 +2,8 @@ import { useFieldArray } from 'react-hook-form';
 import type { Control, UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Trash2 } from 'lucide-react';
+import { ChoiceIndicator } from '@/components/common/form/ChoiceIndicator';
+import { Input } from '@/components/ui/input';
 import type { TestLessonFormData } from '@/schemas/lesson.schema';
 import { cn } from '@/utils/cn';
 
@@ -42,33 +44,42 @@ export function ChoiceEditor({
                 const isCorrectField = `questions.${qIdx}.options.${oIdx}.isCorrect` as const;
                 return (
                     <div key={optField.id} className="flex items-center gap-2">
-                        {qType === 'SingleChoice' ? (
-                            <input
-                                type="radio"
-                                name={`questions.${qIdx}.singleCorrect`}
-                                checked={watch(isCorrectField)}
-                                onChange={() =>
-                                    optionFields.forEach((_, i) =>
-                                        setValue(
-                                            `questions.${qIdx}.options.${i}.isCorrect`,
-                                            i === oIdx,
-                                            { shouldValidate: true },
-                                        ),
-                                    )
-                                }
-                                className="accent-primary"
+                        {/* The input is real but hidden — the browser's own control is a white disc in the
+                            dark theme. The circle beside it is ours (ChoiceIndicator). */}
+                        <label className="group flex cursor-pointer items-center">
+                            {qType === 'SingleChoice' ? (
+                                <input
+                                    type="radio"
+                                    name={`questions.${qIdx}.singleCorrect`}
+                                    checked={watch(isCorrectField)}
+                                    onChange={() =>
+                                        optionFields.forEach((_, i) =>
+                                            setValue(
+                                                `questions.${qIdx}.options.${i}.isCorrect`,
+                                                i === oIdx,
+                                                { shouldValidate: true },
+                                            ),
+                                        )
+                                    }
+                                    className="sr-only"
+                                />
+                            ) : (
+                                <input
+                                    type="checkbox"
+                                    {...register(isCorrectField)}
+                                    className="sr-only"
+                                />
+                            )}
+                            <ChoiceIndicator
+                                type={qType === 'SingleChoice' ? 'radio' : 'checkbox'}
+                                checked={!!watch(isCorrectField)}
                             />
-                        ) : (
-                            <input
-                                type="checkbox"
-                                {...register(isCorrectField)}
-                                className="accent-primary"
-                            />
-                        )}
-                        <input
+                        </label>
+                        <Input
+                            variant="card"
                             {...register(`questions.${qIdx}.options.${oIdx}.text` as const)}
                             placeholder={t('fieldOptionText')}
-                            className="flex-1 rounded border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                            className="h-8 flex-1 py-1"
                         />
                         {optionFields.length > 2 && (
                             <button

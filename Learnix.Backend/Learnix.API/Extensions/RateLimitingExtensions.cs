@@ -12,7 +12,7 @@ public static class RateLimitingExtensions
         services.AddRateLimiter(options =>
         {
             // Unified 429 response for all rate-limited policies
-            options.OnRejected = async (context, ct) =>
+            options.OnRejected = async (context, cancellationToken) =>
             {
                 context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
 
@@ -31,7 +31,7 @@ public static class RateLimitingExtensions
                 };
 
                 context.HttpContext.Response.ContentType = "application/problem+json";
-                await context.HttpContext.Response.WriteAsJsonAsync(problem, ct);
+                await context.HttpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
             };
 
             // auth-strict: 5 requests per 15 minutes per IP
@@ -54,23 +54,14 @@ public static class RateLimitingExtensions
                     });
             });
 
-            // ai-chat: 20 requests per hour per authenticated user
-            options.AddPolicy(RateLimitPolicies.AiChat, httpContext =>
-            {
-                var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                             ?? GetClientIp(httpContext);
+            // Each policy keeps its own partition space, so the two AI budgets never draw on each other.
+            // ai-chat-platform: 20 requests per hour per authenticated user
+            options.AddPolicy(RateLimitPolicies.AiChatPlatform, httpContext =>
+                AiChatPartition(httpContext, permitLimit: 20));
 
-                return RateLimitPartition.GetFixedWindowLimiter(
-                    partitionKey: userId,
-                    factory: _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 20,
-                        Window = TimeSpan.FromHours(1),
-                        QueueLimit = 0,
-                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                        AutoReplenishment = true
-                    });
-            });
+            // ai-chat-tutor: 60 requests per hour per authenticated user
+            options.AddPolicy(RateLimitPolicies.AiChatTutor, httpContext =>
+                AiChatPartition(httpContext, permitLimit: 60));
 
             // test-attempts: 30 requests per minute per authenticated user to prevent bot spamming
             options.AddPolicy(RateLimitPolicies.TestAttempts, httpContext =>
@@ -161,6 +152,23 @@ public static class RateLimitingExtensions
         });
 
         return services;
+    }
+
+    private static RateLimitPartition<string> AiChatPartition(HttpContext httpContext, int permitLimit)
+    {
+        var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                     ?? GetClientIp(httpContext);
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: userId,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = permitLimit,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                AutoReplenishment = true
+            });
     }
 
     /// <summary>

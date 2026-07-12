@@ -29,16 +29,16 @@ public sealed class DeleteCourseCommandHandler
     }
 
     protected override async Task<Result> HandleAsync(
-        DeleteCourseCommand request, Course course, CancellationToken ct)
+        DeleteCourseCommand request, Course course, CancellationToken cancellationToken)
     {
         course.MarkForDeletion();
 
-        await _courseRepository.DeleteAsync(course, ct);
-        await _unitOfWork.SaveChangesAsync(ct);
+        await _courseRepository.DeleteAsync(course, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await Task.WhenAll(
-            _cache.RemoveAsync(CacheKeys.Course(request.CourseId), ct),
-            _cache.RemoveAsync(CacheKeys.CoursesFeatured, ct));
+            _cache.RemoveAsync(CacheKeys.Courses.ById(request.CourseId), cancellationToken),
+            _cache.RemoveAsync(CacheKeys.Courses.Featured, cancellationToken));
 
         return Result.Ok();
     }

@@ -39,6 +39,13 @@ api.interceptors.response.use(
             return Promise.reject(error);
         }
 
+        // Requests already in flight when the user signs out come back 401 with a stale
+        // Bearer header. Refreshing would fail anyway — the cookie is gone — and the
+        // failure path would hard-redirect to /login, overriding the logout's own redirect.
+        if (!useAuthStore.getState().accessToken) {
+            return Promise.reject(error);
+        }
+
         if (isRefreshing) {
             return new Promise((resolve, reject) => {
                 failedQueue.push({

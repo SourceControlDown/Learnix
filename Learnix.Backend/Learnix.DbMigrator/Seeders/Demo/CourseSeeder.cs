@@ -27,6 +27,19 @@ public sealed class CourseSeeder(
     IOptions<BlobStorageOptions> blobOptions,
     ILogger<CourseSeeder> logger) : IDataSeeder
 {
+    /// <summary>
+    /// Every seeded video is the same placeholder file, so its length is read once, from the header
+    /// of the embedded asset itself — rather than hardcoding a number that silently goes stale the
+    /// day the file is swapped.
+    /// </summary>
+    private static readonly Lazy<int?> PlaceholderVideoDuration = new(() =>
+    {
+        using var stream = typeof(CourseSeeder).Assembly
+            .GetManifestResourceStream("Learnix.DbMigrator.Assets.placeholder.mp4");
+
+        return stream is null ? null : Mp4Duration.TryRead(stream);
+    });
+
     private static readonly SeedCourseDefinition[] SeedCourses =
     [
         CSharpFundamentalsSeeder.GetDefinition(),
@@ -46,6 +59,10 @@ public sealed class CourseSeeder(
         AgileMethodologiesSeeder.GetDefinition()
     ];
 
+    // S3776: a linear seed script — guard the config, ensure the instructor, then walk the course
+    // definitions. It reads top to bottom; carving it into helpers would only scatter the order in
+    // which demo data has to be created.
+#pragma warning disable S3776
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         var email = configuration[$"{ConfigurationSectionNameConstants.SeedData}:InstructorEmail"];
@@ -53,13 +70,17 @@ public sealed class CourseSeeder(
 
         if (string.IsNullOrWhiteSpace(email) || !System.Net.Mail.MailAddress.TryCreate(email, out _))
         {
-            logger.LogWarning($"Course seeder: {ConfigurationSectionNameConstants.SeedData}:InstructorEmail is missing or invalid — skipping course seeding.");
+            logger.LogWarning(
+                "Course seeder: {Section}:InstructorEmail is missing or invalid — skipping course seeding.",
+                ConfigurationSectionNameConstants.SeedData);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(password))
         {
-            logger.LogWarning($"Course seeder: {ConfigurationSectionNameConstants.SeedData}:InstructorPassword is not set — skipping course seeding.");
+            logger.LogWarning(
+                "Course seeder: {Section}:InstructorPassword is not set — skipping course seeding.",
+                ConfigurationSectionNameConstants.SeedData);
             return;
         }
 
@@ -121,7 +142,12 @@ public sealed class CourseSeeder(
                     .ToDictionaryAsync(c => c.Slug, c => c.Id, cancellationToken);
 
                 var categorySlugs = new[] { "programming", "web-development", "data-science", "design", "business", "marketing", "personal-development", "language-learning" };
+
+                // S2245: this only picks a category for a throwaway demo course — nothing here is a
+                // secret or a security decision, so a PRNG is the right tool.
+#pragma warning disable S2245
                 var random = new Random();
+#pragma warning restore S2245
 
                 for (int i = 1; i <= 10; i++)
                 {
@@ -159,6 +185,7 @@ public sealed class CourseSeeder(
             }
         }
     }
+#pragma warning restore S3776
 
 
 
@@ -196,6 +223,10 @@ public sealed class CourseSeeder(
         return instructor;
     }
 
+    // S107/S3776: seeding one course means creating the course, its sections, its lessons of three
+    // different kinds and its cover blob, in that order. Every parameter is a collaborator it needs,
+    // and the branches are the lesson kinds.
+#pragma warning disable S107, S3776
     private static async Task SeedSingleCourseAsync(
         ApplicationDbContext context,
         Guid instructorId,
@@ -204,7 +235,7 @@ public sealed class CourseSeeder(
         IBlobStorageService blobStorage,
         IOptions<BlobStorageOptions> blobOptions,
         ILogger logger,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
         // Step 1 — persist course + sections so their IDs are stable before adding lessons.
         var course = Course.Create(
@@ -219,7 +250,7 @@ public sealed class CourseSeeder(
             using var stream = assembly.GetManifestResourceStream($"Learnix.DbMigrator.Assets.{definition.ImageName}");
             if (stream != null)
             {
-                await blobStorage.UploadAsync(coverPath, stream, "image/png", ct);
+                await blobStorage.UploadAsync(coverPath, stream, "image/webp", cancellationToken);
                 course.SetCoverImage(coverPath);
             }
         }
@@ -234,10 +265,10 @@ public sealed class CourseSeeder(
             .Select(s => (Entity: course.AddSection(s.Title), Def: s))
             .ToList();
 
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync(cancellationToken);
 
-        // Step 2 — add lessons via DbContext (Section.AddLesson is internal to the Domain assembly).
-        // The unique (SectionId, DisplayOrder) index requires stable order values.
+        // Step 2 — add lessons through the aggregate root, which assigns DisplayOrder from the
+        // section and so keeps the unique (SectionId, DisplayOrder) index satisfied.
         //
         // Notes on visibility:
         //   PostLesson.Create()  в†’ sets IsHidden = false automatically when content is non-empty.
@@ -245,13 +276,12 @@ public sealed class CourseSeeder(
         //   TestLesson.Create()  в†’ IsHidden stays true even after ReplaceQuestions(); must call SetVisibility(false).
         foreach (var (section, sectionDef) in sections)
         {
-            for (var order = 0; order < sectionDef.Lessons.Length; order++)
+            foreach (var lessonDef in sectionDef.Lessons)
             {
-                switch (sectionDef.Lessons[order])
+                switch (lessonDef)
                 {
                     case SeedPost post:
-                        context.Set<PostLesson>().Add(
-                            PostLesson.Create(section.Id, post.Title, order, post.Content));
+                        course.AddLesson(PostLesson.Create(section.Id, post.Title, post.Content));
                         break;
 
                     case SeedVideo vid:
@@ -262,7 +292,7 @@ public sealed class CourseSeeder(
                             using var stream = assembly.GetManifestResourceStream("Learnix.DbMigrator.Assets.placeholder.mp4");
                             if (stream != null)
                             {
-                                await blobStorage.UploadAsync(videoPath, stream, "video/mp4", ct);
+                                await blobStorage.UploadAsync(videoPath, stream, "video/mp4", cancellationToken);
                             }
                         }
                         catch (Exception ex)
@@ -270,31 +300,30 @@ public sealed class CourseSeeder(
                             logger.LogWarning(ex, "Failed to upload placeholder video for {Title}", vid.Title);
                         }
 
-                        var vl = VideoLesson.Create(
-                            section.Id, vid.Title, order, videoPath, vid.Description);
-                        context.Set<VideoLesson>().Add(vl);
+                        course.AddLesson(VideoLesson.Create(
+                            section.Id, vid.Title, videoPath, vid.Description, PlaceholderVideoDuration.Value));
                         break;
 
                     case SeedTest test:
                         var tl = TestLesson.Create(
-                            section.Id, test.Title, order,
+                            section.Id, test.Title,
                             test.Description, test.AttemptLimit,
                             test.CooldownMinutes, test.PassingThreshold);
                         tl.ReplaceQuestions(test.Questions);
-                        context.Set<TestLesson>().Add(tl);
+                        course.AddLesson(tl);
                         break;
                 }
             }
         }
 
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync(cancellationToken);
 
         // Step 3 — reload with full navigation so Publish() can validate the in-memory
         // lesson collection. Section._lessons is a backing field populated by EF on load.
         var fullCourse = await context.Courses
             .Include(c => c.Sections)
             .ThenInclude(s => s.Lessons)
-            .FirstAsync(c => c.Id == course.Id, ct);
+            .FirstAsync(c => c.Id == course.Id, cancellationToken);
 
         // Toggle visibility via the aggregate root
         foreach (var sec in fullCourse.Sections)
@@ -310,8 +339,9 @@ public sealed class CourseSeeder(
 
         fullCourse.Publish();
 
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync(cancellationToken);
     }
+#pragma warning restore S107, S3776
 }
 
 

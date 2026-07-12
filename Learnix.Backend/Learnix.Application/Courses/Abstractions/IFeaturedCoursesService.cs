@@ -4,5 +4,5 @@ namespace Learnix.Application.Courses.Abstractions;
 
 public interface IFeaturedCoursesService
 {
-    Task<IReadOnlyList<FeaturedCourseDto>> GetTopFeaturedAsync(int count, CancellationToken ct);
+    Task<IReadOnlyList<FeaturedCourseDto>> GetTopFeaturedAsync(int count, CancellationToken cancellationToken);
 }

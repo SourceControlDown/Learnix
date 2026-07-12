@@ -1,11 +1,19 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, ChevronDown, ClipboardList, FileText, PlayCircle } from 'lucide-react';
+import {
+    ArrowLeft,
+    CheckCircle2,
+    ChevronDown,
+    ClipboardList,
+    FileText,
+    PlayCircle,
+    X,
+} from 'lucide-react';
 import { LanguageSwitcher } from '@/components/common/ui/LanguageSwitcher';
 import { ThemeSwitcher } from '@/components/common/ui/ThemeSwitcher';
 import { APP_ROUTES } from '@/routes/paths';
-import type { SectionProgressDto } from '@/types/progress.types';
+import type { LessonProgressItemDto, SectionProgressDto } from '@/types/progress.types';
 import { cn } from '@/utils/cn';
 
 interface CourseSidebarProps {
@@ -14,7 +22,8 @@ interface CourseSidebarProps {
     courseId: string;
     totalLessons: number;
     completedLessons: number;
-    onCloseMobile?: () => void;
+    /** Closes the overlay on mobile, collapses the panel on desktop. */
+    onClose?: () => void;
 }
 
 const lessonTypeIcon = {
@@ -27,9 +36,36 @@ export function CourseSidebar({
     sections,
     currentLessonId,
     courseId,
-    onCloseMobile,
+    onClose,
 }: CourseSidebarProps) {
     const { t } = useTranslation('lessonPlayer');
+
+    function formatDuration(seconds: number) {
+        // Below a minute, round to minutes and a 10-second clip claims to take a whole one.
+        if (seconds < 60) {
+            return t('sidebar.durationSeconds', { n: Math.max(1, Math.round(seconds)) });
+        }
+
+        const totalMinutes = Math.round(seconds / 60);
+        const hours = Math.floor(totalMinutes / 60);
+
+        return hours > 0
+            ? t('sidebar.durationHours', { h: hours, m: totalMinutes % 60 })
+            : t('sidebar.durationMinutes', { n: totalMinutes });
+    }
+
+    /**
+     * What sits under a lesson title: a length for video and post, a question count for a test.
+     * Loose `!= null` on purpose — an older API omits these fields entirely, and `undefined !== null`
+     * would send every lesson down the question-count branch.
+     */
+    function formatMeta(lesson: LessonProgressItemDto) {
+        if (lesson.questionCount != null) {
+            return t('testPreview.questionsCount', { count: lesson.questionCount });
+        }
+
+        return lesson.durationSeconds != null ? formatDuration(lesson.durationSeconds) : null;
+    }
 
     const activeSectionId = sections.find((s) =>
         s.lessons.some((l) => l.lessonId === currentLessonId),
@@ -61,52 +97,67 @@ export function CourseSidebar({
 
     return (
         <aside className="flex h-full w-72 shrink-0 flex-col overflow-hidden border-r border-border bg-card lg:w-full">
+            {/* On desktop this link lives in the header; there is no room for it there on mobile,
+                where the header must fit a burger, and course navigation belongs in here anyway. */}
+            <Link
+                to={APP_ROUTES.student.myLearning}
+                className="flex items-center gap-2 border-b border-border px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:hidden"
+            >
+                <ArrowLeft className="size-4 shrink-0" />
+                {t('header.myLearning')}
+            </Link>
+
             <div className="flex items-center justify-between border-b border-border p-4">
                 <span className="text-sm font-semibold uppercase tracking-wider text-foreground">
                     {t('sidebar.courseContent')}
                 </span>
-                {onCloseMobile && (
+                {onClose && (
                     <button
-                        onClick={onCloseMobile}
-                        className="rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground lg:hidden"
+                        type="button"
+                        onClick={onClose}
+                        title={t('sidebar.collapse')}
+                        className="rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
                     >
-                        <span className="sr-only">Close sidebar</span>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <path d="M18 6 6 18" />
-                            <path d="m6 6 12 12" />
-                        </svg>
+                        <span className="sr-only">{t('sidebar.collapse')}</span>
+                        <X className="size-4" />
                     </button>
                 )}
             </div>
 
-            <nav className="flex-1 overflow-y-auto py-2">
+            <nav className="flex-1 overflow-y-auto">
                 {sections.map((section, sIdx) => {
                     const isOpen = openSections.has(section.sectionId);
                     const sectionCompleted = section.lessons.filter((l) => l.isCompleted).length;
                     const sectionTotal = section.lessons.length;
 
+                    // Lessons are numbered across the whole course, not restarted per section, so the
+                    // number matches how a student refers to "lesson 5".
+                    const lessonNumberOffset = sections
+                        .slice(0, sIdx)
+                        .reduce((sum, s) => sum + s.lessons.length, 0);
+
                     return (
-                        <div key={section.sectionId} className="mb-1">
+                        <div key={section.sectionId}>
+                            {/* Rules, not fills, separate a section from its lessons: a line above
+                                always, and one below only while it is collapsed — an open section is
+                                continuous with the lessons it just revealed. A tinted strip would
+                                fight the active lesson for attention, which in dark mode is the one
+                                thing that may be bright. */}
                             <button
                                 type="button"
                                 onClick={() => toggleSection(section.sectionId)}
-                                className="flex w-full items-center justify-between px-4 py-2 text-left hover:bg-secondary/50"
+                                className={cn(
+                                    'flex w-full items-center justify-between gap-2 border-border px-4 py-3 text-left transition-colors hover:bg-secondary/40',
+                                    // The panel header already draws the rule above the first section.
+                                    sIdx > 0 && 'border-t',
+                                    !isOpen && 'border-b',
+                                )}
                             >
-                                <span className="flex-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <span className="flex-1 text-sm font-semibold leading-snug text-foreground">
                                     {t('sidebar.sectionPrefix')} {sIdx + 1} · {section.title}
                                 </span>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-medium text-muted-foreground/70">
+                                    <span className="text-xs font-medium text-muted-foreground">
                                         {sectionCompleted} / {sectionTotal}
                                     </span>
                                     <ChevronDown
@@ -123,8 +174,9 @@ export function CourseSidebar({
                                     {section.lessons
                                         .slice()
                                         .sort((a, b) => a.displayOrder - b.displayOrder)
-                                        .map((lesson) => {
+                                        .map((lesson, lIdx) => {
                                             const isActive = lesson.lessonId === currentLessonId;
+                                            const lessonNumber = lessonNumberOffset + lIdx + 1;
                                             const Icon =
                                                 lessonTypeIcon[
                                                     lesson.lessonType as keyof typeof lessonTypeIcon
@@ -138,18 +190,33 @@ export function CourseSidebar({
                                                             lesson.lessonId,
                                                         )}
                                                         className={cn(
-                                                            'flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-secondary',
+                                                            'flex items-start gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-secondary',
                                                             isActive
                                                                 ? 'border-l-2 border-primary bg-secondary font-medium text-foreground'
                                                                 : 'text-muted-foreground',
                                                         )}
                                                     >
-                                                        <Icon className="size-4 shrink-0 opacity-60" />
-                                                        <span className="line-clamp-2 flex-1 leading-snug">
-                                                            {lesson.title}
+                                                        <span className="w-5 shrink-0 text-right text-xs tabular-nums leading-5 text-muted-foreground/70">
+                                                            {t('sidebar.lessonNumber', {
+                                                                n: lessonNumber,
+                                                            })}
                                                         </span>
+
+                                                        <span className="min-w-0 flex-1">
+                                                            <span className="line-clamp-2 block leading-snug">
+                                                                {lesson.title}
+                                                            </span>
+                                                            <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground/70">
+                                                                <Icon className="size-3.5 shrink-0" />
+                                                                {/* A quiz has no length of its own;
+                                                                    its question count is the closest
+                                                                    thing a student can plan around. */}
+                                                                <span>{formatMeta(lesson)}</span>
+                                                            </span>
+                                                        </span>
+
                                                         {lesson.isCompleted && (
-                                                            <CheckCircle2 className="size-4 shrink-0 text-success" />
+                                                            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
                                                         )}
                                                     </Link>
                                                 </li>

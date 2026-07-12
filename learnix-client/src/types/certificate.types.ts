@@ -19,8 +19,10 @@ export interface CourseCertificateResponse {
     verificationUrl: string;
 }
 
-export interface CertificateReadyNotification {
+export interface CertificateIssuedNotification {
     certificateId: string;
+    /** Sent by the hub for future use; nothing reads it yet. */
+    courseId: string;
     courseTitle: string;
 }
 
