@@ -12,7 +12,7 @@ namespace Learnix.Infrastructure.AiChat.Anthropic;
 
 internal sealed class AnthropicChatProvider(
     AnthropicClient client,
-    IOptions<AnthropicSettings> options) : IAiChatProvider
+    IOptions<AnthropicOptions> options) : IAiChatProvider
 {
     public string Name => "Anthropic";
 

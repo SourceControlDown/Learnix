@@ -12,9 +12,9 @@ namespace Learnix.Infrastructure.AiChat.Gemini;
 internal sealed class GeminiChatProvider : IAiChatProvider
 {
     private readonly Client _client;
-    private readonly GeminiSettings _settings;
+    private readonly GeminiOptions _settings;
 
-    public GeminiChatProvider(IOptions<GeminiSettings> options)
+    public GeminiChatProvider(IOptions<GeminiOptions> options)
     {
         _settings = options.Value;
         _client = new Client(apiKey: _settings.ApiKey);

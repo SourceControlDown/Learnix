@@ -13,7 +13,7 @@ using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Messaging;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Abstractions.Storage;
-using Learnix.Application.Common.Settings;
+using Learnix.Application.Common.Options;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.InstructorApplications.Abstractions;
@@ -171,7 +171,7 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<BlobStorageOptions>(configuration.GetSection(ConfigurationSectionNameCaonstants.BlobStorage));
+        services.Configure<BlobStorageOptions>(configuration.GetSection(ConfigurationSectionNameConstants.BlobStorage));
 
         services.AddSingleton(sp =>
         {
@@ -192,14 +192,14 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<JwtSettings>(configuration.GetSection(ConfigurationSectionNameCaonstants.Jwt));
-        services.Configure<GoogleSettings>(configuration.GetSection(ConfigurationSectionNameCaonstants.Google));
+        services.Configure<JwtOptions>(configuration.GetSection(ConfigurationSectionNameConstants.Jwt));
+        services.Configure<GoogleOptions>(configuration.GetSection(ConfigurationSectionNameConstants.Google));
 
         // JWT Authentication
-        var jwtSettings = configuration.GetSection(ConfigurationSectionNameCaonstants.Jwt).Get<JwtSettings>()
+        var jwtOptions = configuration.GetSection(ConfigurationSectionNameConstants.Jwt).Get<JwtOptions>()
             ?? throw new InvalidOperationException("Missing 'Jwt' configuration section.");
 
-        if (string.IsNullOrWhiteSpace(jwtSettings.Secret))
+        if (string.IsNullOrWhiteSpace(jwtOptions.Secret))
             throw new InvalidOperationException("JWT secret is not configured.");
 
         services
@@ -218,9 +218,9 @@ public static class DependencyInjection
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+                    ValidIssuer = jwtOptions.Issuer,
+                    ValidAudience = jwtOptions.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret)),
                     ClockSkew = TimeSpan.FromSeconds(30),
                     NameClaimType = "name",
                     RoleClaimType = "role"
@@ -245,10 +245,10 @@ public static class DependencyInjection
             .AddPolicy("EmailConfirmed", policy => policy.RequireClaim("email_verified", "true"));
 
         // Fail-fast validation
-        var googleSettings = configuration.GetSection(ConfigurationSectionNameCaonstants.Google).Get<GoogleSettings>()
+        var googleOptions = configuration.GetSection(ConfigurationSectionNameConstants.Google).Get<GoogleOptions>()
             ?? throw new InvalidOperationException("Missing 'Google' configuration section.");
 
-        if (string.IsNullOrWhiteSpace(googleSettings.ClientId))
+        if (string.IsNullOrWhiteSpace(googleOptions.ClientId))
             throw new InvalidOperationException("Google OAuth Client ID is not configured.");
 
         // Auth services
@@ -268,7 +268,7 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<AppSettings>(configuration.GetSection("App"));
+        services.Configure<AppOptions>(configuration.GetSection(ConfigurationSectionNameConstants.App));
 
         // Redis distributed cache
         services.AddStackExchangeRedisCache(options =>
@@ -279,7 +279,7 @@ public static class DependencyInjection
 
         services.AddScoped<OutboxDbContextHolder>();
         services.AddOutboxMessageHandlers();
-        services.Configure<SmtpSettings>(configuration.GetSection(ConfigurationSectionNameCaonstants.Smtp));
+        services.Configure<SmtpSettings>(configuration.GetSection(ConfigurationSectionNameConstants.Smtp));
         services.AddLocalization();
         services.AddSingleton<EmailRenderer>();
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
@@ -295,10 +295,10 @@ public static class DependencyInjection
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
         // MongoDB
-        services.Configure<MongoSettings>(configuration.GetSection(ConfigurationSectionNameCaonstants.Mongo));
+        services.Configure<MongoOptions>(configuration.GetSection(ConfigurationSectionNameConstants.Mongo));
         services.AddSingleton<IMongoClient>(sp =>
         {
-            var settings = sp.GetRequiredService<IOptions<MongoSettings>>().Value;
+            var settings = sp.GetRequiredService<IOptions<MongoOptions>>().Value;
             MongoConventionRegistration.Register();
             return new MongoClient(settings.ConnectionString);
         });
@@ -306,11 +306,11 @@ public static class DependencyInjection
         services.AddScoped<IChatSessionRepository, ChatSessionRepository>();
 
         // AI Chat
-        services.Configure<AnthropicSettings>(configuration.GetSection(ConfigurationSectionNameCaonstants.Anthropic));
-        services.Configure<GeminiSettings>(configuration.GetSection(ConfigurationSectionNameCaonstants.Gemini));
-        services.Configure<AiChatSettings>(configuration.GetSection(ConfigurationSectionNameCaonstants.AiChat));
+        services.Configure<AnthropicOptions>(configuration.GetSection(ConfigurationSectionNameConstants.Anthropic));
+        services.Configure<GeminiOptions>(configuration.GetSection(ConfigurationSectionNameConstants.Gemini));
+        services.Configure<AiChatOptions>(configuration.GetSection(ConfigurationSectionNameConstants.AiChat));
 
-        var aiProvider = configuration[$"{ConfigurationSectionNameCaonstants.AiChat}:Provider"] ?? "Anthropic";
+        var aiProvider = configuration[$"{ConfigurationSectionNameConstants.AiChat}:Provider"] ?? "Gemini";
         if (aiProvider.Equals("Gemini", StringComparison.OrdinalIgnoreCase))
         {
             services.AddSingleton<IAiChatProvider, GeminiChatProvider>();
@@ -319,7 +319,7 @@ public static class DependencyInjection
         {
             services.AddSingleton(sp =>
                 new AnthropicClient(new APIAuthentication(
-                    sp.GetRequiredService<IOptions<AnthropicSettings>>().Value.ApiKey)));
+                    sp.GetRequiredService<IOptions<AnthropicOptions>>().Value.ApiKey)));
             services.AddScoped<IAiChatProvider, AnthropicChatProvider>();
         }
 

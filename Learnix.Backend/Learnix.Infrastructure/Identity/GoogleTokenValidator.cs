@@ -3,18 +3,18 @@ using Google.Apis.Auth;
 using Learnix.Application.Auth.Abstractions;
 using Learnix.Application.Auth.Models;
 using Learnix.Application.Common.Errors;
-using Learnix.Application.Common.Settings;
+using Learnix.Application.Common.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Learnix.Infrastructure.Identity;
 
 internal sealed class GoogleTokenValidator(
-    IOptions<GoogleSettings> googleSettings,
+    IOptions<GoogleOptions> googleSettings,
     ILogger<GoogleTokenValidator> logger)
     : IGoogleTokenValidator
 {
-    private readonly GoogleSettings _settings = googleSettings.Value;
+    private readonly GoogleOptions _settings = googleSettings.Value;
 
     public async Task<Result<GoogleUserInfo>> ValidateAsync(string idToken, CancellationToken cancellationToken = default)
     {

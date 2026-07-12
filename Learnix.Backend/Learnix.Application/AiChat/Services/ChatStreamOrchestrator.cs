@@ -4,7 +4,7 @@ using Learnix.Application.AiChat.Abstractions.Models;
 using Learnix.Application.AiChat.Constants;
 using Learnix.Application.AiChat.Queries.GetCourseContextForAi;
 using Learnix.Application.AiChat.Tools;
-using Learnix.Application.Common.Settings;
+using Learnix.Application.Common.Options;
 using MediatR;
 using Microsoft.Extensions.Options;
 
@@ -18,7 +18,7 @@ public sealed class ChatStreamOrchestrator(
     IEnumerable<IChatTool> tools,
     IMediator mediator,
     IAiAvailabilityStore availability,
-    IOptions<AiChatSettings> aiChatOptions)
+    IOptions<AiChatOptions> aiChatOptions)
 {
     private readonly IReadOnlyList<IChatTool> _tools = tools.ToList();
     private readonly int _contextWindowSize = aiChatOptions.Value.ContextWindowSize;

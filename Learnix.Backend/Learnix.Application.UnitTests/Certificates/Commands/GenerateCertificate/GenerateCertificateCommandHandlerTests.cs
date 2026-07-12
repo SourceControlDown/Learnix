@@ -5,7 +5,7 @@ using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Errors;
-using Learnix.Application.Common.Settings;
+using Learnix.Application.Common.Options;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.Users.Abstractions;
@@ -46,7 +46,7 @@ public class GenerateCertificateCommandHandlerTests
         _sut = new GenerateCertificateCommandHandler(
             _currentUser, _enrollmentRepository, _certificateRepository, _courseRepository, _userRepository,
             _pdfGenerator, _blobStorage, _courseCompletion, _unitOfWork,
-            Options.Create(new AppSettings { ClientBaseUrl = "https://learnix.dev" }));
+            Options.Create(new AppOptions { ClientBaseUrl = "https://learnix.dev" }));
     }
 
     private void EnrollmentIs(Enrollment? enrollment) =>

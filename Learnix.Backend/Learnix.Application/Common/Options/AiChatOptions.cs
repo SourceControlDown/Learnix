@@ -1,6 +1,6 @@
-namespace Learnix.Application.Common.Settings;
+namespace Learnix.Application.Common.Options;
 
-public sealed class AiChatSettings
+public sealed class AiChatOptions
 {
     public string Provider { get; init; } = "Anthropic";
 

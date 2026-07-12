@@ -1,6 +1,6 @@
-namespace Learnix.Application.Common.Settings;
+namespace Learnix.Application.Common.Options;
 
-public sealed class JwtSettings
+public sealed class JwtOptions
 {
     public string Issuer { get; init; } = null!;
     public string Audience { get; init; } = null!;
