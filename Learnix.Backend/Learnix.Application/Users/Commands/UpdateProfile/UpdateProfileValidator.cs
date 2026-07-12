@@ -1,4 +1,5 @@
 using FluentValidation;
+using Learnix.Application.Common.Validation;
 using Learnix.Domain.Constants;
 
 namespace Learnix.Application.Users.Commands.UpdateProfile;
@@ -8,12 +9,10 @@ public sealed class UpdateProfileValidator : AbstractValidator<UpdateProfileComm
     public UpdateProfileValidator()
     {
         RuleFor(x => x.FirstName)
-            .NotEmpty()
-            .MaximumLength(UserConstants.FirstNameMaxLength);
+            .ValidFirstName();
 
         RuleFor(x => x.LastName)
-            .NotEmpty()
-            .MaximumLength(UserConstants.LastNameMaxLength);
+            .ValidLastName();
 
         RuleFor(x => x.Bio)
             .MaximumLength(UserConstants.BioMaxLength)
