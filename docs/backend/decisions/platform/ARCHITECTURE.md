@@ -30,14 +30,14 @@
 - Integrates well with FluentValidation.
 
 **Alternatives:**
-- Custom `Result<T>` works, but would have to be expanded manually.
-- Exceptions for business errors  violates the "exceptions = unexpected failures" contract.
-- ErrorOr another option, but FluentResults has a richer API.
+- Custom `Result<T>` — works, but would have to be expanded manually.
+- Exceptions for business errors — violates the "exceptions = unexpected failures" contract.
+- ErrorOr — another option, but FluentResults has a richer API.
 
 **Consequences:**
 - Command handlers return `Result` or `Result<T>`.
 - Query handlers return `Result<TResponse>`.
-- Controllers map `result.IsFailed` > BadRequest, `result.IsSuccess` > Ok.
+- Controllers map `result.IsFailed` → BadRequest, `result.IsSuccess` → Ok.
 
 ---
 
@@ -52,7 +52,7 @@
 
 **Alternatives:**
 - Throw `ValidationException` + catch in middleware works, but mixes two approaches to errors.
-- Return `Result` from middleware (`catch` > `Result.Fail`)  a cosmetic solution, the exception is still thrown.
+- Return `Result` from middleware (`catch` → `Result.Fail`) — a cosmetic solution, the exception is still thrown.
 
 **Consequences:**
 - `ExceptionHandlingMiddleware` remains only for unforeseen failures (DB down, null ref, etc.).
@@ -73,7 +73,7 @@ Base types:
 
 **Why:**
 - Compile-time safety: a typo in the type name = compilation error.
-- The controller maps Result > HTTP status without magic strings.
+- The controller maps Result → HTTP status without magic strings.
 - Easy to extend: new type = new class, without altering existing code.
 
 **Alternatives:**
@@ -92,13 +92,13 @@ return Ok(result.Value);
 
 ## ADR-BACK-ARCH-005: ProblemDetails for errors, clean DTO for success
 
-**Decision:** No envelope. Success > DTO directly.
-Error > `ProblemDetails` (RFC 7807) with an errors dictionary for validation.
+**Decision:** No envelope. Success → DTO directly.
+Error → `ProblemDetails` (RFC 7807) with an errors dictionary for validation.
 
 **Why:**
 - ASP.NET Core has built-in support for `ProblemDetails`.
 - The frontend receives a standardized error structure.
-- Envelope (`{ data, success, errors }`) � unnecessary boilerplate.
+- Envelope (`{ data, success, errors }`) — unnecessary boilerplate.
 
 **Validation is returned as:**
 ```json
@@ -112,13 +112,13 @@ Error > `ProblemDetails` (RFC 7807) with an errors dictionary for validation.
 }
 ```
 
-**Mapping:** Extension method in the API layer: `Result.Errors` > `ProblemDetails`.
+**Mapping:** Extension method in the API layer: `Result.Errors` → `ProblemDetails`.
 
 ---
 
 ## ADR-BACK-ARCH-007: Manual mapping without AutoMapper
 
-**Decision:** Entity > DTO mapping via extension methods (`ToDto()`, `ToResponse()`).
+**Decision:** Entity → DTO mapping via extension methods (`ToDto()`, `ToResponse()`).
 No AutoMapper or Mapster.
 
 **Why:**
@@ -130,7 +130,7 @@ No AutoMapper or Mapster.
 
 ## ADR-BACK-ARCH-008: IDomainEvent without dependency on MediatR - adapter in Application
 
-**Decision:** The `IDomainEvent` interface in `Learnix.Domain.Common` - a pure marker without inheriting `INotification`. The MediatR-specific wrapper `DomainEventNotification<TDomainEvent> : INotification` resides in `Learnix.Application.Common.Events`. `ApplicationDbContext.SaveChangesAsync` publishes domain events via `MakeGenericType` + `Activator.CreateInstance`, wrapping each event in the corresponding `DomainEventNotification<T>`.
+**Decision:** The `IDomainEvent` interface in `Learnix.Domain.Common` - a pure marker without inheriting `INotification`. The MediatR-specific wrapper `DomainEventNotification<TDomainEvent> : INotification` resides in `Learnix.Application.Common.Events`. `DomainEventsInterceptor` (Infrastructure) does the wrapping at `SavingChangesAsync` time — `typeof(DomainEventNotification<>).MakeGenericType(...)` — and publishes each one through MediatR, inside the same transaction as the entity change (ADR-BACK-INFRA-015).
 
 **Why:**
 - The Domain layer shouldn't know about MediatR - it's an infrastructure library.
@@ -147,18 +147,18 @@ No AutoMapper or Mapster.
 
 **Decision:** Interfaces of the Application layer are grouped by **area of usage**:
 
-- **Cross-cutting** (used by more than one feature) > `Common/Abstractions/{Category}/`. Categories: `Persistence`, `Caching`, `Messaging`, `Time` (if needed), `Identity` (general concepts like `ICurrentUserService`).
-- **Feature-specific** (lives within one feature) > `{Feature}/Abstractions/`. Examples: `IUserRegistrationService`, `IUserAuthenticationService`, `ITokenService`, `IRefreshTokenRepository` - all in `Auth/Abstractions/`.
+- **Cross-cutting** (used by more than one feature) → `Common/Abstractions/{Category}/`. The categories that exist today: `Persistence`, `Identity`, `Messaging`, `Storage`, `Hubs`.
+- **Feature-specific** (lives within one feature) → `{Feature}/Abstractions/`. Examples: `IUserRegistrationService`, `IUserAuthenticationService`, `ITokenService`, `IRefreshTokenRepository` — all in `Auth/Abstractions/`.
 
 The folder is named `Abstractions`, not `Interfaces`, because it may contain more than just interfaces (abstract classes, delegates).
 
-`Models/` (records returned/accepted by interfaces) - also feature-scoped: `Auth/Models/`, `Courses/Models/`. A cross-cutting `Common/Models/` is created only if a model emerges that is truly used across multiple features.
+`Models/` (the records those interfaces take and return) is feature-scoped and appears only when a type is shared by more than one use case — `Auth/Models/` holds `LoginResponse`, `UserAuthenticationInfo` and `GoogleUserInfo`, which is exactly why the folder exists there and nowhere else (ADR-BACK-ARCH-017). `Common/Models/` is for the handful of types every feature speaks, not a landing zone.
 
-Categorization into `Common/Abstractions/` is established immediately (even with one file in the folder) � moving one file is easy, moving ten is painful after the folder has turned into a dump.
+Categorization into `Common/Abstractions/` is established immediately (even with one file in the folder) — moving one file is easy, moving ten is painful after the folder has turned into a dump.
 
 **Rule for new interfaces:** "Does this interface make sense outside of a single feature?"
-- Yes > `Common/Abstractions/{Category}/`
-- No > `{Feature}/Abstractions/`
+- Yes → `Common/Abstractions/{Category}/`
+- No → `{Feature}/Abstractions/`
 
 **Why:**
 - Locality of changes: a feature is a self-contained folder top-to-bottom. The Auth feature is deleted in one operation.
@@ -172,7 +172,7 @@ Categorization into `Common/Abstractions/` is established immediately (even with
 
 ---
 
-## ADR-BACK-ARCH-010: Business logic  exclusively in the Application layer
+## ADR-BACK-ARCH-010: Business logic — exclusively in the Application layer
 
 **Decision:** Any business logic (domain rules, orchestration, reaction to domain events) resides **only** in `Learnix.Application`. Infrastructure and API layers contain no business logic.
 
@@ -182,9 +182,9 @@ Categorization into `Common/Abstractions/` is established immediately (even with
 - Choosing which entity to load, which domain rule to apply, which domain field to update is business logic.
 
 **What Infrastructure MUST NOT do (besides technical implementation):**
-- Load entities via `DbContext`/repository and invoke domain methods > this is Application (event handler, command handler).
-- Decide whether a counter needs updating depending on the entity's state (`WasPublished`) > this is Application.
-- Execute SQL queries with business conditions (`WHERE Status = Published`) without explicit delegation from Application > this is Application.
+- Load entities via `DbContext`/repository and invoke domain methods → this is Application (event handler, command handler).
+- Decide whether a counter needs updating depending on the entity's state (`WasPublished`) → this is Application.
+- Execute SQL queries with business conditions (`WHERE Status = Published`) without explicit delegation from Application → this is Application.
 
 **What Infrastructure does:** technical operations, independent of business rules - writing to the Outbox, sending HTTP requests, writing to Blob Storage, reading configuration, DI registration. Event handlers in Infrastructure exclusively create infrastructure side-effects (OutboxMessage, blob operations), but do not make business decisions.
 
@@ -200,7 +200,7 @@ internal sealed class CoursePublishedCountHandler(OutboxDbContextHolder holder) 
     category?.IncrementCoursesCount(); // < business decision in Infrastructure
 }
 
-// RIGHT � Application handler via abstraction
+// RIGHT — Application handler via abstraction
 internal sealed class CoursePublishedCountHandler(CategoryCoursesCountUpdater updater) ...
 {
     return updater.IncrementAsync(notification.DomainEvent.CategoryId, ct);
@@ -210,16 +210,16 @@ internal sealed class CoursePublishedCountHandler(CategoryCoursesCountUpdater up
 **Why this matters:**
 
 1. **Testability.** Application handlers are tested via mock repositories. Infrastructure handlers bypassing this layer are tested only with a real DbContext.
-2. **Pipeline.** Logic in Application passes through the MediatR pipeline: logging, validation, error handling. In Infrastructure � it does not.
-3. **Dependency rule.** Infrastructure depends on Application, not vice versa. If business logic is in Infrastructure � it depends on the specific DbContext, EF Core, and the current DB provider. This implicitly ties a business rule to a technical choice.
-4. **Single place of lookup.** A developer searching for "where is it decided whether to update the counter" � always in Application. No need to search through Infrastructure or API.
+2. **Pipeline.** Logic in Application passes through the MediatR pipeline: logging, validation, error handling. In Infrastructure — it does not.
+3. **Dependency rule.** Infrastructure depends on Application, not vice versa. If business logic is in Infrastructure — it depends on the specific DbContext, EF Core, and the current DB provider. This implicitly ties a business rule to a technical choice.
+4. **Single place of lookup.** A developer searching for "where is it decided whether to update the counter" — always in Application. No need to search through Infrastructure or API.
 
 **Practical rule for checking:**
-> If code in Infrastructure or API contains an `if` based on the state of a **domain entity** (not technical state), or invokes a domain method � it is business logic that must be moved to Application.
+> If code in Infrastructure or API contains an `if` based on the state of a **domain entity** (not technical state), or invokes a domain method — it is business logic that must be moved to Application.
 
 **Alternatives rejected:**
-- "It is more convenient to place it in Infrastructure because the DbContext is there" � implementation convenience cannot justify violating layering.
-- "The controller can check the condition, it knows the HTTP request context" � the controller does not know the business context, only HTTP. Conditions with domain meaning > Application validator or domain entity.
+- "It is more convenient to place it in Infrastructure because the DbContext is there" — implementation convenience cannot justify violating layering.
+- "The controller can check the condition, it knows the HTTP request context" — the controller does not know the business context, only HTTP. Conditions with domain meaning → Application validator or domain entity.
 
 ---
 
@@ -251,9 +251,12 @@ public sealed class UserAchievementsByUserSpecification : Specification<UserAchi
 ```
 
 **Conventions:**
-- `AsNoTracking = true` by default.
-- For Commands that mutate entities: explicitly `AsNoTracking = false`.
-- Location: `Application/{Feature}/Specifications/`.
+- **Tracking is opt-in per call, not per specification.** A specification that both a query and a command
+  need takes a `forUpdate` flag and applies `AsNoTracking()` unless it is set (`CourseByIdSpecification`
+  is the canonical example). Reads are therefore untracked by default and a mutation has to *ask* for
+  tracking — the safe direction for the mistake to fall.
+- Location: `Application/{Feature}/Specifications/` — plural, always (ADR-BACK-ARCH-017).
+- No raw LINQ in handlers. If a query is worth running, it is worth naming.
 
 ---
 
@@ -267,46 +270,14 @@ public sealed class UserAchievementsByUserSpecification : Specification<UserAchi
 - Cursor-based pagination is overkill for this project.
 
 **Implementation Details:**
-- `PageIndex` is zero-based.
-- `MaxPageSize = 100`, `DefaultPageSize = 20`.
-- `PaginatedResult` includes `TotalCount`, `TotalPages`, `HasNextPage`, `HasPreviousPage`.
+- `PageIndex` is zero-based; `PaginationRequest` clamps it and the page size in its constructor
+  (`Math.Clamp(pageSize, MinPageSize, MaxPageSize)`), so an out-of-range request cannot exist — there is
+  no validation rule to forget. `FromOffset(skip, take)` adapts the `skip`/`take` the controllers accept.
+- Bounds live in `PaginationConstants` (ADR-BACK-ARCH-018): `MaxPageSize = 100`, `DefaultPageSize = 20`.
+- `PaginatedResult<T>` carries `TotalCount` and derives `TotalPages`, `HasNextPage`, `HasPreviousPage`.
 
-**Code Snippet:**
-```csharp
-public record PaginationRequest
-{
-    public int PageIndex { get; init; }
-    public int PageSize { get; init; }
-
-    public PaginationRequest(int pageIndex = 0, int pageSize = PaginationConstants.DefaultPageSize)
-    {
-        PageIndex = Math.Max(0, pageIndex);
-        PageSize = Math.Clamp(pageSize, PaginationConstants.MinPageSize, PaginationConstants.MaxPageSize);
-    }
-
-    public static PaginationRequest FromOffset(int skip, int take)
-    {
-        var normalizedTake = Math.Clamp(take, PaginationConstants.MinPageSize, PaginationConstants.MaxPageSize);
-        var normalizedSkip = Math.Max(0, skip);
-        return new PaginationRequest(normalizedSkip / normalizedTake, normalizedTake);
-    }
-
-    public int Skip => PageIndex * PageSize;
-    public int Take => PageSize;
-}
-
-public record PaginatedResult<TEntity>(
-    int Page,
-    int PageSize,
-    long TotalCount,
-    IReadOnlyList<TEntity> Items
-) where TEntity : class
-{
-    public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
-    public bool HasNextPage => Page < TotalPages - 1;
-    public bool HasPreviousPage => Page > 0;
-}
-```
+The clamp is the point worth remembering: an anonymous caller asking for `take=1000000` gets 100 rows,
+not an `OutOfMemoryException`.
 
 ---
 
@@ -319,7 +290,7 @@ public record PaginatedResult<TEntity>(
 - The Domain should remain as pure as possible, free from cross-cutting concerns.
 
 **Alternatives:**
-- Leave in Domain � works, but mixes levels of abstraction.
+- Leave in Domain — works, but mixes levels of abstraction.
 
 ## ADR-BACK-ARCH-014: Command and Query Structure Rules
 
@@ -327,20 +298,20 @@ public record PaginatedResult<TEntity>(
 
 **Structure:**
 - **Command:** Application/{Feature}/Commands/{Name}/
-  - {Name}Command.cs � record with input data implementing IRequest<Result> or IRequest<Result<T>>
-  - {Name}CommandHandler.cs � implements IRequestHandler<,>
-  - {Name}Validator.cs � AbstractValidator<{Name}Command>
+  - {Name}Command.cs — record with input data implementing IRequest<Result> or IRequest<Result<T>>
+  - {Name}CommandHandler.cs — implements IRequestHandler<,>
+  - {Name}Validator.cs — AbstractValidator<{Name}Command>
 - **Query:** Application/{Feature}/Queries/{Name}/
-  - {Name}Query.cs � record with input data implementing IRequest<Result<TResponse>>
-  - {Name}QueryHandler.cs � implements IRequestHandler<,>
-  - {Name}Response.cs � DTO returned to controller (co-located with query)
+  - {Name}Query.cs — record with input data implementing IRequest<Result<TResponse>>
+  - {Name}QueryHandler.cs — implements IRequestHandler<,>
+  - {Name}Response.cs — DTO returned to controller (co-located with query)
 
 **Rules:**
 - Commands return Result or Result<T> (FluentResults).
 - Queries return Result<TResponse> (FluentResults).
-- Expected errors > Result.Fail(new NotFoundError(...)) � never throw for business errors.
-- Throw exceptions � only for unexpected infrastructure failures.
-- Never return domain entities from handlers � always map to DTOs.
+- Expected errors → Result.Fail(new NotFoundError(...)) — never throw for business errors.
+- Throw exceptions — only for unexpected infrastructure failures.
+- Never return domain entities from handlers — always map to DTOs.
 
 **Why:**
 - Strict structure ensures predictability across all features.
@@ -354,12 +325,12 @@ public record PaginatedResult<TEntity>(
 **Decision:** DomainExceptionBehavior<TRequest, TResponse> sits closest to the handler in the MediatR pipeline. It catches Learnix.Domain.Common.Exceptions.DomainException and returns Result.Fail(new ConflictError(ex.Message)).
 
 **Pipeline order (critical):**
-1. LoggingBehavior � wraps everything for timing.
-2. ValidationBehavior � rejects invalid requests before domain is touched.
-3. DomainExceptionBehavior � closest to handler, catches invariant violations.
+1. LoggingBehavior — wraps everything for timing.
+2. ValidationBehavior — rejects invalid requests before domain is touched.
+3. DomainExceptionBehavior — closest to handler, catches invariant violations.
 
 **Why:**
-- Handlers contain only the happy path � no 	ry-catch boilerplate for domain invariant violations.
+- Handlers contain only the happy path — no try-catch boilerplate for domain invariant violations.
 - System exceptions (NullReferenceException, DB failures, etc.) propagate freely to ExceptionHandlingMiddleware to return a 500 status code with a full stack trace.
 
 ---
@@ -475,9 +446,21 @@ go to `Application/Common/Constants/`.
   stores a hash; the minimum length is a policy of the authentication feature, and it lives with it.
   The test is not "does it look domain-ish" but "would the entity be invalid without it".
 
+**Error messages are constants too**, and they follow the same layering:
+- Messages shared across features — `Application/Common/Constants/Messages.cs` (`CommonMessages`):
+  `CourseNotFound(id)`, `NotOwnerOfCourse`, `NotAuthenticated`.
+- Feature-specific ones — `Application/{Feature}/Constants/{Feature}Messages.cs` (`AuthMessages`,
+  `CourseMessages`, `CertificateMessages`, …).
+
+The reason is the same as for any other constant: the same "Course not found." is raised from a dozen
+handlers, and a message the client asserts on is a contract. Handlers hold that line — 164 of the 165
+typed errors in the Application layer take their text from a `Messages` class.
+
 **What deliberately stays inline** — a constant is for a value with a *second reader*. These have none:
 - One-off regexes used by a single validator (`[A-Z]`, `[a-z]` in the password rules).
-- Validation messages in `WithMessage("...")`.
+- FluentValidation `WithMessage("...")` texts, which are written where the rule is and read nowhere
+  else. This is the pragmatic exception, not a second convention: the day one of them is needed twice,
+  it moves to the feature's `{Feature}Messages` like everything else.
 - Identity's own implementation details (hash length and the like) — ASP.NET Identity owns those.
 
 **Alternatives:**

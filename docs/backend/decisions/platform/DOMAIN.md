@@ -59,7 +59,8 @@ business operations.
 ## ADR-BACK-DOMAIN-003: `DomainException` for invariant violations — never `InvalidOperationException`
 
 **Decision:** invariant checks in entities throw `DomainException` (`Learnix.Domain.Common.Exceptions`).
-Handlers that mutate an aggregate catch **that** exception and turn it into `ConflictError` → 409.
+No handler catches it — `DomainExceptionBehavior`, the MediatR behaviour sitting closest to the handler,
+turns it into `ConflictError` → 409 (ADR-BACK-ARCH-015). Handlers contain only the happy path.
 
 **Why:**
 - Catching `InvalidOperationException` in the Application layer would be catching the framework: a
@@ -89,10 +90,10 @@ The handler shape for any structure mutation:
 2. Owner-or-admin check.
 3. Call the domain method (`course.AddSection(...)`, `course.RemoveLesson(...)`).
 4. `SaveChangesAsync()`.
-5. `DomainException` → `ConflictError` (ADR-BACK-DOMAIN-003).
 
 Steps 1–2 are not written by hand in each handler — they are the base class `CourseCommandHandler`
-(ADR-BACK-ARCH-019).
+(ADR-BACK-ARCH-019). A `DomainException` thrown in step 3 is not caught here either: it is turned into
+a 409 by the pipeline (ADR-BACK-DOMAIN-003).
 
 **Why:**
 - The publish invariants (ADR-BACK-DOMAIN-007) are statements about the *whole* course. Checking them
