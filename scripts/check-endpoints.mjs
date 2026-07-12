@@ -33,8 +33,10 @@ function readRoles(attr) {
     return roles.length ? roles.join(', ') : null;
 }
 
+/** Both `[Authorize(Policy = "EmailConfirmed")]` and `[Authorize(Policy = AuthPolicies.EmailConfirmed)]`. */
 function readPolicy(attr) {
-    return /Policy\s*=\s*"([^"]+)"/.exec(attr)?.[1] ?? null;
+    const match = /Policy\s*=\s*(?:"([^"]+)"|(?:[\w.]+\.)?(\w+))/.exec(attr);
+    return match ? (match[1] ?? match[2]) : null;
 }
 
 /** How an endpoint is protected, as one human-readable cell. */
