@@ -235,3 +235,16 @@
         background: hsl(var(--muted-foreground) / 0.5);
     }
 }
+
+@layer utilities {
+    /* A row that scrolls sideways by touch and says so by being cut off — it needs no scrollbar.
+       Used on tab strips that sit on a permanently dark banner, where the thumb (themed from
+       --border) would otherwise be a bright white bar in light mode. */
+    .scrollbar-hide {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE / legacy Edge */
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+}
