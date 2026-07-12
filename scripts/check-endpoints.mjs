@@ -41,7 +41,8 @@ function readPolicy(attr) {
 
 /** How an endpoint is protected, as one human-readable cell. */
 function describeAuth({ anonymous, authorize }) {
-    if (anonymous || !authorize) return anonymous ? 'Anonymous' : 'Anonymous';
+    // [AllowAnonymous], or no [Authorize] at all — either way the endpoint is open.
+    if (anonymous || !authorize) return 'Anonymous';
     const roles = readRoles(authorize);
     const policy = readPolicy(authorize);
     if (roles && policy) return `${roles} + ${policy}`;
@@ -65,7 +66,7 @@ async function parseControllers() {
     const files = (await readdir(CONTROLLERS_DIR)).filter((f) => f.endsWith('Controller.cs'));
     const endpoints = [];
 
-    for (const file of files.toSorted()) {
+    for (const file of files.toSorted((a, b) => a.localeCompare(b))) {
         const source = await readFile(path.join(CONTROLLERS_DIR, file), 'utf8');
         const name = file.replace('Controller.cs', '');
 
