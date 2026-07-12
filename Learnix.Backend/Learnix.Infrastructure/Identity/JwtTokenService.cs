@@ -5,6 +5,7 @@ using System.Text;
 using Learnix.Application.Auth.Abstractions;
 using Learnix.Application.Common.Models;
 using Learnix.Application.Common.Options;
+using Learnix.Infrastructure.Constants;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -33,10 +34,10 @@ internal sealed class JwtTokenService(IOptions<JwtOptions> jwtSettings) : IToken
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.Email, email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new("name", $"{firstName} {lastName}"),
-            new("email_verified", emailConfirmed ? "true" : "false"),
+            new(ClaimNames.Name, $"{firstName} {lastName}"),
+            new(ClaimNames.EmailVerified, emailConfirmed ? ClaimNames.TrueValue : ClaimNames.FalseValue),
         };
-        claims.AddRange(roles.Select(r => new Claim("role", r)));
+        claims.AddRange(roles.Select(r => new Claim(ClaimNames.Role, r)));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

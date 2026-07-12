@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Learnix.Application.Common.Abstractions.Hubs;
+using Learnix.Infrastructure.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -10,7 +11,7 @@ public sealed class NotificationsHub : Hub<INotificationsHubClient>
 {
     public override async Task OnConnectedAsync()
     {
-        var userId = Context.User?.FindFirstValue("sub");
+        var userId = Context.User?.FindFirstValue(ClaimNames.Sub);
         if (userId is not null)
             await Groups.AddToGroupAsync(Context.ConnectionId, UserGroup(userId));
 
@@ -19,7 +20,7 @@ public sealed class NotificationsHub : Hub<INotificationsHubClient>
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var userId = Context.User?.FindFirstValue("sub");
+        var userId = Context.User?.FindFirstValue(ClaimNames.Sub);
         if (userId is not null)
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, UserGroup(userId));
 
