@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { ConfirmDialog } from '@/components/common/ui/ConfirmDialog';
@@ -31,7 +31,6 @@ interface Props {
 
 export function LessonEditorModal({ courseId, sectionId, lessonType, lesson, onClose }: Props) {
     const { t } = useTranslation('instructor');
-    const overlayRef = useRef<HTMLDivElement>(null);
     const [isDirty, setIsDirty] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
 
@@ -97,14 +96,16 @@ export function LessonEditorModal({ courseId, sectionId, lessonType, lesson, onC
     const testIsPending = createTest.isPending || updateTest.isPending;
 
     return (
-        <div
-            ref={overlayRef}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 p-4"
-            onClick={(e) => {
-                if (e.target === overlayRef.current) handleAttemptClose();
-            }}
-        >
-            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* The backdrop is its own button behind the card — dismissing by clicking outside now has a
+                keyboard equivalent, and the card is not nested inside an interactive element. */}
+            <button
+                type="button"
+                aria-label={t('common:actions.close')}
+                onClick={handleAttemptClose}
+                className="absolute inset-0 bg-foreground/30"
+            />
+            <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card shadow-xl">
                 <div className="flex items-center justify-between border-b border-border p-5">
                     <h2 className="font-heading font-semibold text-foreground">{title}</h2>
                     <button

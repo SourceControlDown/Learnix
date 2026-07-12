@@ -164,8 +164,6 @@ export default function CoursePlayerPage() {
             sections={progress?.sections ?? []}
             currentLessonId={lessonId!}
             courseId={courseId!}
-            totalLessons={progress?.totalLessons ?? 0}
-            completedLessons={progress?.completedLessons ?? 0}
             onClose={() => (isDesktop ? setIsSidebarCollapsed(true) : setIsSidebarOpen(false))}
         />
     );
@@ -431,7 +429,9 @@ export default function CoursePlayerPage() {
                     <div className="flex size-full flex-col overflow-hidden">
                         {/* Mobile sidebar overlay */}
                         {isSidebarOpen && (
-                            <div
+                            <button
+                                type="button"
+                                aria-label={t('common:actions.close')}
                                 className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
                                 onClick={() => setIsSidebarOpen(false)}
                             />

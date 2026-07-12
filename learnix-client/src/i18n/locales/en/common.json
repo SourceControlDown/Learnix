@@ -8,6 +8,7 @@
         "backHome": "Back home"
     },
     "actions": {
+        "close": "Close",
         "cancel": "Cancel",
         "save": "Save",
         "delete": "Delete",

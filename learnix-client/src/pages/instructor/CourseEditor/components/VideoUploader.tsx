@@ -70,7 +70,10 @@ export function VideoUploader({ value, onChange }: Props) {
             <label className="block text-sm font-medium text-foreground">{t('fieldVideo')}</label>
             {videoSrc && !isUploading ? (
                 <div className="overflow-hidden rounded-lg border border-border bg-black">
-                    <video src={videoSrc} controls className="aspect-video w-full object-contain" />
+                    <video src={videoSrc} controls className="aspect-video w-full object-contain">
+                        {/* The platform has no caption tracks; the empty one keeps the element valid. */}
+                        <track kind="captions" />
+                    </video>
                     <div className="flex justify-end border-t border-border bg-card p-3">
                         <button
                             type="button"
@@ -83,12 +86,14 @@ export function VideoUploader({ value, onChange }: Props) {
                     </div>
                 </div>
             ) : (
-                <div
-                    onClick={() => !isUploading && inputRef.current?.click()}
+                <button
+                    type="button"
+                    disabled={isUploading}
+                    onClick={() => inputRef.current?.click()}
                     onDrop={onDrop}
                     onDragOver={(e) => e.preventDefault()}
                     className={cn(
-                        'flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted p-8 text-muted-foreground transition-colors hover:border-primary',
+                        'flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted p-8 text-muted-foreground transition-colors hover:border-primary',
                         isUploading && 'cursor-wait opacity-70',
                     )}
                 >
@@ -98,7 +103,7 @@ export function VideoUploader({ value, onChange }: Props) {
                     ) : (
                         <span className="text-sm">{t('videoHint')}</span>
                     )}
-                </div>
+                </button>
             )}
             {error && <p className="text-xs text-destructive">{error}</p>}
             <input

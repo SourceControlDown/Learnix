@@ -20,8 +20,6 @@ interface CourseSidebarProps {
     sections: SectionProgressDto[];
     currentLessonId: string;
     courseId: string;
-    totalLessons: number;
-    completedLessons: number;
     /** Closes the overlay on mobile, collapses the panel on desktop. */
     onClose?: () => void;
 }
