@@ -35,6 +35,11 @@ internal sealed class OutboxProcessorService(
                 break;
             }
 
+            // Signals queued behind this one say nothing new: the SELECT below sees every row committed
+            // before it runs, however many notifications announced them. Without this, five commits during
+            // one batch buy five more iterations, each re-querying an outbox the first one already drained.
+            outboxSignal.DrainPending();
+
             await ProcessBatchAsync(stoppingToken);
         }
     }
