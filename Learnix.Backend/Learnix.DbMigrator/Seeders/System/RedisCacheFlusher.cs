@@ -30,7 +30,14 @@ public sealed class RedisCacheFlusher(IConfiguration configuration, ILogger<Redi
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            logger.LogInformation("No Redis connection string configured — nothing to flush.");
+            // A warning, not an info line: this is the failure mode this class exists to prevent, and it
+            // hid for a day in production precisely because it announced itself quietly. Every deployment
+            // that runs the seeders has a Redis to flush; not having one means the deploy forgot to pass
+            // the connection string, not that the cache is absent.
+            logger.LogWarning(
+                "No Redis connection string configured — the cache was NOT flushed. Entries written "
+                + "against the previous database will keep serving ids that no longer exist until their "
+                + "TTL expires (up to 24h for the category list).");
             return;
         }
 

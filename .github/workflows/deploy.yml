@@ -181,6 +181,11 @@ jobs:
       env:
         ConnectionStrings__Postgres: ${{ secrets.PROD_POSTGRES_CONN }}
         ConnectionStrings__AzureBlobStorage: ${{ env.BLOB_CONN }}
+        # Without this the migrator's RedisCacheFlusher finds no connection string and quietly skips:
+        # the cache then outlives the database it was built from, and after a re-seed `categories:all`
+        # serves ids that no longer exist for the rest of its 24h TTL — the catalogue offers categories
+        # that filter down to nothing (ADR-BACK-INFRA-014).
+        ConnectionStrings__Redis: ${{ secrets.PROD_REDIS_CONN }}
         ASPNETCORE_ENVIRONMENT: Production
         SeedAdmin__Email: ${{ vars.PROD_SEED_ADMIN_EMAIL }}
         SeedAdmin__Password: ${{ secrets.PROD_SEED_ADMIN_PASSWORD }}

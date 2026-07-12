@@ -15,6 +15,8 @@ import { cn } from '@/utils/cn';
 import { getRoleHome } from '@/utils/getRoleHome';
 import { parseAccessToken } from '@/utils/parseAccessToken';
 
+const CODE_LENGTH = 6;
+
 /**
  * Related ADRs:
  * - ADR-FRONT-AUTH-002: OTP-Based Email Verification & Auto-Login
@@ -33,7 +35,7 @@ export default function VerifyEmailPage() {
     // Kept apart from `email`, which decides *which* screen shows: typing into a field bound to it
     // would swap the screen on the first keystroke, one character into the address.
     const [emailInput, setEmailInput] = useState('');
-    const [code, setCode] = useState<string[]>(new Array(6).fill(''));
+    const [code, setCode] = useState<string[]>(new Array(CODE_LENGTH).fill(''));
     const [resendCooldown, setResendCooldown] = useState(0);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -64,7 +66,7 @@ export default function VerifyEmailPage() {
         },
         onError: () => {
             toast.error(t('verify.error'));
-            setCode(new Array(6).fill(''));
+            setCode(new Array(CODE_LENGTH).fill(''));
             inputRefs.current[0]?.focus();
         },
     });
@@ -106,48 +108,45 @@ export default function VerifyEmailPage() {
         }
     };
 
+    /**
+     * Spreads however many digits arrived across the boxes from `index` onwards, and submits once six
+     * are in. Both paths lead here: a desktop paste fires `paste` with the whole string, while phone
+     * keyboards routinely deliver a paste as a plain `change` with all six digits in one box — reading
+     * a single character there is why pasting used to fill the first square and stop.
+     */
+    const fillFrom = (index: number, digits: string) => {
+        if (!digits) return;
+
+        const newCode = [...code];
+        for (let i = 0; i < digits.length && index + i < CODE_LENGTH; i++) {
+            newCode[index + i] = digits[i];
+        }
+        setCode(newCode);
+
+        const filledTo = Math.min(index + digits.length, CODE_LENGTH - 1);
+        inputRefs.current[filledTo]?.focus();
+
+        if (newCode.every((digit) => digit !== '')) {
+            // Let the state land before the request reads it.
+            setTimeout(() => verify(newCode.join('')), 0);
+        }
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const value = e.target.value.replace(/\D/g, '');
         if (!value) return;
 
-        const newCode = [...code];
-        newCode[index] = value.at(-1) ?? '';
-        setCode(newCode);
-
-        if (index < 5 && value) {
-            inputRefs.current[index + 1]?.focus();
-        }
-
-        if (index === 5 && value) {
-            // Wait for state to update, then verify
-            setTimeout(() => {
-                const fullCode = [...newCode.slice(0, 5), value.at(0) ?? ''].join('');
-                if (fullCode.length === 6) {
-                    verify(fullCode);
-                }
-            }, 0);
-        }
+        // A single keystroke into a filled box replaces it; anything longer is a paste in disguise.
+        fillFrom(index, value.length === 1 ? value : value.slice(0, CODE_LENGTH - index));
     };
 
-    const handlePaste = (e: React.ClipboardEvent) => {
+    const handlePaste = (e: React.ClipboardEvent, index: number) => {
         e.preventDefault();
-        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-        if (!pastedData) return;
-
-        const newCode = [...code];
-        for (let i = 0; i < pastedData.length; i++) {
-            newCode[i] = pastedData[i];
-        }
-        setCode(newCode);
-
-        if (pastedData.length === 6) {
-            inputRefs.current[5]?.focus();
-            setTimeout(() => {
-                verify(pastedData);
-            }, 0);
-        } else {
-            inputRefs.current[pastedData.length]?.focus();
-        }
+        const pasted = e.clipboardData
+            .getData('text')
+            .replace(/\D/g, '')
+            .slice(0, CODE_LENGTH - index);
+        fillFrom(index, pasted);
     };
 
     if (!email) {
@@ -199,7 +198,10 @@ export default function VerifyEmailPage() {
                     <span className="font-medium text-foreground">{email}</span>
                 </p>
 
-                <div className="mt-8 flex justify-center gap-2">
+                {/* The boxes shrink with the card instead of keeping a fixed 48px: six of those plus the
+                    gaps and the card's padding need ~400px of viewport, so on a 360px phone the last
+                    one fell off the edge. */}
+                <div className="mt-8 flex justify-center gap-1.5 sm:gap-2">
                     {code.map((digit, idx) => (
                         <input
                             key={idx}
@@ -209,14 +211,17 @@ export default function VerifyEmailPage() {
                             type="text"
                             inputMode="numeric"
                             autoComplete="one-time-code"
-                            maxLength={1}
+                            // Not 1: with maxLength={1} the browser truncates a pasted code to a single
+                            // character before onChange ever sees it. The box still shows one digit —
+                            // the value is controlled by state — but a paste now arrives whole.
+                            maxLength={CODE_LENGTH}
                             value={digit}
                             onChange={(e) => handleChange(e, idx)}
                             onKeyDown={(e) => handleKeyDown(e, idx)}
-                            onPaste={idx === 0 ? handlePaste : undefined}
+                            onPaste={(e) => handlePaste(e, idx)}
                             disabled={isVerifying}
                             className={cn(
-                                'h-14 w-12 rounded-xl border bg-background text-center text-xl font-bold outline-none transition-all',
+                                'h-14 w-full min-w-0 max-w-12 flex-1 rounded-xl border bg-background text-center text-xl font-bold outline-none transition-all',
                                 'focus:border-primary focus:ring-4 focus:ring-primary/10',
                                 digit
                                     ? 'border-primary text-foreground'
