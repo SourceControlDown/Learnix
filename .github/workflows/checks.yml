@@ -185,10 +185,15 @@ jobs:
       run: npm run type-check
 
     # 7. Build frontend to validate there are no TypeScript or build errors
+    #
+    # Placeholders, not the real values: this build is thrown away, it exists only to prove the code
+    # compiles. VITE_SITE_URL has to be among them because a production build refuses to run without it
+    # — canonical URLs, og:image and the sitemap would otherwise silently point at localhost.
     - name: Build (validates no TS errors)
       env:
         VITE_API_URL: https://placeholder.azurecontainerapps.io/api
         VITE_GOOGLE_CLIENT_ID: placeholder
+        VITE_SITE_URL: https://placeholder.azurestaticapps.net
       run: npm run build
 
   duplication:
