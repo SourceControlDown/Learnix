@@ -42,6 +42,15 @@ function stripTrailingSlashes(url) {
     return result;
 }
 
+if (!process.env.VITE_SITE_URL) {
+    // Not fatal — a sitemap of localhost URLs is useless but harmless on a dev machine. It would be
+    // actively wrong if it ever shipped, so say so loudly rather than writing it in silence.
+    console.warn(
+        '[seo] VITE_SITE_URL is not set — falling back to http://localhost:5173. ' +
+            'The sitemap and canonical URLs generated now are only valid locally.',
+    );
+}
+
 const SITE_URL = stripTrailingSlashes(process.env.VITE_SITE_URL || 'http://localhost:5173');
 const API_URL = stripTrailingSlashes(process.env.VITE_API_URL || '');
 const PAGE_SIZE = 100; // PaginationConstants.MaxPageSize on the backend
