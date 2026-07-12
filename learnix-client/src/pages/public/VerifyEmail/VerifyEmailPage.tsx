@@ -198,7 +198,10 @@ export default function VerifyEmailPage() {
                     <span className="font-medium text-foreground">{email}</span>
                 </p>
 
-                <div className="mt-8 flex justify-center gap-2">
+                {/* The boxes shrink with the card instead of keeping a fixed 48px: six of those plus the
+                    gaps and the card's padding need ~400px of viewport, so on a 360px phone the last
+                    one fell off the edge. */}
+                <div className="mt-8 flex justify-center gap-1.5 sm:gap-2">
                     {code.map((digit, idx) => (
                         <input
                             key={idx}
@@ -218,7 +221,7 @@ export default function VerifyEmailPage() {
                             onPaste={(e) => handlePaste(e, idx)}
                             disabled={isVerifying}
                             className={cn(
-                                'h-14 w-12 rounded-xl border bg-background text-center text-xl font-bold outline-none transition-all',
+                                'h-14 w-full min-w-0 max-w-12 flex-1 rounded-xl border bg-background text-center text-xl font-bold outline-none transition-all',
                                 'focus:border-primary focus:ring-4 focus:ring-primary/10',
                                 digit
                                     ? 'border-primary text-foreground'
