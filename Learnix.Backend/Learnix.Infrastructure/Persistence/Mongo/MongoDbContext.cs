@@ -9,7 +9,7 @@ public sealed class MongoDbContext
 {
     private readonly IMongoDatabase _database;
 
-    public MongoDbContext(IMongoClient client, IOptions<MongoSettings> options)
+    public MongoDbContext(IMongoClient client, IOptions<MongoOptions> options)
     {
         MongoConventionRegistration.Register();
         _database = client.GetDatabase(options.Value.DatabaseName);

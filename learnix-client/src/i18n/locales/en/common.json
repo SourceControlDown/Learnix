@@ -2,7 +2,13 @@
     "errorBoundaryTitle": "Something went wrong",
     "errorBoundarySubtitle": "An unexpected error occurred. Please refresh the page.",
     "errorBoundaryRefresh": "Refresh page",
+    "notFound": {
+        "title": "Page not found",
+        "subtitle": "The page you're looking for doesn't exist or was moved.",
+        "backHome": "Back home"
+    },
     "actions": {
+        "close": "Close",
         "cancel": "Cancel",
         "save": "Save",
         "delete": "Delete",
@@ -53,6 +59,7 @@
         "student": "Student"
     },
     "navigation": {
+        "home": "Home",
         "courses": "Courses",
         "dashboard": "Dashboard",
         "myProfile": "My Profile",

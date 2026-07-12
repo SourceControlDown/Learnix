@@ -85,7 +85,9 @@ export function ThumbnailCell({
                     </div>
                 </>
             ) : (
-                <div
+                <button
+                    type="button"
+                    title="Upload image"
                     className={cn(
                         'flex h-10 w-10 cursor-pointer items-center justify-center rounded text-xl',
                         visual.iconBgClass,
@@ -97,7 +99,7 @@ export function ThumbnailCell({
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                         <Upload size={14} className="text-white" />
                     </div>
-                </div>
+                </button>
             )}
             <input
                 type="file"

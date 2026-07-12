@@ -4,7 +4,7 @@ using Learnix.Application.AiChat.Abstractions.Models;
 using Learnix.Application.AiChat.Constants;
 using Learnix.Application.AiChat.Queries.GetCourseContextForAi;
 using Learnix.Application.AiChat.Tools;
-using Learnix.Application.Common.Settings;
+using Learnix.Application.Common.Options;
 using MediatR;
 using Microsoft.Extensions.Options;
 
@@ -18,7 +18,7 @@ public sealed class ChatStreamOrchestrator(
     IEnumerable<IChatTool> tools,
     IMediator mediator,
     IAiAvailabilityStore availability,
-    IOptions<AiChatSettings> aiChatOptions)
+    IOptions<AiChatOptions> aiChatOptions)
 {
     private readonly IReadOnlyList<IChatTool> _tools = tools.ToList();
     private readonly int _contextWindowSize = aiChatOptions.Value.ContextWindowSize;
@@ -55,7 +55,7 @@ public sealed class ChatStreamOrchestrator(
             yield return evt;
         }
 
-        // This turn is the health check: it just called the provider for real (ADR-CHAT-014).
+        // This turn is the health check: it just called the provider for real (ADR-BACK-CHAT-014).
         if (failures.Count > 0)
             await availability.ReportOutageAsync(failures[0], cancellationToken);
         else
@@ -182,7 +182,7 @@ public sealed class ChatStreamOrchestrator(
     /// What the client is told about a failed turn: only what a student can act on. The provider's own
     /// message never leaves the server — it can carry key fragments and endpoint detail — and the reason is
     /// narrowed to the public one, so a rejected key reads as "unavailable" and not as a status report on
-    /// our credentials (ADR-CHAT-014).
+    /// our credentials (ADR-BACK-CHAT-014).
     /// </summary>
     private static string ErrorPayload(ProviderErrorEvent error)
     {
@@ -198,7 +198,7 @@ public sealed class ChatStreamOrchestrator(
     /// <summary>
     /// The course behind a tutor session. A failure here is not worth killing the turn over: the tutor keeps
     /// its tools and simply answers without knowing which course it is in — which is where it was before
-    /// ADR-CHAT-013.
+    /// ADR-BACK-CHAT-013.
     /// </summary>
     private async Task<CourseContextForAiDto?> LoadCourseContextAsync(
         ChatScope scope,

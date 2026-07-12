@@ -82,7 +82,7 @@ public static class CacheKeys
     public static class AiChat
     {
         /// <summary>
-        /// The AI provider outage in force, if any (ADR-CHAT-014). No TTL constant: the entry expires when
+        /// The AI provider outage in force, if any (ADR-BACK-CHAT-014). No TTL constant: the entry expires when
         /// the provider said it would be worth calling again, so the key's own lifetime ends the outage.
         /// </summary>
         public static string Outage => "ai-chat:outage";

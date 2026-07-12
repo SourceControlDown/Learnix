@@ -3,7 +3,7 @@ using Learnix.Application.AiChat.Abstractions.Models;
 namespace Learnix.Application.AiChat.Abstractions;
 
 /// <summary>
-/// What the platform last learned about the AI provider, from the chat traffic itself (ADR-CHAT-014).
+/// What the platform last learned about the AI provider, from the chat traffic itself (ADR-BACK-CHAT-014).
 /// <para>
 /// The status is never probed: on a free tier the quota is counted in requests, so a health-check ping would
 /// consume exactly what it is checking for. Instead every real chat turn reports what happened, and the

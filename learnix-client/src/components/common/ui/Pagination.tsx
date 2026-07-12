@@ -49,7 +49,7 @@ export function Pagination({
     }
 
     const goTo = () => {
-        const n = parseInt(goToValue, 10);
+        const n = Number.parseInt(goToValue, 10);
         setGoToValue('');
         if (!Number.isNaN(n)) onChange(Math.min(totalPages, Math.max(1, n)));
     };

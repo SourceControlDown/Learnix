@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { User } from 'lucide-react';
 import { CourseCard } from '@/components/common/course/CourseCard';
+import { Seo } from '@/components/common/seo/Seo';
 import { QueryError } from '@/components/common/system/QueryError';
 import { BackLink } from '@/components/common/ui/BackLink';
 import { TextLink } from '@/components/common/ui/TextLink';
@@ -55,6 +56,7 @@ export default function InstructorProfilePage() {
     if (profileMissing) {
         return (
             <div className="mx-auto max-w-5xl px-6 py-20 text-center">
+                <Seo title={t('notFound')} noIndex />
                 <p className="text-muted-foreground">{t('notFound')}</p>
                 <TextLink to={APP_ROUTES.public.courses} className="mt-4 inline-block">
                     {t('common:actions.backToCatalog')}
@@ -66,6 +68,7 @@ export default function InstructorProfilePage() {
     if (!profile) {
         return (
             <div className="mx-auto max-w-5xl px-6 py-12">
+                <Seo title={t('error')} noIndex />
                 <BackLink
                     fallbackTo={APP_ROUTES.public.courses}
                     fallbackLabel={t('common:actions.backToCatalog')}
@@ -84,6 +87,13 @@ export default function InstructorProfilePage() {
 
     return (
         <div className="mx-auto max-w-5xl px-6 py-12">
+            <Seo
+                title={t('seo.title', { name: fullName })}
+                description={profile.bio || t('seo.description', { name: fullName })}
+                image={profile.avatarUrl}
+                type="profile"
+                canonicalPath={APP_ROUTES.public.instructorProfile(instructorId!)}
+            />
             <BackLink
                 fallbackTo={APP_ROUTES.public.courses}
                 fallbackLabel={t('common:actions.backToCatalog')}

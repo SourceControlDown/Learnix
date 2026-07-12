@@ -1,5 +1,6 @@
+using Learnix.DbMigrator.DatabaseObjects;
 using Learnix.DbMigrator.Seeders;
-using Learnix.Infrastructure;
+using Learnix.Infrastructure.Modules;
 using Learnix.Infrastructure.Persistence.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -60,6 +61,7 @@ builder.ConfigureServices((context, services) =>
     services.AddScoped<StudentSeeder>();
     services.AddScoped<StorageSeeder>();
     services.AddScoped<RedisCacheFlusher>();
+    services.AddScoped<DatabaseObjectsApplier>();
 });
 
 var host = builder.Build();
@@ -77,6 +79,12 @@ try
     var dbContext = services.GetRequiredService<ApplicationDbContext>();
     await dbContext.Database.MigrateAsync();
     logger.LogInformation("Migrations applied successfully.");
+
+    // Functions and triggers EF does not model. Repeatable and idempotent, so they survive a squash of
+    // the migration history — which is how the outbox notify trigger was lost (ADR-BACK-MIGR-003).
+    logger.LogInformation("Applying repeatable database objects...");
+    var databaseObjects = services.GetRequiredService<DatabaseObjectsApplier>();
+    await databaseObjects.ApplyAsync();
 
     if (args.Contains("--create-blob"))
     {
@@ -114,7 +122,7 @@ try
     }
 
     // Last, and only once the data is final: whatever Redis holds was cached against the database as it was
-    // before this run — and after a re-seed, the ids in it may not exist any more (ADR-INFRA-014).
+    // before this run — and after a re-seed, the ids in it may not exist any more (ADR-BACK-INFRA-014).
     var cacheFlusher = services.GetRequiredService<RedisCacheFlusher>();
     await cacheFlusher.FlushAsync();
 

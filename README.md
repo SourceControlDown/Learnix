@@ -3,8 +3,11 @@
 <div align="center">
 
 [![Checks & Validation](https://github.com/Oleh-Bashtovyi/Learnix/actions/workflows/checks.yml/badge.svg)](https://github.com/Oleh-Bashtovyi/Learnix/actions/workflows/checks.yml)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Learnix&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Learnix)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Learnix&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Learnix)
+[![Maintainability](https://sonarcloud.io/api/project_badges/measure?project=Learnix&metric=sqale_rating)](https://sonarcloud.io/summary/overall?id=Learnix)
+[![Reliability](https://sonarcloud.io/api/project_badges/measure?project=Learnix&metric=reliability_rating)](https://sonarcloud.io/summary/overall?id=Learnix)
+[![Security](https://sonarcloud.io/api/project_badges/measure?project=Learnix&metric=security_rating)](https://sonarcloud.io/summary/overall?id=Learnix)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Learnix&metric=coverage)](https://sonarcloud.io/component_measures?id=Learnix&metric=coverage)
+[![Duplication](https://sonarcloud.io/api/project_badges/measure?project=Learnix&metric=duplicated_lines_density)](https://sonarcloud.io/component_measures?id=Learnix&metric=duplicated_lines_density)
 
 ![.NET 8](https://img.shields.io/badge/-%2E%4E%45%54%208.0-512BD4?logo=dotnet)
 ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
@@ -110,7 +113,9 @@ The backend application is thoroughly tested to ensure domain logic integrity an
 - **NSubstitute:** A friendly mocking framework used to isolate dependencies and simulate external services.
 - **Coverlet:** Cross-platform code coverage library for .NET, integrated into our CI/CD pipeline.
 
-Code coverage and code quality are continuously analyzed via **SonarCloud** during the CI pipeline.
+Code quality is continuously analyzed via **SonarCloud** during the CI pipeline — across the whole
+repository, backend and frontend alike. Coverage is a backend metric: there are no frontend tests,
+so `learnix-client` is excluded from the coverage calculation (but not from the quality analysis).
 
 To run the tests locally and generate a coverage report, execute:
 ```bash

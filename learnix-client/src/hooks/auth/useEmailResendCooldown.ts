@@ -10,7 +10,7 @@ export function useEmailResendCooldown() {
         const checkCooldown = () => {
             const storedTimestamp = localStorage.getItem(COOLDOWN_KEY);
             if (storedTimestamp) {
-                const timestamp = parseInt(storedTimestamp, 10);
+                const timestamp = Number.parseInt(storedTimestamp, 10);
                 const elapsed = Math.floor((Date.now() - timestamp) / 1000);
                 if (elapsed < COOLDOWN_SECONDS) {
                     setSecondsRemaining(COOLDOWN_SECONDS - elapsed);

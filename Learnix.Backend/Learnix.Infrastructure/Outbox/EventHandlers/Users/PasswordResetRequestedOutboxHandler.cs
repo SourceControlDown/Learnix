@@ -1,6 +1,6 @@
 using System.Text;
 using Learnix.Application.Common.Events;
-using Learnix.Application.Common.Settings;
+using Learnix.Application.Common.Options;
 using Learnix.Domain.Entities;
 using Learnix.Domain.Events;
 using Learnix.Infrastructure.Outbox.Payloads.Users;
@@ -13,10 +13,10 @@ namespace Learnix.Infrastructure.Outbox.EventHandlers.Users;
 
 internal sealed class PasswordResetRequestedOutboxHandler(
     OutboxDbContextHolder holder,
-    IOptions<AppSettings> appSettings)
+    IOptions<AppOptions> appSettings)
     : INotificationHandler<DomainEventNotification<PasswordResetRequestedDomainEvent>>
 {
-    private readonly AppSettings _appSettings = appSettings.Value;
+    private readonly AppOptions _appSettings = appSettings.Value;
 
     public async Task Handle(
         DomainEventNotification<PasswordResetRequestedDomainEvent> notification,

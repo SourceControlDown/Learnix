@@ -76,7 +76,7 @@ public class AdminRemoveRoleCommandHandlerTests
     {
         SetupUserFound();
         _roleService.GetRolesAsync(TargetId, Arg.Any<CancellationToken>())
-                    .Returns(new List<string> { Roles.Student });
+                    .Returns([Roles.Student]);
 
         var result = await _sut.Handle(new AdminRemoveRoleCommand(TargetId, Roles.Instructor), default);
 
@@ -89,7 +89,7 @@ public class AdminRemoveRoleCommandHandlerTests
     {
         SetupUserFound();
         _roleService.GetRolesAsync(AdminId, Arg.Any<CancellationToken>())
-                    .Returns(new List<string> { Roles.Admin, Roles.Student });
+                    .Returns([Roles.Admin, Roles.Student]);
 
         var result = await _sut.Handle(new AdminRemoveRoleCommand(AdminId, Roles.Admin), default);
 
@@ -102,7 +102,7 @@ public class AdminRemoveRoleCommandHandlerTests
     {
         SetupUserFound();
         _roleService.GetRolesAsync(TargetId, Arg.Any<CancellationToken>())
-                    .Returns(new List<string> { Roles.Admin, Roles.Student });
+                    .Returns([Roles.Admin, Roles.Student]);
         _roleService.CountUsersInRoleAsync(Roles.Admin, Arg.Any<CancellationToken>())
                     .Returns(1);
 
@@ -119,7 +119,7 @@ public class AdminRemoveRoleCommandHandlerTests
     {
         SetupUserFound();
         _roleService.GetRolesAsync(TargetId, Arg.Any<CancellationToken>())
-                    .Returns(new List<string> { Roles.Student, Roles.Instructor });
+                    .Returns([Roles.Student, Roles.Instructor]);
 
         var result = await _sut.Handle(new AdminRemoveRoleCommand(TargetId, Roles.Instructor), default);
 
@@ -134,7 +134,7 @@ public class AdminRemoveRoleCommandHandlerTests
     {
         SetupUserFound();
         _roleService.GetRolesAsync(TargetId, Arg.Any<CancellationToken>())
-                    .Returns(new List<string> { Roles.Admin, Roles.Student });
+                    .Returns([Roles.Admin, Roles.Student]);
         _roleService.CountUsersInRoleAsync(Roles.Admin, Arg.Any<CancellationToken>())
                     .Returns(2);
 

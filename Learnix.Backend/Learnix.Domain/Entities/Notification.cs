@@ -6,7 +6,7 @@ namespace Learnix.Domain.Entities;
 /// <summary>
 /// A thing that happened, addressed to one user — not a sentence about it. The bell renders whatever the
 /// client makes of <see cref="Type"/> and <see cref="Parameters"/>; the server never picks the words
-/// (ADR-NOTIF-001).
+/// (ADR-BACK-NOTIF-001).
 /// </summary>
 public sealed class Notification : BaseEntity
 {

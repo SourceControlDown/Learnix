@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Clock, Star, Tag, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { Seo } from '@/components/common/seo/Seo';
 import { QueryError } from '@/components/common/system/QueryError';
 import { BackLink } from '@/components/common/ui/BackLink';
 import { Pagination } from '@/components/common/ui/Pagination';
@@ -17,6 +17,7 @@ import { useWishlist } from '@/hooks/student/useWishlist';
 import { useAddToWishlist, useRemoveFromWishlist } from '@/hooks/student/useWishlistMutations';
 import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
+import { breadcrumbJsonLd, courseJsonLd } from '@/utils/seo';
 import { CourseSidebar } from './components/CourseSidebar';
 import { CurriculumAccordion } from './components/CurriculumAccordion';
 import { ReviewForm } from './components/ReviewForm';
@@ -25,7 +26,7 @@ import { ReviewsList } from './components/ReviewsList';
 export default function CourseDetailPage() {
     const { courseId } = useParams<{ courseId: string }>();
     const user = useAuthStore((s) => s.user);
-    const { t } = useTranslation('courseDetail');
+    const { t, i18n } = useTranslation('courseDetail');
 
     const {
         data: course,
@@ -85,6 +86,8 @@ export default function CourseDetailPage() {
     if (courseError) {
         return (
             <div className="mx-auto max-w-5xl p-6 sm:py-12">
+                {/* A course that failed to load must never be indexed under its own URL. */}
+                <Seo title={t('error.title')} noIndex />
                 <BackLink
                     fallbackTo={APP_ROUTES.public.courses}
                     fallbackLabel={t('common:actions.backToCatalog')}
@@ -102,6 +105,7 @@ export default function CourseDetailPage() {
     if (!course) {
         return (
             <div className="mx-auto max-w-5xl px-6 py-20 text-center">
+                <Seo title={t('notFound')} noIndex />
                 <p className="text-muted-foreground">{t('notFound')}</p>
                 <TextLink to={APP_ROUTES.public.courses} className="mt-4 inline-block">
                     {t('common:actions.backToCatalog')}
@@ -115,16 +119,24 @@ export default function CourseDetailPage() {
 
     return (
         <>
-            <Helmet>
-                <title>{ogTitle}</title>
-                <meta name="description" content={description} />
-                <meta property="og:title" content={ogTitle} />
-                <meta property="og:description" content={description} />
-                {course.coverImageUrl && (
-                    <meta property="og:image" content={course.coverImageUrl} />
-                )}
-                <meta property="og:type" content="article" />
-            </Helmet>
+            <Seo
+                title={ogTitle}
+                description={description}
+                image={course.coverImageUrl}
+                type="article"
+                canonicalPath={APP_ROUTES.public.courseDetail(course.id)}
+                jsonLd={[
+                    courseJsonLd(course, i18n.language),
+                    breadcrumbJsonLd([
+                        { name: t('common:navigation.home'), path: APP_ROUTES.public.home },
+                        { name: t('common:navigation.courses'), path: APP_ROUTES.public.courses },
+                        {
+                            name: course.title,
+                            path: APP_ROUTES.public.courseDetail(course.id),
+                        },
+                    ]),
+                ]}
+            />
             <div className="mx-auto max-w-5xl p-6 sm:py-12">
                 <BackLink
                     fallbackTo={APP_ROUTES.public.courses}

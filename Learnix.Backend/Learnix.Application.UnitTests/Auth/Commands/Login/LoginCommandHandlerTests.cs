@@ -46,7 +46,7 @@ public class LoginCommandHandlerTests
             command.Email,
             "Test",
             "User",
-            new[] { "Student" },
+            ["Student"],
             true,
             "avatars/1.jpg");
 

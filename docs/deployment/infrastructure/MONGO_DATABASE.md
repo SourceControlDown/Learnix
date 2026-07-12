@@ -76,7 +76,7 @@ If you have already used your Cosmos DB Free Tier quota, or simply prefer an alt
    - **Where would you like to connect from?** Select `My Local Environment`.
    - Under IP Access List, click **Allow Access from Anywhere** (which adds `0.0.0.0/0`). This is necessary because Azure Container Apps use dynamic outbound IP addresses, and you'll need access from your local machine as well. Click **Add IP Address**.
    - Click **Finish and Close**.
-9. Once your cluster is ready, click **Connect** на сторінці огляду кластера.
+9. Once your cluster is ready, click **Connect** on the cluster overview page.
 10. Select **Drivers**.
 11. Under **Driver**, select `C# / .NET` and ensure the latest version is selected.
 12. Copy the **Connection String**. It will look something like this:

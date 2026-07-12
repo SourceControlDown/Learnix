@@ -41,9 +41,10 @@ export default function UserManagementPage() {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const searchParam = searchParams.get('q') ?? '';
-    const skipParam = parseInt(searchParams.get('skip') ?? '0', 10) || 0;
+    const skipParam = Number.parseInt(searchParams.get('skip') ?? '0', 10) || 0;
     const sizeParam =
-        parseInt(searchParams.get('size') ?? String(DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE;
+        Number.parseInt(searchParams.get('size') ?? String(DEFAULT_PAGE_SIZE), 10) ||
+        DEFAULT_PAGE_SIZE;
     const includeDeletedParam = searchParams.get('includeDeleted') === 'true';
 
     const [search, setSearch] = useState(searchParam);

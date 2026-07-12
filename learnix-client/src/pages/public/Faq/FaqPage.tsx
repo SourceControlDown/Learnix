@@ -1,12 +1,18 @@
-import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Mail } from 'lucide-react';
+import { Seo } from '@/components/common/seo/Seo';
 import { ProjectNoticeBanner } from '@/components/common/ui/ProjectNoticeBanner';
 import { SearchInput } from '@/components/common/ui/SearchInput';
 import { EXTERNAL_LINKS } from '@/const/links.constants';
 import { usePublicConfig } from '@/hooks/shared/usePublicConfig';
+import { faqJsonLd } from '@/utils/seo';
 import { FaqCategory } from './FaqCategory';
 import { FaqSidebar } from './FaqSidebar';
+
+interface FaqItem {
+    q: string;
+    a: string;
+}
 
 export default function FaqPage() {
     const { t } = useTranslation('faq');
@@ -29,14 +35,24 @@ export default function FaqPage() {
     }) as object;
     const accountAndPrivacy = t('categories.accountAndPrivacy', { returnObjects: true }) as object;
 
+    const allCategories = [
+        gettingStarted,
+        coursesAndLearning,
+        paymentsAndRefunds,
+        certificates,
+        forInstructors,
+        aiTutor,
+        accountAndPrivacy,
+    ] as { items: FaqItem[] }[];
+    const allQuestions = allCategories.flatMap((category) => category.items);
+
     return (
         <>
-            <Helmet>
-                <title>{t('seo.title')}</title>
-                <meta name="description" content={t('seo.description')} />
-                <meta property="og:title" content={t('seo.title')} />
-                <meta property="og:description" content={t('seo.description')} />
-            </Helmet>
+            <Seo
+                title={t('seo.title')}
+                description={t('seo.description')}
+                jsonLd={faqJsonLd(allQuestions)}
+            />
             <div className="bg-background">
                 <ProjectNoticeBanner />
 

@@ -1,9 +1,10 @@
-import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
+import { Seo } from '@/components/common/seo/Seo';
 import { ProjectNoticeBanner } from '@/components/common/ui/ProjectNoticeBanner';
 import { useCategories } from '@/hooks/course/useCategories';
 import { useCourseCount } from '@/hooks/course/useCourseCount';
 import { useFeaturedCourses } from '@/hooks/course/useFeaturedCourses';
+import { organizationJsonLd, webSiteJsonLd } from '@/utils/seo';
 import { AIAssistantSection } from './components/AIAssistantSection';
 import { CategoriesSection } from './components/CategoriesSection';
 import { FaqSection } from './components/FaqSection';
@@ -33,12 +34,11 @@ export default function LandingPage() {
 
     return (
         <>
-            <Helmet>
-                <title>{t('seo.title')}</title>
-                <meta name="description" content={t('seo.description')} />
-                <meta property="og:title" content={t('seo.title')} />
-                <meta property="og:description" content={t('seo.description')} />
-            </Helmet>
+            <Seo
+                title={t('seo.title')}
+                description={t('seo.description')}
+                jsonLd={[organizationJsonLd(), webSiteJsonLd()]}
+            />
             {/* <AnnouncementBar /> */}
             <ProjectNoticeBanner />
             <HeroSection />

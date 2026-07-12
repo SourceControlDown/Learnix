@@ -12,7 +12,7 @@ namespace Learnix.Infrastructure.AiChat.Anthropic;
 
 internal sealed class AnthropicChatProvider(
     AnthropicClient client,
-    IOptions<AnthropicSettings> options) : IAiChatProvider
+    IOptions<AnthropicOptions> options) : IAiChatProvider
 {
     public string Name => "Anthropic";
 
@@ -21,7 +21,7 @@ internal sealed class AnthropicChatProvider(
     /// <summary>
     /// Driven by hand rather than with <c>await foreach</c>: a rate limit or a rejected key surfaces as an
     /// exception out of <c>MoveNextAsync</c>, and an iterator cannot yield from inside a catch. See
-    /// <see cref="AiProviderErrors"/> and ADR-CHAT-014.
+    /// <see cref="AiProviderErrors"/> and ADR-BACK-CHAT-014.
     /// </summary>
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
         ChatRequest request,

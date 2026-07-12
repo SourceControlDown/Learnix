@@ -7,7 +7,7 @@ using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
-using Learnix.Application.Common.Settings;
+using Learnix.Application.Common.Options;
 using Learnix.Application.Courses.Abstractions;
 using Learnix.Application.Enrollments.Abstractions;
 using Learnix.Application.Enrollments.Specifications;
@@ -32,7 +32,7 @@ public sealed class GenerateCertificateCommandHandler(
     IBlobStorageService blobStorageService,
     ICourseCompletionService courseCompletion,
     IUnitOfWork unitOfWork,
-    IOptions<AppSettings> appSettings)
+    IOptions<AppOptions> appSettings)
     : IRequestHandler<GenerateCertificateCommand, Result<string>>
 #pragma warning restore S107
 {

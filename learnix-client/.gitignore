@@ -13,6 +13,10 @@ dist-ssr
 *.local
 .vite
 
+# Generated at build time by scripts/generate-seo-files.mjs (needs VITE_SITE_URL + the live API)
+public/sitemap.xml
+public/robots.txt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

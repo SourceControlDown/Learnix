@@ -4,7 +4,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Learnix.Application.Auth.Abstractions;
 using Learnix.Application.Common.Models;
-using Learnix.Application.Common.Settings;
+using Learnix.Application.Common.Options;
+using Learnix.Infrastructure.Constants;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -17,9 +18,9 @@ namespace Learnix.Infrastructure.Identity;
 /// - ADR-BACK-AUTH-008: JWT claims — standard OIDC + custom for roles
 /// - ADR-BACK-AUTH-014: Email confirmation soft restriction (email_verified claim)
 /// </remarks>
-internal sealed class JwtTokenService(IOptions<JwtSettings> jwtSettings) : ITokenService
+internal sealed class JwtTokenService(IOptions<JwtOptions> jwtSettings) : ITokenService
 {
-    private readonly JwtSettings _settings = jwtSettings.Value;
+    private readonly JwtOptions _settings = jwtSettings.Value;
 
     public AccessTokenResult GenerateAccessToken(
         Guid userId, string email, string firstName, string lastName, IReadOnlyList<string> roles,
@@ -33,10 +34,10 @@ internal sealed class JwtTokenService(IOptions<JwtSettings> jwtSettings) : IToke
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.Email, email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new("name", $"{firstName} {lastName}"),
-            new("email_verified", emailConfirmed ? "true" : "false"),
+            new(ClaimNames.Name, $"{firstName} {lastName}"),
+            new(ClaimNames.EmailVerified, emailConfirmed ? ClaimNames.TrueValue : ClaimNames.FalseValue),
         };
-        claims.AddRange(roles.Select(r => new Claim("role", r)));
+        claims.AddRange(roles.Select(r => new Claim(ClaimNames.Role, r)));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

@@ -8,6 +8,7 @@ Whether you are a human developer or an AI assistant, this is your entry point.
 
 - **[Project Structure](PROJECT_STRUCTURE.md)**: Details the folder organization, layered architecture boundaries, and what goes where.
 - **[Architecture](ARCHITECTURE.md)**: Explains the high-level architecture of the backend (Clean Architecture, CQRS, MediatR, EF Core).
+- **[API Surface](ENDPOINTS.md)**: Every endpoint, its auth and its rate limit — generated from the controllers and verified against them in CI (`npm run check:endpoints`).
 
 ## Architectural Decision Records (ADR)
 

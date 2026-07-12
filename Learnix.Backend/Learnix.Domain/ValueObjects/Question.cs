@@ -9,7 +9,17 @@ public sealed class Question
     public string Text { get; init; } = null!;
     public QuestionType Type { get; init; }
     public int Order { get; init; }
-    public IReadOnlyList<QuestionOption> Options { get; init; } = new List<QuestionOption>();
+
+    // Backed by a real List, and EF is pointed at the field (see LessonConfiguration): materializing the
+    // JSON column means *adding* to this collection, which a `[]` on IReadOnlyList — an empty array —
+    // cannot do. Every test lesson with options 500'd on `Collection was of a fixed size` until this.
+    private readonly List<QuestionOption> _options = [];
+    public IReadOnlyList<QuestionOption> Options
+    {
+        get => _options;
+        init => _options = value is null ? [] : [.. value];
+    }
+
     public TextAnswerConfig? TextAnswer { get; init; }
 
     // Scoring: 1 if correct, 0 otherwise. Answers reference options by Order (stable, persisted int).

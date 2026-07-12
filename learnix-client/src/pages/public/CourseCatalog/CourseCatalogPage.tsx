@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { CourseCard } from '@/components/common/course/CourseCard';
+import { Seo } from '@/components/common/seo/Seo';
 import { QueryError } from '@/components/common/system/QueryError';
 import { PageSizeSelect } from '@/components/common/ui/PageSizeSelect';
 import { Pagination } from '@/components/common/ui/Pagination';
@@ -11,7 +11,9 @@ import { CATALOG_PAGE_SIZES } from '@/const/ui.constants';
 import { useCatalogCourses } from '@/hooks/course/useCatalogCourses';
 import { useCategories } from '@/hooks/course/useCategories';
 import { useMediaQuery } from '@/hooks/shared/useMediaQuery';
+import { APP_ROUTES } from '@/routes/paths';
 import { cn } from '@/utils/cn';
+import { breadcrumbJsonLd } from '@/utils/seo';
 import { FilterSidebar } from './FilterSidebar';
 import { SortDropdown } from './SortDropdown';
 import { useCatalogFilters } from './hooks/useCatalogFilters';
@@ -45,8 +47,8 @@ export default function CourseCatalogPage() {
     const isDesktop = useMediaQuery('(min-width: 640px)');
     const pageSizeOptions = isDesktop ? CATALOG_PAGE_SIZES.desktop : CATALOG_PAGE_SIZES.mobile;
     useEffect(() => {
-        const max = pageSizeOptions[pageSizeOptions.length - 1];
-        if (pageSize > max) setPageSize(max);
+        const max = pageSizeOptions.at(-1);
+        if (max !== undefined && pageSize > max) setPageSize(max);
     }, [pageSizeOptions, pageSize, setPageSize]);
 
     const { data: categoriesData } = useCategories();
@@ -90,12 +92,17 @@ export default function CourseCatalogPage() {
 
     return (
         <>
-            <Helmet>
-                <title>{t('seo.title')}</title>
-                <meta name="description" content={t('seo.description')} />
-                <meta property="og:title" content={t('seo.title')} />
-                <meta property="og:description" content={t('seo.description')} />
-            </Helmet>
+            {/* Filters and paging live in the query string; canonical points at the clean URL so
+                every filtered view consolidates onto one indexable page. */}
+            <Seo
+                title={t('seo.title')}
+                description={t('seo.description')}
+                canonicalPath={APP_ROUTES.public.courses}
+                jsonLd={breadcrumbJsonLd([
+                    { name: t('common:navigation.home'), path: APP_ROUTES.public.home },
+                    { name: t('common:navigation.courses'), path: APP_ROUTES.public.courses },
+                ])}
+            />
             <div className="min-h-screen bg-background">
                 <div className="mx-auto max-w-7xl px-4 pb-8 pt-4 sm:px-6 md:pt-6">
                     {/* Page title */}

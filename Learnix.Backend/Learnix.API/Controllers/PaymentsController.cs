@@ -1,3 +1,4 @@
+using Learnix.API.Constants;
 using Learnix.API.Extensions;
 using Learnix.API.RateLimiting;
 using Learnix.Application.Payments.Commands.InitiateMockPayment;
@@ -16,7 +17,7 @@ public sealed class PaymentsController(ISender sender) : ControllerBase
 {
     [HttpPost]
     [EnableRateLimiting(RateLimitPolicies.Payments)]
-    [Authorize(Policy = "EmailConfirmed")]
+    [Authorize(Policy = AuthPolicies.EmailConfirmed)]
     public async Task<IActionResult> InitiatePayment(
         [FromBody] InitiateMockPaymentCommand command,
         CancellationToken cancellationToken)

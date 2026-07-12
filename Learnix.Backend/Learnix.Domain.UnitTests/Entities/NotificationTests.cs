@@ -11,7 +11,7 @@ public class NotificationTests
         // Arrange
         var userId = Guid.NewGuid();
 
-        // Act — what happened, and what it happened to. Never a sentence about it (ADR-NOTIF-001).
+        // Act — what happened, and what it happened to. Never a sentence about it (ADR-BACK-NOTIF-001).
         var notification = Notification.Create(
             userId, NotificationType.CertificateReady, """{"courseTitle":"React"}""");
 

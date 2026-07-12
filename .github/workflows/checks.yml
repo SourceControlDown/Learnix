@@ -17,9 +17,9 @@ jobs:
   backend:
     name: Backend Build & Test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./Learnix.Backend
+    # Every step runs from the repository root: SonarScanner for .NET requires begin, build and end
+    # to share a working directory, and that directory is what it indexes — so it has to be the root
+    # for learnix-client to be analysed at all.
     steps:
     # 1. Checkout repository
     - uses: actions/checkout@v4
@@ -35,44 +35,120 @@ jobs:
         java-version: 17
         distribution: 'zulu'
 
+    # The scanner analyses learnix-client too. SonarJS needs the client's node_modules to resolve
+    # types from tsconfig — without them TypeScript is still parsed, but type-aware rules go quiet.
+    - name: Setup Node.js 20 (for TypeScript analysis)
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: learnix-client/package-lock.json
+    - name: Install frontend dependencies
+      working-directory: ./learnix-client
+      run: npm ci
+
     # 3. Install SonarScanner and restore dependencies
     - name: Install SonarScanner for .NET
       run: dotnet tool install --global dotnet-sonarscanner
     - name: Restore dependencies
-      run: dotnet restore Learnix.Backend.slnx
+      run: dotnet restore Learnix.Backend/Learnix.Backend.slnx
 
     # 4. Enforce code formatting style
     - name: Check formatting
-      run: dotnet format Learnix.Backend.slnx --verify-no-changes
+      run: dotnet format Learnix.Backend/Learnix.Backend.slnx --verify-no-changes
 
     # 5. Run static code analysis and test coverage
+    #
+    # Runs from the repository root, not ./Learnix.Backend: the scanner's base directory is what it
+    # indexes, so anything above it — learnix-client — would never be analysed at all.
+    #
+    # sonar.exclusions: EF migrations are generated code; the Razor email templates are table-layout
+    # HTML whose "deprecated" attributes are what makes them render in Outlook; mockups/ is a static
+    # design artifact that ships to nobody; the rest is frontend build output and vendored code.
+    #
+    # sonar.coverage.exclusions: coverage is a backend metric. There are no frontend tests, so
+    # without this the client's ~20k untested lines would count as "lines to cover" and drag the
+    # project's coverage down by roughly half while telling us nothing new.
+    #
+    # sonar.issue.ignore: rules that are wrong *for this codebase*, each with its reason.
+    #   S6759 (props must be Readonly<T>) — props are immutable by contract in React; wrapping every
+    #   props type adds noise and catches nothing.
+    #   S6479 (no array index as key) — every hit is a fixed-length list that is never reordered
+    #   (4 avatars, 6 OTP boxes, JSON-LD blocks), so the index *is* the identity.
+    #   S3358 (no nested ternary) — in JSX the loading/empty/data chain is the idiom; hoisting each one
+    #   into a statement would push 25 render bodies out of the markup they describe.
+    #   S6505 (npm --ignore-scripts) — the frontend build *needs* lifecycle scripts: esbuild installs
+    #   its platform binary in postinstall, so `npm ci --ignore-scripts` breaks `vite build` outright.
+    #   S6437 (hard-coded password in PasswordInput.tsx) — it is the string "password", the input's
+    #   type attribute, not a credential.
+    #   S125 (commented-out code in index.html) — the SEO fallback tags are documented in a comment
+    #   block that the analyser mistakes for dead markup.
+    #   S5332 (clear-text protocol in deploy.yml) — ASPNETCORE_URLS="http://+:8080" is the *inside* of
+    #   the container. TLS terminates at the Container Apps ingress; the app never speaks to the public.
+    #   S6380 (anonymous access to blob containers) — course covers, category images and avatars are
+    #   public by design: they are served straight to unauthenticated visitors browsing the catalogue.
+    #   S6378 (no managed identity on the storage account) — the API authenticates with a connection
+    #   string held as a Container App secret. Managed identity is the better answer and is recorded as
+    #   the intended migration in INFRA.md; it is not a finding to suppress silently, but it is not a
+    #   defect in what exists today.
+    #   S6471 (nginx runs as root) — the official nginx:alpine image drops to the `nginx` user for its
+    #   workers; the master process needs root to bind :80. Switching to nginx-unprivileged would mean
+    #   re-porting the container to a high port for no gain behind Static Web Apps.
     - name: Begin SonarScanner
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      # Exclusions: EF migrations are generated code, and the Razor email templates are table-layout
-      # HTML whose "deprecated" attributes are what makes them render in Outlook.
-      run: dotnet sonarscanner begin /k:"Learnix" /o:"oleh-bashtovyi" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" /d:sonar.exclusions="**/Persistence/EntityFramework/Migrations/**,**/Email/Templates/**"
+      run: >
+        dotnet sonarscanner begin
+        /k:"Learnix" /o:"oleh-bashtovyi"
+        /d:sonar.token="$SONAR_TOKEN"
+        /d:sonar.host.url="https://sonarcloud.io"
+        /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml"
+        /d:sonar.exclusions="**/Persistence/EntityFramework/Migrations/**,**/Email/Templates/**,mockups/**,learnix-client/node_modules/**,learnix-client/dist/**,learnix-client/src/components/ui/**,**/*.min.js"
+        /d:sonar.coverage.exclusions="learnix-client/**,infrastructure/**,**/*.mjs,**/*.config.*"
+        /d:sonar.issue.ignore.multicriteria="e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11"
+        /d:sonar.issue.ignore.multicriteria.e1.ruleKey="typescript:S6759"
+        /d:sonar.issue.ignore.multicriteria.e1.resourceKey="**/*.tsx"
+        /d:sonar.issue.ignore.multicriteria.e2.ruleKey="typescript:S6479"
+        /d:sonar.issue.ignore.multicriteria.e2.resourceKey="**/*.tsx"
+        /d:sonar.issue.ignore.multicriteria.e3.ruleKey="typescript:S3358"
+        /d:sonar.issue.ignore.multicriteria.e3.resourceKey="**/*.tsx"
+        /d:sonar.issue.ignore.multicriteria.e4.ruleKey="docker:S6505"
+        /d:sonar.issue.ignore.multicriteria.e4.resourceKey="**/Dockerfile"
+        /d:sonar.issue.ignore.multicriteria.e5.ruleKey="githubactions:S6505"
+        /d:sonar.issue.ignore.multicriteria.e5.resourceKey="**/*.yml"
+        /d:sonar.issue.ignore.multicriteria.e6.ruleKey="typescript:S2068"
+        /d:sonar.issue.ignore.multicriteria.e6.resourceKey="**/PasswordInput.tsx"
+        /d:sonar.issue.ignore.multicriteria.e7.ruleKey="Web:S125"
+        /d:sonar.issue.ignore.multicriteria.e7.resourceKey="learnix-client/index.html"
+        /d:sonar.issue.ignore.multicriteria.e8.ruleKey="githubactions:S5332"
+        /d:sonar.issue.ignore.multicriteria.e8.resourceKey=".github/workflows/deploy.yml"
+        /d:sonar.issue.ignore.multicriteria.e9.ruleKey="terraform:S6380"
+        /d:sonar.issue.ignore.multicriteria.e9.resourceKey="infrastructure/storage.tf"
+        /d:sonar.issue.ignore.multicriteria.e10.ruleKey="terraform:S6378"
+        /d:sonar.issue.ignore.multicriteria.e10.resourceKey="infrastructure/storage.tf"
+        /d:sonar.issue.ignore.multicriteria.e11.ruleKey="docker:S6471"
+        /d:sonar.issue.ignore.multicriteria.e11.resourceKey="**/Dockerfile"
 
     # 6. Build the backend application
     - name: Build
-      run: dotnet build Learnix.Backend.slnx --no-restore --configuration Release
+      run: dotnet build Learnix.Backend/Learnix.Backend.slnx --no-restore --configuration Release
 
     # 7. Execute unit tests and collect code coverage
     - name: Test
       run: |
-        dotnet test Learnix.Backend.slnx \
+        dotnet test Learnix.Backend/Learnix.Backend.slnx \
           --no-build \
           --configuration Release \
           --collect:"XPlat Code Coverage" \
-          --settings coverage.runsettings
+          --settings Learnix.Backend/coverage.runsettings
 
     # 8. Upload coverage results to SonarCloud
     - name: End SonarScanner
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+      run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
   frontend:
     name: Frontend Build & Lint
@@ -130,11 +206,19 @@ jobs:
 
     # 3. Install root dependencies to get the duplication script
     - name: Install root dependencies
-      run: npm install
+      run: npm ci
 
     # 4. Execute duplication analysis across the codebase
     - name: Run code duplication check
       run: npm run check:duplication
+
+    # 5. docs/backend/ENDPOINTS.md is generated from the controllers — fail if they have drifted apart
+    - name: Check the documented API surface matches the controllers
+      run: npm run check:endpoints
+
+    # 6. ADRs are cited from prose and from C# comments — fail if a cited id has no ADR behind it
+    - name: Check every referenced ADR id exists
+      run: npm run check:adr
 
   gitleaks:
     name: Secret Scanning
@@ -150,7 +234,8 @@ jobs:
 
       # 2. Run Gitleaks action to scan for committed secrets
       - name: Scan git history for secrets
-        uses: gitleaks/gitleaks-action@v2
+        # Pinned to the commit v2 pointed at — a mutable tag would let the action change under us.
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml

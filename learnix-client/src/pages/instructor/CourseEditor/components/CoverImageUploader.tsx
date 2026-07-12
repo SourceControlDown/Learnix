@@ -44,12 +44,16 @@ export function CoverImageUploader({ value, onChange }: Props) {
             <label className="block text-sm font-medium text-foreground">
                 {t('coverImageLabel')}
             </label>
-            <div
-                onClick={() => !isUploading && inputRef.current?.click()}
+            {/* A button, not a div: the drop zone opens a file picker, so it has to be reachable and
+                activatable from the keyboard like any other control. */}
+            <button
+                type="button"
+                disabled={isUploading}
+                onClick={() => inputRef.current?.click()}
                 onDrop={onDrop}
                 onDragOver={(e) => e.preventDefault()}
                 className={cn(
-                    'relative aspect-video cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-border bg-muted transition-colors hover:border-primary',
+                    'relative aspect-video w-full cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-border bg-muted transition-colors hover:border-primary',
                     isUploading && 'cursor-wait opacity-70',
                 )}
             >
@@ -74,7 +78,7 @@ export function CoverImageUploader({ value, onChange }: Props) {
                         </span>
                     </div>
                 )}
-            </div>
+            </button>
             {error && <p className="text-xs text-destructive">{error}</p>}
             <input
                 ref={inputRef}

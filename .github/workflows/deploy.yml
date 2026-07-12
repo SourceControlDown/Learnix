@@ -45,6 +45,8 @@ name: Deploy to Azure
 # (cors)         PROD_ALLOWED_ORIGINS            — Frontend URL, e.g. https://learnix.azurestaticapps.net
 # (frontend)     PROD_CLIENT_BASE_URL            — Same as PROD_ALLOWED_ORIGINS
 # (frontend)     VITE_API_URL                    — Production API URL for frontend build
+# (frontend)     VITE_SITE_URL                   — Public frontend origin, e.g. https://learnix.azurestaticapps.net
+#                                                  (canonical URLs, og:image, sitemap.xml)
 # (domain)       CUSTOM_DOMAIN                   — (Optional) Custom frontend domain to show in README.md
 
 on:
@@ -66,8 +68,7 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-      # - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590
+      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3
         id: filter
         with:
           filters: |
@@ -95,8 +96,7 @@ jobs:
     # 1.1 If REGISTRY_TYPE is 'ACR'
     - name: Log in to Azure Container Registry
       if: ${{ vars.REGISTRY_TYPE == 'ACR' }}
-      uses: docker/login-action@v3
-      # uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
       with:
         registry: ${{ vars.ACR_LOGIN_SERVER }}
         username: ${{ vars.ACR_USERNAME }}
@@ -105,8 +105,7 @@ jobs:
     # 1.1 If REGISTRY_TYPE is 'DOCKERHUB'
     - name: Log in to Docker Hub
       if: ${{ vars.REGISTRY_TYPE == 'DOCKERHUB' }}
-      uses: docker/login-action@v3
-      # uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
       with:
         registry: docker.io
         username: ${{ vars.DOCKERHUB_USERNAME }}
@@ -115,8 +114,7 @@ jobs:
     # 1.2 Metadata and build image
     - name: Extract metadata (tags, labels)
       id: meta
-      uses: docker/metadata-action@v5
-      # uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051
+      uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
       with:
         images: ${{ vars.REGISTRY_TYPE == 'ACR' && vars.ACR_LOGIN_SERVER || vars.DOCKERHUB_USERNAME }}/learnix-api
         tags: |
@@ -125,8 +123,7 @@ jobs:
 
     # 1.3 Build and push API image
     - name: Build and push API image
-      uses: docker/build-push-action@v5
-      # uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25
+      uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
       with:
         context: ./Learnix.Backend
         file: ./Learnix.Backend/Dockerfile
@@ -153,15 +150,13 @@ jobs:
 
     # Authenticate to Azure ONCE
     - name: Azure Login
-      uses: azure/login@v2
-      # uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5
+      uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     # Provision Infrastructure
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      # uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+      uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
 
     - name: Terraform Init & Apply
       working-directory: ./infrastructure
@@ -197,6 +192,10 @@ jobs:
 
     # Configure Private Registry Credentials (Required for Docker Hub)
     - name: Configure Container App Registry
+      env:
+        # Through the environment, not interpolated into the script: an expanded secret ends up in the
+        # command line, and anything that echoes the command leaks it.
+        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       run: |
         if [ "${{ vars.REGISTRY_TYPE }}" == "DOCKERHUB" ]; then
           az containerapp registry set \
@@ -204,7 +203,7 @@ jobs:
             --resource-group ${{ vars.CONTAINER_APP_RG }} \
             --server docker.io \
             --username ${{ vars.DOCKERHUB_USERNAME }} \
-            --password ${{ secrets.DOCKERHUB_TOKEN }}
+            --password "$DOCKERHUB_TOKEN"
         fi
 
     # Deploy to Container Apps using Azure CLI directly (Action v1 has bugs with spaces in env vars)
@@ -271,8 +270,8 @@ jobs:
         # variable is missing, which is the SAFE and CORRECT approach for ACA due 
         # to network isolation and ForwardLimit=1. 
         # ONLY enable this if migrating away from PaaS to a traditional VM/VPS setup.
+        # If you ever do, pass the proxy list through `env:` — never expand a secret inline here.
         # =========================================================================
-        # Proxy__TrustedProxies__0=${{ secrets.PROD_TRUSTED_PROXIES }}
 
   # 3. Build & deploy frontend to Static Web Apps
   deploy-frontend:
@@ -308,13 +307,13 @@ jobs:
       env:
         VITE_API_URL: ${{ vars.VITE_API_URL }}
         VITE_GOOGLE_CLIENT_ID: ${{ vars.PROD_GOOGLE_CLIENT_ID }}
+        VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
       run: |
         npm ci
         npm run build
 
     - name: Deploy to Azure Static Web Apps
-      uses: Azure/static-web-apps-deploy@v1
-      # uses: Azure/static-web-apps-deploy@4d27395796ac319302594769cfe812bd207490b1
+      uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9 # v1
       with:
         azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
         repo_token: ${{ secrets.GITHUB_TOKEN }}

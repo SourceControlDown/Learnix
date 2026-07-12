@@ -70,5 +70,5 @@ Command / Query Handler  (business logic, happy path only)
 > container to its permanent one happens **synchronously**, inside the command handler, via
 > `IBlobStorageService.CommitUploadAsync()` before `SaveChangesAsync()`. The Outbox only ever
 > *deletes* blobs (`OutboxMessageTypes.DeleteBlob`) — there is no "confirm" message type.
-> See [Blob Storage & Uploads](decisions/BLOB.md).
+> See [Blob Storage & Uploads](decisions/platform/BLOB.md).
 

@@ -5,7 +5,7 @@ namespace Learnix.Application.AiChat.Queries.GetCourseContextForAi;
 /// <summary>
 /// Everything the tutor should know about the course without asking: what it is, how it is structured, and
 /// how far the student has got. Rendered into the system prompt by <c>ChatSystemPrompt</c>, so it is paid for
-/// once per request and never accumulates in the conversation — unlike a tool result (ADR-CHAT-013).
+/// once per request and never accumulates in the conversation — unlike a tool result (ADR-BACK-CHAT-013).
 /// </summary>
 /// <param name="Description">Truncated to <c>AiChatToolLimits.CourseDescriptionPreviewLength</c>.</param>
 /// <param name="OutlineCollapsed">

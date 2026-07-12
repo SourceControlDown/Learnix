@@ -16,6 +16,14 @@ export default [
   react.configs.flat['jsx-runtime'],
   ...tailwind.configs['flat/recommended'],
   {
+    // Build-time Node scripts (sitemap/robots generation) — Node globals, not browser ones.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: globals.node,
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2020,

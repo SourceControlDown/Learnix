@@ -73,6 +73,12 @@ public sealed class TestLessonConfiguration : IEntityTypeConfiguration<TestLesso
             {
                 ob.Ignore(o => o.Id);
             });
+
+            // Same reason as _questions below: EF adds to the collection while materializing, so it has
+            // to write to the mutable backing field, not to the IReadOnlyList the property exposes.
+            qb.Navigation(q => q.Options)
+                .HasField("_options")
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
         // Instruct EF Core to write directly to the private _questions field

@@ -60,13 +60,11 @@ export function useNotificationsHub() {
         });
 
         connection.on('AchievementUnlocked', (payload: AchievementUnlockedPayload) => {
-            toast.success(
-                `🏆 ${tAchievements(`meta.${payload.code}.name`, { defaultValue: payload.code })}`,
-                {
-                    description: tAchievements(`meta.${payload.code}.description`),
-                    duration: 6000,
-                },
-            );
+            const name = tAchievements(`meta.${payload.code}.name`, { defaultValue: payload.code });
+            toast.success(`🏆 ${name}`, {
+                description: tAchievements(`meta.${payload.code}.description`),
+                duration: 6000,
+            });
             queryClient.invalidateQueries({ queryKey: queryKeys.achievements.mine() });
         });
 

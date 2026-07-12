@@ -7,6 +7,9 @@ By completing this guide, you will determine the following values. Configure the
 * **Variables:**
   - `PROD_ALLOWED_ORIGINS` (The generated URL of your Static Web App, e.g., `https://proud-pond-xxx.azurestaticapps.net`)
   - `PROD_CLIENT_BASE_URL` (Same as above)
+  - `VITE_SITE_URL` (Same as above — the origin crawlers hit. Feeds canonical URLs, `og:image` and
+    the generated `sitemap.xml`/`robots.txt`. If it is missing, the build silently falls back to
+    `http://localhost:5173` and every canonical/OG URL points at localhost.)
 * **Secrets:**
   - `AZURE_STATIC_WEB_APPS_API_TOKEN` (The deployment token obtained at the end of this guide)
 

@@ -96,7 +96,7 @@ public sealed class StartTestAttemptCommandHandler(
     /// </summary>
     private static Result EnsureCooldownElapsed(
         Domain.Entities.TestLesson testLesson,
-        IReadOnlyList<Domain.Entities.TestAttempt> submittedAttempts)
+        List<Domain.Entities.TestAttempt> submittedAttempts)
     {
         if (!testLesson.CooldownMinutes.HasValue || submittedAttempts.Count == 0)
             return Result.Ok();

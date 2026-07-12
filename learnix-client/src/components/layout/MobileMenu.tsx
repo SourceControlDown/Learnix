@@ -72,8 +72,10 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
             {typeof document !== 'undefined' &&
                 createPortal(
                     <>
-                        {/* Backdrop */}
-                        <div
+                        {/* Backdrop — a button, so dismissing the menu is not mouse-only */}
+                        <button
+                            type="button"
+                            aria-label={t('common:actions.close')}
                             className={cn(
                                 'fixed inset-0 z-50 bg-background/80 backdrop-blur-sm transition-opacity duration-300',
                                 isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',

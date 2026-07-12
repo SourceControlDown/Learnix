@@ -5,7 +5,7 @@ using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
-using Learnix.Application.Common.Settings;
+using Learnix.Application.Common.Options;
 using MediatR;
 using Microsoft.Extensions.Options;
 
@@ -15,7 +15,7 @@ public sealed class GetMyCertificatesQueryHandler(
     ICurrentUserService currentUser,
     ICertificateRepository certificateRepository,
     IBlobStorageService blobStorageService,
-    IOptions<AppSettings> appSettings)
+    IOptions<AppOptions> appSettings)
     : IRequestHandler<GetMyCertificatesQuery, Result<IReadOnlyList<MyCertificateDto>>>
 {
     public async Task<Result<IReadOnlyList<MyCertificateDto>>> Handle(

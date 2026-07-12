@@ -1,6 +1,6 @@
 using System.Globalization;
 using Learnix.Application.Common.Abstractions.Messaging;
-using Learnix.Application.Common.Settings;
+using Learnix.Application.Common.Options;
 using Learnix.Infrastructure.Email.Models;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -13,13 +13,13 @@ namespace Learnix.Infrastructure.Email;
 
 internal sealed class SmtpEmailSender(
     IOptions<SmtpSettings> options,
-    IOptions<AppSettings> appSettings,
+    IOptions<AppOptions> appSettings,
     EmailRenderer renderer,
     IStringLocalizerFactory localizerFactory,
     ILogger<SmtpEmailSender> logger) : IEmailSender
 {
     private readonly SmtpSettings _settings = options.Value;
-    private readonly AppSettings _appSettings = appSettings.Value;
+    private readonly AppOptions _appSettings = appSettings.Value;
     private readonly IStringLocalizer _localizer = localizerFactory.Create(typeof(EmailStrings));
 
     public async Task SendEmailConfirmationAsync(string toEmail, string firstName, string confirmationCode, string language = "en", CancellationToken cancellationToken = default)

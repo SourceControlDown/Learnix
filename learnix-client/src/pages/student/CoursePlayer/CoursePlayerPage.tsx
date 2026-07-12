@@ -164,8 +164,6 @@ export default function CoursePlayerPage() {
             sections={progress?.sections ?? []}
             currentLessonId={lessonId!}
             courseId={courseId!}
-            totalLessons={progress?.totalLessons ?? 0}
-            completedLessons={progress?.completedLessons ?? 0}
             onClose={() => (isDesktop ? setIsSidebarCollapsed(true) : setIsSidebarOpen(false))}
         />
     );
@@ -282,8 +280,10 @@ export default function CoursePlayerPage() {
         </>
     );
 
+    // h-dvh, not h-screen: on a phone 100vh excludes the browser's URL bar, so the shell overflows the
+    // visible area and the lesson footer (mark-complete, prev/next) sits below the fold until scrolled to.
     return (
-        <div className="flex h-screen flex-col overflow-hidden bg-background">
+        <div className="flex h-dvh flex-col overflow-hidden bg-background">
             {/* Top bar */}
             <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
                 <div className="flex min-w-0 items-center gap-3">
@@ -429,7 +429,9 @@ export default function CoursePlayerPage() {
                     <div className="flex size-full flex-col overflow-hidden">
                         {/* Mobile sidebar overlay */}
                         {isSidebarOpen && (
-                            <div
+                            <button
+                                type="button"
+                                aria-label={t('common:actions.close')}
                                 className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
                                 onClick={() => setIsSidebarOpen(false)}
                             />

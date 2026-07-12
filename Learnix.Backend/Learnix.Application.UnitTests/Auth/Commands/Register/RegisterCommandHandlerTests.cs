@@ -43,7 +43,7 @@ public class RegisterCommandHandlerTests
             .Returns(Result.Ok(registrationResult));
 
         _tokenService.GenerateAccessToken(
-            userId, command.Email, command.FirstName, command.LastName, Arg.Any<string[]>(), false)
+            userId, command.Email, command.FirstName, command.LastName, Arg.Any<IReadOnlyList<string>>(), false)
             .Returns(new AccessTokenResult("access-token", DateTime.UtcNow.AddMinutes(15)));
 
         _tokenService.GenerateRefreshToken()

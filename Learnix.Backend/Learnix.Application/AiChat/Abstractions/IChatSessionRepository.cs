@@ -23,7 +23,7 @@ public interface IChatSessionRepository
 
     /// <summary>
     /// Every session the user has, in every scope. Chat history is as personal as it gets, so an account
-    /// being purged must not leave it behind in Mongo (ADR-USERS-001).
+    /// being purged must not leave it behind in Mongo (ADR-BACK-USERS-001).
     /// </summary>
     Task<long> DeleteAllForUserAsync(Guid userId, CancellationToken cancellationToken = default);
 }

@@ -13,7 +13,7 @@ Before implementing **any** backend feature, complete these steps in order:
 1. **Read `docs/TODO.md`** — identify the exact task(s), their phase, and current status.
 2. **Read `docs/FEATURES.md`** — understand the functional spec for the feature being built.
 3. **Read `docs/backend/ARCHITECTURE.md`** — review layer rules, request flow, and relevant patterns.
-4. **Check relevant ADR files in `docs/backend/decisions/`** — read only those that apply to the current task scope (Auth → `AUTH.md`, Domain → `DOMAIN.md`, Infra → `INFRA.md`, Blob → `BLOB.md`, etc.). The index is `docs/backend/decisions/README.md`.
+4. **Check relevant ADR files in `docs/backend/decisions/`** — read only those that apply to the current task scope. The folder is grouped by altitude: `platform/` (`ARCHITECTURE.md`, `DOMAIN.md`, `INFRA.md`, `MIGRATIONS.md`, `AUTH.md`, `BLOB.md`), `features/` (`LMS.md`, `CHAT.md`, `PAYMENT.md`, …), `operations/` (`CICD.md`, `LOGGING.md`, …). The index is `docs/backend/decisions/README.md`.
 5. **Check the relevant `Controllers/*.cs`** — verify route prefix, HTTP method, request/response shape, and auth requirements before writing any handler or DTO.
 6. **Look at an existing similar handler** — find a handler in the same feature folder or a nearby one that does something similar. Match its style exactly.
 
@@ -59,6 +59,25 @@ Application/{Feature}/Queries/{Name}/
 ```
 Application/{Feature}/Specifications/{Name}Specification.cs
 ```
+
+### Feature-level folders (ADR-BACK-ARCH-017)
+
+An artifact lives in **its use case's folder**. It moves up to the feature level only when a
+**second** use case actually uses it — never in anticipation.
+
+| Folder | Holds | Create it when |
+|---|---|---|
+| `Abstractions/` | Feature-scoped interfaces (`IPaymentRepository`) | The feature needs a port |
+| `Specifications/` | Ardalis specifications (plural — always) | The feature queries |
+| `Constants/` | Feature constants (ADR-BACK-ARCH-018) | — |
+| `Models/` | Types shared by 2+ use cases, and the contracts of `Abstractions/` | A **second** use case needs the type |
+| `Validation/` | Shared FluentValidation rule sets (`PasswordRules.ValidPassword()`) | A **second** validator needs the rule |
+| `EventHandlers/` | Domain-event handlers owned by the feature | The feature reacts to a domain event |
+| `Services/` | Feature-scoped logic that is not a use case | It is genuinely shared and does not fit a handler |
+
+Most features have none of the last four, and that is correct — their absence means nothing has
+needed sharing yet. **Never** create `Models/` or `Validation/` "to be clean": a speculative shared
+folder is where dead code goes to hide.
 
 ### Naming table
 
@@ -223,8 +242,14 @@ public sealed class CreateCourseValidator : AbstractValidator<CreateCourseComman
 }
 ```
 
-- Always reference `Domain/Constants/{Entity}Constants.cs` for length limits — never hardcode numbers.
-- Application-layer validation policies (password rules, RFC email) go in `Application/{Feature}/Constants/{Feature}ValidationConstants.cs`.
+- Always reference `Domain/Constants/{Entity}Constants.cs` for length limits and value bounds — never
+  hardcode numbers. This includes bounds you are only *filtering* by: a catalog filter on `minRating`
+  uses `ReviewConstants.MaxRating`, not a literal `5`.
+- Application-layer policies (password rules, RFC email length, page sizes, cache TTLs) go in
+  `Application/{Feature}/Constants/` — or `Application/Common/Constants/` if genuinely cross-feature.
+- The rule for which layer a constant belongs to is ADR-BACK-ARCH-018: **the layer that owns the rule**.
+  The test is "would the entity be invalid without it?" — if yes it is a domain invariant, if no it is
+  an application policy.
 - Validators are registered automatically via assembly scanning — no manual DI needed.
 
 ---
@@ -333,7 +358,7 @@ public class CoursePublishedHandler
 
 ## Blob Storage — Upload Pattern
 
-All file uploads follow the **temp → final** SAS flow (ADR-BLOB-003). **Never use `IFormFile` or server-side uploads** for user-initiated files.
+All file uploads follow the **temp → final** SAS flow (ADR-BACK-BLOB-003). **Never use `IFormFile` or server-side uploads** for user-initiated files.
 
 ```
 1. Client → POST /api/uploads/request-url { target, contentType }
@@ -402,7 +427,7 @@ dotnet run --project Learnix.DbMigrator --launch-profile Development -- --create
 docker compose --profile init up migrator
 ```
 
-- **Migrations are never auto-applied on API startup.** `Learnix.API/Program.cs` does not call `ApplyMigrationsAsync()`; `Learnix.DbMigrator` runs `Database.MigrateAsync()` as a separate step in dev and in CI/CD (see ADR MIGRATIONS.md).
+- **Migrations are never auto-applied on API startup.** Nothing outside `Learnix.DbMigrator` calls `Database.MigrateAsync()` — `Learnix.Infrastructure` owns the migration files, not the code that runs them. Do not reintroduce a `MigrateAsync()` call in `Program.cs` (see ADR-BACK-MIGR-001 in `docs/backend/decisions/platform/MIGRATIONS.md`).
 - `--create-blob` initializes local blob containers; `--seed-demo` seeds fake courses + a demo student. Role, admin and category seeders always run.
 - The API image ships without EF tooling by design — it has no DDL rights at runtime.
 
@@ -467,6 +492,8 @@ After completing **any** backend task:
 1. **Build and test** — `dotnet build Learnix.Backend.slnx` then `dotnet test Learnix.Backend.slnx`. Every project sets `TreatWarningsAsErrors` and `EnforceCodeStyleInBuild`, so an unused using or unused private member **fails the build**.
 2. **Format** — `dotnet format Learnix.Backend.slnx`. CI runs `--verify-no-changes` and fails otherwise.
 3. **Update `docs/TODO.md`** — set the task's `Status` column to `done` (the file uses status tables, not `[x]` checkboxes). Add a note in the `Notes` column if the implementation deviated from the spec or introduced constraints worth remembering.
-4. **Update ADR files** — if a new architectural decision was made, a pattern was changed, or a constraint was added: add an entry to the appropriate file in `docs/backend/decisions/` using `ADR-BACK-<SCOPE>-NNN` numbering. Numbering is **scoped per file** — read the file first and take the next free number after its current highest. If an existing ADR was superseded, mark it `Superseded by ADR-BACK-<SCOPE>-NNN`. A brand-new topic gets a new file from `TEMPLATE.md`, registered in `decisions/README.md`.
+4. **Update ADR files** — if a new architectural decision was made, a pattern was changed, or a constraint was added: add an entry to the appropriate file under `docs/backend/decisions/{platform,features,operations}/`. Numbering is **scoped per file** — read the file first and take the next free number after its current highest. Every backend ADR id is `ADR-BACK-<SCOPE>-NNN` — no exceptions. If an existing ADR was superseded, mark it `Superseded by ADR-BACK-<SCOPE>-NNN`. If the mechanism it describes no longer exists at all, remove it and record the old approach as a rejected alternative in whatever replaced it. A brand-new topic gets a new file from `TEMPLATE.md`, placed in the right folder and registered in `decisions/README.md`.
 
-> Note: `docs/backend/decisions/DOMAIN.md` still uses the legacy un-scoped `ADR-NNN` numbering and is written in Ukrainian. Follow its existing local convention when editing that file; use `ADR-BACK-<SCOPE>-NNN` everywhere else.
+> `npm run check:adr` fails if an ADR id is cited anywhere — prose or C# comment — with no ADR heading behind it. Run it after renaming or removing an ADR.
+
+> Note: `docs/backend/decisions/platform/DOMAIN.md` is still written in Ukrainian. Match the local language when editing that file.

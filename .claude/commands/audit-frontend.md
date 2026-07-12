@@ -9,8 +9,8 @@ Perform a thorough security and correctness audit of the Learnix React 19 + Type
 ## Step 1 — Gather context
 
 Read the following files before starting:
-- `ARCHITECTURE_FRONTEND.md`
-- `DECISIONS_FRONTEND.md`
+- `docs/frontend/ARCHITECTURE.md`
+- the relevant ADRs in `docs/frontend/decisions/` (index: `docs/frontend/decisions/README.md`)
 - `.claude/skills/frontend-standards/SKILL.md`
 
 Then scan the target scope with Glob/Grep to collect all `.ts` / `.tsx` files relevant to the audit.

@@ -67,3 +67,19 @@ csharp_new_line_before_finally = true
 csharp_new_line_before_members_in_object_initializers = true
 csharp_new_line_before_members_in_anonymous_types = true
 csharp_new_line_between_query_expression_clauses = true
+
+# ---------------------------------------------------------------------------------------------
+# LINQ that EF Core translates into SQL.
+#
+# CA1862 asks for `Contains(x, StringComparison.OrdinalIgnoreCase)` instead of
+# `Title.ToLower().Contains(x)`. Inside an expression tree that advice is actively wrong: EF Core
+# cannot translate the StringComparison overload and throws at runtime ("could not be translated").
+# The `ToLower()` call is the point — it becomes `LOWER(col) LIKE '%x%'`, evaluated by PostgreSQL.
+#
+# Scoped to query code, so the rule keeps protecting ordinary in-memory string comparisons.
+# ---------------------------------------------------------------------------------------------
+[Learnix.Backend/Learnix.Application/**/Specifications/*.cs]
+dotnet_diagnostic.CA1862.severity = none
+
+[Learnix.Backend/Learnix.Infrastructure/Services/Catalog/PublicCourseCatalogSearchService.cs]
+dotnet_diagnostic.CA1862.severity = none

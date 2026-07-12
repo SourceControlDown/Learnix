@@ -30,7 +30,10 @@ export default function VerifyEmailPage() {
     const from = (location.state as { from?: Location })?.from?.pathname;
 
     const [email, setEmail] = useState<string>((location.state as { email?: string })?.email || '');
-    const [code, setCode] = useState<string[]>(Array(6).fill(''));
+    // Kept apart from `email`, which decides *which* screen shows: typing into a field bound to it
+    // would swap the screen on the first keystroke, one character into the address.
+    const [emailInput, setEmailInput] = useState('');
+    const [code, setCode] = useState<string[]>(new Array(6).fill(''));
     const [resendCooldown, setResendCooldown] = useState(0);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -61,7 +64,7 @@ export default function VerifyEmailPage() {
         },
         onError: () => {
             toast.error(t('verify.error'));
-            setCode(Array(6).fill(''));
+            setCode(new Array(6).fill(''));
             inputRefs.current[0]?.focus();
         },
     });
@@ -71,7 +74,12 @@ export default function VerifyEmailPage() {
         isPending: isResending,
         isSuccess: isResendSuccess,
     } = useMutation({
-        mutationFn: () => authApi.resendConfirmation({ email }),
+        // The address can arrive as an argument: on the entry screen `email` is still empty at the
+        // moment the user asks for the code, and setState would not have landed yet anyway.
+        mutationFn: (emailOverride?: string | void) =>
+            authApi.resendConfirmation({
+                email: typeof emailOverride === 'string' ? emailOverride : email,
+            }),
         onSuccess: () => {
             setResendCooldown(60);
             toast.success(
@@ -99,11 +107,11 @@ export default function VerifyEmailPage() {
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-        const value = e.target.value.replace(/[^0-9]/g, '');
+        const value = e.target.value.replace(/\D/g, '');
         if (!value) return;
 
         const newCode = [...code];
-        newCode[index] = value.charAt(value.length - 1);
+        newCode[index] = value.at(-1) ?? '';
         setCode(newCode);
 
         if (index < 5 && value) {
@@ -113,7 +121,7 @@ export default function VerifyEmailPage() {
         if (index === 5 && value) {
             // Wait for state to update, then verify
             setTimeout(() => {
-                const fullCode = [...newCode.slice(0, 5), value.charAt(0)].join('');
+                const fullCode = [...newCode.slice(0, 5), value.at(0) ?? ''].join('');
                 if (fullCode.length === 6) {
                     verify(fullCode);
                 }
@@ -123,10 +131,7 @@ export default function VerifyEmailPage() {
 
     const handlePaste = (e: React.ClipboardEvent) => {
         e.preventDefault();
-        const pastedData = e.clipboardData
-            .getData('text')
-            .replace(/[^0-9]/g, '')
-            .slice(0, 6);
+        const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
         if (!pastedData) return;
 
         const newCode = [...code];
@@ -156,13 +161,15 @@ export default function VerifyEmailPage() {
                         <FormInput
                             type="email"
                             placeholder={t('verify.emailPlaceholder', 'Email address')}
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={emailInput}
+                            onChange={(e) => setEmailInput(e.target.value)}
                         />
                         <AsyncButton
                             onClick={() => {
-                                if (!email) return;
-                                resendEmail();
+                                const value = emailInput.trim();
+                                if (!value) return;
+                                setEmail(value);
+                                resendEmail(value);
                             }}
                             isLoading={isResending}
                             isSuccess={isResendSuccess}

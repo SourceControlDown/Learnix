@@ -1,3 +1,4 @@
+using Learnix.API.Constants;
 using Learnix.API.Extensions;
 using Learnix.Application.Enrollments.Commands.EnrollInCourse;
 using Learnix.Application.Enrollments.Queries.GetContinueLearning;
@@ -14,7 +15,7 @@ namespace Learnix.API.Controllers;
 public sealed class EnrollmentsController(ISender sender) : ControllerBase
 {
     [HttpPost]
-    [Authorize(Policy = "EmailConfirmed")]
+    [Authorize(Policy = AuthPolicies.EmailConfirmed)]
     public async Task<IActionResult> Enroll(
         [FromBody] EnrollInCourseCommand command,
         CancellationToken cancellationToken)
