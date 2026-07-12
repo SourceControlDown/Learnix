@@ -35,8 +35,15 @@ async function loadDotEnv() {
 }
 await loadDotEnv();
 
-const SITE_URL = (process.env.VITE_SITE_URL || 'http://localhost:5173').replace(/\/+$/, '');
-const API_URL = (process.env.VITE_API_URL || '').replace(/\/+$/, '');
+/** `/\/+$/` backtracks on a long run of slashes; a loop cannot. */
+function stripTrailingSlashes(url) {
+    let result = url;
+    while (result.endsWith('/')) result = result.slice(0, -1);
+    return result;
+}
+
+const SITE_URL = stripTrailingSlashes(process.env.VITE_SITE_URL || 'http://localhost:5173');
+const API_URL = stripTrailingSlashes(process.env.VITE_API_URL || '');
 const PAGE_SIZE = 100; // PaginationConstants.MaxPageSize on the backend
 
 /** Public, indexable routes that exist regardless of the database contents. */

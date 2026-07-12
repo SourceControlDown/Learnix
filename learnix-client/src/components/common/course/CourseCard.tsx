@@ -22,7 +22,7 @@ const GRADIENT_FALLBACKS = [
 ];
 
 function pickGradient(courseId: string): string {
-    const sum = courseId.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+    const sum = courseId.split('').reduce((acc, ch) => acc + (ch.codePointAt(0) ?? 0), 0);
     return GRADIENT_FALLBACKS[sum % GRADIENT_FALLBACKS.length];
 }
 

@@ -90,7 +90,7 @@ export default function RegisterPage() {
         minLength: passwordValue.length >= 8,
         uppercase: /[A-Z]/.test(passwordValue),
         lowercase: /[a-z]/.test(passwordValue),
-        digit: /[0-9]/.test(passwordValue),
+        digit: /\d/.test(passwordValue),
     };
 
     const onSubmit = async (data: RegisterFormData) => {
