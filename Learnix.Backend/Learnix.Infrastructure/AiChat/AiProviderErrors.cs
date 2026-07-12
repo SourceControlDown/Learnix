@@ -6,7 +6,7 @@ namespace Learnix.Infrastructure.AiChat;
 
 /// <summary>
 /// Turns whatever a provider SDK threw into the one thing the platform can act on: a reason and a time to
-/// come back (ADR-CHAT-014).
+/// come back (ADR-BACK-CHAT-014).
 /// <para>
 /// Neither SDK exposes a status code on a typed exception the two have in common — Google.GenAI throws
 /// <c>ClientError</c>/<c>ServerError</c>, Anthropic.SDK throws its own — so the classification reads the

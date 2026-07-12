@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace Learnix.API.Controllers;
 
 /// <summary>
-/// A chat session is identified by the signed-in user and the scope in the route (ADR-CHAT-004).
+/// A chat session is identified by the signed-in user and the scope in the route (ADR-BACK-CHAT-004).
 /// The platform assistant and a course tutor are separate conversations.
 /// </summary>
 [ApiController]
@@ -31,7 +31,7 @@ public sealed class AiChatController(
     /// <summary>
     /// Whether the assistant can answer right now. Read from what the last real chat turns learned about the
     /// provider — the endpoint never calls it, because on a free tier a health-check ping spends the very
-    /// quota it is checking (ADR-CHAT-014).
+    /// quota it is checking (ADR-BACK-CHAT-014).
     /// </summary>
     [HttpGet("status")]
     public async Task<IActionResult> GetStatus(CancellationToken cancellationToken)

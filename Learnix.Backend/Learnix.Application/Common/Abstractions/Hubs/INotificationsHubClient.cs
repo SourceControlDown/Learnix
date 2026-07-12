@@ -35,7 +35,7 @@ public sealed record CertificateIssuedNotification(
 
 /// <param name="Parameters">
 /// What the client cannot derive from the type — a course title, an achievement code. Null when the type says
-/// it all. The wording is the client's to choose; the server only reports what happened (ADR-NOTIF-001).
+/// it all. The wording is the client's to choose; the server only reports what happened (ADR-BACK-NOTIF-001).
 /// </param>
 public sealed record NotificationReceivedPayload(
     Guid NotificationId,

@@ -10,6 +10,6 @@ public sealed class AiChatSettings
     /// </summary>
     public int StoredMessagesLimit { get; init; } = 50;
 
-    /// <summary>How many of the stored messages are replayed to the provider (ADR-CHAT-005).</summary>
+    /// <summary>How many of the stored messages are replayed to the provider (ADR-BACK-CHAT-005).</summary>
     public int ContextWindowSize { get; init; } = 20;
 }

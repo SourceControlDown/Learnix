@@ -1,5 +1,5 @@
 using FluentResults;
-using Learnix.Application.Auth.Commands.Login;
+using Learnix.Application.Auth.Models;
 using MediatR;
 
 namespace Learnix.Application.Auth.Commands.Register;

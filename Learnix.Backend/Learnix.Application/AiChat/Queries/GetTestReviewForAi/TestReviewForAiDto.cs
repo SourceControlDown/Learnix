@@ -5,7 +5,7 @@ namespace Learnix.Application.AiChat.Queries.GetTestReviewForAi;
 /// <summary>
 /// A submitted attempt, as the tutor is allowed to see it. Unlike <c>LessonForAiDto</c> this one does carry
 /// the questions and the correct answers — the platform already revealed them to the student in
-/// <c>SubmitTestAttemptResponse</c> the moment they submitted. See ADR-CHAT-012.
+/// <c>SubmitTestAttemptResponse</c> the moment they submitted. See ADR-BACK-CHAT-012.
 /// </summary>
 public sealed record TestReviewForAiDto(
     Guid LessonId,

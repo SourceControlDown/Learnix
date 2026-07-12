@@ -241,11 +241,8 @@ public static class DependencyInjection
                 };
             });
 
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy("EmailConfirmed", policy =>
-                policy.RequireClaim("email_verified", "true"));
-        });
+        services.AddAuthorizationBuilder()
+            .AddPolicy("EmailConfirmed", policy => policy.RequireClaim("email_verified", "true"));
 
         // Fail-fast validation
         var googleSettings = configuration.GetSection(ConfigurationSectionNameCaonstants.Google).Get<GoogleSettings>()

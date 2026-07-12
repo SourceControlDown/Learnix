@@ -1,6 +1,6 @@
 using FluentResults;
 using Learnix.Application.Auth.Abstractions;
-using Learnix.Application.Auth.Commands.Login;
+using Learnix.Application.Auth.Models;
 using Learnix.Application.Common.Abstractions.Persistence;
 using MediatR;
 using RefreshTokenEntity = Learnix.Domain.Entities.RefreshToken;
@@ -39,7 +39,7 @@ internal sealed class RegisterCommandHandler(
             request.Email,
             request.FirstName,
             request.LastName,
-            new[] { Learnix.Domain.Constants.Roles.Student },
+            [Learnix.Domain.Constants.Roles.Student],
             false);
 
         var refresh = tokenService.GenerateRefreshToken();

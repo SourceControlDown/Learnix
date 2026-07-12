@@ -10,7 +10,7 @@ public enum ChatScopeType
 }
 
 /// <summary>
-/// What a chat session is about. Together with the user id it identifies the session — see ADR-CHAT-004.
+/// What a chat session is about. Together with the user id it identifies the session — see ADR-BACK-CHAT-004.
 /// </summary>
 public sealed record ChatScope
 {

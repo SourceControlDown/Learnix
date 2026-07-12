@@ -23,7 +23,7 @@ namespace Learnix.Infrastructure.Storage;
 // The type is carried by the Content-Type header, which CommitUploadAsync overwrites with the value
 // sniffed from the magic bytes rather than trusting what the client declared.
 // Entities store the relative "{container}/{blobName}" path — the container prefix is mandatory
-// (ADR-BLOB-003), and ParseBlobPath below splits it back out.
+// (ADR-BACK-BLOB-003), and ParseBlobPath below splits it back out.
 
 internal sealed class AzureBlobStorageService(
     BlobServiceClient blobServiceClient,
@@ -280,7 +280,7 @@ internal sealed class AzureBlobStorageService(
 
     private static string FormatBytes(long bytes)
     {
-        string[] suffix = { "B", "KB", "MB", "GB", "TB" };
+        string[] suffix = ["B", "KB", "MB", "GB", "TB"];
         int i;
         double dblSByte = bytes;
         for (i = 0; i < suffix.Length && bytes >= 1024; i++, bytes /= 1024)

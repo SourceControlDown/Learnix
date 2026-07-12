@@ -13,7 +13,7 @@ public interface IAiChatProvider
     /// <summary>
     /// A provider failure arrives as a <see cref="ProviderErrorEvent"/>, never as an exception. The SSE
     /// headers are already out by the time this runs, so a throw would only sever the connection and leave
-    /// the client guessing (ADR-CHAT-014).
+    /// the client guessing (ADR-BACK-CHAT-014).
     /// </summary>
     IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(ChatRequest request, CancellationToken cancellationToken);
 }

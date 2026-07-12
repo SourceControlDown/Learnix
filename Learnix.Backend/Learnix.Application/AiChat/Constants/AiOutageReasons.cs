@@ -3,7 +3,7 @@ namespace Learnix.Application.AiChat.Constants;
 /// <summary>
 /// Why the assistant is unavailable — as the server knows it. Only <see cref="Public"/> ever reaches a
 /// student: a rejected key and a missing one are the operator's business, and telling a stranger the state
-/// of our credentials buys them information and us nothing (ADR-CHAT-014).
+/// of our credentials buys them information and us nothing (ADR-BACK-CHAT-014).
 /// </summary>
 public static class AiOutageReasons
 {

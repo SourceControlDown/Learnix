@@ -12,7 +12,7 @@ namespace Learnix.Infrastructure.Outbox.Handlers.Notifications;
 /// <para>
 /// These handlers decide <b>what happened</b> and hand over the facts it happened to. They never write a
 /// sentence: the client renders the type through its own i18n, the way it renders every other string it shows
-/// (ADR-NOTIF-001). That is also why a title in the wrong language can no longer be stored forever.
+/// (ADR-BACK-NOTIF-001). That is also why a title in the wrong language can no longer be stored forever.
 /// </para>
 /// </summary>
 internal sealed class AchievementUnlockedNotificationHandler(

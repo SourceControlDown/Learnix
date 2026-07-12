@@ -28,7 +28,7 @@ internal sealed class GeminiChatProvider : IAiChatProvider
     /// The stream is driven by hand rather than with <c>await foreach</c>: a quota refusal surfaces as an
     /// exception out of <c>MoveNextAsync</c>, and an iterator cannot yield from inside a catch. Classifying
     /// it into a <see cref="ProviderErrorEvent"/> is the whole point — a throw here would just kill an SSE
-    /// connection whose headers are already out (ADR-CHAT-014).
+    /// connection whose headers are already out (ADR-BACK-CHAT-014).
     /// </summary>
     public async IAsyncEnumerable<ChatStreamEvent> StreamChatAsync(
         ChatRequest request,
@@ -169,7 +169,7 @@ internal sealed class GeminiChatProvider : IAiChatProvider
 
     private static Dictionary<string, object>? DeserializeArgs(string? json)
         => string.IsNullOrEmpty(json)
-            ? new Dictionary<string, object>()
+            ? []
             : JsonSerializer.Deserialize<Dictionary<string, object>>(json);
 
     private GenerateContentConfig BuildConfig(IReadOnlyList<ToolDefinition> tools, string systemPrompt)

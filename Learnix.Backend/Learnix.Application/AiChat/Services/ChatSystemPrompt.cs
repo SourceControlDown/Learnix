@@ -9,7 +9,7 @@ namespace Learnix.Application.AiChat.Services;
 /// Builds the system prompt for a scope. The tool list a scope advertises here must match what
 /// <see cref="Tools.IChatTool.IsAvailableIn"/> actually hands the provider.
 /// <para>
-/// The course a tutor session is about is described here rather than behind a tool (ADR-CHAT-013): the
+/// The course a tutor session is about is described here rather than behind a tool (ADR-BACK-CHAT-013): the
 /// system prompt is rebuilt on every request and never enters the conversation, so these facts cost the
 /// same once and can neither go stale nor pile up the way a stored tool result does.
 /// </para>

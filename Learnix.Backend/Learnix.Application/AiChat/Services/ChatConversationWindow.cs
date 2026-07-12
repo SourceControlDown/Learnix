@@ -3,7 +3,7 @@ using Learnix.Application.AiChat.Abstractions.Models;
 namespace Learnix.Application.AiChat.Services;
 
 /// <summary>
-/// Slices the sliding context window (ADR-CHAT-005) on a turn boundary.
+/// Slices the sliding context window (ADR-BACK-CHAT-005) on a turn boundary.
 /// </summary>
 public static class ChatConversationWindow
 {

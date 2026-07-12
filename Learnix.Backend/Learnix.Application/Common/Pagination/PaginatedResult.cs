@@ -20,5 +20,5 @@ public record PaginatedResult<TEntity>(
         => new(pageIndex, pageSize, totalCount, items.ToList().AsReadOnly());
 
     public static PaginatedResult<TEntity> Empty(int pageIndex, int pageSize)
-        => new(pageIndex, pageSize, 0, Array.Empty<TEntity>());
+        => new(pageIndex, pageSize, 0, []);
 }

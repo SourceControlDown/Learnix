@@ -4,7 +4,7 @@ namespace Learnix.Infrastructure.Email;
 
 internal sealed class EmailRenderer
 {
-    private readonly IRazorLightEngine _engine;
+    private readonly RazorLightEngine _engine;
 
     public EmailRenderer()
     {

@@ -6,9 +6,9 @@ namespace Learnix.Application.AiChat.Services;
 
 /// <summary>
 /// Drops the bodies of lesson-bound tool results that no longer describe the lesson the student has open
-/// (ADR-CHAT-013).
+/// (ADR-BACK-CHAT-013).
 /// <para>
-/// A tool result is persisted and replayed inside the sliding window on every later turn (ADR-CHAT-005).
+/// A tool result is persisted and replayed inside the sliding window on every later turn (ADR-BACK-CHAT-005).
 /// Without this, walking through a course drags every lesson body the student ever opened along with it —
 /// and coming back to an earlier lesson has the model fetch its body a second time, so the same 8 000
 /// characters sit in the window twice. Here the window keeps exactly one live body per lesson-bound tool:

@@ -5,7 +5,7 @@ namespace Learnix.Application.AiChat.Queries.GetLessonForAi;
 /// <summary>
 /// The lesson as the model is allowed to see it. Deliberately not <c>LessonContentDto</c>: that one carries a
 /// signed blob URL for the video, which must never leave the server for a third-party model provider.
-/// Test questions and their answers are absent by design — see ADR-CHAT-012.
+/// Test questions and their answers are absent by design — see ADR-BACK-CHAT-012.
 /// </summary>
 /// <param name="ContentAvailable">False for video lessons: there is no transcript and the model cannot watch it.</param>
 /// <param name="Content">Body of a written lesson, possibly truncated. Null for video and test lessons.</param>

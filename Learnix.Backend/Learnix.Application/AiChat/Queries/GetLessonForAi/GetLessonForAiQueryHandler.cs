@@ -86,7 +86,7 @@ internal sealed class GetLessonForAiQueryHandler(
             ContentTruncated: truncated);
     }
 
-    /// <summary>Questions are never read here — only counted. See ADR-CHAT-012.</summary>
+    /// <summary>Questions are never read here — only counted. See ADR-BACK-CHAT-012.</summary>
     private async Task<LessonForAiDto> MapTestAsync(TestLesson test, Guid studentId, CancellationToken cancellationToken)
     {
         var submittedAttempts = await testAttemptRepository.CountAsync(

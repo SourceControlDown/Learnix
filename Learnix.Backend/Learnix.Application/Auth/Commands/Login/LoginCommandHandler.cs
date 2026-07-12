@@ -1,5 +1,6 @@
 using FluentResults;
 using Learnix.Application.Auth.Abstractions;
+using Learnix.Application.Auth.Models;
 using Learnix.Application.Common.Abstractions.Persistence;
 using Learnix.Application.Common.Abstractions.Storage;
 using MediatR;

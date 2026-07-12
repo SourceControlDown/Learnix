@@ -4,7 +4,7 @@ namespace Learnix.Infrastructure.Outbox.Handlers.Blobs;
 
 /// <summary>
 /// Reaps a blob that an entity let go of — a replaced avatar, a removed cover, a released lesson video.
-/// The outbox never confirms an upload, only deletes one (ADR-BLOB-003).
+/// The outbox never confirms an upload, only deletes one (ADR-BACK-BLOB-003).
 /// </summary>
 internal sealed class DeleteBlobHandler(IBlobStorageService blobStorage)
     : OutboxMessageHandler<DeleteBlobPayload>

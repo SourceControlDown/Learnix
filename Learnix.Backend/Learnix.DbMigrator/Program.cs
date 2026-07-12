@@ -114,7 +114,7 @@ try
     }
 
     // Last, and only once the data is final: whatever Redis holds was cached against the database as it was
-    // before this run — and after a re-seed, the ids in it may not exist any more (ADR-INFRA-014).
+    // before this run — and after a re-seed, the ids in it may not exist any more (ADR-BACK-INFRA-014).
     var cacheFlusher = services.GetRequiredService<RedisCacheFlusher>();
     await cacheFlusher.FlushAsync();
 

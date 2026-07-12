@@ -6,7 +6,7 @@ public interface INotificationSender
 {
     /// <summary>
     /// Records what happened and pushes it to whoever is online. It takes no title and no body: the wording
-    /// belongs to the client, which already translates every other string it shows (ADR-NOTIF-001).
+    /// belongs to the client, which already translates every other string it shows (ADR-BACK-NOTIF-001).
     /// </summary>
     /// <param name="parameters">
     /// Whatever the client cannot derive from the type alone — a course title, an achievement code. Null when

@@ -134,7 +134,7 @@ public class ValidationBehaviorTests
     public async Task Should_Call_Next_When_No_Validators()
     {
         var behavior = new ValidationBehavior<NonGenericCommand, Result>(
-            Enumerable.Empty<IValidator<NonGenericCommand>>());
+            []);
 
         var called = false;
         var result = await behavior.Handle(
