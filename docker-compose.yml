@@ -10,10 +10,10 @@ services:
       - ./Learnix.Backend/Learnix.API/.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=learnix;Username=learnix;Password=learnix
+      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=learnix;Username=${POSTGRES_USER:-learnix};Password=${POSTGRES_PASSWORD:-learnix}
       - ConnectionStrings__AzureBlobStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;
       - ConnectionStrings__Redis=redis:6379
-      - Mongo__ConnectionString=mongodb://learnix:learnix@mongo:27017/?authSource=admin
+      - Mongo__ConnectionString=mongodb://${MONGO_USER:-learnix}:${MONGO_PASSWORD:-learnix}@mongo:27017/?authSource=admin
       - Smtp__Host=mailpit
       - Serilog__WriteTo__0__Args__serverUrl=http://seq:80
     volumes:
@@ -43,10 +43,10 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - App__ClientBaseUrl=http://localhost
       - Cors__AllowedOrigins__0=http://localhost
-      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=learnix;Username=learnix;Password=learnix
+      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=learnix;Username=${POSTGRES_USER:-learnix};Password=${POSTGRES_PASSWORD:-learnix}
       - ConnectionStrings__AzureBlobStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;
       - ConnectionStrings__Redis=redis:6379
-      - Mongo__ConnectionString=mongodb://learnix:learnix@mongo:27017/?authSource=admin
+      - Mongo__ConnectionString=mongodb://${MONGO_USER:-learnix}:${MONGO_PASSWORD:-learnix}@mongo:27017/?authSource=admin
       - Smtp__Host=mailpit
       - Serilog__WriteTo__0__Args__serverUrl=http://seq:80
     env_file:
@@ -80,8 +80,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: learnix
-      POSTGRES_USER: learnix
-      POSTGRES_PASSWORD: learnix
+      POSTGRES_USER: ${POSTGRES_USER:-learnix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-learnix}
     ports:
       - "5432:5432"
     volumes:
@@ -97,8 +97,8 @@ services:
     container_name: learnix-mongo
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: learnix
-      MONGO_INITDB_ROOT_PASSWORD: learnix
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-learnix}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-learnix}
       MONGO_INITDB_DATABASE: learnix
     ports:
       - "27017:27017"
