@@ -6,6 +6,7 @@ import { CheckCircle, Clock, ShieldAlert, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormInput } from '@/components/common/form/FormInput';
 import { FormTextarea } from '@/components/common/form/FormTextarea';
+import { Seo } from '@/components/common/seo/Seo';
 import { UserRole } from '@/enums/user.enums';
 import { useMyApplication } from '@/hooks/instructor/useMyApplication';
 import { useSubmitApplication } from '@/hooks/instructor/useSubmitApplication';
@@ -51,6 +52,7 @@ export default function BecomeInstructorPage() {
 
     return (
         <div className="mx-auto max-w-2xl px-4 py-16">
+            <Seo title={t('becomeTitle')} description={t('becomeSubtitle')} />
             {/* Page title */}
             <div className="mb-10 text-center">
                 <h1 className="font-heading text-4xl font-bold text-foreground">

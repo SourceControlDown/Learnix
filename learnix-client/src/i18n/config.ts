@@ -125,6 +125,14 @@ i18n.use(LanguageDetector)
         pluralSeparator: '_',
     });
 
+// Keep <html lang> in sync with the active language — screen readers and crawlers read it, and it
+// would otherwise stay stuck on the static `en` from index.html.
+function syncDocumentLanguage(language: string) {
+    document.documentElement.lang = language;
+}
+syncDocumentLanguage(i18n.language);
+i18n.on('languageChanged', syncDocumentLanguage);
+
 // Set zod error map globally so all schemas use i18n translations
 z.setErrorMap(makeZodI18nMap({ ns: ['zod'] }));
 

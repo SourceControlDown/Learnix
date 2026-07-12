@@ -2,6 +2,11 @@
     "errorBoundaryTitle": "Щось пішло не так",
     "errorBoundarySubtitle": "Сталася неочікувана помилка. Будь ласка, оновіть сторінку.",
     "errorBoundaryRefresh": "Оновити сторінку",
+    "notFound": {
+        "title": "Сторінку не знайдено",
+        "subtitle": "Сторінка, яку ви шукаєте, не існує або була переміщена.",
+        "backHome": "На головну"
+    },
     "actions": {
         "cancel": "Скасувати",
         "save": "Зберегти",
@@ -53,6 +58,7 @@
         "student": "Студент"
     },
     "navigation": {
+        "home": "Головна",
         "courses": "Курси",
         "dashboard": "Панель управління",
         "myProfile": "Мій профіль",

@@ -60,6 +60,71 @@ Basic SEO optimization is implemented via `react-helmet-async` in a client-side 
 - When adding a new private page or layout, add `<meta name="robots" content="noindex,nofollow">` to the layout component.
 - `robots.txt` must be updated manually when introducing new private route paths.
 
+> **Superseded in part by ADR-FRONT-INTL-005.** Pages no longer use `<Helmet>` directly (they use
+> `<Seo />`), `robots.txt` and `sitemap.xml` are generated at build time, and the claim that the
+> `index.html` fallback tags are "sufficient" for social networks was wrong: non-JS scrapers only
+> ever see the landing page's tags, so shared course links never carried the course's own preview.
+
+---
+
+## ADR-FRONT-INTL-005: Canonical URLs, Structured Data and a Single `<Seo />` Component
+
+**Decision:**
+All per-page metadata goes through one component — `components/common/seo/Seo.tsx` — instead of
+hand-rolled `<Helmet>` blocks. It renders `<title>`, `description`, `<link rel="canonical">`, the
+Open Graph and Twitter Card sets, an optional `robots: noindex,nofollow`, and any JSON-LD blocks.
+
+1. **Canonical URLs:** every public page emits one. The default is the current pathname *without*
+   the query string, so the filtered/paginated catalog (`/courses?page=2&isFree=true`) consolidates
+   onto `/courses` instead of splitting rank across near-duplicates.
+2. **Structured data** (`utils/seo.ts` builders): `Course` + `BreadcrumbList` on the course page,
+   `FAQPage` on `/faq`, `Organization` + `WebSite` (with a `SearchAction`) on the landing page.
+   `aggregateRating` is only emitted for a course with at least one review — a zero-review rating is
+   a structured-data error. `courseWorkload` is omitted because lessons carry no duration.
+3. **`noindex` on non-pages:** the 404 page and the not-found / failed-to-load states of the course
+   and instructor pages. Static hosting can only answer `200` for unknown SPA routes, so `noindex`
+   is the only thing that keeps them out of the index.
+4. **`<html lang>`** is synced to the active language by an `i18n.on('languageChanged')` listener in
+   `i18n/config.ts`.
+5. **Absolute URLs** come from `env.SITE_URL` (`VITE_SITE_URL`, falling back to the runtime origin).
+   The same variable feeds `%VITE_SITE_URL%` in `index.html` via the `learnix:inject-site-url` Vite
+   plugin — Vite's own `%VAR%` substitution silently leaves the placeholder when the var is unset,
+   which would ship a broken `og:image`.
+6. **`robots.txt` + `sitemap.xml` are generated** by `scripts/generate-seo-files.mjs` (`prebuild`).
+   The sitemap includes every published course and instructor, pulled from the public catalog API;
+   if the API is unreachable it degrades to the static routes rather than failing the build. Both
+   files are gitignored — they are build output, not source.
+7. **The `index.html` fallback tags are stripped on boot.** They are marked `data-seo-fallback` and
+   removed in `main.tsx`. React 19 hoists the tags `<Seo />` renders *without* deduplicating them
+   against `index.html`, so leaving them in place gives every page two conflicting `og:title` /
+   `og:url` tags — and a scraper reads the first one, i.e. always the landing page's.
+
+**Why:**
+- Duplicate/near-duplicate URLs and missing canonicals are the highest-leverage SEO defect on a
+  catalog-shaped site; a canonical tag is ~10 lines and fixes it.
+- `Course` and `FAQPage` rich results are the whole point of structured data for an LMS — ratings,
+  price and instructor rendered directly in the SERP.
+- A static three-URL sitemap advertised none of the actual content. Generating it at build time is
+  the only option that keeps the frontend on static hosting.
+
+**Alternatives:**
+- **Per-page `<Helmet>` blocks (the status quo):** every page reinvents the tag set and forgets
+  canonical/`og:url`; there was no single place to fix a systemic bug.
+- **Serving `sitemap.xml` from the API:** a cross-origin sitemap needs both hosts verified in Search
+  Console, and the sitemap would live on a different domain than the pages it lists.
+- **Hardcoding the production domain:** breaks preview environments and local builds.
+
+**Consequences:**
+- New public page → render `<Seo title={...} description={...} />`; do not use `<Helmet>` directly.
+- New private page/layout → `<Seo noIndex />` (or the layout-level `robots` meta), *and* add the
+  route to `DISALLOWED` in `scripts/generate-seo-files.mjs`.
+- A new public route that should be indexed must be added to `STATIC_ROUTES` in the same script.
+- `VITE_SITE_URL` must be set in the production build environment (GitHub Actions repo variable).
+  Without it the build falls back to `http://localhost:5173` and the sitemap/OG tags are useless.
+- **Still unsolved:** non-JS scrapers (Facebook, LinkedIn, Slack) see only the landing page's
+  fallback tags, so a shared course link shows a generic preview. Fixing that needs prerendering or
+  an edge function — tracked in `docs/TECH_DEBT.md`.
+
 ---
 
 ## ADR-FRONT-INTL-003: Zod Validation Localization

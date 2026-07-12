@@ -45,6 +45,8 @@ name: Deploy to Azure
 # (cors)         PROD_ALLOWED_ORIGINS            — Frontend URL, e.g. https://learnix.azurestaticapps.net
 # (frontend)     PROD_CLIENT_BASE_URL            — Same as PROD_ALLOWED_ORIGINS
 # (frontend)     VITE_API_URL                    — Production API URL for frontend build
+# (frontend)     VITE_SITE_URL                   — Public frontend origin, e.g. https://learnix.azurestaticapps.net
+#                                                  (canonical URLs, og:image, sitemap.xml)
 # (domain)       CUSTOM_DOMAIN                   — (Optional) Custom frontend domain to show in README.md
 
 on:
@@ -308,6 +310,7 @@ jobs:
       env:
         VITE_API_URL: ${{ vars.VITE_API_URL }}
         VITE_GOOGLE_CLIENT_ID: ${{ vars.PROD_GOOGLE_CLIENT_ID }}
+        VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
       run: |
         npm ci
         npm run build

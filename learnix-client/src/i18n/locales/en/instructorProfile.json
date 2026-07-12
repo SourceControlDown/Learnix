@@ -1,4 +1,8 @@
 {
+    "seo": {
+        "title": "{{name}} — Instructor on Learnix",
+        "description": "Browse courses taught by {{name}} on Learnix."
+    },
     "coursesHeading": "Courses by this instructor",
     "noCourses": "No published courses yet.",
     "notFound": "Instructor not found.",

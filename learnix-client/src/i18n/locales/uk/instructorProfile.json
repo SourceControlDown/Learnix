@@ -1,4 +1,8 @@
 {
+    "seo": {
+        "title": "{{name}} — інструктор на Learnix",
+        "description": "Курси від {{name}} на платформі Learnix."
+    },
     "coursesHeading": "Курси цього інструктора",
     "noCourses": "Опублікованих курсів поки немає.",
     "notFound": "Інструктора не знайдено.",

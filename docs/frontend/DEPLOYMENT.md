@@ -1,7 +1,7 @@
 # Learnix — Frontend Architecture Decision Records (Deployment)
 
 > Format: Decision → Why → Alternatives.
-> For step-by-step deployment instructions, refer to `docs/AZURE_DEPLOY.md` in the project root.
+> For step-by-step deployment instructions, refer to [`docs/deployment/README.md`](../deployment/README.md).
 
 ---
 

@@ -49,6 +49,13 @@ const queryClient = new QueryClient({
 const googleClientId =
     import.meta.env.VITE_GOOGLE_CLIENT_ID || 'dummy_to_prevent_crash.apps.googleusercontent.com';
 
+/**
+ * The fallback social tags in index.html exist purely for scrapers that never run JS. Once React
+ * boots, <Seo /> owns the head — and React 19 hoists its tags without deduplicating against the
+ * static ones, so they must be removed or every page would carry two conflicting og:title/og:url.
+ */
+document.head.querySelectorAll('meta[data-seo-fallback]').forEach((tag) => tag.remove());
+
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <HelmetProvider>
