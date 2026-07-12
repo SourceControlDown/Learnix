@@ -109,7 +109,7 @@ This connects to the **Azurite** emulator running in Docker. The account key is 
 
 ---
 
-## 6. Email (SMTP)і
+## 6. Email (SMTP)
 
 **Development (Local): No action needed.**
 ```env
@@ -128,7 +128,7 @@ To send real emails (e.g. for user registration or password reset) using a stand
 6. Remove the spaces from this password and use it in your configuration.
 
 Configure PROD_SMTP_PASSWORD in GitHub Secrets, and the rest of the values (PROD_SMTP_HOST, PROD_SMTP_PORT, etc.) in GitHub Variables (Settings → Secrets and variables → Actions). 
-*(Примітка: оскільки у вас налаштовано CI/CD через `deploy.yml`, GitHub Actions при кожному деплої буде перезаписувати змінні середовища в Azure Container App значеннями з ваших GitHub Secrets. Тому додавати їх напряму в порталі Azure немає сенсу — вони затруться при наступному релізі).*
+*(Note: since you have CI/CD configured via `deploy.yml`, GitHub Actions will overwrite the environment variables in the Azure Container App with the values from your GitHub Secrets on every deployment. Therefore, there is no point in adding them directly in the Azure portal — they will be overwritten during the next release).*
 
 ```env
 PROD_SMTP_HOST=smtp.gmail.com

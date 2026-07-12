@@ -1,4 +1,4 @@
-# Learnix — ADR: Платіжна система
+# Learnix — ADR: Payment System
 
 > **Endpoints:** see [`docs/backend/ENDPOINTS.md`](../../ENDPOINTS.md) — one generated table for
 > the whole API, verified against the controllers in CI. An ADR records a decision; it is not the
@@ -9,111 +9,112 @@
 - A real payment provider (Stripe/LiqPay) — the decision is recorded in ADR-BACK-PAY-006
 
 ---
-## ADR-BACK-PAY-001: Окрема сутність `Payment` замість атрибутів на `Enrollment`
 
-**Рішення:** `Payment` — самостійна сутність (`BaseEntity`) з полями `UserId`, `CourseId`, `EnrollmentId`, `Amount`, `Currency`, `Status`, `PaymentProvider`, `CompletedAt`. Має FK до `Enrollment` (1:1).
+## ADR-BACK-PAY-001: Separate `Payment` entity instead of attributes on `Enrollment`
 
-**Чому:**
-- `Enrollment` — факт участі студента в курсі. `Payment` — факт грошової транзакції. Це різні доменні концепції.
-- `Enrollment` вже має `PaymentStatus` enum для швидкої перевірки "чи оплачено" без JOIN. `Payment` зберігає повну аудит-трасу транзакції.
-- При переході на реальний провайдер (Stripe, LiqPay) `Payment` отримає `ExternalTransactionId`, `ProviderResponse` — поля що не стосуються enrollment.
-- Адмін-панель і dashboard інструктора потребують агрегацій по платежах (сума зборів, динаміка по місяцях) — зручніше запитувати окрему таблицю.
+**Decision:** `Payment` is an independent entity (`BaseEntity`) with fields `UserId`, `CourseId`, `EnrollmentId`, `Amount`, `Currency`, `Status`, `PaymentProvider`, `CompletedAt`. It has a FK to `Enrollment` (1:1).
 
-**Альтернативи:**
-- Зберігати все на `Enrollment` (додати `ProviderTransactionId`, `PaidAt`) — відкинуто: payment details забруднюють enrollment aggregate, ускладнюють майбутні звіти.
-- Окремий `PaymentDetail` value object в `Enrollment` як JSONB — відкинуто: потребує складного JSONB-запиту для агрегацій.
+**Why:**
+- `Enrollment` is the fact of a student participating in a course. `Payment` is the fact of a financial transaction. These are different domain concepts.
+- `Enrollment` already has a `PaymentStatus` enum for quick "is paid" checks without a JOIN. `Payment` stores the full audit trail of the transaction.
+- When migrating to a real provider (Stripe, LiqPay), `Payment` will get `ExternalTransactionId`, `ProviderResponse` — fields that do not concern the enrollment.
+- Admin panel and instructor dashboard need payment aggregations (total fees collected, monthly dynamics) — it is more convenient to query a separate table.
 
-**Наслідки:**
-- `Payments` — окрема таблиця з unique index на `EnrollmentId`.
-- `Enrollment.PaymentStatus` залишається як денормалізований флаг для швидкої перевірки без JOIN.
+**Alternatives:**
+- Store everything on `Enrollment` (add `ProviderTransactionId`, `PaidAt`) — rejected: payment details pollute the enrollment aggregate and complicate future reports.
+- Separate `PaymentDetail` value object in `Enrollment` as JSONB — rejected: requires complex JSONB queries for aggregations.
 
----
-
-## ADR-BACK-PAY-002: `POST /api/payments` як окремий endpoint для оплати (замість розширення `/api/enrollments`)
-
-**Рішення:** Для оплатних курсів студент викликає `POST /api/payments { courseId }`. Безкоштовні курси — `POST /api/enrollments { courseId }` (без змін). Два окремих endpoint, кожен зі своїм призначенням.
-
-**Чому:**
-- Семантика відрізняється: "enroll" = приєднатись до курсу, "pay" = здійснити транзакцію і отримати доступ. Змішувати в одному endpoint порушує принцип єдиної відповідальності.
-- `POST /api/payments` обробляє бізнес-логіку оплати (перевіряє `Price > 0`, створює `Payment` record) і як side-effect активує enrollment. `POST /api/enrollments` перевіряє `Price == 0` — у майбутньому явно відхилятиме paid courses.
-- Frontend checkout flow: окремий endpoint дозволяє показати "payment confirmation" сторінку між натисканням "Buy" і отриманням успішного enrollment — логічний UX-перехід.
-- При заміні на реальний Stripe: змінюється тільки handler `InitiateMockPaymentCommandHandler`. Контролер, routing, frontend — без змін.
-
-**Альтернативи:**
-- Один `POST /api/enrollments` для всього — відкинуто: приховує різницю між free і paid flow, ускладнює додавання real payment у майбутньому.
-- `POST /api/courses/{id}/purchase` — семантично правильне, але порушує RESTful resource-centric routing. Відкинуто.
-
-**Наслідки:**
-- Frontend для **безкоштовних** курсів: `POST /api/enrollments`.
-- Frontend для **платних** курсів: `POST /api/payments`.
-- Existing `/api/enrollments` не змінюється — backward compatible.
+**Consequences:**
+- `Payments` — a separate table with a unique index on `EnrollmentId`.
+- `Enrollment.PaymentStatus` remains as a denormalized flag for quick checks without a JOIN.
 
 ---
 
-## ADR-BACK-PAY-003: Атомарне створення `Payment` + `Enrollment` в одному `SaveChangesAsync`
+## ADR-BACK-PAY-002: `POST /api/payments` as a separate endpoint for payment (instead of extending `/api/enrollments`)
 
-**Рішення:** `InitiateMockPaymentCommandHandler` додає і `Enrollment`, і `Payment` до відповідних репозиторіїв до виклику `unitOfWork.SaveChangesAsync(cancellationToken)`. Обидва записи зберігаються в одній транзакції.
+**Decision:** For paid courses, the student calls `POST /api/payments { courseId }`. Free courses use `POST /api/enrollments { courseId }` (unchanged). Two separate endpoints, each with its own purpose.
 
-**Чому:**
-- Гарантує консистентність: неможлива ситуація "Payment є, Enrollment немає" або навпаки.
-- Якщо `SaveChangesAsync` кидає виключення — rollback обох. Студент отримає помилку і зможе повторити дію.
-- EF Core за замовчуванням обгортає `SaveChangesAsync` у транзакцію — нічого додаткового не потрібно.
+**Why:**
+- Semantics differ: "enroll" = join a course, "pay" = make a transaction and get access. Mixing them in one endpoint violates the Single Responsibility Principle.
+- `POST /api/payments` handles payment business logic (checks `Price > 0`, creates a `Payment` record) and activates enrollment as a side-effect. `POST /api/enrollments` checks `Price == 0` — in the future it will explicitly reject paid courses.
+- Frontend checkout flow: a separate endpoint allows showing a "payment confirmation" page between clicking "Buy" and receiving a successful enrollment — a logical UX transition.
+- When replacing with real Stripe: only the `InitiateMockPaymentCommandHandler` changes. Controller, routing, frontend remain unchanged.
 
-**Альтернативи:**
-- Два окремих `SaveChangesAsync` — відкинуто: вікно між першим і другим save = стан некоректної часткової записи.
-- Domain event + `EnrollmentCreatedDomainEvent` handler для Payment — надмірно для синхронного мок-flow. Відкинуто.
+**Alternatives:**
+- One `POST /api/enrollments` for everything — rejected: hides the difference between free and paid flows, complicates adding real payment in the future.
+- `POST /api/courses/{id}/purchase` — semantically correct, but violates RESTful resource-centric routing. Rejected.
 
----
-
-## ADR-BACK-PAY-004: `PaymentProvider` як рядок замість enum
-
-**Рішення:** `Payment.PaymentProvider` — `string` (max 50), не enum. Default значення для мока — `"Mock"`.
-
-**Чому:**
-- Майбутні провайдери (`"Stripe"`, `"LiqPay"`, `"PayPal"`) з'являються без зміни схеми БД і без міграції для нового enum значення.
-- `"Mock"` — самодокументуючий рядок. В Swagger і відповіді API одразу зрозуміло що це мок-транзакція.
-- Enum для payment provider — over-engineering на рівні бізнес-логіки, де порівняння по Provider рідко потрібне в коді.
-
-**Альтернативи:**
-- `PaymentProvider` enum — відкинуто: кожен новий провайдер потребує EF міграції.
-- Зовсім без `PaymentProvider` поля — відкинуто: не можна відрізнити мок від реального платежу в аудит-лозі.
+**Consequences:**
+- Frontend for **free** courses: `POST /api/enrollments`.
+- Frontend for **paid** courses: `POST /api/payments`.
+- Existing `/api/enrollments` is not changed — backward compatible.
 
 ---
 
-## ADR-BACK-PAY-005: Відсутність instructor-facing earnings endpoint (Phase 4)
+## ADR-BACK-PAY-003: Atomic creation of `Payment` + `Enrollment` in one `SaveChangesAsync`
 
-**Рішення:** `GET /api/instructor/earnings` повертає зведену фінансову статистику інструктора: `TotalEarnings`, `TotalPayments`, та список `Courses` згрупованих по `CourseId` (PaymentsCount, TotalAmount, LastPaymentAt). Пагінація відсутня — повертаються всі курси інструктора в одному відповіді.
+**Decision:** `InitiateMockPaymentCommandHandler` adds both `Enrollment` and `Payment` to their respective repositories before calling `unitOfWork.SaveChangesAsync(cancellationToken)`. Both records are saved in one transaction.
 
-**Чому без пагінації:**
-- Групування по курсу відбувається in-memory в handler після завантаження всіх платежів інструктора. Пагінація по згрупованих даних потребувала б складнішого DB-level GROUP BY або двох проходів.
-- Кількість курсів одного інструктора — від одиниць до кількох десятків. In-memory grouping прийнятний.
-- Analytics/stats endpoints традиційно повертають повний snapshot, не сторінки.
+**Why:**
+- Guarantees consistency: a situation where "Payment exists, Enrollment doesn't" or vice versa is impossible.
+- If `SaveChangesAsync` throws an exception — both are rolled back. The student will receive an error and can retry the action.
+- EF Core wraps `SaveChangesAsync` in a transaction by default — nothing extra is needed.
 
-**Доступ:** `Authorize(Roles = "Instructor,Admin")` — адмін також може перевіряти earning stats (фільтр по `currentUser.UserId` в handler).
+**Alternatives:**
+- Two separate `SaveChangesAsync` — rejected: the window between the first and second save creates an incorrect partial write state.
+- Domain event + `EnrollmentCreatedDomainEvent` handler for Payment — excessive for a synchronous mock flow. Rejected.
 
-**Специфікація:** `InstructorPaymentsSpecification(instructorId)` — фільтрує по `p.Course.InstructorId == instructorId` і `p.Status == Completed`.
+---
 
-**Наслідки:**
+## ADR-BACK-PAY-004: `PaymentProvider` as a string instead of an enum
+
+**Decision:** `Payment.PaymentProvider` — `string` (max 50), not enum. Default value for the mock is `"Mock"`.
+
+**Why:**
+- Future providers (`"Stripe"`, `"LiqPay"`, `"PayPal"`) can be added without DB schema changes and without migrations for a new enum value.
+- `"Mock"` is a self-documenting string. In Swagger and API responses it is immediately clear that this is a mock transaction.
+- Enum for payment provider is over-engineering at the business logic level, where comparing by Provider is rarely needed in code.
+
+**Alternatives:**
+- `PaymentProvider` enum — rejected: every new provider requires an EF migration.
+- No `PaymentProvider` field at all — rejected: impossible to distinguish a mock from a real payment in the audit log.
+
+---
+
+## ADR-BACK-PAY-005: Absence of instructor-facing earnings endpoint (Phase 4)
+
+**Decision:** `GET /api/instructor/earnings` returns summarized financial statistics for the instructor: `TotalEarnings`, `TotalPayments`, and a list of `Courses` grouped by `CourseId` (PaymentsCount, TotalAmount, LastPaymentAt). Pagination is absent — all instructor courses are returned in a single response.
+
+**Why no pagination:**
+- Grouping by course happens in-memory in the handler after loading all instructor payments. Pagination over grouped data would require a more complex DB-level GROUP BY or two passes.
+- The number of courses for one instructor ranges from units to a few dozens. In-memory grouping is acceptable.
+- Analytics/stats endpoints traditionally return a full snapshot, not pages.
+
+**Access:** `Authorize(Roles = "Instructor,Admin")` — an admin can also check earning stats (filter by `currentUser.UserId` in the handler).
+
+**Specification:** `InstructorPaymentsSpecification(instructorId)` — filters by `p.Course.InstructorId == instructorId` and `p.Status == Completed`.
+
+**Consequences:**
 - Earnings endpoint: `GET /api/instructor/earnings`.
 
 ---
 
-## ADR-BACK-PAY-006: Мок-оплата замість реального Stripe
+## ADR-BACK-PAY-006: Mock payment instead of real Stripe
 
-**Рішення:** Платіжна система реалізована як мок: кнопка "Pay" одразу записує `Payment` зі статусом `Completed` та `PaymentProvider = "Mock"` і активує enrollment без будь-якого зовнішнього сервісу. `Stripe__SecretKey` прибрано з `.env.example`. Stripe SDK не встановлюється.
+**Decision:** The payment system is implemented as a mock: the "Pay" button immediately writes a `Payment` with status `Completed` and `PaymentProvider = "Mock"` and activates enrollment without any external service. `Stripe__SecretKey` was removed from `.env.example`. The Stripe SDK is not installed.
 
-**Чому:**
-- Це pet-проект. Реальний Stripe потребує верифікації бізнесу, додає комісію 2.9% + $0.30, і значну складність: webhooks, declined cards, refunds, PCI compliance.
-- Для портфоліо важлива демонстрація **flow і архітектури** (команда `PurchaseCourse`, доменна подія, зарахування), а не реальне стягнення грошей.
-- Мок зберігає повну доменну модель: `Payment` entity з `Amount`, `Status`, `Provider`, `TransactionId` — поле `Provider = "Mock"` чітко сигналізує що це не production.
-- Підключити реальний провайдер у майбутньому — зміна в одному місці (handler + DI), без перебудови архітектури.
+**Why:**
+- This is a pet project. Real Stripe requires business verification, adds a 2.9% + $0.30 fee, and significant complexity: webhooks, declined cards, refunds, PCI compliance.
+- For a portfolio, demonstrating the **flow and architecture** (PurchaseCourse command, domain event, enrollment) is important, not actual money collection.
+- The mock retains the full domain model: `Payment` entity with `Amount`, `Status`, `Provider`, `TransactionId` — the field `Provider = "Mock"` clearly signals that this is not production.
+- Connecting a real provider in the future is a change in one place (handler + DI), without rebuilding the architecture.
 
-**Альтернативи:**
-- Stripe test mode — все одно потребує облікового запису, webhook endpoint, Stripe SDK. Тестові ключі не заряджають картки, але додають ~200 рядків коду без практичної цінності для пет-проекту.
-- Stripe повністю — надлишок для демо-проекту, юридичні вимоги для production.
+**Alternatives:**
+- Stripe test mode — still requires an account, webhook endpoint, Stripe SDK. Test keys don't charge cards, but add ~200 lines of code with no practical value for a pet project.
+- Stripe fully — overkill for a demo project, legal requirements for production.
 
-**Наслідки:**
-- `Stripe__SecretKey` прибрано з `Learnix.API/.env.example` і `learnix-client/.env.example`.
-- `VITE_STRIPE_PUBLISHABLE_KEY` прибрано з frontend `.env.example`.
-- `Payment.PaymentProvider` зберігає `"Mock"` — в майбутньому можна додати `"Stripe"`, `"LiqPay"` тощо.
-- При переході на реальний провайдер: замінити логіку в `PurchaseCourseCommandHandler`, додати webhook endpoint, оновити `.env.example`.
+**Consequences:**
+- `Stripe__SecretKey` removed from `Learnix.API/.env.example` and `learnix-client/.env.example`.
+- `VITE_STRIPE_PUBLISHABLE_KEY` removed from frontend `.env.example`.
+- `Payment.PaymentProvider` stores `"Mock"` — in the future `"Stripe"`, `"LiqPay"`, etc. can be added.
+- When transitioning to a real provider: replace logic in `PurchaseCourseCommandHandler`, add a webhook endpoint, update `.env.example`.
