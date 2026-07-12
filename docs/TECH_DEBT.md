@@ -70,3 +70,23 @@
 2. **Inject metadata at the edge** for `/courses/{id}` and `/instructors/{id}`: a small function in front of the static host that detects a bot user-agent, fetches the course from the API and rewrites the `<head>` of `index.html` before serving it. Azure Static Web Apps supports managed functions; the alternative is moving the frontend behind a Node/edge host, which is the same migration cost as adopting SSR outright.
 
 Until one of them lands, the `index.html` fallback tags are the *only* thing scrapers ever see — keep them accurate.
+
+---
+
+## TD-005 · The email logo is an inline CID attachment, and Gmail renders it as neither
+
+**Priority:** `medium` (every transactional email looks broken, and the brand is the first thing the reader sees)
+
+**Current state.** `SmtpEmailSender` attaches `Email/Resources/logo.png` as a MailKit `LinkedResource` with `ContentId = learnix-logo`, and `_Layout.cshtml` references it as `<img src="cid:learnix-logo">`. The MIME this produces is correct — verified byte by byte against a locally delivered message: `multipart/alternative` → `text/plain` + `multipart/related` (the HTML plus an `image/png` part carrying `Content-Disposition: inline` and `Content-Id: <learnix-logo>`). Mail clients that honour it show the logo in the header.
+
+Gmail does not. It leaves an empty box where the logo belongs and lists the image at the bottom as a file attachment. This is **not** the spam folder blocking images — it persists now that delivery reaches the inbox.
+
+**Why it is a problem.** Beyond the broken header: a `cid` part is a real attachment on the wire, so every email carries the logo's bytes, and clients that don't resolve the `cid` show the reader a paperclip on a message that has nothing to download.
+
+**Root cause: unconfirmed.** The message we generate is right, so something between us and the reader is not: the most likely candidate is the SMTP relay rewriting the MIME (several providers flatten `multipart/related` or drop `Content-ID`, which turns a linked resource into a plain attachment). Diagnosing it needs the *delivered* source — Gmail's "Show original" — not the message we send.
+
+**Plan.** Do what transactional senders actually do and stop embedding the image: host the logo as a static asset on the frontend (it is already a public HTTPS origin — `App:ClientBaseUrl`) and reference it with an absolute URL, e.g. `<img src="@Model.ClientBaseUrl/email-logo.png">`. Then drop the `LinkedResource` entirely.
+
+- **Why this is the standard.** Stripe, GitHub, Postmark, Mailchimp and every provider template do it this way. The message stays small, carries no attachments, and Gmail proxies and caches the image through `googleusercontent.com` — no `cid` resolution to get wrong, and no relay left to mangle it.
+- **The trade-off, stated honestly.** The logo becomes an external image, so a client configured to block remote content shows nothing until the reader allows it — where a `cid` image would have rendered. That is the price the whole industry pays, and Gmail loads proxied images by default.
+- **Do not skip the diagnosis.** Even after moving to a URL, the raw delivered message is worth reading once: if the relay is rewriting MIME, that is worth knowing before it silently breaks something else.
