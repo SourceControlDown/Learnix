@@ -98,7 +98,12 @@ npm run format:check   # CI enforces this
 ```bash
 npm run check:duplication   # jscpd — runs in pre-commit and CI
 npm run check:secrets       # gitleaks via Docker
+npm run check:endpoints     # docs/backend/ENDPOINTS.md vs the controllers — runs in CI
+npm run docs:endpoints      # regenerate it after adding or changing an endpoint
 ```
+
+> Adding, removing or re-authorizing a controller action means `docs/backend/ENDPOINTS.md` is now
+> stale and CI will fail. Run `npm run docs:endpoints` — hand-written descriptions are preserved.
 
 > `TreatWarningsAsErrors` is on for every backend project, and `EnforceCodeStyleInBuild` makes IDE analyzers (unused usings, unused members) fail the build. A warning **is** a build failure.
 
@@ -148,7 +153,7 @@ Cross-cutting interfaces live in `Application/Common/Abstractions/{Category}/`.
 - **Rate limiting:** policies in `API/RateLimiting/RateLimitPolicies.cs`, applied per-endpoint with `[EnableRateLimiting]`.
 - **DI:** each layer exposes a `DependencyInjection.cs`. MediatR and FluentValidation use assembly scanning.
 
-**Notable integrations:** Azure Blob — uploads go client → SAS → `temp-uploads`, then a handler calls `CommitUploadAsync` **synchronously** to validate (magic bytes) and promote the blob to its final container; entities store the relative `{container}/{blobName}` path — the container prefix is mandatory, everything downstream parses it out (ADR-BLOB-003). SignalR `NotificationsHub` at `/hubs/notifications`, AI chat via swappable `Anthropic` / `Gemini` providers (`AiChat:Provider`) with sessions in MongoDB, certificates via QuestPDF + QRCoder, email via MailKit + RazorLight templates + PreMailer.
+**Notable integrations:** Azure Blob — uploads go client → SAS → `temp-uploads`, then a handler calls `CommitUploadAsync` **synchronously** to validate (magic bytes) and promote the blob to its final container; entities store the relative `{container}/{blobName}` path — the container prefix is mandatory, everything downstream parses it out (ADR-BACK-BLOB-003). SignalR `NotificationsHub` at `/hubs/notifications`, AI chat via swappable `Anthropic` / `Gemini` providers (`AiChat:Provider`) with sessions in MongoDB, certificates via QuestPDF + QRCoder, email via MailKit + RazorLight templates + PreMailer.
 
 **Payments are mocked** (`InitiateMockPayment`) — there is no real payment gateway.
 
@@ -160,7 +165,7 @@ Cross-cutting interfaces live in `Application/Common/Abstractions/{Category}/`.
 - **Identity:** `User : IdentityUser<Guid>`, roles via AspNetRoles tables
 - **Google OAuth** via ID-token verification; **email confirmation** via 6-digit OTP
 - `EmailConfirmed` authorization policy gates sensitive endpoints
-- Full endpoint table: `docs/backend/decisions/AUTH.md`
+- Full endpoint table: `docs/backend/decisions/platform/AUTH.md`
 
 ## Frontend Architecture
 
@@ -204,7 +209,7 @@ refactor(courses): extract pagination to shared hook
 
 ## Documentation Map
 
-Docs live under `docs/` and are predominantly **English**. Exception: `docs/backend/decisions/DOMAIN.md` is written in Ukrainian and still uses the legacy un-scoped `ADR-NNN` numbering — match the local convention when editing that file.
+Docs live under `docs/` and are predominantly **English**. Several backend ADR files still carry Ukrainian sections (`platform/DOMAIN.md` most of all, plus parts of `CHAT.md`, `PAYMENT.md`, `MESSAGING.md`, `REVIEWS.md`, `INFRA.md`, `AUTH.md`, `CICD.md`) — match the local language when editing them; translation to English is planned.
 
 | Doc | Purpose |
 |---|---|
@@ -215,11 +220,12 @@ Docs live under `docs/` and are predominantly **English**. Exception: `docs/back
 | `docs/TODO.md` | Implementation tracking by phase |
 | `docs/TECH_DEBT.md` | Known suboptimal implementations + fix plans |
 | `docs/CONTRIBUTING.md` | Contribution workflow |
-| `docs/backend/` | `ARCHITECTURE.md`, `PROJECT_STRUCTURE.md`, `decisions/` (ADRs) |
+| `docs/decisions/` | Repository-wide ADRs (monorepo layout, workflow) — not backend- or frontend-specific |
+| `docs/backend/` | `ARCHITECTURE.md`, `PROJECT_STRUCTURE.md`, `ENDPOINTS.md` (generated API surface), `decisions/` (ADRs) |
 | `docs/frontend/` | `ARCHITECTURE.md`, `PROJECT_STRUCTURE.md`, `CODING_STYLE.md`, `DEPLOYMENT.md`, `decisions/` (ADRs) |
 | `docs/deployment/` | `TERRAFORM_GUIDE.md`, `MANUAL_OPERATIONS.md` |
 
-ADRs are grouped by topic, one file per scope (e.g. `docs/backend/decisions/AUTH.md`, `docs/frontend/decisions/UI.md`). Use `decisions/TEMPLATE.md` when adding one, and register it in `decisions/README.md`.
+ADRs are grouped by topic, one file per scope. Backend ADRs are further split by altitude — `decisions/platform/` (ARCHITECTURE, DOMAIN, INFRA, MIGRATIONS, AUTH, BLOB), `decisions/features/` (the user-facing domains), `decisions/operations/` (CICD, LOGGING, FORWARDED_HEADERS); frontend ADRs are flat (`decisions/UI.md`, …). Numbering is scoped **per file**, not per folder. Use `decisions/TEMPLATE.md` when adding one, and register it in `decisions/README.md`.
 
 ---
 

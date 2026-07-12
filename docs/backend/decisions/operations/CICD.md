@@ -3,7 +3,7 @@
 > Format: what was decided → why → what alternatives were rejected.
 > Updated after each chat where CI/CD architectural decisions were made.
 
-Related files: [DECISIONS_INFRA.md](DECISIONS_INFRA.md) · [DECISIONS_MIGRATIONS.md](DECISIONS_MIGRATIONS.md) · [DECISIONS_ARCHITECTURE.md](DECISIONS_ARCHITECTURE.md)
+Related files: [INFRA.md](../platform/INFRA.md) · [MIGRATIONS.md](../platform/MIGRATIONS.md) · [ARCHITECTURE.md](../platform/ARCHITECTURE.md)
 
 ## Status Convention
 
@@ -52,7 +52,7 @@ The project has **three workflow files** in `.github/workflows/`:
 
 ---
 
-## ADR-CICD-001: Separate CI workflows for backend and frontend
+## ADR-BACK-CICD-001: Separate CI workflows for backend and frontend
 
 **Decision:** The backend and frontend each have their own CI workflow file (`backend-ci.yml` and `frontend-ci.yml`) that trigger independently on every push or pull request to `main` or `dev`.
 
@@ -71,7 +71,7 @@ The project has **three workflow files** in `.github/workflows/`:
 
 ---
 
-## ADR-CICD-002: Backend CI — dotnet restore → build → test → format check
+## ADR-BACK-CICD-002: Backend CI — dotnet restore → build → test → format check
 
 **Decision:** The backend CI job (`build-and-test`) runs four sequential steps on `ubuntu-latest`:
 1. `dotnet restore` — restores NuGet packages.
@@ -97,7 +97,7 @@ The working directory defaults to `./Learnix.Backend` so all commands target the
 
 ---
 
-## ADR-CICD-003: Frontend CI — install → lint → type-check → build
+## ADR-BACK-CICD-003: Frontend CI — install → lint → type-check → build
 
 **Decision:** The frontend CI job (`build-and-lint`) runs on `ubuntu-latest` with `./learnix-client` as the working directory. Steps:
 1. `npm ci` — clean install from `package-lock.json` (deterministic, ignores `node_modules`).
@@ -124,7 +124,7 @@ The working directory defaults to `./Learnix.Backend` so all commands target the
 
 ---
 
-## ADR-CICD-004: Deploy pipeline — four sequential jobs with `needs:` dependencies
+## ADR-BACK-CICD-004: Deploy pipeline — four sequential jobs with `needs:` dependencies
 
 **Decision:** The deploy workflow (`deploy.yml`) triggers only on push to `main` (or manual `workflow_dispatch`) and executes four jobs in strict order:
 
@@ -146,12 +146,12 @@ Jobs:
 - `build-api` must complete first so that `deploy-api` knows the exact image tag to deploy (communicated via `outputs.image-tag`).
 
 **Alternatives:**
-- Run migrations inside the API on startup (`Database.MigrateAsync()`) — rejected (see ADR-INFRA-006). Race conditions on scale-out, schema errors crash the startup, no human review gate.
+- Run migrations inside the API on startup (`Database.MigrateAsync()`) — rejected (see [ADR-BACK-MIGR-001](../platform/MIGRATIONS.md)). Race conditions on scale-out, schema errors crash the startup, no human review gate.
 - Run frontend and API deploys in parallel — safe only if there are no breaking API changes. Rejected for simplicity: sequential deploys with a 2-3 minute total window are acceptable.
 
 ---
 
-## ADR-CICD-005: Docker image tagging — SHA + `latest`
+## ADR-BACK-CICD-005: Docker image tagging — SHA + `latest`
 
 **Decision:** The `build-api` job uses `docker/metadata-action@v5` to generate two tags for the ACR image:
 - `type=sha,prefix=,format=short` → e.g., `abc1234` (the short Git commit SHA)
@@ -175,7 +175,7 @@ The deploy job then deploys the **SHA-tagged** image: `learnix-api:${{ needs.bui
 
 ---
 
-## ADR-CICD-006: Migrations via a dedicated `Learnix.DbMigrator` project (not `dotnet ef database update`)
+## ADR-BACK-CICD-006: Migrations via a dedicated `Learnix.DbMigrator` project (not `dotnet ef database update`)
 
 **Decision:** The `migrate-db` CI job runs `dotnet run --project Learnix.DbMigrator -- --seed-demo` instead of `dotnet ef database update`.
 
@@ -186,12 +186,12 @@ The deploy job then deploys the **SHA-tagged** image: `learnix-api:${{ needs.bui
 
 **Alternatives:**
 - `dotnet ef database update` — requires EF tools installation, no seeding capability, less portable.
-- Running migrations inside the API on startup — rejected (see ADR-INFRA-006).
+- Running migrations inside the API on startup — rejected (see [ADR-BACK-MIGR-001](../platform/MIGRATIONS.md)).
 - SQL script (`dotnet ef migrations script --idempotent`) applied via `psql` — valid approach, but requires `psql` on the runner and management of the script artifact. More moving parts.
 
 ---
 
-## ADR-CICD-007: All production secrets passed as Container App environment variables (not `appsettings.Production.json`)
+## ADR-BACK-CICD-007: All production secrets passed as Container App environment variables (not `appsettings.Production.json`)
 
 **Decision:** The `deploy-api` job passes every production secret as an environment variable to the Azure Container App via the `environmentVariables:` block of `azure/container-apps-deploy-action@v1`. There is no `appsettings.Production.json` committed to the repository.
 
@@ -234,7 +234,7 @@ GitHub Secrets (encrypted) → workflow ${{ secrets.PROD_POSTGRES_CONN }}
 
 ---
 
-## ADR-CICD-008: Frontend deployed to Azure Static Web Apps (not Container Apps or Azure Blob)
+## ADR-BACK-CICD-008: Frontend deployed to Azure Static Web Apps (not Container Apps or Azure Blob)
 
 **Decision:** The React frontend is deployed via `Azure/static-web-apps-deploy@v1` to Azure Static Web Apps (SWA). The Vite build output (`dist/`) is uploaded directly; `skip_app_build: true` is set because the build already ran in the previous step.
 
@@ -253,7 +253,7 @@ GitHub Secrets (encrypted) → workflow ${{ secrets.PROD_POSTGRES_CONN }}
 
 ---
 
-## ADR-CICD-009: Pre-commit hooks (Husky + lint-staged) as a local complement to CI
+## ADR-BACK-CICD-009: Pre-commit hooks (Husky + lint-staged) as a local complement to CI
 
 **Decision:** Husky is configured at the monorepo root with a `pre-commit` hook that runs `lint-staged`. `lint-staged` applies `dotnet format` to staged `.cs` files and `prettier --write` to staged frontend files. This is a **local developer tool**, not a CI pipeline component.
 

@@ -2,18 +2,12 @@
 
 > This file contains decisions regarding the certificate generation and validation subsystem (Phase 8).
 
-## Endpoints summary
-
-| HTTP Method | Endpoint | Description | Rate Limit | Auth Required |
-|---|---|---|---|---|
-| `GET` | `/api/certificates/mine` | Fetch user's earned certificates | Default | Yes |
-| `GET` | `/api/certificates/courses/{courseId}` | Get certificate details for a specific course | Default | Yes |
-| `POST` | `/api/certificates/courses/{courseId}/generate` | On-demand generate PDF certificate | Default | Yes |
-| `GET` | `/api/certificates/verify/{code}` | Public verification of a certificate by code | Default | No |
+> **Endpoints:** see [`docs/backend/ENDPOINTS.md`](../../ENDPOINTS.md) — one generated table for
+> the whole API, verified against the controllers in CI. An ADR records a decision; it is not the
+> place to keep a copy of the API surface.
 
 ---
-
-## ADR-CERT-001: QuestPDF library for PDF generation
+## ADR-BACK-CERT-001: QuestPDF library for PDF generation
 
 **Decision:** The **QuestPDF** library is used for creating layouts and rendering PDF certificates. The layout is described entirely via the C# Fluent API (code-first approach), without the use of intermediate HTML templates.
 
@@ -34,7 +28,7 @@
 
 ---
 
-## ADR-CERT-002: QR code generation via QRCoder
+## ADR-BACK-CERT-002: QR code generation via QRCoder
 
 **Decision:** The **QRCoder** library is used to generate the QR code on the certificate (which links to the public certificate validation page).
 
@@ -53,7 +47,7 @@
 
 ---
 
-## ADR-CERT-003: On-Demand (synchronous) certificate generation
+## ADR-BACK-CERT-003: On-Demand (synchronous) certificate generation
 
 > **Supersedes**: Previous decision "Asynchronous PDF certificate generation via BackgroundService".
 

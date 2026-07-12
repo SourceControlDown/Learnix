@@ -2,28 +2,12 @@
 
 > Covers Phase 10: achievement system (unlock logic, progress tracking, notifications).
 
-## Endpoints summary
-
-### Achievements
-
-| HTTP Method | Endpoint | Description | Rate Limit | Auth Required |
-|---|---|---|---|---|
-| `GET` | `/api/achievements/me` | Fetch user's achievements and progress counters | Default | Yes |
-| `POST` | `/api/achievements/{id}/seen` | Mark an achievement as seen by the user | Default | Yes |
-
-### Notifications
-
-| HTTP Method | Endpoint | Description | Rate Limit | Auth Required |
-|---|---|---|---|---|
-| `GET` | `/api/notifications` | Fetch user's notifications history | Default | Yes |
-| `GET` | `/api/notifications/unread-count` | Get total unread notifications count | Default | Yes |
-| `POST` | `/api/notifications/{id}/read` | Mark specific notification as read | Default | Yes |
-| `POST` | `/api/notifications/read-all` | Mark all user's notifications as read | Default | Yes |
-| `POST` | `/api/notifications/read-by-type?type=...` | Mark all notifications of a specific type as read | Default | Yes |
+> **Endpoints:** see [`docs/backend/ENDPOINTS.md`](../../ENDPOINTS.md) — one generated table for
+> the whole API, verified against the controllers in CI. An ADR records a decision; it is not the
+> place to keep a copy of the API surface.
 
 ---
-
-## ADR-ACHIEVEMENT-001: Outbox-Driven Evaluation over Inline Handler Logic
+## ADR-BACK-ACHIEVEMENT-001: Outbox-Driven Evaluation over Inline Handler Logic
 
 **Decision:** Achievement evaluation is not performed inside command handlers. Instead, domain events (`LessonCompletedDomainEvent`, `EnrollmentCompletedDomainEvent`, `TestSubmittedDomainEvent`, `UserProfileUpdatedDomainEvent`) are caught by lightweight Infrastructure MediatR handlers that write a single outbox message. The background `OutboxProcessorService` then dispatches the message to `IAchievementEvaluator`, which contains all achievement logic.
 
@@ -40,7 +24,7 @@
 
 ---
 
-## ADR-ACHIEVEMENT-002: Idempotent SET Semantics for Progress Counters
+## ADR-BACK-ACHIEVEMENT-002: Idempotent SET Semantics for Progress Counters
 
 **Decision:** `UserAchievementProgress` stores counters (`LessonsCompleted`, `CoursesCompleted`, `DistinctCategoriesCompleted`). Each evaluator method recomputes the counter from an aggregate query (`COUNT(*)`) and calls a `SetX(value)` method — it never increments or decrements. The same applies to threshold checks: before unlocking, the current count is compared against a threshold; if already met, the check simply returns.
 
@@ -55,7 +39,7 @@
 
 ---
 
-## ADR-ACHIEVEMENT-003: Dual-Layer Deduplication for Achievement Unlocks
+## ADR-BACK-ACHIEVEMENT-003: Dual-Layer Deduplication for Achievement Unlocks
 
 **Decision:** An achievement unlock is protected by two independent guards:
 
@@ -73,7 +57,7 @@
 
 ---
 
-## ADR-ACHIEVEMENT-004: Frontend Icon Mapping by Stable Code String
+## ADR-BACK-ACHIEVEMENT-004: Frontend Icon Mapping by Stable Code String
 
 **Decision:** Each achievement has a stable string code (e.g., `FIRST_LESSON`, `SPEED_DEMON`) stored as a `varchar(64)` in the database. The backend returns the code in every API response. The frontend maps each code to an SVG asset at build time. No icon path or icon metadata is stored in the database.
 
@@ -88,7 +72,7 @@
 
 ---
 
-## ADR-ACHIEVEMENT-005: Denormalized `UserAchievementProgress` Aggregate Row
+## ADR-BACK-ACHIEVEMENT-005: Denormalized `UserAchievementProgress` Aggregate Row
 
 **Decision:** A `UserAchievementProgress` table stores one row per user with pre-computed counters: `LessonsCompleted`, `CoursesCompleted`, `DistinctCategoriesCompleted`, `ProfileCompleted`. These counters are updated by the evaluator and exposed directly by the `GET /api/achievements/me` endpoint.
 
@@ -103,7 +87,7 @@
 
 ---
 
-## ADR-ACHIEVEMENT-006: Composite Primary Key on `UserCompletedCategory`
+## ADR-BACK-ACHIEVEMENT-006: Composite Primary Key on `UserCompletedCategory`
 
 **Decision:** `UserCompletedCategory` uses a composite primary key `(UserId, CategoryId)`. There is no surrogate `Id` column. `AddIfMissingAsync` checks `AnyAsync` before inserting; the composite PK enforces the uniqueness invariant at the database level.
 
@@ -118,7 +102,7 @@
 
 ---
 
-## ADR-ACHIEVEMENT-007: `NotifyAchievementUnlocked` via Outbox → SignalR & Persistent Notifications
+## ADR-BACK-ACHIEVEMENT-007: `NotifyAchievementUnlocked` via Outbox → SignalR & Persistent Notifications
 
 > **Updated:** Originally written as a Phase-2 placeholder; both SignalR push and persistent Notifications are now implemented.
 
@@ -137,7 +121,7 @@
 - SignalR only (no persistent notification) — offline users would never know they earned an achievement while away from the platform (e.g., if a background admin action or delayed outbox execution triggered it).
 - Persistent notification only (no SignalR) — active users would not get the instant "wow" factor of a toast popping up right as they complete a course or lesson.
 
-**Latency update (see DECISIONS_INFRA.md ADR-020):** The polling-only outbox had a worst-case 20s delay for achievement chains (evaluate → notify = 2 polling cycles). This was resolved by a combination of PostgreSQL `LISTEN/NOTIFY` push notifications (to wake the processor immediately on new events) and an **in-process self-signaling loop**. When the processor evaluates an achievement and inserts a new `NotifyAchievementUnlocked` message, it immediately loops back to process it without waiting for a new DB notification or polling interval. Achievement notification latency is now effectively instantaneous (< 100ms).
+**Latency update (see ../platform/INFRA.md ADR-BACK-INFRA-008):** The polling-only outbox had a worst-case 20s delay for achievement chains (evaluate → notify = 2 polling cycles). This was resolved by a combination of PostgreSQL `LISTEN/NOTIFY` push notifications (to wake the processor immediately on new events) and an **in-process self-signaling loop**. When the processor evaluates an achievement and inserts a new `NotifyAchievementUnlocked` message, it immediately loops back to process it without waiting for a new DB notification or polling interval. Achievement notification latency is now effectively instantaneous (< 100ms).
 
 ---
 

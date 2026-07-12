@@ -3,15 +3,19 @@
 > Format: what was decided → why → what alternatives were rejected.
 > Updated after each chat where architectural decisions were made.
 
-Related files: [DECISIONS_ARCHITECTURE.md](DECISIONS_ARCHITECTURE.md) · [DECISIONS_AUTH.md](DECISIONS_AUTH.md) · [DECISIONS_DOMAIN.md](DECISIONS_DOMAIN.md)
+Related files: [ARCHITECTURE.md](ARCHITECTURE.md) · [AUTH.md](AUTH.md) · [DOMAIN.md](DOMAIN.md) · [MIGRATIONS.md](MIGRATIONS.md)
 
 ## Status Convention
 
-ADRs are not deleted. If a decision is reviewed — the old ADR is marked `Superseded by ADR-XXX`, the new one — `Supersedes ADR-YYY`. This preserves the history of thought and shows how the architecture evolved.
+When a decision is revised, the old ADR is marked `Superseded by ADR-XXX` and the new one `Supersedes ADR-YYY` — the history of thought is worth keeping.
+
+When the mechanism an ADR describes no longer exists at all, the ADR is **removed** rather than kept as a tombstone: a reader looking for how the system works should not have to first work out which half of the file is fiction. The rejected alternative lives on in the ADR that replaced it — that is where "why not this?" belongs — and the full text stays in git history.
+
+Numbers are never reused, so gaps in the sequence are expected. `ADR-BACK-INFRA-006` (auto-migrations on API startup) and `ADR-BACK-INFRA-009` (seed assets embedded in `Learnix.Infrastructure`) were removed this way: migrations and seeding no longer live in this layer at all. See [MIGRATIONS.md](MIGRATIONS.md).
 
 ---
 
-## ADR-INFRA-001: PostgreSQL + MongoDB (polyglot persistence)
+## ADR-BACK-INFRA-001: PostgreSQL + MongoDB (polyglot persistence)
 
 **Decision:** Core relational data in PostgreSQL, unstructured data — in MongoDB.
 
@@ -30,7 +34,7 @@ ADRs are not deleted. If a decision is reviewed — the old ADR is marked `Super
 
 ---
 
-## ADR-INFRA-002: Redis distributed cache — ICacheable<TValue> + MediatR pipeline behavior
+## ADR-BACK-INFRA-002: Redis distributed cache — ICacheable<TValue> + MediatR pipeline behavior
 
 **Decision:** Queries implementing `ICacheable<TValue>` are automatically cached in Redis via `CachingBehavior<TRequest, TValue>`. Commands that mutate cached data explicitly invalidate the corresponding keys after `SaveChangesAsync`.
 
@@ -115,7 +119,7 @@ public interface ICacheable<TValue>
 
 ---
 
-## ADR-INFRA-003: Audit fields via EF SaveChanges interceptor
+## ADR-BACK-INFRA-003: Audit fields via EF SaveChanges interceptor
 
 **Decision:** CreatedAt / UpdatedAt are automatically set via the EF SaveChanges interceptor. Properties have a private set — the interceptor sets them through the EF ChangeTracker (without reflection, EF natively supports private setters).
 
@@ -126,7 +130,7 @@ public interface ICacheable<TValue>
 
 ---
 
-## ADR-INFRA-004: DbContext natively implements IUnitOfWork
+## ADR-BACK-INFRA-004: DbContext natively implements IUnitOfWork
 
 **Decision:** `ApplicationDbContext` implements `IUnitOfWork`. There is no separate `UnitOfWork` class. DI: `services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>())` — resolves to the same scoped instance.
 
@@ -140,7 +144,7 @@ public interface ICacheable<TValue>
 
 ---
 
-## ADR-INFRA-005: Outbox pattern (Schema & Background Worker)
+## ADR-BACK-INFRA-005: Outbox pattern (Schema & Background Worker)
 
 **Decision:** The Outbox pattern is implemented to reliably execute background operations (confirm/delete blob, send email, evaluate achievements). Domain events are published in-process via `DomainEventsInterceptor` after `SaveChangesAsync`. Critical background operations are written to `OutboxMessage` within the same database transaction.
 
@@ -153,30 +157,11 @@ public interface ICacheable<TValue>
 - Reads `WHERE ProcessedAt IS NULL AND (NextRetryAt IS NULL OR NextRetryAt <= NOW())`
 - Invokes `IOutboxMessageDispatcher.DispatchAsync(message)` which routes to a specific handler.
 - Exponential backoff via `NextRetryAt` on errors.
-- **See ADR-INFRA-008:** Dispatch mechanism optimized via PostgreSQL LISTEN/NOTIFY.
+- **See ADR-BACK-INFRA-008:** Dispatch mechanism optimized via PostgreSQL LISTEN/NOTIFY.
 
 ---
 
-## ADR-INFRA-006: Auto-migrations only in Development
-
-**Decision:** `Database.MigrateAsync()` is called upon API startup via the `app.ApplyMigrationsAsync()` extension only when `app.Environment.IsDevelopment()`. In staging/prod, migrations are applied in a separate, controlled step (CI/CD or manual `dotnet ef database update`).
-
-**Why:**
-- Dev: the developer runs `docker compose up -d` and `dotnet run` — the DB is ready without additional commands. Speeds up the feedback loop.
-- Prod: auto-migrations create race conditions upon scale-out (multiple instances starting simultaneously), migration error = API fails to start, destructive schema changes pass without human review.
-
-**Alternatives:**
-- Always auto-migrate — dangerous in prod (see above).
-- Never auto-migrate, even in dev — every `git pull` with a new migration requires manual `dotnet ef database update`. Adds friction to daily work.
-- `Database.EnsureCreatedAsync()` — incompatible with migrations, suitable only for test databases created from scratch.
-
-**Consequences:**
-- Phase D (Deploy): add a dedicated CI step to apply migrations in staging/prod, or generate an idempotent SQL script via `dotnet ef migrations script --idempotent` and apply it using a migration tool (Flyway/custom).
-- Developers should expect migrations to run automatically upon their first `dotnet run` after a `git pull` — they will see this in the console via `LogInformation`.
-
----
-
-## ADR-INFRA-007: Background job scheduling — IHostedService vs Quartz.NET vs Hangfire
+## ADR-BACK-INFRA-007: Background job scheduling — IHostedService vs Quartz.NET vs Hangfire
 
 **Decision:** For background tasks, we use `BackgroundService` + `PeriodicTimer` (built into .NET). We will not introduce Quartz.NET or Hangfire until there is a specific need for their capabilities.
 
@@ -212,15 +197,15 @@ If the API runs on 3 servers simultaneously (horizontal scaling), `IHostedServic
 
 ---
 
-## ADR-INFRA-008: Outbox latency — PostgreSQL LISTEN/NOTIFY instead of polling-only
+## ADR-BACK-INFRA-008: Outbox latency — PostgreSQL LISTEN/NOTIFY instead of polling-only
 
-> Partially supersedes ADR-INFRA-005 regarding the "Outbox worker (background IHostedService)" — the message dispatch mechanism was changed from pure polling to push-first with a polling fallback.
+> Partially supersedes ADR-BACK-INFRA-005 regarding the "Outbox worker (background IHostedService)" — the message dispatch mechanism was changed from pure polling to push-first with a polling fallback.
 
 **Context and problem:**
 
-The initial Outbox implementation (ADR-INFRA-005) utilized pure polling: `OutboxProcessorService` with a `PeriodicTimer(10s)` executed a SELECT on the `OutboxMessages` table on every tick. This worked well for blob operations and emails, where a 10s latency was acceptable.
+The initial Outbox implementation (ADR-BACK-INFRA-005) utilized pure polling: `OutboxProcessorService` with a `PeriodicTimer(10s)` executed a SELECT on the `OutboxMessages` table on every tick. This worked well for blob operations and emails, where a 10s latency was acceptable.
 
-The issue became critical with the introduction of chained events in the achievement system (ADR-ACHIEVEMENT-001, ADR-ACHIEVEMENT-007):
+The issue became critical with the introduction of chained events in the achievement system (ADR-BACK-ACHIEVEMENT-001, ADR-BACK-ACHIEVEMENT-007):
 
 ```text
 LessonCompleted → SaveChanges
@@ -347,28 +332,7 @@ The entire batch is wrapped in an explicit transaction (`BeginTransactionAsync` 
 
 ---
 
-## ADR-INFRA-009: Embedded Resources for Data Seeding
-
-**Decision:** Assets (images and videos) required for database seeding (courses, lessons, avatars) are stored directly within the `Learnix.Infrastructure` assembly as Embedded Resources, rather than in the file system or as Base64 strings in the code. Upon upload to Blob Storage, each generated entity (course or video lesson) receives its own unique copy of the file (a unique `blobPath` is generated).
-
-**Why:**
-- **Environment independence:** Seeder code does not depend on the host file system or current working directory (which is problematic in Docker or during tests).
-- **Code size:** The previous approach utilized large Base64 strings directly in C# code, polluting it and complicating reading.
-- **Data isolation:** During seeding, every course or lesson receives its own unique path in Blob Storage. This prevents conflicts (e.g., accidental deletion of a shared `placeholder.mp4` via the admin panel).
-
-**Alternatives:**
-- **Base64 constants in code (old decision):** Pollutes C# files, difficult to maintain large files. Rejected.
-- **Reading from the file system (`File.ReadAllBytes`):** Requires proper `Copy to Output Directory` setup, paths may break.
-- **Shared Blob Storage object:** Uploading one `placeholder.mp4` and linking it from all lessons. Rejected: deleting a video in one lesson would trigger Outbox `DeleteBlob`, destroying the shared file and causing 404s in others.
-
-**Consequences:**
-- Files added to the `Learnix.Infrastructure/Assets/` folder and configured as `<EmbeddedResource>` in `Learnix.Infrastructure.csproj`.
-- `CourseSeederHostedService` and `StudentSeederHostedService` utilize `Assembly.GetExecutingAssembly().GetManifestResourceStream()`.
-- Each uploaded copy receives a `Guid.NewGuid()` in its path (`blobPath`), ensuring uniqueness and safe deletion.
-
----
-
-## ADR-INFRA-010: PII Masking in Application Logs
+## ADR-BACK-INFRA-010: PII Masking in Application Logs
 
 **Context:**
 During a security audit, it was discovered that the email sending service (`SmtpEmailSender`) logged complete user email addresses at the `Information` level (e.g., `logger.LogInformation("Email sent to Oleh123@gmail.com")`). In a production environment, these logs might be transmitted to centralized systems (ELK, Datadog), accessible to a broad array of developers. Logging Personally Identifiable Information (PII) in plaintext creates security risks and violates compliance (GDPR).
@@ -384,7 +348,7 @@ Any service logging sensitive data (email, phones, IP addresses) must apply mask
 - Additional effort: Developers must remain vigilant regarding the data they log.
 
 
-## ADR-INFRA-011: Repository Pattern via Ardalis.Specification
+## ADR-BACK-INFRA-011: Repository Pattern via Ardalis.Specification
 
 **Decision:** Specific repository interfaces per aggregate root extending IRepositoryBase<T> from Ardalis.Specification. No custom repository base classes.
 
@@ -399,7 +363,7 @@ Any service logging sensitive data (email, phones, IP addresses) must apply mask
 
 ---
 
-## ADR-INFRA-012: Application Settings via IOptions<T>
+## ADR-BACK-INFRA-012: Application Settings via IOptions<T>
 
 **Decision:** Configuration sections from ppsettings.json are strongly typed to POCOs and consumed via IOptions<T>.
 
@@ -413,7 +377,7 @@ Any service logging sensitive data (email, phones, IP addresses) must apply mask
 - Dependency rule: Application layer doesn't depend on Microsoft.Extensions.Configuration abstractions, only on its own models.
 ---
 
-## ADR-INFRA-013: Outbox Dispatch — a Handler per Message Type, not a Switch in the Processor
+## ADR-BACK-INFRA-013: Outbox Dispatch — a Handler per Message Type, not a Switch in the Processor
 
 **Decision:** `OutboxProcessorService` no longer knows what any message *means*. It locks a batch (`FOR UPDATE SKIP LOCKED`), hands each row to `IOutboxMessageDispatcher`, and retries with backoff whatever throws. Every message type is a class:
 
@@ -433,7 +397,7 @@ internal sealed class PasswordResetEmailHandler(IEmailSender emailSender)
 **What the processor used to be:** a 20-case `switch` with seven services injected into a background worker (`IEmailSender`, `IBlobStorageService`, `IAchievementEvaluator`, `IAchievementNotifier`, `ICertificateNotifier`, `INotificationSender`), `JsonSerializer.Deserialize<T>` repeated verbatim in every branch, and the user-facing text of in-app notifications ("Achievement Unlocked", "Certificate Issued") sitting inside the plumbing. Adding an outbox message meant editing the class responsible for not losing messages.
 
 **Why:**
-- **The processor's job is delivery, not meaning.** Row locking, retry, exponential backoff and the `LISTEN/NOTIFY` wake-up (ADR-INFRA-008) are what it must get right. Every dependency it carried for someone else's side-effect was a reason to touch it — and each touch risked the one thing nobody wants broken.
+- **The processor's job is delivery, not meaning.** Row locking, retry, exponential backoff and the `LISTEN/NOTIFY` wake-up (ADR-BACK-INFRA-008) are what it must get right. Every dependency it carried for someone else's side-effect was a reason to touch it — and each touch risked the one thing nobody wants broken.
 - **Each handler declares only what it needs.** `DeleteBlobHandler` takes `IBlobStorageService` and nothing else. The old switch gave the *whole* processor every dependency in the union.
 - **The deserialization lived twenty times.** Now once, in `OutboxMessageHandler<TPayload>`, which also turns an unreadable payload into a proper failure rather than a `null!` waiting to throw somewhere less obvious.
 - **The dispatcher can enforce what the switch could not.** At construction it checks the handler set against every constant in `OutboxMessageTypes`, and refuses to start if a type has no handler — or if two handlers claim one. A `default:` branch could only complain *after* a message was already stranded; a set difference complains at boot. There *was* such a stranded case waiting to happen: an unused `OutboxMessageDispatcher` with a lone `DeleteBlob` branch had been left behind in the codebase, registered nowhere.
@@ -450,17 +414,17 @@ internal sealed class PasswordResetEmailHandler(IEmailSender emailSender)
 
 ---
 
-## ADR-INFRA-014: The Migrator Flushes Redis — a Cache Must Not Outlive Its Database
+## ADR-BACK-INFRA-014: The Migrator Flushes Redis — a Cache Must Not Outlive Its Database
 
 **Decision:** `Learnix.DbMigrator` empties the Redis cache (`FLUSHDB`) as its last step, after migrations and every seeder have run. Failure to reach Redis logs a warning and does not fail the run.
 
 **Why:** the cache outlives the database, and the two then disagree about which world they are in — with the cache winning for up to a day.
 
-Concretely, and this was found the hard way: drop and re-create PostgreSQL (a routine local reset) while the Redis container keeps running. The categories are re-seeded with **new** GUIDs, but `categories:all` still holds the old list for the remainder of its 24-hour TTL (ADR-INFRA-006 / `CacheKeys.Categories.AllTtl`). The catalog then renders a filter sidebar of categories whose ids no longer exist in any row, and picking one returns **zero courses**. Nothing in the code is wrong. Every layer is behaving exactly as designed, and the result is a page that lies.
+Concretely, and this was found the hard way: drop and re-create PostgreSQL (a routine local reset) while the Redis container keeps running. The categories are re-seeded with **new** GUIDs, but `categories:all` still holds the old list for the remainder of its 24-hour TTL (ADR-BACK-INFRA-002 / `CacheKeys.Categories.AllTtl`). The catalog then renders a filter sidebar of categories whose ids no longer exist in any row, and picking one returns **zero courses**. Nothing in the code is wrong. Every layer is behaving exactly as designed, and the result is a page that lies.
 
 **Why flush everything rather than the keys that went stale:**
 - `IDistributedCache` cannot enumerate or delete by prefix, so "the keys that went stale" is not a set the migrator can name. `CacheKeys.Courses.Public(...)` alone is an unbounded key space parameterized by search terms.
-- **Every key in Redis is derived data**: cached query results, and `ai-chat:outage` (ADR-CHAT-014), which the next chat turn re-learns anyway. The cost of throwing it all away is a few cold reads. The cost of keeping a stale entry is a silently wrong page.
+- **Every key in Redis is derived data**: cached query results, and `ai-chat:outage` (ADR-BACK-CHAT-014), which the next chat turn re-learns anyway. The cost of throwing it all away is a few cold reads. The cost of keeping a stale entry is a silently wrong page.
 - Maintaining a list of "caches to invalidate after a seed" is bookkeeping that rots the moment somebody adds a cache and forgets the list exists.
 
 **Why in the migrator and not the API:** the migrator is the only component that knows the data has just changed underneath everyone. The API cannot tell a fresh start from a restart, and flushing on every boot would throw away a warm cache for no reason.

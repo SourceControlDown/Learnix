@@ -4,11 +4,11 @@
 
 ---
 
-## ADR-NOTIF-001: A Notification Is Data, Not a Sentence
+## ADR-BACK-NOTIF-001: A Notification Is Data, Not a Sentence
 
 **Decision:** A notification carries **what happened** and **what it happened to** — never prose. `Notification` stores `Type` (the enum) and `Parameters` (a `jsonb` map of strings: `{"courseTitle": "React"}`, `{"code": "FIRST_LESSON"}`), and nothing else. `INotificationSender.SendAsync(userId, type, parameters)` takes no title and no body. The REST payload and the SignalR push carry the same two fields. **The client renders the text**, through the same `react-i18next` machinery it already uses for every other string on the page.
 
-Emails are the opposite and stay that way: they are rendered server-side, localized with `IStringLocalizer` from `User.Language` (ADR-EMAIL-002), because an email leaves the platform and there is no client on the other end to render anything.
+Emails are the opposite and stay that way: they are rendered server-side, localized with `IStringLocalizer` from `User.Language` (ADR-BACK-EMAIL-002), because an email leaves the platform and there is no client on the other end to render anything.
 
 **What it replaced.** `Notification.Title` and `Notification.Body` — English sentences composed inside outbox handlers (`"Achievement Unlocked"`, `$"You've earned a certificate for \"{CourseTitle}\"."`) and stored, already rendered, in the database.
 

@@ -2,22 +2,14 @@
 
 > Covers Phase 8: B-44 (MongoDB), B-45 (AI providers + SSE), B-46 (session persistence).
 
-## Підсумок: що реалізовано
+> **Endpoints:** see [`docs/backend/ENDPOINTS.md`](../../ENDPOINTS.md) — one generated table for
+> the whole API, verified against the controllers in CI. An ADR records a decision; it is not the
+> place to keep a copy of the API surface.
 
-Сесія визначається користувачем і скоупом (ADR-CHAT-004). Скоуп — у шляху.
-
-| Endpoint | Що робить |
-|---|---|
-| `GET /api/ai-chat/platform/session` | Сесія платформного асистента |
-| `POST /api/ai-chat/platform/messages` | Повідомлення асистенту, відповідь стрімом (SSE) |
-| `DELETE /api/ai-chat/platform/session` | Видалення сесії асистента |
-| `GET /api/ai-chat/courses/{courseId}/session` | Сесія тьютора курсу (потрібне зарахування) |
-| `POST /api/ai-chat/courses/{courseId}/messages` | Повідомлення тьютору; у тілі також `lessonId` |
-| `DELETE /api/ai-chat/courses/{courseId}/session` | Видалення сесії тьютора цього курсу |
+A session is identified by the user and the scope (ADR-BACK-CHAT-004); the scope is carried in the path.
 
 ---
-
-## ADR-CHAT-001: `IAiChatProvider` Abstraction
+## ADR-BACK-CHAT-001: `IAiChatProvider` Abstraction
 
 **Decision:** The Application layer defines `IAiChatProvider` with a single method `StreamChatAsync(ChatRequest, CancellationToken)` returning `IAsyncEnumerable<ChatStreamEvent>`. Infrastructure contains `AnthropicChatProvider` and `GeminiChatProvider`. The active provider is selected via `appsettings.json` → `AiChat:Provider = "Anthropic" | "Gemini"`. DI resolves the correct implementation based on that string at startup.
 
@@ -37,7 +29,7 @@ Conversation, tools **and system prompt** travel together in `ChatRequest`. The 
 - Swapping providers requires changing one config value — the Application layer is untouched.
 - The tool execution loop is written once in `ChatStreamOrchestrator` and not duplicated per provider.
 - `IAsyncEnumerable` allows streaming events directly into SSE without buffering the full response.
-- Passing a `ChatRequest` object rather than growing the parameter list means the next field the orchestrator needs to send does not touch either provider. The system prompt was the first such field: it stopped being a constant the moment the tutor needed a different one (ADR-CHAT-012).
+- Passing a `ChatRequest` object rather than growing the parameter list means the next field the orchestrator needs to send does not touch either provider. The system prompt was the first such field: it stopped being a constant the moment the tutor needed a different one (ADR-BACK-CHAT-012).
 
 **Rejected alternatives:**
 - Anthropic-only in v1 — simpler, but loses the ability to switch for cost optimization or fallback.
@@ -47,7 +39,7 @@ Conversation, tools **and system prompt** travel together in `ChatRequest`. The 
 
 ---
 
-## ADR-CHAT-002: `Anthropic.SDK` Package over Manual HTTP
+## ADR-BACK-CHAT-002: `Anthropic.SDK` Package over Manual HTTP
 
 **Decision:** `AnthropicChatProvider` uses the `Anthropic.SDK` NuGet package (v5.x, by tghamm) instead of hand-rolled HTTP requests. The three manual files — `AnthropicRequestBuilder`, `AnthropicSseParser`, `AnthropicDtos` — are deleted.
 
@@ -69,7 +61,7 @@ Key SDK usage:
 
 ---
 
-## ADR-CHAT-003: MongoDB for AI Chat Sessions
+## ADR-BACK-CHAT-003: MongoDB for AI Chat Sessions
 
 **Decision:** AI chat sessions are stored in a MongoDB collection `chat_sessions`. One document = one session = list of messages.
 
@@ -96,11 +88,11 @@ Document schema:
 }
 ```
 
-Index: **unique** `{ userId: 1, scope: 1, courseId: 1 }` — the session's identity (ADR-CHAT-004). Created by `MongoIndexInitializer` (`IHostedService`) at startup. `courseId` is null for the platform scope, which Mongo treats as a value, so uniqueness holds there too.
+Index: **unique** `{ userId: 1, scope: 1, courseId: 1 }` — the session's identity (ADR-BACK-CHAT-004). Created by `MongoIndexInitializer` (`IHostedService`) at startup. `courseId` is null for the platform scope, which Mongo treats as a value, so uniqueness holds there too.
 
 **Why:**
 - Document structure is natural for conversational data — messages are stored as an array inside the document, not in a separate table with a FK.
-- MongoDB `$push` gives atomic message appends without race conditions on concurrent requests. With `$each` + `$slice` the same write also trims the history to its limit (ADR-CHAT-005), so no read-modify-write is needed.
+- MongoDB `$push` gives atomic message appends without race conditions on concurrent requests. With `$each` + `$slice` the same write also trims the history to its limit (ADR-BACK-CHAT-005), so no read-modify-write is needed.
 - Schema changes (e.g., adding new fields to messages like `toolCalls`) require no migrations.
 
 **Rejected alternatives:**
@@ -109,7 +101,7 @@ Index: **unique** `{ userId: 1, scope: 1, courseId: 1 }` — the session's ident
 
 ---
 
-## ADR-CHAT-004: Scoped Sessions — `(userId, scope, courseId)`
+## ADR-BACK-CHAT-004: Scoped Sessions — `(userId, scope, courseId)`
 
 **Decision:** A chat session is identified by **who is talking and what about**: the signed-in user plus a `ChatScope`, which is either `Platform` or `Course(courseId)`. That triple is the unique key, enforced by a unique Mongo index.
 
@@ -123,7 +115,7 @@ GET|DELETE /api/ai-chat/courses/{courseId}/session
 POST       /api/ai-chat/courses/{courseId}/messages        { message, lessonId? }
 ```
 
-Each scope keeps its own history, its own context window, its own message limit, its own tool set and system prompt (ADR-CHAT-012), and its own rate-limit budget. `DELETE` deletes the document for that scope alone. There is no `isActive` flag and no session lifecycle: a session exists or it does not.
+Each scope keeps its own history, its own context window, its own message limit, its own tool set and system prompt (ADR-BACK-CHAT-012), and its own rate-limit budget. `DELETE` deletes the document for that scope alone. There is no `isActive` flag and no session lifecycle: a session exists or it does not.
 
 The course endpoints require an active enrollment. The check lives in `ChatScopeAuthorizer`, shared by the query, the command and the SSE stream — the stream sits outside the MediatR pipeline, so the rule cannot live only in a handler.
 
@@ -141,7 +133,7 @@ The course endpoints require an active enrollment. The check lives in `ChatScope
 
 ---
 
-## ADR-CHAT-005: Two Rolling Windows — Storage (50) and Context (20)
+## ADR-BACK-CHAT-005: Two Rolling Windows — Storage (50) and Context (20)
 
 **Decision:** Two independent limits, both in `IOptions<AiChatSettings>` and tunable without recompilation:
 
@@ -166,14 +158,14 @@ The context window is cut on a **turn boundary**, not on a message boundary: `Ch
 
 ---
 
-## ADR-CHAT-006: Tool Use for Course Recommendations
+## ADR-BACK-CHAT-006: Tool Use for Course Recommendations
 
 **Decision:** The AI provider has access to two tools registered via `IChatTool`:
 
 - `search_courses(query, category?, maxResults?)` — searches published courses by keyword and optional category slug; returns `{ courses: [...] }`.
 - `get_categories()` — returns all available categories with name, slug, and course count. Called by the AI when the user mentions a subject area and the AI needs the correct slug before calling `search_courses`.
 
-Implemented via the `IChatTool` interface in the Application layer. Both tools delegate to `IMediator.Send(...)` — preserving the FluentValidation and logging pipeline. Both are offered only in the platform scope (ADR-CHAT-012).
+Implemented via the `IChatTool` interface in the Application layer. Both tools delegate to `IMediator.Send(...)` — preserving the FluentValidation and logging pipeline. Both are offered only in the platform scope (ADR-BACK-CHAT-012).
 
 Tool execution loop in `ChatStreamOrchestrator`:
 1. Receives `ToolUseEndEvent` from the provider.
@@ -217,7 +209,7 @@ The system prompt (`AiChatConstants.SystemPrompt`) explicitly lists all three to
 
 ---
 
-## ADR-CHAT-007: Rate Limiting AI Chat — a Separate Budget per Scope
+## ADR-BACK-CHAT-007: Rate Limiting AI Chat — a Separate Budget per Scope
 
 **Decision:** Two `RateLimiterPolicy` instances, one per scope, both `FixedWindowLimiter` partitioned by `userId` (from the JWT `sub` claim):
 
@@ -242,7 +234,7 @@ On limit exceeded: HTTP 429 + `ProblemDetails` with `Retry-After` header via the
 
 ---
 
-## ADR-CHAT-008: SSE over WebSocket for AI Streaming
+## ADR-BACK-CHAT-008: SSE over WebSocket for AI Streaming
 
 **Decision:** `POST /api/ai-chat/messages` returns `Content-Type: text/event-stream`. The controller writes SSE events directly to `Response.Body` without buffering. This endpoint is intentionally excluded from the MediatR pipeline — `ChatStreamOrchestrator` is called directly because SSE requires access to `HttpContext.Response`.
 
@@ -281,17 +273,17 @@ The frontend reads the SSE stream via `fetch` with a `ReadableStream` reader. Th
 
 ---
 
-## ADR-CHAT-009: Closed Session Cleanup (30-day Retention) — **WITHDRAWN**
+## ADR-BACK-CHAT-009: Closed Session Cleanup (30-day Retention) — **WITHDRAWN**
 
-Superseded by ADR-CHAT-004. `ChatSessionCleanupService` and `DeleteOlderThanAsync` are gone.
+Superseded by ADR-BACK-CHAT-004. `ChatSessionCleanupService` and `DeleteOlderThanAsync` are gone.
 
 The service deleted documents left behind by `isActive: false`. Once "clear chat" simply deletes the document, there is nothing to collect: the collection holds at most one document per `(user, scope)`. The retention it provided — 30 days of closed transcripts "for post-mortem investigation" — was never used; `closedAt` was written and read by nothing.
 
-The number is retained so that ADR-CHAT-010 and ADR-CHAT-011 keep their identities.
+The number is retained so that ADR-BACK-CHAT-010 and ADR-BACK-CHAT-011 keep their identities.
 
 ---
 
-## ADR-CHAT-010: `Google.GenAI` Official Library for Gemini
+## ADR-BACK-CHAT-010: `Google.GenAI` Official Library for Gemini
 
 **Decision:** `GeminiChatProvider` uses the official `Google.GenAI` NuGet package instead of manual HTTP requests to the Generative Language API. Key usage:
 
@@ -313,7 +305,7 @@ The `tool_result` role used internally in `ChatMessage` is mapped to `"user"` in
 **`GeminiChatProvider` is registered as `Singleton`** (vs `Scoped` for `AnthropicChatProvider`). The `Client` instance is thread-safe and is reused across requests. Both registrations are correct; the difference is intentional — the Google client benefits from connection pooling across requests.
 
 **Why:**
-- Eliminates manual SSE parsing and HTTP plumbing (same rationale as ADR-CHAT-002 for Anthropic).
+- Eliminates manual SSE parsing and HTTP plumbing (same rationale as ADR-BACK-CHAT-002 for Anthropic).
 - The official library handles API versioning, model routing, and error mapping.
 - `GenerateContentStreamAsync` returns `IAsyncEnumerable<GenerateContentResponse>` — maps directly onto `IAsyncEnumerable<ChatStreamEvent>`.
 
@@ -323,9 +315,9 @@ The `tool_result` role used internally in `ChatMessage` is mapped to `"user"` in
 
 ---
 
-## ADR-CHAT-011: Personal and Instructor Tools (`get_my_learning_profile`, `get_instructor_courses`)
+## ADR-BACK-CHAT-011: Personal and Instructor Tools (`get_my_learning_profile`, `get_instructor_courses`)
 
-**Decision:** Two tools were added to the `IChatTool` set defined in ADR-CHAT-006, both registered `Scoped` in `Infrastructure/DependencyInjection.cs` and both delegating to `IMediator.Send(...)`.
+**Decision:** Two tools were added to the `IChatTool` set defined in ADR-BACK-CHAT-006, both registered `Scoped` in `Infrastructure/DependencyInjection.cs` and both delegating to `IMediator.Send(...)`.
 
 ### `get_my_learning_profile(sections?)`
 
@@ -335,7 +327,7 @@ Returns the caller's own profile, courses in progress with a completion percenta
 
 **Optional `sections` argument** (`profile`, `in_progress`, `completed`, `wishlist`, `achievements`, from `LearningProfileSections`). Omitted means all. Each section is gated so that an unrequested section costs no query.
 
-**Every list section is capped** at `AiChatToolLimits.LearningProfileSectionItems` (15) and wrapped in `LearningProfileSection<T>(Total, Truncated, Items)`. Tool results are persisted into the Mongo session and replayed inside the 20-message sliding window (ADR-CHAT-005) on every subsequent turn, so an uncapped list is paid for on each turn, not once. `Total` still tells the AI the real number.
+**Every list section is capped** at `AiChatToolLimits.LearningProfileSectionItems` (15) and wrapped in `LearningProfileSection<T>(Total, Truncated, Items)`. Tool results are persisted into the Mongo session and replayed inside the 20-message sliding window (ADR-BACK-CHAT-005) on every subsequent turn, so an uncapped list is paid for on each turn, not once. `Total` still tells the AI the real number.
 
 **Only payment-completed enrollments** are returned (`StudentEnrollmentsSpecification`). A pending payment grants no course access, so such an enrollment is not part of the student's learning picture.
 
@@ -355,7 +347,7 @@ Resolves an instructor by display name or id and returns their published courses
 
 **`CourseSearchResultDto` gained `InstructorId` and `InstructorFullName`**, resolved through one batched `UsersByIdsSpecification` query, mirroring how `CategoryName` is resolved. This lets the AI move from a course it just found to that course's author without a name search. The system prompt requires instructor mentions to be rendered as `[Instructor Name](/instructors/{InstructorId})`, matching the existing course-link rule.
 
-Both tools return a JSON **object** at the root, per the format rule in ADR-CHAT-006. `null` sections are omitted via `DefaultIgnoreCondition = WhenWritingNull` rather than serialized as `null`.
+Both tools return a JSON **object** at the root, per the format rule in ADR-BACK-CHAT-006. `null` sections are omitted via `DefaultIgnoreCondition = WhenWritingNull` rather than serialized as `null`.
 
 ### `ILessonProgressRepository.GetProgressCountsAsync`
 
@@ -370,7 +362,7 @@ A bulk method was added to `ILessonProgressRepository`, which until now was an e
 `LessonProgress/Specifications/CompletedLessonCountByStudentAndCourseSpecification` is unused, and is unusable for this purpose: lacking the `Lesson` join it counts completed *hidden* lessons too, overstating progress once an instructor hides a lesson a student already finished.
 
 **Why:**
-- A tool that knows what the user is studying turns generic recommendations into grounded ones, which is the point of tool use (ADR-CHAT-006).
+- A tool that knows what the user is studying turns generic recommendations into grounded ones, which is the point of tool use (ADR-BACK-CHAT-006).
 - Caller-scoped identity makes the personal tool safe by construction rather than by prompt instruction.
 - Single-call instructor resolution keeps the five-turn tool budget for actual reasoning.
 
@@ -383,9 +375,9 @@ A bulk method was added to `ILessonProgressRepository`, which until now was an e
 
 ---
 
-## ADR-CHAT-012: The Course Tutor — `get_current_lesson`, Scoped Tools, and What the Model May Not See
+## ADR-BACK-CHAT-012: The Course Tutor — `get_current_lesson`, Scoped Tools, and What the Model May Not See
 
-**Decision:** In a course-scoped session (ADR-CHAT-004) the assistant is a **tutor for that course**. It gets a different system prompt and a different tool set:
+**Decision:** In a course-scoped session (ADR-BACK-CHAT-004) the assistant is a **tutor for that course**. It gets a different system prompt and a different tool set:
 
 | Tool | Platform | Course |
 |---|:---:|:---:|
@@ -413,7 +405,7 @@ What it returns, by lesson type:
 
 `get_current_lesson` reports `reviewAvailable` for a test lesson so the model knows which branch it is in without a wasted tool turn. It is `submittedAttempts > 0 && no open attempt`.
 
-**Why this is not the cheating machine ADR-CHAT-012 refuses to build:**
+**Why this is not the cheating machine ADR-BACK-CHAT-012 refuses to build:**
 - The platform **already reveals the answers on submit**. `SubmitTestAttemptResponse.QuestionResults` carries `CorrectOptionOrders` and `CorrectTextAnswer`, and `QuestionCard`/`ChoiceQuestion` highlight them. The tutor tells the student nothing they were not shown seconds earlier. Withholding it before submission is what protects the test; withholding it after protects nothing and blocks the single most valuable tutoring moment.
 - **An open attempt is not a submitted one.** Even though a student with an earlier submission has already seen the answers, restating them into a live attempt is not tutoring, and the guard costs one `AnyAsync`. It runs first, so on refusal the questions are never even read from the database.
 - The attempt is chosen by the server — the newest submitted one. The tool takes no `attemptId`, for the same reason it takes no `lessonId`.
@@ -429,7 +421,7 @@ What it returns, by lesson type:
 - **Video: the prohibition must be written down.** The model gets a title and a description and nothing else — there is no transcript. Given a gap, a language model fills it. The prompt therefore states plainly that it cannot watch video and must never claim to know what is in it, and the DTO carries `contentUnavailableReason` saying the same thing in-band.
 - **Test questions are withheld because hiding `IsCorrect` is not enough.** A model that can see the question and four options simply solves it. Exposing them at all turns the tutor into a cheating machine. It can still teach the topic and explain the rules of the test.
 - **`GetLessonContentQuery` is not reused**, though it performs the same enrollment check. Its DTO carries `VideoUrl` — a signed SAS blob URL from `IBlobStorageService.GenerateReadUrl`. Sending it to a third-party model provider would leak a live credential, and it would be persisted into the session document and replayed on every later turn. `LessonForAiDto` has no field that can hold a URL.
-- Truncation is mandatory, not defensive: tool results are stored and replayed inside the context window on every subsequent turn, so an uncapped lesson body is paid for repeatedly (ADR-CHAT-005).
+- Truncation is mandatory, not defensive: tool results are stored and replayed inside the context window on every subsequent turn, so an uncapped lesson body is paid for repeatedly (ADR-BACK-CHAT-005).
 
 **Consequences:**
 - `lessonId` is persisted on the user message. Earlier turns in the same course session may concern other lessons; the prompt says so and points at the `<current_lesson>` block for the one in view.
@@ -446,9 +438,9 @@ What it returns, by lesson type:
 
 ---
 
-## ADR-CHAT-013: The Course in the System Prompt, and Superseding Stale Lesson Bodies
+## ADR-BACK-CHAT-013: The Course in the System Prompt, and Superseding Stale Lesson Bodies
 
-**Decision:** The course-scoped tutor (ADR-CHAT-012) is given the course itself — its title, category, instructor, description and full outline — **in the system prompt**, not behind a tool. And the window it is sent is compacted first: of the lesson-bound tool results replayed in it, only the newest one that is about the lesson currently open keeps its payload.
+**Decision:** The course-scoped tutor (ADR-BACK-CHAT-012) is given the course itself — its title, category, instructor, description and full outline — **in the system prompt**, not behind a tool. And the window it is sent is compacted first: of the lesson-bound tool results replayed in it, only the newest one that is about the lesson currently open keeps its payload.
 
 ### The course block
 
@@ -474,21 +466,21 @@ A failure to load the context is not fatal: the tutor keeps its tools and answer
 
 ### Superseding stale results
 
-`ChatToolResultCompactor` runs over the aligned window (ADR-CHAT-005) on every provider request. For each lesson-bound tool — `get_current_lesson`, `get_my_test_review` — it keeps the payload of the newest result whose `lessonId` matches the lesson the student has open, and replaces every other one with a short `"Superseded"` note. Error results carry no `lessonId` and therefore never survive.
+`ChatToolResultCompactor` runs over the aligned window (ADR-BACK-CHAT-005) on every provider request. For each lesson-bound tool — `get_current_lesson`, `get_my_test_review` — it keeps the payload of the newest result whose `lessonId` matches the lesson the student has open, and replaces every other one with a short `"Superseded"` note. Error results carry no `lessonId` and therefore never survive.
 
 The messages themselves are never dropped: both providers reject a `tool_result` whose `tool_use` is missing. Only the payload inside is swapped, **and only for the request** — the stored session keeps the full result, so navigating back to an earlier lesson revives its body from history instead of fetching it a second time.
 
 **Why:**
 - **The tutor could not name its own course.** The prompt carried `courseId` as a bare GUID and the only content tool returned the lesson alone. Asked "which course are we on", the model could only answer "one you are enrolled in" — for a course platform, an embarrassing gap, and it also meant the tutor could not relate a lesson to the syllabus around it.
-- **The system prompt is the right home for facts that do not change.** It is rebuilt on every request and never enters the conversation, so it cannot go stale and cannot accumulate. A tool result does the opposite: it is persisted and replayed in the window on every later turn (ADR-CHAT-005), so a `get_course_outline` tool would pay for the outline once per call *and* keep paying for every stale copy. For a stable ~400-token payload that is strictly worse — this is why no such tool exists.
-- **This does not overturn the rejection of an eager lesson body in ADR-CHAT-012.** A lesson body is up to 8 000 characters and changes with every navigation; the course and its outline are small and stable. Size and volatility decide where a fact lives, not habit.
+- **The system prompt is the right home for facts that do not change.** It is rebuilt on every request and never enters the conversation, so it cannot go stale and cannot accumulate. A tool result does the opposite: it is persisted and replayed in the window on every later turn (ADR-BACK-CHAT-005), so a `get_course_outline` tool would pay for the outline once per call *and* keep paying for every stale copy. For a stable ~400-token payload that is strictly worse — this is why no such tool exists.
+- **This does not overturn the rejection of an eager lesson body in ADR-BACK-CHAT-012.** A lesson body is up to 8 000 characters and changes with every navigation; the course and its outline are small and stable. Size and volatility decide where a fact lives, not habit.
 - **Walking through a course used to drag every lesson behind it.** Read lesson A, move to B, and A's body stayed in the window; come back to A and the model fetched it again, so the same body sat in the window twice. The window now holds exactly one live lesson body — the one the student is looking at.
 - **Compaction is presentation-time, not destructive.** Rewriting the stored session would lose the body for good, and the student is very likely to come back to that lesson.
 
 **Rejected alternatives:**
 - *A `get_course_outline` tool.* See above: a stored, replayed, duplicable copy of data that never changes.
 - *Truncating the stored session instead.* Destroys the cached body of a lesson the student may return to, and makes history a function of navigation order.
-- *Dropping stale `tool_result` messages from the window entirely.* Rejected by both providers (dangling `tool_use`), and the aligned-window logic (ADR-CHAT-005) exists precisely to avoid producing such a window.
+- *Dropping stale `tool_result` messages from the window entirely.* Rejected by both providers (dangling `tool_use`), and the aligned-window logic (ADR-BACK-CHAT-005) exists precisely to avoid producing such a window.
 - *Keeping the newest lesson body regardless of which lesson it describes.* The common case is exactly the harmful one: the student has moved on, and the newest body is about the lesson they left.
 
 **Consequences:**
@@ -497,7 +489,7 @@ The messages themselves are never dropped: both providers reject a `tool_result`
 
 ---
 
-## ADR-CHAT-014: Provider Availability — Learned from Traffic, Never Probed
+## ADR-BACK-CHAT-014: Provider Availability — Learned from Traffic, Never Probed
 
 **Decision:** The platform tracks whether the AI provider can answer, exposes it at `GET /api/ai-chat/status`, and refuses to start a stream it already knows will fail. The state is **learned from real chat turns** — nothing pings the provider.
 

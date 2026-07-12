@@ -13,7 +13,7 @@
 
 ---
 
-## ADR-EMAIL-001: Email delivery — MailKit (SMTP) + RazorLight (.cshtml templates) + PreMailer.Net
+## ADR-BACK-EMAIL-001: Email delivery — MailKit (SMTP) + RazorLight (.cshtml templates) + PreMailer.Net
 
 **Decision:** Email sending is implemented using `MailKit` (SMTP client) and `RazorLight` for rendering `.cshtml` templates. For CSS inlining, `PreMailer.Net` is used, which converts CSS classes from `styles.css` (included in `_Layout.cshtml`) into inline styles (`style="..."`). Locally, Mailpit is used via Docker (SMTP :1025, Web UI :8025). On Azure, SendGrid SMTP relay is used. A console-logging `ConsoleEmailSender` is also available for development.
 
@@ -38,7 +38,7 @@
 
 ---
 
-## ADR-EMAIL-002: Email localization — IStringLocalizer + .resx + Language on User
+## ADR-BACK-EMAIL-002: Email localization — IStringLocalizer + .resx + Language on User
 
 **Decision:** Email templates are localized into English (default) and Ukrainian using `IStringLocalizer<EmailStrings>` and `.resx` resource files. The language preference is stored in the `Language` field of the `User` entity (default `"en"`), which is initially populated from the `Accept-Language` header during registration. `SmtpEmailSender` sets `CultureInfo.CurrentUICulture` before rendering; `IStringLocalizer` automatically picks up the correct translations.
 

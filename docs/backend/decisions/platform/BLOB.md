@@ -3,15 +3,12 @@
 > Format: decision → why → rejected alternatives.
 > Covers the backend blob storage architecture and asset management.
 
-## Endpoints Summary
-
-| Endpoint | Who | What it does |
-|---|---|---|
-| `POST /api/uploads/request-url` | Authenticated Users | Requests a pre-signed SAS URL for direct-to-Azure file upload into a temporary container. |
+> **Endpoints:** see [`docs/backend/ENDPOINTS.md`](../../ENDPOINTS.md) — one generated table for
+> the whole API, verified against the controllers in CI. An ADR records a decision; it is not the
+> place to keep a copy of the API surface.
 
 ---
-
-## ADR-BLOB-001: Azure Blob Storage Integration & SDK
+## ADR-BACK-BLOB-001: Azure Blob Storage Integration & SDK
 
 **Decision:** The platform uses Azure Blob Storage for all file assets (avatars, course covers, videos, category images, and certificates). The integration is implemented in the `Learnix.Infrastructure` layer using the official `Azure.Storage.Blobs` SDK. 
 
@@ -21,7 +18,7 @@
 
 ---
 
-## ADR-BLOB-002: Relative Paths in the Database
+## ADR-BACK-BLOB-002: Relative Paths in the Database
 
 **Decision:** The database does NOT store absolute URLs for blob assets. Instead, it stores a relative path in the format `{containerName}/{blobName}` (e.g., `avatars/9f2c4a1b8e7d40f3a5c6b2d1e0f34567`).
 
@@ -67,7 +64,7 @@ The obvious alternative is to store the bare `{blobName}` and let every caller s
 
 ---
 
-## ADR-BLOB-003: Two-Phase Upload Pattern (Temp → Final)
+## ADR-BACK-BLOB-003: Two-Phase Upload Pattern (Temp → Final)
 
 **Decision:** The entire lifecycle of file uploads is divided into three clear phases using the **"Temp-to-Final"** pattern (Pattern 1) to ensure reliability and strictly prevent orphan files:
 

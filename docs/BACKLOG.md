@@ -108,7 +108,7 @@ Branch `dev` carries two finished, verified, **uncommitted** changes:
 
 1. **AI-tutor test review** — `get_my_test_review` tool, `GetTestReviewForAi` query/handler/DTO,
    `reviewAvailable` + `submittedAttempts` on `TestInfoDto`, prompt rules, frontend tool label and
-   i18n, ADR-CHAT-012. Plus a fix in `useAiChat.ts`: a stream ending without `message_end`/`error`
+   i18n, ADR-BACK-CHAT-012. Plus a fix in `useAiChat.ts`: a stream ending without `message_end`/`error`
    no longer leaves `isStreaming` stuck true.
 2. **Tool names extracted to constants** — `ChatToolNames.cs`, `aiChat.constants.ts`,
    `ChatToolJson.cs`; every tool's `Definition` now derives its name from its own `Name` property.

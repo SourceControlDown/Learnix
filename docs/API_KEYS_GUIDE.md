@@ -91,7 +91,7 @@ Gemini__ApiKey=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 ## 4. Stripe — not used
 
-The project uses a **mock payment flow** instead of real Stripe integration (see `docs/backend/decisions/INFRA.md` ADR-018). `Stripe__SecretKey` is removed from `.env.example`. No action needed.
+The project uses a **mock payment flow** instead of real Stripe integration (see `docs/backend/decisions/features/PAYMENT.md`). `Stripe__SecretKey` is removed from `.env.example`. No action needed.
 
 ---
 

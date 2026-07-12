@@ -4,7 +4,7 @@
 
 ---
 
-## ADR-USERS-001: Deleting an Account — Soft Delete, a Promised Date, and Anonymization at the End
+## ADR-BACK-USERS-001: Deleting an Account — Soft Delete, a Promised Date, and Anonymization at the End
 
 **Decision:** Deleting a user is a three-stage lifecycle, and it never ends in a `DELETE` of the row.
 

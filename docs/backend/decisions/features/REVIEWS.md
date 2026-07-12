@@ -2,19 +2,12 @@
 
 > Covers Phase 9: B-47 (course reviews), B-48 (denormalized rating).
 
-## Підсумок: що реалізовано
-
-| Endpoint | Що робить |
-|---|---|
-| `GET /api/courses/{courseId}/reviews` | Отримання списку відгуків курсу (публічно, пагінація) |
-| `GET /api/courses/{courseId}/reviews/mine` | Отримання власного відгуку поточного користувача |
-| `POST /api/courses/{courseId}/reviews` | Створення відгуку (перевіряється факт зарахування на курс) |
-| `PUT /api/courses/{courseId}/reviews/{id}` | Редагування відгуку його автором |
-| `DELETE /api/courses/{courseId}/reviews/{id}` | Видалення відгуку (автором або адміністратором) |
+> **Endpoints:** see [`docs/backend/ENDPOINTS.md`](../../ENDPOINTS.md) — one generated table for
+> the whole API, verified against the controllers in CI. An ADR records a decision; it is not the
+> place to keep a copy of the API surface.
 
 ---
-
-## ADR-REVIEW-001: PostgreSQL over MongoDB for Course Reviews
+## ADR-BACK-REVIEW-001: PostgreSQL over MongoDB for Course Reviews
 
 **Decision:** Course reviews are stored in the PostgreSQL `CourseReviews` table, not in a MongoDB collection. The entity lives in the EF Core data model with a unique constraint on `(StudentId, CourseId)`, FK to `Courses` (cascade delete), and FK to `AspNetUsers` (restrict delete).
 
@@ -31,7 +24,7 @@
 
 ---
 
-## ADR-REVIEW-002: Inline Domain Arithmetic for Denormalized Rating
+## ADR-BACK-REVIEW-002: Inline Domain Arithmetic for Denormalized Rating
 
 **Decision:** `Course` exposes three domain methods that update `AverageRating` (numeric 4,2) and `ReviewsCount` (int) in memory before `SaveChangesAsync`:
 
@@ -55,7 +48,7 @@ Both the review and the updated course statistics are committed in the same `Sav
 
 ---
 
-## ADR-REVIEW-003: Navigation Property on `CourseReview` for Student Info
+## ADR-BACK-REVIEW-003: Navigation Property on `CourseReview` for Student Info
 
 **Decision:** `CourseReview` declares `public User? Student { get; private set; }` — an EF navigation property loaded via `Query.Include(r => r.Student)` in `CourseReviewsByCoursePaginatedSpecification`. The listing query returns `FirstName`, `LastName`, and `AvatarBlobPath` from the joined `User` row.
 
@@ -70,7 +63,7 @@ Both the review and the updated course statistics are committed in the same `Sav
 
 ---
 
-## ADR-REVIEW-004: Review Visibility Rules
+## ADR-BACK-REVIEW-004: Review Visibility Rules
 
 **Decision:**
 

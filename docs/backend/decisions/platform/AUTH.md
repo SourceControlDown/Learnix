@@ -1,21 +1,10 @@
 # Learnix — ADR: Authentication & Authorization
 
-## Endpoints summary
-
-| HTTP Method | Endpoint | Description | Rate Limit | Auth Required |
-|---|---|---|---|---|
-| `POST` | `/api/auth/register` | Register new user | Strict (5/15min) | No |
-| `POST` | `/api/auth/login` | Login (returns JWT + Refresh token) | Strict (5/15min) | No |
-| `POST` | `/api/auth/google` | Login via Google ID Token | Strict (5/15min) | No |
-| `POST` | `/api/auth/refresh` | Get new token pair using Refresh cookie | None | No |
-| `POST` | `/api/auth/logout` | Logout and invalidate Refresh token | None | No |
-| `POST` | `/api/auth/forgot-password` | Request password reset | Strict (5/15min) | No |
-| `POST` | `/api/auth/reset-password` | Set new password | Strict (5/15min) | No |
-| `POST` | `/api/auth/resend-confirmation`| Resend email confirmation | Strict (5/15min) | No |
-| `POST` | `/api/auth/confirm-email` | Confirm email via 6-digit OTP (returns JWT + Refresh token) | Strict (5/15min) | No |
+> **Endpoints:** see [`docs/backend/ENDPOINTS.md`](../../ENDPOINTS.md) — one generated table for
+> the whole API, verified against the controllers in CI. An ADR records a decision; it is not the
+> place to keep a copy of the API surface.
 
 ---
-
 ## ADR-BACK-AUTH-001: JWT (short-lived) + Refresh Token (long-lived, HttpOnly cookie)
 
 **Decision:** Authentication via token pair:
@@ -103,7 +92,7 @@ A separate `InstructorProfile` table is out of scope for v1.
 **Decision:** `appsettings.json` contains `Jwt.Secret = ""` (placeholder, startup validation fails if empty). `appsettings.Development.json` overrides it with a static random string (>32 bytes). In production, the value is passed via the environment variable `JWT__Secret` (double underscore = nested config key in .NET configuration).
 
 **Why:**
-- Developer runs `dotnet run` without extra steps — DB migrates automatically (DECISIONS_INFRA.md ADR-012), JWT doesn't fail on startup.
+- Developer runs `dotnet run` and the JWT config does not fail on startup — no extra steps for a secret that only exists to make Development boot. (The database is a separate matter: it is migrated by `Learnix.DbMigrator`, never by the API — see [ADR-BACK-MIGR-001](MIGRATIONS.md).)
 - `appsettings.Development.json` never goes into production build — low leak risk.
 - Production secret never touches disk or git — only runtime env var (Azure Key Vault → App Service config → env var).
 - Explicit check `string.IsNullOrWhiteSpace(jwtSettings.Secret)` in `AddInfrastructure` — fail fast, better to crash on startup than issue tokens signed with an empty key.
@@ -130,7 +119,7 @@ A separate `InstructorProfile` table is out of scope for v1.
 - `IUserAuthenticationService` — credentials validation + fetching info to build the token.
 - `ITokenService` — JWT generation + refresh token generation + hashing (pure function with no DB or Identity knowledge).
 
-All three live in `Auth/Abstractions/` (DECISIONS_ARCHITECTURE.md ADR-009). Implementations — in `Infrastructure/Identity/`.
+All three live in `Auth/Abstractions/` (ARCHITECTURE.md ADR-BACK-ARCH-009). Implementations — in `Infrastructure/Identity/`.
 
 **Why:**
 - **Different reasons to change.** If you swap the Identity provider (for Auth0/IdentityServer) — you rewrite `UserRegistration` + `UserAuthentication`, `TokenService` is unaware. If you swap JWT for PASETO or change claims — you rewrite `TokenService`, the rest is untouched. Single Responsibility Principle in action.
@@ -301,7 +290,7 @@ The refresh token is passed via HttpOnly + Secure + SameSite=Strict cookie with 
 **Why:**
 - The controller does not know `course.InstructorId` without fetching it via a repository. If the controller fetches it — it effectively performs part of the handler's job → SRP violation.
 - ASP.NET `[Authorize(Policy = ...)]` works well for static rules (role in claims, claim value). Owner checks require fetching the resource → resource-based authorization → dynamic → natural place is the handler.
-- Handler returns `Result.Fail(new ForbiddenError(...))` → `ToActionResult()` maps to 403. Aligned with existing pipeline (DECISIONS_ARCHITECTURE.md ADR-002, ADR-004).
+- Handler returns `Result.Fail(new ForbiddenError(...))` → `ToActionResult()` maps to 403. Aligned with existing pipeline (ARCHITECTURE.md ADR-BACK-ARCH-002, ADR-BACK-ARCH-004).
 - One place to look — all business rules are visible in a single layer.
 
 **Alternatives:**

@@ -1,21 +1,15 @@
 # Learnix — ADR: Платіжна система
 
-## Підсумок: що реалізовано
+> **Endpoints:** see [`docs/backend/ENDPOINTS.md`](../../ENDPOINTS.md) — one generated table for
+> the whole API, verified against the controllers in CI. An ADR records a decision; it is not the
+> place to keep a copy of the API surface.
 
-| Endpoint | Хто | Що робить |
-|---|---|---|
-| `POST /api/payments` | Student (EmailConfirmed) | Купує платний курс: створює `Payment` + `Enrollment` |
-| `GET /api/payments/mine` | Student | Власна історія платежів (paginated) |
-| `GET /api/instructor/earnings` | Instructor, Admin | Earnings по курсах інструктора (grouped summary) |
-| `GET /api/admin/payments` | Admin | Усі платежі платформи (paginated, search by email/course) |
-
-**Що НЕ реалізовано (known gaps):**
+**Not implemented (known gaps):**
 - Refunds / failed payment simulation
-- Real payment provider (Stripe/LiqPay) — задокументоване рішення в ADR-PAY-006
+- A real payment provider (Stripe/LiqPay) — the decision is recorded in ADR-BACK-PAY-006
 
 ---
-
-## ADR-PAY-001: Окрема сутність `Payment` замість атрибутів на `Enrollment`
+## ADR-BACK-PAY-001: Окрема сутність `Payment` замість атрибутів на `Enrollment`
 
 **Рішення:** `Payment` — самостійна сутність (`BaseEntity`) з полями `UserId`, `CourseId`, `EnrollmentId`, `Amount`, `Currency`, `Status`, `PaymentProvider`, `CompletedAt`. Має FK до `Enrollment` (1:1).
 
@@ -35,7 +29,7 @@
 
 ---
 
-## ADR-PAY-002: `POST /api/payments` як окремий endpoint для оплати (замість розширення `/api/enrollments`)
+## ADR-BACK-PAY-002: `POST /api/payments` як окремий endpoint для оплати (замість розширення `/api/enrollments`)
 
 **Рішення:** Для оплатних курсів студент викликає `POST /api/payments { courseId }`. Безкоштовні курси — `POST /api/enrollments { courseId }` (без змін). Два окремих endpoint, кожен зі своїм призначенням.
 
@@ -56,7 +50,7 @@
 
 ---
 
-## ADR-PAY-003: Атомарне створення `Payment` + `Enrollment` в одному `SaveChangesAsync`
+## ADR-BACK-PAY-003: Атомарне створення `Payment` + `Enrollment` в одному `SaveChangesAsync`
 
 **Рішення:** `InitiateMockPaymentCommandHandler` додає і `Enrollment`, і `Payment` до відповідних репозиторіїв до виклику `unitOfWork.SaveChangesAsync(cancellationToken)`. Обидва записи зберігаються в одній транзакції.
 
@@ -71,7 +65,7 @@
 
 ---
 
-## ADR-PAY-004: `PaymentProvider` як рядок замість enum
+## ADR-BACK-PAY-004: `PaymentProvider` як рядок замість enum
 
 **Рішення:** `Payment.PaymentProvider` — `string` (max 50), не enum. Default значення для мока — `"Mock"`.
 
@@ -86,7 +80,7 @@
 
 ---
 
-## ADR-PAY-005: Відсутність instructor-facing earnings endpoint (Phase 4)
+## ADR-BACK-PAY-005: Відсутність instructor-facing earnings endpoint (Phase 4)
 
 **Рішення:** `GET /api/instructor/earnings` повертає зведену фінансову статистику інструктора: `TotalEarnings`, `TotalPayments`, та список `Courses` згрупованих по `CourseId` (PaymentsCount, TotalAmount, LastPaymentAt). Пагінація відсутня — повертаються всі курси інструктора в одному відповіді.
 
@@ -104,7 +98,7 @@
 
 ---
 
-## ADR-PAY-006: Мок-оплата замість реального Stripe
+## ADR-BACK-PAY-006: Мок-оплата замість реального Stripe
 
 **Рішення:** Платіжна система реалізована як мок: кнопка "Pay" одразу записує `Payment` зі статусом `Completed` та `PaymentProvider = "Mock"` і активує enrollment без будь-якого зовнішнього сервісу. `Stripe__SecretKey` прибрано з `.env.example`. Stripe SDK не встановлюється.
 

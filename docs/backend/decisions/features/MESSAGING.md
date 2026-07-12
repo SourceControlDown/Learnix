@@ -2,20 +2,12 @@
 
 > Covers F-26 (chat UI), F-28 (notification bell), and the backend endpoints/hub.
 
-## Підсумок: що реалізовано
-
-| Endpoint | Що робить |
-|---|---|
-| `GET /api/messages/conversations` | Отримання списку діалогів (пагінація, пошук) |
-| `GET /api/messages/conversations/{id}/messages` | Отримання повідомлень діалогу (пагінація) |
-| `POST /api/messages/conversations/start-or-get` | Отримання або створення діалогу для курсу |
-| `POST /api/messages/conversations/{id}/messages` | Відправка повідомлення в діалог |
-| `PUT /api/messages/conversations/{id}/read` | Позначення діалогу як прочитаного |
-| `GET /api/messages/unread-count` | Отримання загальної кількості непрочитаних повідомлень |
+> **Endpoints:** see [`docs/backend/ENDPOINTS.md`](../../ENDPOINTS.md) — one generated table for
+> the whole API, verified against the controllers in CI. An ADR records a decision; it is not the
+> place to keep a copy of the API surface.
 
 ---
-
-## ADR-MSG-001: PostgreSQL over MongoDB for Course Conversations
+## ADR-BACK-MSG-001: PostgreSQL over MongoDB for Course Conversations
 
 **Decision:** `CourseConversation` and `CourseMessage` are EF Core entities stored in PostgreSQL, not MongoDB documents.
 
@@ -30,9 +22,9 @@
 
 ---
 
-## ADR-MSG-002: Separate `ChatHub` from `AchievementsHub`
+## ADR-BACK-MSG-002: Separate `ChatHub` from `AchievementsHub`
 
-> **Superseded by ADR-MSG-007.** Original decision kept for history.
+> **Superseded by ADR-BACK-MSG-007.** Original decision kept for history.
 
 **Decision:** A dedicated `ChatHub : Hub<IChatHubClient>` at `/hubs/chat` handles messaging events. It is separate from `AchievementsHub`.
 
@@ -46,7 +38,7 @@
 
 ---
 
-## ADR-MSG-003: REST for History + SignalR for Real-Time Delivery
+## ADR-BACK-MSG-003: REST for History + SignalR for Real-Time Delivery
 
 **Decision:** Message history is fetched via REST (`GET /api/messages/conversations/{id}/messages`) and cached by TanStack Query. New messages arrive in real-time via SignalR `ReceiveMessage` push, which triggers a React Query cache invalidation.
 
@@ -61,7 +53,7 @@
 
 ---
 
-## ADR-MSG-004: 1-on-1 Conversation per Student per Course
+## ADR-BACK-MSG-004: 1-on-1 Conversation per Student per Course
 
 **Decision:** Each enrolled student gets exactly one private thread with the instructor, scoped to the course. Enforced via `UNIQUE(CourseId, StudentId)` index.
 
@@ -75,7 +67,7 @@
 
 ---
 
-## ADR-MSG-005: Unread Count via Denormalized Fields on Conversation
+## ADR-BACK-MSG-005: Unread Count via Denormalized Fields on Conversation
 
 **Decision:** `CourseConversation` has `StudentUnreadCount` and `InstructorUnreadCount` integer fields. These are incremented by `AddMessage()` and reset to 0 by `MarkReadByStudent()` / `MarkReadByInstructor()`.
 
@@ -89,7 +81,7 @@
 
 ---
 
-## ADR-MSG-006: `IChatNotifier` Abstraction for SignalR Push
+## ADR-BACK-MSG-006: `IChatNotifier` Abstraction for SignalR Push
 
 **Decision:** `IChatNotifier` lives in the Application layer with two methods: `NotifyNewMessageAsync` (pushes `ReceiveMessage` to the recipient's SignalR group) and `NotifyUnreadCountChangedAsync` (pushes `UnreadCountChanged` to the affected user). `SignalRChatNotifier` implements it in Infrastructure.
 
@@ -103,7 +95,7 @@
 
 ---
 
-## ADR-MSG-007: Unified `NotificationsHub` (supersedes ADR-MSG-002)
+## ADR-BACK-MSG-007: Unified `NotificationsHub` (supersedes ADR-BACK-MSG-002)
 
 **Decision:** `ChatHub` and `AchievementsHub` are merged into a single `NotificationsHub : Hub<INotificationsHubClient>` at `/hubs/notifications`. The frontend opens one WebSocket connection for all real-time events.
 
@@ -113,5 +105,5 @@
 - `INotificationsHubClient` defines all four typed methods: `ReceiveMessage`, `UnreadCountChanged`, `AchievementUnlocked`, `CertificateReady`. Client-side handler routing is a simple `connection.on('EventName', handler)` — there is no routing complexity.
 - The frontend `useNotificationsHub` hook replaces `useChatHub` + `useAchievementsHub`, reducing layout component coupling.
 
-**Rejected alternative that was previously chosen (ADR-MSG-002):**
+**Rejected alternative that was previously chosen (ADR-BACK-MSG-002):**
 - Separate hubs per domain — driven by "independent deployability" concern that does not apply at this scale (single API process, single Azure Container App). The scale argument becomes relevant only when consumers are extracted to separate services.
