@@ -1,6 +1,6 @@
 using Learnix.DbMigrator.DatabaseObjects;
 using Learnix.DbMigrator.Seeders;
-using Learnix.Infrastructure;
+using Learnix.Infrastructure.Modules;
 using Learnix.Infrastructure.Persistence.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
