@@ -4,6 +4,7 @@ using Learnix.Application.Sections.Commands.CreateSection;
 using Learnix.Application.Sections.Commands.DeleteSection;
 using Learnix.Application.Sections.Commands.ReorderSections;
 using Learnix.Application.Sections.Commands.UpdateSectionTitle;
+using Learnix.Domain.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace Learnix.API.Controllers;
 
 [ApiController]
-[Authorize]
+// Every action here mutates course structure. Ownership is still enforced in the handler
+// (course.IsOwnerOrAdmin) — this only rejects the wrong role before it gets that far.
+[Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
 [Route("api")]
 public sealed class SectionsController(ISender sender) : ControllerBase
 {

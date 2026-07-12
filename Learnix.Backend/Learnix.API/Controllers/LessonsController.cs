@@ -11,6 +11,7 @@ using Learnix.Application.Lessons.Commands.UpdatePostLesson;
 using Learnix.Application.Lessons.Commands.UpdateTestLesson;
 using Learnix.Application.Lessons.Commands.UpdateVideoLesson;
 using Learnix.Application.Lessons.Queries.GetLessonContent;
+using Learnix.Domain.Constants;
 using Learnix.Domain.ValueObjects;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -68,6 +69,7 @@ public sealed class LessonsController(ISender sender) : ControllerBase
     // Create
 
     [HttpPost("sections/{sectionId:guid}/lessons/video")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
     public async Task<IActionResult> CreateVideo(
         Guid courseId,
         Guid sectionId,
@@ -83,6 +85,7 @@ public sealed class LessonsController(ISender sender) : ControllerBase
     }
 
     [HttpPost("sections/{sectionId:guid}/lessons/test")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
     public async Task<IActionResult> CreateTest(
         Guid courseId,
         Guid sectionId,
@@ -99,6 +102,7 @@ public sealed class LessonsController(ISender sender) : ControllerBase
     }
 
     [HttpPost("sections/{sectionId:guid}/lessons/post")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
     public async Task<IActionResult> CreatePost(
         Guid courseId,
         Guid sectionId,
@@ -114,6 +118,7 @@ public sealed class LessonsController(ISender sender) : ControllerBase
     // Update
 
     [HttpPatch("lessons/{lessonId:guid}/video")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
     public async Task<IActionResult> UpdateVideo(
         Guid courseId,
         Guid lessonId,
@@ -128,6 +133,7 @@ public sealed class LessonsController(ISender sender) : ControllerBase
     }
 
     [HttpPatch("lessons/{lessonId:guid}/test")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
     public async Task<IActionResult> UpdateTest(
         Guid courseId,
         Guid lessonId,
@@ -143,6 +149,7 @@ public sealed class LessonsController(ISender sender) : ControllerBase
     }
 
     [HttpPatch("lessons/{lessonId:guid}/post")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
     public async Task<IActionResult> UpdatePost(
         Guid courseId,
         Guid lessonId,
@@ -155,6 +162,7 @@ public sealed class LessonsController(ISender sender) : ControllerBase
     }
 
     [HttpPatch("lessons/{lessonId:guid}/toggle-visibility")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
     public async Task<IActionResult> ToggleVisibility(
         Guid courseId,
         Guid lessonId,
@@ -168,6 +176,7 @@ public sealed class LessonsController(ISender sender) : ControllerBase
 
     // Delete / Reorder
     [HttpDelete("lessons/{lessonId:guid}")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
     public async Task<IActionResult> Delete(Guid courseId, Guid lessonId, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new DeleteLessonCommand(courseId, lessonId), cancellationToken);
@@ -175,6 +184,7 @@ public sealed class LessonsController(ISender sender) : ControllerBase
     }
 
     [HttpPost("sections/{sectionId:guid}/lessons/reorder")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin}")]
     public async Task<IActionResult> Reorder(
         Guid courseId,
         Guid sectionId,
