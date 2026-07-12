@@ -170,7 +170,9 @@ export default function NotificationsPage() {
 
     return (
         <div className="mx-auto max-w-2xl px-4 py-8">
-            <div className="mb-6 flex items-center justify-between">
+            {/* Wraps rather than squeezes: the label is one long phrase in Ukrainian, and on a narrow
+                screen a gapless justify-between pushes it flush against the heading. */}
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                 <h1 className="font-heading text-2xl font-bold text-foreground">
                     {t('common:navigation.notifications')}
                 </h1>
@@ -178,7 +180,7 @@ export default function NotificationsPage() {
                     <button
                         onClick={() => markAllReadMutation.mutate()}
                         disabled={markAllReadMutation.isPending}
-                        className="text-sm text-primary hover:underline disabled:opacity-50"
+                        className="shrink-0 text-sm text-primary hover:underline disabled:opacity-50"
                     >
                         {t('markAllRead')}
                     </button>
