@@ -90,3 +90,86 @@ Gmail does not. It leaves an empty box where the logo belongs and lists the imag
 - **Why this is the standard.** Stripe, GitHub, Postmark, Mailchimp and every provider template do it this way. The message stays small, carries no attachments, and Gmail proxies and caches the image through `googleusercontent.com` — no `cid` resolution to get wrong, and no relay left to mangle it.
 - **The trade-off, stated honestly.** The logo becomes an external image, so a client configured to block remote content shows nothing until the reader allows it — where a `cid` image would have rendered. That is the price the whole industry pays, and Gmail loads proxied images by default.
 - **Do not skip the diagnosis.** Even after moving to a URL, the raw delivered message is worth reading once: if the relay is rewriting MIME, that is worth knowing before it silently breaks something else.
+
+---
+
+## TD-006 · Image uploads are validated for type and byte size, never for pixel dimensions
+
+**Priority:** `low` (a cosmetic hole, not a security one — but it is a hole in a check the UI implies exists)
+
+**Current state.** `CommitUploadAsync` (`AzureBlobStorageService`) is thorough about *what* a blob is: it sniffs magic bytes, rejects anything outside the per-target whitelist, enforces `MaxSizes`, and overwrites the `Content-Type` header with the value it detected rather than the one the client declared. What it never does is **decode the image**, so it has no idea how large it is in pixels.
+
+The client does. `IMAGE_CROP_RULES` (`learnix-client/src/const/upload.constants.ts`) rejects source images below a minimum (100×100 for avatars and category tiles, 640×360 for course covers), enforces a fixed aspect per target, and renders the crop to exact output dimensions (512×512 / 1280×720) before uploading. Every image that goes through the UI is therefore uniform.
+
+**Why it is a problem.** Those rules live *only* in the browser. The SAS URL and the commit endpoint accept any well-formed JPEG/PNG/WebP under the size cap, so a client that skips the UI — a script, a replayed request, curl against the SAS URL — can store a 1×1 pixel avatar or a 5000×80 "course cover". Nothing downstream will reject it; it will simply render badly everywhere, and the aspect the layout assumes will be a lie. The damage is cosmetic and self-inflicted, which is why this is `low` and not `medium` — but the asymmetry is worth closing, because every other property of an uploaded blob *is* verified server-side and this one only looks like it is.
+
+**Plan.** Decode the image header on commit and validate dimensions alongside the magic-bytes check:
+
+1. Add `SixLabors.ImageSharp` to `Learnix.Infrastructure` and use `Image.IdentifyAsync` — it reads only the header, so it costs no full decode and cannot be turned into a decompression-bomb vector.
+2. Extend the per-target rules in `AzureBlobStorageService` (which already holds `MaxSizes` and `AllowedContentTypes`) with minimum dimensions and an expected aspect + tolerance, mirroring `IMAGE_CROP_RULES` on the client. Keep the two lists commented as mirrors of each other, the way the content-type whitelists already are.
+3. Fail with the existing `BlobValidationError`, which the commit path already maps to a 400, and delete the temp blob exactly as the size and content-type failures do.
+4. Leave `LessonVideo` alone: probing a video's dimensions means decoding container metadata, and a non-16:9 video is already a deliberate warning-not-rejection on the client (the player letterboxes it).
+
+---
+
+## TD-007 · Course search is a substring match, and calls itself a search
+
+**Priority:** `medium` (it is the AI assistant's main way of finding anything, and the catalogue's only one)
+
+**Current state.** Every course search in the system is `Title.ToLower().Contains(term)` — `CourseListSpecification` and `AdminCourseListSpecification` match the title alone; `CourseSearchSpecification` (the AI tool) now splits the query into keywords and ANDs a `Contains` over title, description and tags, with a per-keyword fallback in `SearchCoursesQueryHandler` when the strict pass finds nothing. That fallback is a patch over the real problem, not a fix for it.
+
+**Why it is a problem.** `LIKE '%term%'` is not search, and it fails in ways users read as "the site has nothing":
+
+- **No stemming.** "testing" does not find "tests"; "analyse" does not find "analysis".
+- **No stopwords.** Every word must earn its keep, so any filler the user types — or the model relays — narrows the result set. This is exactly what broke: a question phrased "Які є курси по пайтону" reached the tool as `"Python courses"`, was matched literally, and returned nothing while a Python course sat in the catalogue. The keyword split and the fallback rescue that case; they will not rescue the next one.
+- **No ranking.** Results come back ordered by enrollment count, so relevance plays no part: a popular course that mentions the word once outranks the course that is *about* it.
+- **No index.** `LOWER(col) LIKE '%x%'` cannot use a B-tree, so every search is a sequential scan. Invisible at 25 courses, not at 25 000.
+
+**Plan.** PostgreSQL already ships the right instrument; use it.
+
+1. Add a generated `tsvector` column on `Courses` — `setweight(to_tsvector('english', Title), 'A') || setweight(to_tsvector('english', Description), 'B') || setweight(to_tsvector('english', array_to_string(Tags, ' ')), 'C')` — with a GIN index over it. The weighting is what lets a title hit beat a description hit.
+2. Query it through `EF.Functions.ToTsVector` / `WebSearchToTsQuery` (Npgsql translates both) and order by `ts_rank_cd`. `websearch_to_tsquery` handles quoted phrases, `or`, and `-exclusions` the way a user expects, and drops stopwords on its own — no word list to maintain, in any language.
+3. Then delete the fallback in `SearchCoursesQueryHandler` and the keyword loop in `CourseSearchSpecification`: both exist only to work around the substring match.
+4. Point the catalogue and the admin list at the same specification. Today they search titles only, which is a third behaviour, and the least useful of the three.
+
+**Caveat worth knowing before starting.** `to_tsvector('english', …)` stems English. Course titles and descriptions are English by policy — the system prompt tells the model to translate keywords before searching — so this holds today. The day the catalogue accepts Ukrainian course text, the config has to become per-row rather than a constant.
+
+---
+
+## TD-008 · Editing a test silently rewrites the past attempts of every student who took it
+
+**Priority:** `high` (it corrupts data that is already on the platform, and it does so without a trace)
+
+**Current state.** A student's answer is `StudentAnswer(QuestionOrder, SelectedOptionOrders, TextValue)` — it identifies the question it answers by **its position in the test**, and the options it chose by **their position in the question**. `TestAttempt.Answers` is a JSON column, so those positions are the only link between an attempt and the questions it was an attempt at.
+
+Nothing keeps those positions still:
+
+- `TestLesson.ReplaceQuestions` rebuilds the whole list from the blueprints and assigns `Order = index`. `UpdateTest` calls it on **every** save, even one that only changed the title.
+- `Question.Id` exists on the value object but is `qb.Ignore(q => q.Id)` in `LessonConfiguration` — it is **never persisted**. Every time the questions are read out of the JSON column, EF hands back a fresh `Guid.NewGuid()`. There is no stable identity to fall back on, and `CourseForEditQuestionDto.Id` — which the editor round-trips — is one of these ephemeral guids.
+- `UpdateTestLessonCommandHandler` does not look at `TestAttempts` at all. There is no guard, no warning, and no versioning.
+
+**Why it is a problem.** Every edit to a test rewrites the history of everyone who has already sat it:
+
+| The instructor does | What happens to a submitted attempt |
+|---|---|
+| Inserts a question anywhere but the end | Every answer after it shifts by one. The review shows the student's answer to old Q2 against the text of new Q3, and marks it against Q3's key. |
+| Deletes a question | The tail shifts back; the answer to the last question now points at an order that no longer exists and renders as "skipped". |
+| Reorders questions | Every answer is now against a different question. |
+| Reorders the options within a question | The student's selected orders now point at different options — an answer that was right reads as wrong. |
+| Edits only the wording | Safe, but only by luck: the rebuild reassigns the same orders. |
+
+The stored `Score`, `MaxScore` and `Passed` are frozen at submit time and stay correct, which makes this worse rather than better: the score says 3/3 while the review — recomputed live against the current questions by `GetTestAttemptReview` and `GetTestReviewForAi` — shows two of them wrong. The student sees the platform contradict itself, and the AI tutor confidently explains a mistake they never made.
+
+An **in-progress** attempt is corrupted the same way, and faster: the student loaded the questions, the instructor saved an edit, and the answers submit by order against a test that has changed underneath them.
+
+**Plan.** Give a question an identity, and stop pretending an edit is free.
+
+1. **Persist `Question.Id`.** Drop the `qb.Ignore(q => q.Id)` and give every question a guid that survives the JSON round-trip. Same for `QuestionOption`. This is the foundation — everything else is unbuildable without it.
+2. **Answer by id, not by position.** `StudentAnswer(QuestionId, SelectedOptionIds, TextValue)`. Order becomes what it should always have been: a display concern, free to change without touching a single stored answer. Migrating the existing rows means mapping order → id once, inside the migration, while the orders still mean what they meant when they were written.
+3. **Make `UpdateTest` incremental.** Match incoming blueprints to existing questions by id: update the ones that are there, append the new ones, remove the ones that are gone. `ReplaceQuestions` — rebuild-everything — stays only for a test with no attempts.
+4. **Decide what an edit to a test with attempts even means**, and say it out loud in the UI. Two defensible answers, and the choice belongs to the product, not to the code:
+   - *Copy-on-write*: an edit to a test that has submitted attempts creates a new **version**; old attempts keep pointing at the version they were taken against, and the review replays that one. Correct, and the only option that keeps history truly intact.
+   - *Warn and let it break the tail*: the editor tells the instructor how many attempts exist and what changing the questions will do to them. Cheap, honest, and adequate for a platform this size.
+5. **Guard the open attempt** either way: an edit while an attempt is in progress should either be refused or should invalidate that attempt outright. Submitting answers against questions that no longer exist is not a state worth supporting.
+
+**Until this lands**, editing the questions of a test that anyone has already taken corrupts their attempts. It is worth saying plainly in the editor, because nothing about the current UI suggests that saving a test is a destructive act.
