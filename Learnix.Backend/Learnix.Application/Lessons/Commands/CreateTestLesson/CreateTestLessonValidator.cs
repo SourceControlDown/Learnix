@@ -22,6 +22,8 @@ public sealed class CreateTestLessonValidator : AbstractValidator<CreateTestLess
             .When(x => x.CooldownMinutes.HasValue);
         RuleFor(x => x.PassingThreshold)
             .InclusiveBetween(LessonConstants.MinPassingThreshold, LessonConstants.MaxPassingThreshold);
+
+        RuleFor(x => x.ReviewMode).IsInEnum();
         RuleFor(x => x.Questions)
             .NotEmpty();
     }
