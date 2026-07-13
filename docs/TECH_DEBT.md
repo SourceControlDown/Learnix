@@ -173,3 +173,29 @@ An **in-progress** attempt is corrupted the same way, and faster: the student lo
 5. **Guard the open attempt** either way: an edit while an attempt is in progress should either be refused or should invalidate that attempt outright. Submitting answers against questions that no longer exist is not a state worth supporting.
 
 **Until this lands**, editing the questions of a test that anyone has already taken corrupts their attempts. It is worth saying plainly in the editor, because nothing about the current UI suggests that saving a test is a destructive act.
+
+---
+
+## TD-009 · Redundant Handlers for Category Image Management
+
+**Priority:** `low` (code duplication / architectural purity)
+
+**Current state.** There are dedicated handlers for managing a category's image: `SetCategoryImageCommandHandler` and `DeleteCategoryImageCommandHandler`.
+
+**Why it is a problem.** The `UpdateCategoryCommandHandler` already updates the entire category entity. Having separate commands just for the image might be redundant and adds unnecessary boilerplate. It violates the principle of having a single authoritative update command if the entity is updated as a whole.
+
+**Plan.** Investigate if the logic from `SetCategoryImageCommandHandler` and `DeleteCategoryImageCommandHandler` can be merged into `UpdateCategoryCommandHandler` (e.g., by passing a new image blob path or an explicit null to clear it during the regular update). If so, merge them and remove the dedicated image handlers to simplify the API and application layer.
+
+---
+
+## TD-010 · High code duplication reported by jscpd in C# Unit Tests
+
+**Priority:** `low` (tooling configuration / testing philosophy)
+
+**Current state.** `jscpd` reports a high duplication rate (over 23%) in the C# codebase, which causes the pre-commit hooks to fail. The vast majority of these "clones" are identical Arrange-Act-Assert blocks in `Learnix.Application.UnitTests`, particularly for cross-cutting concerns like testing `WhenUserIsNotAuthenticated` or `WhenUserIsNotAdmin` across multiple command and query handlers.
+
+**Why it is a problem.** While DAMP (Descriptive and Meaningful Phrases) is often preferred over DRY (Don't Repeat Yourself) in unit tests to keep them isolated and readable, this much boilerplate triggers static analysis tools and obscures actual, problematic duplications in the production code. Currently, the entire `**/*UnitTests*/**` pattern has been added to `.jscpdignore` to allow commits to pass.
+
+**Plan.** Decide on a testing philosophy and implement it:
+1. **Option A (Keep DAMP):** Decide that test duplication is acceptable for readability. Keep unit tests ignored in `jscpd` permanently and close this issue.
+2. **Option B (Refactor to DRY):** Extract common Arrange/Assert logic into shared base classes or helper methods (e.g., `AssertRequiresAuthentication(handler, command)`), which reduces boilerplate but might make tests harder to read top-to-bottom. If implemented, remove the ignore rule from `.jscpd.json`.
