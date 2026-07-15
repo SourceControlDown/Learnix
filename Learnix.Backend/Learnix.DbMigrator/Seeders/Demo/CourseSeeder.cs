@@ -160,6 +160,20 @@ public sealed class CourseSeeder(
                     var catSlug = categorySlugs[random.Next(categorySlugs.Length)];
                     if (!categoryIdBySlug.TryGetValue(catSlug, out var catId)) continue;
 
+                    var hasVideo = random.NextDouble() > 0.5;
+                    var lessons = hasVideo
+                        ? new SeedLesson[]
+                        {
+                            new SeedVideo("Video Lesson 1", "Generic video lesson content."),
+                            new SeedPost("Post Lesson 2", "Generic post lesson content."),
+                            new SeedPost("Post Lesson 3", "Generic post lesson content.")
+                        }
+                        : new SeedLesson[]
+                        {
+                            new SeedPost("Post Lesson 1", "Generic post lesson content."),
+                            new SeedPost("Post Lesson 2", "Generic post lesson content.")
+                        };
+
                     var def = new SeedCourseDefinition(
                         catSlug,
                         $"Generic Test Course {i}",
@@ -167,11 +181,7 @@ public sealed class CourseSeeder(
                         random.NextDouble() > 0.5 ? 0m : 19.99m,
                         ["generic", "test"],
                         [
-                            new SeedSection("Section 1", [
-                                new SeedVideo("Video Lesson 1", "Generic video lesson content."),
-                                new SeedPost("Post Lesson 2", "Generic post lesson content."),
-                                new SeedPost("Post Lesson 3", "Generic post lesson content.")
-                            ])
+                            new SeedSection("Section 1", lessons)
                         ],
                         "generic_thumbnail.webp"
                     );
