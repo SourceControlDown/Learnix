@@ -21,7 +21,7 @@ import { parseAccessToken } from '@/utils/parseAccessToken';
 
 const ROLE_STYLES: Record<string, string> = {
     Student: 'bg-primary/10 text-primary',
-    Instructor: 'bg-accent/10 text-accent',
+    Instructor: 'bg-accent/10 text-accent-strong',
     Admin: 'bg-destructive/10 text-destructive',
 };
 

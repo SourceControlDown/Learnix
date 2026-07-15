@@ -70,7 +70,7 @@ export default function AdminDashboardPage() {
             icon: <BookOpen size={24} />,
             title: t('quickCoursesTitle'),
             desc: t('quickCoursesDesc'),
-            color: 'text-accent bg-accent/10',
+            color: 'text-accent-strong bg-accent/10',
         },
         {
             to: '/admin/applications',

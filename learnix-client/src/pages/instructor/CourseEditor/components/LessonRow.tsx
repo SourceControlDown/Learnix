@@ -8,7 +8,7 @@ import { cn } from '@/utils/cn';
 
 const TYPE_STYLES: Record<LessonType, string> = {
     Video: 'bg-primary/10 text-primary',
-    Post: 'bg-accent/10 text-accent',
+    Post: 'bg-accent/10 text-accent-strong',
     Test: 'bg-warning/20 text-warning',
 };
 

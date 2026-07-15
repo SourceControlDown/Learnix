@@ -85,7 +85,7 @@ export default function FaqPage() {
                 {/* Hero with search */}
                 <div className="border-b border-border bg-gradient-to-b from-secondary/40 to-background">
                     <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-                        <span className="inline-block rounded-full bg-accent/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent">
+                        <span className="inline-block rounded-full bg-accent/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent-strong">
                             {t('hero.badge')}
                         </span>
                         <h1 className="mt-4 font-heading text-4xl font-bold md:text-5xl">

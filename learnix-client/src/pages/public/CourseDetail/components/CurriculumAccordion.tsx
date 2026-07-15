@@ -10,7 +10,7 @@ interface CurriculumAccordionProps {
 
 const LESSON_TYPE_ICONS: Record<LessonSummaryDto['lessonType'], React.ReactNode> = {
     Video: <PlayCircle className="size-4 text-primary" />,
-    Post: <FileText className="size-4 text-accent" />,
+    Post: <FileText className="size-4 text-accent-strong" />,
     Test: <ClipboardList className="size-4 text-warning" />,
 };
 
