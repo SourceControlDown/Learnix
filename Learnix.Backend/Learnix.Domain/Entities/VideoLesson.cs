@@ -57,7 +57,7 @@ public class VideoLesson : Lesson
         DurationSeconds = durationSeconds;
     }
 
-    public override void PrepareForDeletion()
+    protected override void OnPreparingForDeletion()
     {
         if (!string.IsNullOrWhiteSpace(VideoBlobPath))
             RaiseDomainEvent(new LessonVideoReleasedDomainEvent(Id, VideoBlobPath));
