@@ -1,8 +1,6 @@
 using Learnix.API.Extensions;
 using Learnix.Application.Categories.Commands.CreateCategory;
 using Learnix.Application.Categories.Commands.DeleteCategory;
-using Learnix.Application.Categories.Commands.DeleteCategoryImage;
-using Learnix.Application.Categories.Commands.SetCategoryImage;
 using Learnix.Application.Categories.Commands.UpdateCategory;
 using Learnix.Application.Categories.Queries.GetAdminCategories;
 using Learnix.Application.Categories.Queries.GetAllCategories;
@@ -17,9 +15,8 @@ namespace Learnix.API.Controllers;
 [Route("api/[controller]")]
 public sealed class CategoriesController(ISender sender) : ControllerBase
 {
-    public sealed record CreateCategoryRequest(string Name, string Slug);
-    public sealed record UpdateCategoryRequest(string Name, string Slug);
-    public sealed record SetImageRequest(string BlobPath);
+    public sealed record CreateCategoryRequest(string Name, string Slug, string? ImageBlobPath);
+    public sealed record UpdateCategoryRequest(string Name, string Slug, string? ImageBlobPath, bool RemoveImage);
 
     [HttpGet]
     [AllowAnonymous]
@@ -41,7 +38,7 @@ public sealed class CategoriesController(ISender sender) : ControllerBase
     [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> Create([FromBody] CreateCategoryRequest body, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new CreateCategoryCommand(body.Name, body.Slug), cancellationToken);
+        var result = await sender.Send(new CreateCategoryCommand(body.Name, body.Slug, body.ImageBlobPath), cancellationToken);
         return result.ToActionResult(onSuccess: id => CreatedAtAction(nameof(GetAllForAdmin), new { }, new { id }));
     }
 
@@ -49,7 +46,7 @@ public sealed class CategoriesController(ISender sender) : ControllerBase
     [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryRequest body, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new UpdateCategoryCommand(id, body.Name, body.Slug), cancellationToken);
+        var result = await sender.Send(new UpdateCategoryCommand(id, body.Name, body.Slug, body.ImageBlobPath, body.RemoveImage), cancellationToken);
         return result.ToActionResult();
     }
 
@@ -58,22 +55,6 @@ public sealed class CategoriesController(ISender sender) : ControllerBase
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new DeleteCategoryCommand(id), cancellationToken);
-        return result.ToActionResult();
-    }
-
-    [HttpPost("{id:guid}/image")]
-    [Authorize(Roles = Roles.Admin)]
-    public async Task<IActionResult> SetImage(Guid id, [FromBody] SetImageRequest body, CancellationToken cancellationToken)
-    {
-        var result = await sender.Send(new SetCategoryImageCommand(id, body.BlobPath), cancellationToken);
-        return result.ToActionResult();
-    }
-
-    [HttpDelete("{id:guid}/image")]
-    [Authorize(Roles = Roles.Admin)]
-    public async Task<IActionResult> DeleteImage(Guid id, CancellationToken cancellationToken)
-    {
-        var result = await sender.Send(new DeleteCategoryImageCommand(id), cancellationToken);
         return result.ToActionResult();
     }
 }

@@ -50,7 +50,6 @@ export function CategoryCreateRow({
                     imageUrl={null}
                     previewUrl={form.previewUrl}
                     isEditing={true}
-                    slug={form.slug}
                     onUpload={(blobPath, previewUrl) =>
                         onChange({
                             ...form,

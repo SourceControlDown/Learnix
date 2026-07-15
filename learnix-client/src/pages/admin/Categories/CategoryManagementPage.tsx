@@ -47,15 +47,12 @@ export default function CategoryManagementPage() {
     }
 
     const createMutation = useMutation({
-        mutationFn: async () => {
-            const res = await categoriesApi.create({
+        mutationFn: () =>
+            categoriesApi.create({
                 name: createForm.name,
                 slug: createForm.slug,
-            });
-            if (createForm.blobPath) {
-                await categoriesApi.setImage(res.id, createForm.blobPath);
-            }
-        },
+                imageBlobPath: createForm.blobPath,
+            }),
         onSuccess: () => {
             toast.success(t('toastCategoryCreated'));
             setCreating(false);
@@ -68,14 +65,13 @@ export default function CategoryManagementPage() {
     });
 
     const updateMutation = useMutation({
-        mutationFn: async (id: string) => {
-            await categoriesApi.update(id, { name: editForm.name, slug: editForm.slug });
-            if (editForm.removeImage) {
-                await categoriesApi.deleteImage(id);
-            } else if (editForm.blobPath) {
-                await categoriesApi.setImage(id, editForm.blobPath);
-            }
-        },
+        mutationFn: (id: string) =>
+            categoriesApi.update(id, {
+                name: editForm.name,
+                slug: editForm.slug,
+                imageBlobPath: editForm.blobPath,
+                removeImage: editForm.removeImage,
+            }),
         onSuccess: () => {
             toast.success(t('toastCategoryUpdated'));
             setEditingId(null);

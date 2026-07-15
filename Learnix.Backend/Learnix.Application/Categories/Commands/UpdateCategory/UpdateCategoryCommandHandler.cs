@@ -2,6 +2,7 @@ using FluentResults;
 using Learnix.Application.Categories.Constants;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
+using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
@@ -14,6 +15,7 @@ namespace Learnix.Application.Categories.Commands.UpdateCategory;
 
 internal sealed class UpdateCategoryCommandHandler(
     ICategoryRepository categoryRepository,
+    IBlobStorageService blobStorage,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
     IDistributedCache cache)
@@ -40,6 +42,21 @@ internal sealed class UpdateCategoryCommandHandler(
             return Result.Fail(new ConflictError(CategoryMessages.CategorySlugInUse(slug)));
 
         category.Rename(request.Name.Trim(), slug);
+
+        if (request.RemoveImage)
+        {
+            category.SetImage(null);
+        }
+        else if (request.ImageBlobPath is not null && request.ImageBlobPath != category.ImageBlobPath)
+        {
+            var commitResult = await blobStorage.CommitUploadAsync(
+                request.ImageBlobPath, UploadTarget.CategoryImage, cancellationToken);
+
+            if (commitResult.IsFailed)
+                return Result.Fail(commitResult.Errors);
+
+            category.SetImage(commitResult.Value.BlobPath);
+        }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

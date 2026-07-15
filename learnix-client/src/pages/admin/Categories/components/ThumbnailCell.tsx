@@ -1,17 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import { Loader2, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import categoryFallback from '@/assets/categories/fallback.webp';
 import { ImageCropperDialog } from '@/components/common/upload/ImageCropperDialog';
 import { acceptAttr } from '@/const/upload.constants';
 import { useImageCropUpload } from '@/hooks/shared/useImageCropUpload';
-import { cn } from '@/utils/cn';
-import { getCategoryVisuals } from '@/utils/mocks/landing.mock';
 
 type ThumbnailCellProps = {
     imageUrl: string | null;
     isEditing: boolean;
     previewUrl?: string;
-    slug: string;
     onUpload?: (blobPath: string, previewUrl: string) => void;
     onRemoveImage?: () => void;
 };
@@ -20,7 +18,6 @@ export function ThumbnailCell({
     imageUrl,
     isEditing,
     previewUrl,
-    slug,
     onUpload,
     onRemoveImage,
 }: ThumbnailCellProps) {
@@ -42,22 +39,17 @@ export function ThumbnailCell({
         if (file && onUpload) selectFile(file);
     };
 
+    // The placeholder is the same picture the public site falls back to, so an admin looking at a
+    // category with no image of its own sees exactly what a visitor sees.
     const displayUrl = previewUrl || imageUrl;
-    const visual = getCategoryVisuals(slug);
 
     if (!isEditing) {
-        return displayUrl ? (
-            <img src={displayUrl} alt="" className="size-10 rounded object-cover" />
-        ) : (
-            <div
-                className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded text-xl',
-                    visual.iconBgClass,
-                    visual.iconTextClass,
-                )}
-            >
-                {visual.emoji}
-            </div>
+        return (
+            <img
+                src={displayUrl ?? categoryFallback}
+                alt=""
+                className="size-10 rounded object-cover"
+            />
         );
     }
 
@@ -94,14 +86,10 @@ export function ThumbnailCell({
                 <button
                     type="button"
                     title="Upload image"
-                    className={cn(
-                        'flex h-10 w-10 cursor-pointer items-center justify-center rounded text-xl',
-                        visual.iconBgClass,
-                        visual.iconTextClass,
-                    )}
+                    className="flex size-10 cursor-pointer items-center justify-center rounded"
                     onClick={() => fileRef.current?.click()}
                 >
-                    {visual.emoji}
+                    <img src={categoryFallback} alt="" className="size-full object-cover" />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                         <Upload size={14} className="text-white" />
                     </div>
