@@ -82,32 +82,34 @@ export function ReviewForm({ courseId, existing }: ReviewFormProps) {
     return (
         // FormProvider so the char counter inside FormTextarea can read the live comment value.
         <FormProvider {...form}>
-            <div className="rounded-xl border border-border bg-card p-5">
-                <h3 className="font-heading font-semibold text-foreground">{title}</h3>
-
-                <form onSubmit={form.handleSubmit(onSubmit)} className="mt-4 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-foreground">
-                            {t('reviews.ratingLabel')}
-                        </label>
-                        <Controller
-                            control={form.control}
-                            name="rating"
-                            render={({ field }) => (
-                                <RatingStars
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    size="lg"
-                                    className="mt-2"
-                                />
-                            )}
-                        />
-                        {form.formState.errors.rating && (
-                            <p className="mt-1 text-xs text-destructive">
-                                {form.formState.errors.rating.message}
-                            </p>
-                        )}
+            <div className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 className="font-heading text-lg font-semibold text-foreground">
+                            {title}
+                        </h3>
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                {t('reviews.ratingLabel')}
+                            </span>
+                            <Controller
+                                control={form.control}
+                                name="rating"
+                                render={({ field }) => (
+                                    <RatingStars
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        size="lg"
+                                    />
+                                )}
+                            />
+                        </div>
                     </div>
+                    {form.formState.errors.rating && (
+                        <p className="-mt-3 text-xs text-destructive">
+                            {form.formState.errors.rating.message}
+                        </p>
+                    )}
 
                     <FormTextarea
                         variant="card"

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Star, StarHalf } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -23,22 +24,29 @@ export function RatingStars({
     className,
 }: RatingStarsProps) {
     const isInteractive = !!onChange;
+    const [hoverValue, setHoverValue] = useState<number | null>(null);
 
     return (
-        <div className={cn('flex items-center gap-0.5', className)}>
+        <div
+            className={cn('flex items-center gap-0.5', className)}
+            onMouseLeave={() => setHoverValue(null)}
+        >
             {Array.from({ length: max }, (_, i) => {
                 const starValue = i + 1;
-                const isFull = value >= starValue;
-                const isHalf = !isFull && value > i;
+                const displayValue = isInteractive && hoverValue !== null ? hoverValue : value;
+
+                const isFull = displayValue >= starValue;
+                const isHalf = !isFull && displayValue > i;
 
                 const content = (
                     <div className="relative">
                         <Star
                             className={cn(
                                 SIZE_MAP[size],
+                                'transition-colors duration-200',
                                 isFull
                                     ? 'fill-warning text-warning'
-                                    : 'fill-none text-muted-foreground/40',
+                                    : 'fill-muted text-muted-foreground/30',
                             )}
                         />
                         {isHalf && (
@@ -58,6 +66,7 @@ export function RatingStars({
                             key={i}
                             type="button"
                             onClick={() => onChange?.(starValue)}
+                            onMouseEnter={() => setHoverValue(starValue)}
                             className="cursor-pointer transition-transform hover:scale-110"
                             aria-label={`${starValue} star${starValue !== 1 ? 's' : ''}`}
                         >

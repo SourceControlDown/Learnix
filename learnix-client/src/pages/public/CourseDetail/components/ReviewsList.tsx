@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User } from 'lucide-react';
 import { RatingStars } from '@/components/common/ui/RatingStars';
+import { TextButton } from '@/components/common/ui/TextButton';
 import type { CourseReviewDto } from '@/types/review.types';
 import { cn } from '@/utils/cn';
 
@@ -83,14 +84,11 @@ function ReviewItem({ review }: ReviewItemProps) {
                         {review.comment}
                     </p>
                     {isExpandable && (
-                        <button
-                            onClick={() => setIsExpanded(!isExpanded)}
-                            className="mt-1 text-sm font-medium text-primary hover:underline"
-                        >
+                        <TextButton onClick={() => setIsExpanded(!isExpanded)} className="mt-1">
                             {isExpanded
                                 ? t('common:actions.showLess')
                                 : t('common:actions.showMore')}
-                        </button>
+                        </TextButton>
                     )}
                 </div>
             )}
