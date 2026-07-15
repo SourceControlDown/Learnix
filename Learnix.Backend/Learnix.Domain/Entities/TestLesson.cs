@@ -32,11 +32,12 @@ public class TestLesson : Lesson
     public int? AttemptLimit { get; private set; }
     public int? CooldownMinutes { get; private set; }
     public int PassingThreshold { get; private set; }
+    public int QuestionsCount { get; private set; }
 
     /// <summary>How much of a submitted attempt the student may see back. See <see cref="TestReviewMode"/>.</summary>
     public TestReviewMode ReviewMode { get; private set; } = TestReviewMode.FullReview;
 
-    public int MaxScore => _questions.Count;
+    public int MaxScore => QuestionsCount;
 
     public static TestLesson Create(
         Guid sectionId, string title,
@@ -53,6 +54,7 @@ public class TestLesson : Lesson
             throw new DomainException("Test must have at least one question.");
 
         _questions = blueprints.Select((bp, index) => BuildQuestion(bp, index)).ToList();
+        QuestionsCount = _questions.Count;
 
         EvaluateVisibility();
     }
@@ -90,7 +92,7 @@ public class TestLesson : Lesson
         ReviewMode = reviewMode;
     }
 
-    public override bool IsPublishReady() => _questions.Count > 0;
+    public override bool IsPublishReady() => QuestionsCount > 0;
 
     private static Question BuildQuestion(QuestionBlueprint bp, int order) => bp.Type switch
     {
