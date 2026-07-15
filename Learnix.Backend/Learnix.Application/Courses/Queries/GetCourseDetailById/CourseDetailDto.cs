@@ -28,4 +28,7 @@ public sealed record LessonSummaryDto(
     Guid Id,
     string Title,
     int Order,
-    string LessonType);
+    Learnix.Domain.Enums.LessonType LessonType,
+    int? DurationSeconds = null,
+    int? ReadingSeconds = null,
+    int? QuestionsCount = null);
