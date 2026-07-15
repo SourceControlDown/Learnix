@@ -91,7 +91,7 @@
             "icon": "📚",
             "title": "Courses & Learning",
             "subtitle": "Lessons, progress, and tests",
-            "colorClass": "bg-accent/10 text-accent",
+            "colorClass": "bg-accent/10 text-accent-strong",
             "items": [
                 {
                     "q": "How long do I have access to a course?",
@@ -169,7 +169,7 @@
             "icon": "👨‍🏫",
             "title": "For Instructors",
             "subtitle": "Becoming and being one",
-            "colorClass": "bg-accent/10 text-accent",
+            "colorClass": "bg-accent/10 text-accent-strong",
             "items": [
                 {
                     "q": "How do I become an instructor?",
@@ -194,7 +194,7 @@
             "icon": "✨",
             "title": "AI Tutor",
             "subtitle": "How the assistant works",
-            "colorClass": "bg-accent/10 text-accent",
+            "colorClass": "bg-accent/10 text-accent-strong",
             "items": [
                 {
                     "q": "Does the AI tutor cost extra?",

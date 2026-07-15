@@ -15,7 +15,7 @@ export function InstructorsCTASection() {
             <div className="mx-auto max-w-7xl px-6">
                 <div className="grid items-center gap-12 rounded-3xl border border-border bg-card p-6 shadow-xl md:grid-cols-2 md:p-16">
                     <div>
-                        <span className="text-sm font-semibold text-accent">
+                        <span className="text-sm font-semibold text-accent-strong">
                             {t('instructorsCta.tag')}
                         </span>
                         <h2 className="mt-2 font-heading text-3xl font-bold md:text-4xl">

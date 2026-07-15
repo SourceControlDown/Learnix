@@ -47,7 +47,7 @@ export function CourseCertificateButton({
         primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         outline: 'border border-border bg-transparent hover:bg-secondary',
-        ghost: 'hover:bg-accent hover:text-accent-foreground text-muted-foreground',
+        ghost: 'hover:bg-hover hover:text-hover-foreground text-muted-foreground',
     };
 
     const handleGenerate = async () => {

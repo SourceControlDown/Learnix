@@ -24,12 +24,15 @@ export function AchievementToast({
     const { t } = useTranslation('achievements');
 
     return (
-        <div className="flex w-full items-start gap-3 rounded-lg border border-achievement/40 bg-achievement/10 p-4 shadow-lg">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-achievement/15">
+        <div className="relative flex w-full items-start gap-3 overflow-hidden rounded-lg border border-achievement/40 bg-background p-4 shadow-lg">
+            {/* Background tint overlay */}
+            <div className="pointer-events-none absolute inset-0 bg-achievement/10" />
+
+            <div className="relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full bg-achievement/15">
                 <Trophy className="size-5 text-achievement" />
             </div>
 
-            <div className="min-w-0 flex-1">
+            <div className="relative z-10 min-w-0 flex-1">
                 <p className="font-heading text-sm font-semibold text-card-foreground">{name}</p>
                 {description && (
                     <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
@@ -47,7 +50,7 @@ export function AchievementToast({
                 type="button"
                 onClick={onDismiss}
                 aria-label={t('common:actions.close')}
-                className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                className="relative z-10 shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
             >
                 <X className="size-4" />
             </button>

@@ -21,7 +21,7 @@ export function EmptyState({ icon: Icon, title, description, action }: EmptyStat
     return (
         <div className="mt-16 text-center">
             <div className="mx-auto flex size-24 items-center justify-center rounded-full bg-accent/10">
-                <Icon className="size-12 text-accent" aria-hidden="true" />
+                <Icon className="size-12 text-accent-strong" aria-hidden="true" />
             </div>
             <h2 className="mt-6 font-heading text-2xl font-bold">{title}</h2>
             <p className="mt-2 text-muted-foreground">{description}</p>

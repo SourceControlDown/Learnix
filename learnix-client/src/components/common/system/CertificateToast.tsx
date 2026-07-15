@@ -11,12 +11,14 @@ export function CertificateToast({ courseTitle, onViewAll, onDismiss }: Certific
     const { t } = useTranslation('certificates');
 
     return (
-        <div className="flex w-full items-start gap-3 rounded-lg border border-brand/40 bg-brand/10 p-4 shadow-lg">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand/15">
+        <div className="relative flex w-full items-start gap-3 overflow-hidden rounded-lg border border-brand/40 bg-background p-4 shadow-lg">
+            <div className="pointer-events-none absolute inset-0 bg-brand/10" />
+
+            <div className="relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full bg-brand/15">
                 <Award className="size-5 text-brand" />
             </div>
 
-            <div className="min-w-0 flex-1">
+            <div className="relative z-10 min-w-0 flex-1">
                 <p className="font-heading text-sm font-semibold text-card-foreground">
                     {t('notification.title')}
                 </p>
@@ -36,7 +38,7 @@ export function CertificateToast({ courseTitle, onViewAll, onDismiss }: Certific
                 type="button"
                 onClick={onDismiss}
                 aria-label={t('common:actions.close', { defaultValue: 'Close' })}
-                className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                className="relative z-10 shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
             >
                 <X className="size-4" />
             </button>

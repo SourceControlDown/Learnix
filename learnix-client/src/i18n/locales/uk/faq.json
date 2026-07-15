@@ -91,7 +91,7 @@
             "icon": "📚",
             "title": "Курси та навчання",
             "subtitle": "Уроки, прогрес і тести",
-            "colorClass": "bg-accent/10 text-accent",
+            "colorClass": "bg-accent/10 text-accent-strong",
             "items": [
                 {
                     "q": "Як довго у мене є доступ до курсу?",
@@ -169,7 +169,7 @@
             "icon": "👨‍🏫",
             "title": "Для інструкторів",
             "subtitle": "Як стати і бути інструктором",
-            "colorClass": "bg-accent/10 text-accent",
+            "colorClass": "bg-accent/10 text-accent-strong",
             "items": [
                 {
                     "q": "Як стати інструктором?",
@@ -194,7 +194,7 @@
             "icon": "✨",
             "title": "AI-репетитор",
             "subtitle": "Як працює асистент",
-            "colorClass": "bg-accent/10 text-accent",
+            "colorClass": "bg-accent/10 text-accent-strong",
             "items": [
                 {
                     "q": "AI-репетитор коштує додатково?",

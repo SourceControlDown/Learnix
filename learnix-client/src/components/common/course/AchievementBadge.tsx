@@ -134,7 +134,7 @@ export function AchievementBadge({
                     <>
                         <p className="text-xs text-muted-foreground">{description}</p>
                         {isUnlocked && unlockedAt && (
-                            <p className="mt-1 text-xs text-accent">
+                            <p className="mt-1 text-xs text-accent-strong">
                                 {t('badge.earnedOn', {
                                     date: new Date(unlockedAt).toLocaleDateString(i18n.language, {
                                         month: 'short',

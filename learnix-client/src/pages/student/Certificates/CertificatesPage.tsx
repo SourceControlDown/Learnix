@@ -52,7 +52,7 @@ function CertificateCard({ cert }: CertificateCardProps) {
                             className="size-full object-cover"
                         />
                     ) : (
-                        <GraduationCap className="size-6 text-accent sm:size-8" />
+                        <GraduationCap className="size-6 text-accent-strong sm:size-8" />
                     )}
                 </div>
                 <div className="min-w-0 flex-1">

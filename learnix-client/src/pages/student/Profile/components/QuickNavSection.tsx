@@ -15,10 +15,10 @@ export function QuickNavSection({ canBecomeInstructor }: QuickNavSectionProps) {
         <div className="space-y-4">
             <Link
                 to={APP_ROUTES.student.certificates}
-                className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary sm:p-5"
+                className="group flex items-center gap-4 rounded-xl border border-warning/20 bg-warning/10 p-4 transition-all hover:bg-warning/20 sm:p-5"
             >
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                    <Award className="size-5 text-primary" />
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-warning/20 transition-transform group-hover:scale-110">
+                    <Award className="size-5 text-warning" />
                 </div>
                 <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-foreground">
@@ -26,16 +26,16 @@ export function QuickNavSection({ canBecomeInstructor }: QuickNavSectionProps) {
                     </p>
                     <p className="text-xs text-muted-foreground">{t('certificatesNav.desc')}</p>
                 </div>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" />
             </Link>
 
             {canBecomeInstructor && (
                 <Link
                     to={APP_ROUTES.public.becomeInstructor}
-                    className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary sm:p-5"
+                    className="group flex items-center gap-4 rounded-xl border border-brand/20 bg-brand/10 p-4 transition-all hover:bg-brand/20 sm:p-5"
                 >
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">
-                        <GraduationCap className="size-5 text-accent" />
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand/20 transition-transform group-hover:scale-110">
+                        <GraduationCap className="size-5 text-brand" />
                     </div>
                     <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-foreground">
@@ -45,7 +45,7 @@ export function QuickNavSection({ canBecomeInstructor }: QuickNavSectionProps) {
                             {t('becomeInstructorNav.desc')}
                         </p>
                     </div>
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" />
                 </Link>
             )}
         </div>
