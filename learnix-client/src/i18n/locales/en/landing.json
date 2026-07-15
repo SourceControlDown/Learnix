@@ -24,9 +24,7 @@
             "answer": "Strict Mode mounts components twice to surface side-effect bugs early..."
         },
         "achievementCard": {
-            "label": "Achievement unlocked",
-            "title": "Knowledge Seeker",
-            "xp": "+50 XP"
+            "label": "Achievement unlocked"
         },
         "progressCard": {
             "label": "Course progress",
@@ -58,7 +56,9 @@
         "heading": "Explore by category",
         "viewAll": "All categories →",
         "error": "Failed to load categories",
-        "empty": "No categories yet"
+        "empty": "No categories yet",
+        "courseCount_one": "{{count}} course",
+        "courseCount_other": "{{count}} courses"
     },
     "featuredCourses": {
         "tag": "Popular",
@@ -98,9 +98,9 @@
             "line2": "AI tutor.",
             "highlight": "Always on."
         },
-        "subtitle": "No more hunting through Stack Overflow at 2 AM. Ask the AI tutor anything — it knows your course context, your progress, and how you learn best.",
+        "subtitle": "No more hunting through Stack Overflow at 2 AM. Ask the AI tutor anything: it knows your course context, your progress, and how you learn best.",
         "features": [
-            "Streaming responses — get answers as fast as you can read them",
+            "Streaming responses: get answers as fast as you can read them",
             "Knows the context of every lesson you've taken",
             "Explains code, debugs, and quizzes you on weak spots",
             "Conversation history saved across all your devices"
@@ -115,7 +115,7 @@
                 "q1": "Why does",
                 "q1Code": "useEffect",
                 "q1End": "run twice in development?",
-                "a1": "Great question — this is React's",
+                "a1": "Great question, this is React's",
                 "a1Bold": "Strict Mode",
                 "a1End": "in dev. It intentionally mounts components twice to surface side-effect bugs early.",
                 "a1Note": "In production it runs once. Want me to show how to detect and fix common Strict Mode issues?",
@@ -184,7 +184,7 @@
             "line1": "Teach what you know.",
             "line2": "Earn while you sleep."
         },
-        "subtitle": "Share your expertise with thousands of learners. Our editor handles video hosting, payments, and certificates — so you can focus on creating great content.",
+        "subtitle": "Share your expertise with thousands of learners. Our editor handles video hosting, payments, and certificates, so you can focus on creating great content.",
         "stats": {
             "earnings": {
                 "value": "$2.4k",
@@ -192,7 +192,7 @@
             },
             "revenue": {
                 "value": "85%",
-                "label": "Revenue share — among the highest in the industry"
+                "label": "Revenue share, among the highest in the industry"
             }
         },
         "cta": {
@@ -220,12 +220,12 @@
         "items": [
             {
                 "q": "How does Learnix differ from other LMS platforms?",
-                "a": "Three things: (1) Every course has an AI tutor that knows your progress and lesson context, available 24/7. (2) We focus on project-based learning — you finish with shippable artifacts, not just notes. (3) Our instructors keep 85% of revenue, so they're motivated to deliver real value.",
+                "a": "Three things: (1) Every course has an AI tutor that knows your progress and lesson context, available 24/7. (2) We focus on project-based learning: you finish with shippable artifacts, not just notes. (3) Our instructors keep 85% of revenue, so they're motivated to deliver real value.",
                 "defaultOpen": true
             },
             {
                 "q": "Are courses one-time purchase or subscription?",
-                "a": "One-time purchase — you own a course forever once you buy it. There are no recurring fees, no expiring access. Free courses stay free.",
+                "a": "One-time purchase. You own a course forever once you buy it. There are no recurring fees, no expiring access. Free courses stay free.",
                 "defaultOpen": false
             },
             {
@@ -235,7 +235,7 @@
             },
             {
                 "q": "Does the AI tutor cost extra?",
-                "a": "No. Unlimited AI tutor usage is included with every course you own — both free and paid. Conversation history is saved across sessions and devices.",
+                "a": "No. Unlimited AI tutor usage is included with every course you own, both free and paid. Conversation history is saved across sessions and devices.",
                 "defaultOpen": false
             }
         ]

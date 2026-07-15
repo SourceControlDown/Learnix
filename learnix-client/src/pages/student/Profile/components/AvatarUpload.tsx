@@ -35,24 +35,33 @@ export function AvatarUpload({
     return (
         <div className="flex shrink-0 flex-col md:w-48">
             <div className="flex flex-row items-center gap-5 sm:gap-6 md:flex-col md:items-start md:gap-0 md:text-left">
+                {/* The same gradient ring the instructor profile puts around its avatar, so the two
+                    profiles read as one system. Both rings used to be a flat `border-background`:
+                    the colour of the *page*, on a component that sits on a *card* — which is why it
+                    showed up as a stray white hairline in light mode and a black one in dark. */}
                 <div className="relative shrink-0">
-                    <div className="flex size-20 items-center justify-center overflow-hidden rounded-full border-4 border-background bg-muted shadow-sm sm:size-24 md:size-32">
-                        {displayAvatar !== null ? (
-                            <img
-                                src={displayAvatar}
-                                alt="Avatar"
-                                className="size-full object-cover"
-                            />
-                        ) : (
-                            <User className="size-10 text-muted-foreground md:size-14" />
-                        )}
+                    <div className="rounded-full bg-gradient-to-br from-brand to-accent p-[2px]">
+                        <div className="flex size-20 items-center justify-center overflow-hidden rounded-full border-2 border-card bg-muted shadow-sm sm:size-24 md:size-32">
+                            {displayAvatar !== null ? (
+                                <img
+                                    src={displayAvatar}
+                                    alt="Avatar"
+                                    className="size-full object-cover"
+                                />
+                            ) : (
+                                <User className="size-10 text-muted-foreground md:size-14" />
+                            )}
+                        </div>
                     </div>
+                    {/* Brand blue, not the accent: the ring's gradient runs to the bottom-right, so an
+                        accent-coloured button would land on the accent end of the ring and dissolve
+                        into it. The separating border tracks --card, the surface underneath. */}
                     <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading}
                         title={isUploading ? t('common:actions.uploading') : t('avatar.upload')}
-                        className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full border-2 border-background bg-accent text-accent-foreground shadow-md transition-transform hover:scale-105 hover:opacity-90 disabled:scale-100 disabled:opacity-50 md:bottom-1 md:right-1 md:size-9"
+                        className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full border-2 border-card bg-brand text-brand-foreground shadow-md transition-transform hover:scale-105 hover:opacity-90 disabled:scale-100 disabled:opacity-50 md:bottom-1 md:right-1 md:size-9"
                     >
                         <Camera className="size-3.5 md:size-4" />
                     </button>

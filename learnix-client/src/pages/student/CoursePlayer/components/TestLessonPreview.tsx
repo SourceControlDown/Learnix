@@ -11,6 +11,7 @@ import {
     Target,
     XCircle,
 } from 'lucide-react';
+import { MarkdownRenderer } from '@/components/common/ui/MarkdownRenderer';
 import { StatTile, type StatTone } from '@/components/common/ui/StatTile';
 import { REVIEW_MODE_VISUALS } from '@/const/lesson.constants';
 import { TestReviewMode } from '@/enums/lesson.enums';
@@ -93,15 +94,18 @@ export function TestLessonPreview({ lesson, courseId }: TestLessonPreviewProps) 
                 {!isLoading && !isEmpty && test && (
                     <div className="space-y-5">
                         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                            {/* The threshold is the one figure here a student has to walk away knowing —
+                                it decides whether the attempt counted — so it is the only coloured tile
+                                of the three. The question count and the attempts left are context. */}
                             <StatTile
                                 icon={<ListChecks className="size-5" />}
-                                tone="brand"
+                                tone="neutral"
                                 label={t('testPreview.questionsLabel')}
                                 value={String(test.questions.length)}
                             />
                             <StatTile
                                 icon={<Target className="size-5" />}
-                                tone="accent"
+                                tone="brand"
                                 label={t('testPreview.passThresholdLabel')}
                                 value={`${test.passingThreshold}%`}
                             />
@@ -112,19 +116,37 @@ export function TestLessonPreview({ lesson, courseId }: TestLessonPreviewProps) 
                                 No limit is drawn with the lucide glyph rather than the ∞ character:
                                 the character is rendered by the heading font, which does not really
                                 have one, and it showed. The icon is stroked like every other icon here. */}
-                            <StatTile
-                                icon={<RotateCcw className="size-5" />}
-                                tone="success"
-                                label={t('testPreview.attemptsLabel')}
-                                value={
-                                    <span className="flex items-center gap-1.5">
-                                        {status?.attemptsUsed ?? 0} /{' '}
-                                        {test.attemptLimit ?? (
-                                            <InfinityIcon className="size-4 text-muted-foreground" />
-                                        )}
-                                    </span>
+                            {(() => {
+                                const attemptsUsed = status?.attemptsUsed ?? 0;
+                                const attemptLimit = test.attemptLimit;
+
+                                let attemptsTone: StatTone = 'success';
+                                if (attemptLimit) {
+                                    const attemptsLeft = attemptLimit - attemptsUsed;
+                                    const ratio = attemptsUsed / attemptLimit;
+
+                                    if (attemptsLeft <= 1) attemptsTone = 'destructive';
+                                    else if (ratio < 0.5) attemptsTone = 'success';
+                                    else if (ratio < 0.9) attemptsTone = 'warning';
+                                    else attemptsTone = 'destructive';
                                 }
-                            />
+
+                                return (
+                                    <StatTile
+                                        icon={<RotateCcw className="size-5" />}
+                                        tone={attemptsTone}
+                                        label={t('testPreview.attemptsLabel')}
+                                        value={
+                                            <span className="flex items-center gap-1.5">
+                                                {attemptsUsed} /{' '}
+                                                {attemptLimit ?? (
+                                                    <InfinityIcon className="size-4 text-muted-foreground" />
+                                                )}
+                                            </span>
+                                        }
+                                    />
+                                );
+                            })()}
                         </dl>
 
                         {/* What the test gives back — worth knowing before starting, not after: a test
@@ -160,9 +182,12 @@ export function TestLessonPreview({ lesson, courseId }: TestLessonPreviewProps) 
                             the facts rather than above them: it can run long, and the numbers a student
                             is deciding on should not be pushed off the first screen by prose. */}
                         {test.description && (
-                            <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-                                {test.description}
-                            </p>
+                            <div className="pt-4">
+                                <MarkdownRenderer
+                                    content={test.description}
+                                    className="prose-sm max-w-none text-muted-foreground dark:prose-invert"
+                                />
+                            </div>
                         )}
 
                         {latest && (
@@ -254,9 +279,10 @@ export function TestLessonPreview({ lesson, courseId }: TestLessonPreviewProps) 
 
 /** Border and fill for the review-mode panel, keyed by the tone its icon already carries. */
 const REVIEW_TONE_CLASSES: Record<StatTone, string> = {
+    neutral: 'border-border bg-muted-foreground/10 text-muted-foreground',
     success: 'border-success/30 bg-success/10 text-success',
     brand: 'border-brand/30 bg-brand/10 text-brand',
-    accent: 'border-accent/30 bg-accent/10 text-accent',
+    accent: 'border-accent/30 bg-accent/10 text-accent-strong',
     warning: 'border-warning/30 bg-warning/10 text-warning',
     destructive: 'border-destructive/30 bg-destructive/10 text-destructive',
 };

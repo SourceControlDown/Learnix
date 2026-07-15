@@ -12,5 +12,9 @@ public sealed class CreateCategoryValidator : AbstractValidator<CreateCategoryCo
 
         RuleFor(x => x.Slug)
             .ApplyCategorySlugRules();
+
+        RuleFor(x => x.ImageBlobPath)
+            .NotEmpty()
+            .When(x => x.ImageBlobPath is not null);
     }
 }

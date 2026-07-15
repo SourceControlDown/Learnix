@@ -97,6 +97,8 @@ export function InstructorHero({ profile, fullName }: InstructorHeroProps) {
             </div>
 
             <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {/* The rating is what a prospective student weighs an instructor by, so it is the only
+                    coloured tile; the head count and the join date are supporting context. */}
                 <StatTile
                     icon={<Users className="size-5" />}
                     tone="brand"
@@ -105,7 +107,7 @@ export function InstructorHero({ profile, fullName }: InstructorHeroProps) {
                 />
                 <StatTile
                     icon={<Star className="size-5" />}
-                    tone="accent"
+                    tone="warning"
                     label={t('stats.rating')}
                     value={hasReviews ? profile.averageRating.toFixed(1) : '—'}
                     hint={
@@ -116,7 +118,7 @@ export function InstructorHero({ profile, fullName }: InstructorHeroProps) {
                 />
                 <StatTile
                     icon={<CalendarDays className="size-5" />}
-                    tone="success"
+                    tone="accent"
                     label={t('stats.joined')}
                     value={new Date(profile.joinedAt).toLocaleDateString(i18n.language, {
                         year: 'numeric',

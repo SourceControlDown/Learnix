@@ -22,8 +22,28 @@
         --secondary-foreground: 222 47% 11%;
         --muted: 210 40% 96%;
         --muted-foreground: 215 16% 47%;
-        --accent: 262 83% 58%;
-        --accent-foreground: 0 0% 100%;
+        /* Brand accent — the second half of every brand gradient, paired with --brand.
+           Teal, not the violet it used to be: blue→purple is the stock shadcn/Tailwind pair,
+           and a saturated blue-to-purple gradient now reads as a template rather than a brand.
+
+           This is the *fill*: progress bars, gradients, icon tiles, solid badges. It is tuned to
+           look alive next to --brand, not to be legible at 12px — a teal dark enough to carry
+           small text on white turns muddy the moment it is stretched across a progress bar.
+           Small text gets --accent-strong below; the two must not be collapsed back into one. */
+        --accent: 174 78% 38%;
+        /* Dark, not white: the fill above is luminous enough that a white label on it lands
+           around 2:1. Navy on it clears 6.4:1. */
+        --accent-foreground: 222 47% 11%;
+        /* The same teal, darkened until it clears WCAG AA as body-size text on --background
+           (6.0:1) and --card (6.3:1). Every `text-accent-strong` and the icon glyphs inside
+           `bg-accent/10` chips draw from this. Same reasoning as --link above. */
+        --accent-strong: 178 92% 22%;
+        /* The interactive hover/focus surface: ghost and outline buttons, dropdown items, the
+           dialog close button. Stock shadcn overloads --accent for this, which is why hovering
+           a ghost button used to flood it with saturated brand colour. Kept neutral and kept
+           separate, so the brand accent can be as loud as it likes without shouting on hover. */
+        --hover: 210 40% 96%;
+        --hover-foreground: 222 47% 11%;
         --destructive: 0 72% 51%;
         --destructive-foreground: 0 0% 100%;
         --success: 160 84% 39%;
@@ -81,8 +101,18 @@
         --secondary-foreground: 210 40% 98%;
         --muted: 217 33% 17%;
         --muted-foreground: 215 20% 65%;
-        --accent: 262 83% 68%;
-        --accent-foreground: 210 40% 98%;
+        /* Lighter than the light theme's accent so it carries on a near-black page. The
+           foreground is the deep navy: a near-white label on a colour this luminous only
+           reached 3.5:1 before (a WCAG AA failure that predates the teal), and dark-on-bright
+           takes the same pairing to 7.8:1.
+
+           Unlike the light theme, fill and text are the same value here: on a near-black page a
+           luminous teal is already 8.7:1 as text, so there is nothing to darken it for. */
+        --accent: 174 66% 45%;
+        --accent-foreground: 222 47% 11%;
+        --accent-strong: 174 66% 45%;
+        --hover: 217 33% 17%;
+        --hover-foreground: 210 40% 98%;
         --destructive: 0 63% 55%;
         --destructive-foreground: 210 40% 98%;
         --success: 160 84% 45%;

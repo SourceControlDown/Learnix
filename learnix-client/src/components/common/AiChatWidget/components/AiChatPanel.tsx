@@ -63,7 +63,7 @@ export function AiChatPanel({ isOpen, onClose, isExpanded, onToggleExpand }: AiC
                     isWide={isExpanded || isMobile}
                     header={
                         <div className="flex min-w-0 items-center gap-3">
-                            <div className="grid size-10 shrink-0 place-items-center rounded-full bg-accent/20 text-base text-accent">
+                            <div className="grid size-10 shrink-0 place-items-center rounded-full bg-accent/20 text-base text-accent-strong">
                                 ✨
                             </div>
                             <div className="min-w-0">

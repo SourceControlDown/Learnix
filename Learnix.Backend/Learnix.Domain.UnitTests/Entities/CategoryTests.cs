@@ -94,7 +94,7 @@ public class CategoryTests
     }
 
     [Fact]
-    public void RemoveImage_WhenImageIsSet_ShouldClearPathAndReleaseBlob()
+    public void SetImage_WhenPassedNull_ShouldClearPathAndReleaseBlob()
     {
         // Arrange
         var category = Category.Create("Programming", "programming");
@@ -102,7 +102,7 @@ public class CategoryTests
         category.ClearDomainEvents();
 
         // Act
-        category.RemoveImage();
+        category.SetImage(null);
 
         // Assert
         category.ImageBlobPath.Should().BeNull();
@@ -110,14 +110,14 @@ public class CategoryTests
     }
 
     [Fact]
-    public void RemoveImage_WhenNoImage_ShouldBeNoOp()
+    public void SetImage_WhenPassedNullAndNoImage_ShouldBeNoOp()
     {
         // Arrange
         var category = Category.Create("Programming", "programming");
         category.ClearDomainEvents();
 
         // Act
-        category.RemoveImage();
+        category.SetImage(null);
 
         // Assert
         category.DomainEvents.Should().BeEmpty();
@@ -132,6 +132,23 @@ public class CategoryTests
         category.ClearDomainEvents();
 
         // Act
+        category.PrepareForDeletion();
+
+        // Assert
+        category.DomainEvents.Should().ContainSingle(e => e is CategoryImageRemovedDomainEvent);
+    }
+
+    [Fact]
+    public void PrepareForDeletion_WhenCalledTwice_ShouldReleaseTheImageBlobOnce()
+    {
+        // Arrange — an aggregate root may prepare a child that PrepareForDeletionInterceptor then
+        // sweeps again; the blob must not be queued for deletion twice
+        var category = Category.Create("Programming", "programming");
+        category.SetImage(Image);
+        category.ClearDomainEvents();
+
+        // Act
+        category.PrepareForDeletion();
         category.PrepareForDeletion();
 
         // Assert

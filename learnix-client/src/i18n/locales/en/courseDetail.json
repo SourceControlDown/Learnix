@@ -8,7 +8,9 @@
         "lessonTypes": {
             "Test": "Quiz"
         },
-        "empty": "Course content not added yet"
+        "empty": "Course content not added yet",
+        "expandAll": "Expand All sections",
+        "collapseAll": "Collapse All sections"
     },
     "error": {
         "title": "Failed to load course"

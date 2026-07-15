@@ -78,7 +78,7 @@ export function CourseCard({ course, hideInstructor = false, className }: Course
                 </div>
 
                 <CardContent className="flex flex-1 flex-col p-4 sm:p-5">
-                    <span className="w-fit rounded-md bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent sm:text-xs">
+                    <span className="w-fit rounded-md bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent-strong sm:text-xs">
                         {course.categoryName}
                     </span>
                     {/* Both blocks are clamped to two lines AND reserve the height of two, whether or

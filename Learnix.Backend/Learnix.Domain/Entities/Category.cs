@@ -38,7 +38,7 @@ public class Category : BaseEntity
         Slug = slug;
     }
 
-    public void SetImage(string blobPath)
+    public void SetImage(string? blobPath)
     {
         if (ImageBlobPath == blobPath)
             return;
@@ -47,22 +47,18 @@ public class Category : BaseEntity
             RaiseDomainEvent(new CategoryImageRemovedDomainEvent(Id, ImageBlobPath));
 
         ImageBlobPath = blobPath;
-        RaiseDomainEvent(new CategoryImageSetDomainEvent(Id, ImageBlobPath));
+
+        if (blobPath is not null)
+            RaiseDomainEvent(new CategoryImageSetDomainEvent(Id, blobPath));
     }
 
-    public void RemoveImage()
+    protected override void OnPreparingForDeletion()
     {
         if (ImageBlobPath is not null)
         {
             RaiseDomainEvent(new CategoryImageRemovedDomainEvent(Id, ImageBlobPath));
             ImageBlobPath = null;
         }
-    }
-
-    public override void PrepareForDeletion()
-    {
-        base.PrepareForDeletion();
-        RemoveImage();
     }
 
     public void IncrementCoursesCount() => CoursesCount++;

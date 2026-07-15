@@ -17,10 +17,32 @@ public abstract class BaseEntity : IAuditable, IHasDomainEvents
 
     public void ClearDomainEvents() => _domainEvents.Clear();
 
+    private bool _preparedForDeletion;
+
     /// <summary>
-    /// Hook for releasing external resources (blobs, etc.) via domain events
-    /// before the entity is removed. Called by delete handlers before dbContext.Remove().
-    /// Override in subclasses that own external resources.
+    /// Releases external resources (blobs, etc.) by raising domain events, right before the entity
+    /// leaves the database for good. Invoked automatically by PrepareForDeletionInterceptor for every
+    /// entity that EF Core is about to hard-delete, so handlers never have to remember to call it —
+    /// an aggregate root may still call it explicitly on a child it is removing.
+    ///
+    /// Idempotent: the resources are released once no matter how many callers ask, so the explicit
+    /// aggregate-level call and the interceptor sweep cannot enqueue the same blob deletion twice.
+    ///
+    /// Not invoked for ISoftDeletable entities: their row survives and may be recovered, so their
+    /// external resources have to survive with it. Override <see cref="OnPreparingForDeletion"/>.
     /// </summary>
-    public virtual void PrepareForDeletion() { }
+    public void PrepareForDeletion()
+    {
+        if (_preparedForDeletion)
+            return;
+
+        _preparedForDeletion = true;
+
+        OnPreparingForDeletion();
+    }
+
+    /// <summary>
+    /// Override in subclasses that own external resources. Runs at most once per entity instance.
+    /// </summary>
+    protected virtual void OnPreparingForDeletion() { }
 }

@@ -17,10 +17,7 @@
         "sectionPrefix": "Секція",
         "courseContent": "Вміст курсу",
         "lessonNumber": "{{n}}.",
-        "durationMinutes": "{{n}}хв",
-        "durationHours": "{{h}}год {{m}}хв",
-        "collapse": "Сховати вміст курсу",
-        "durationSeconds": "{{n}}с"
+        "collapse": "Сховати вміст курсу"
     },
     "actions": {
         "markComplete": "Позначити як пройдений",
@@ -35,9 +32,6 @@
     },
     "testPreview": {
         "heading": "Тестовий урок",
-        "questionsCount_one": "{{count}} питання",
-        "questionsCount_few": "{{count}} питання",
-        "questionsCount_many": "{{count}} питань",
         "passThreshold": "Прохідний бал: {{pct}}%",
         "attemptsLimit": "Ліміт спроб: {{n}}",
         "unlimitedAttempts": "Необмежена кількість спроб",

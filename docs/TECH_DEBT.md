@@ -199,3 +199,37 @@ An **in-progress** attempt is corrupted the same way, and faster: the student lo
 **Plan.** Decide on a testing philosophy and implement it:
 1. **Option A (Keep DAMP):** Decide that test duplication is acceptable for readability. Keep unit tests ignored in `jscpd` permanently and close this issue.
 2. **Option B (Refactor to DRY):** Extract common Arrange/Assert logic into shared base classes or helper methods (e.g., `AssertRequiresAuthentication(handler, command)`), which reduces boilerplate but might make tests harder to read top-to-bottom. If implemented, remove the ignore rule from `.jscpd.json`.
+
+---
+
+## TD-011 · Releasing a blob on delete depends on the delete path loading the entity that owns it
+
+**Priority:** `low` (storage hygiene)
+
+**Current state.** `PrepareForDeletionInterceptor` sweeps the EF Core `ChangeTracker` before every save and asks each hard-deleted entity to release the blobs it owns (`BaseEntity.PrepareForDeletion`), which is how a deleted `Category` gives up its image and a deleted `VideoLesson` its video. EF cascades to *loaded* children, so a cascade reaches the sweep too: `DeleteSectionCommandHandler` loads every lesson of the course, and the videos of a deleted section are released along with it. Every hard-delete path in the codebase currently loads the blob-owning entities it destroys, so no path orphans a blob today.
+
+**Why it is a problem.** Nothing enforces that. The sweep only sees what EF tracks, so a future delete path that leaves blob-owning children unloaded — or a specification that stops including lessons because a handler no longer needs them — hands the deletion to the database's `ON DELETE CASCADE`, which takes the rows out without EF ever knowing the entities existed. The files then stay in Azure Storage forever, and nothing in the code shows it: the delete succeeds and the bytes are simply paid for. The safety of this depends on a property of every *caller*, which is exactly the kind of thing that quietly stops being true.
+
+**Plan.** Add a reconciliation job: list each container, diff it against the blob paths still referenced in PostgreSQL, delete what nothing points at. It makes correctness a property of the system rather than of every delete path, and it also collects the blobs orphaned by uploads that were committed but whose entity save then failed — a source of orphans the interceptor cannot see at all.
+
+**Note.** Soft-deletable entities (`Course`, `User`) are deliberately excluded from the sweep: their rows survive and can be recovered, so their blobs have to survive with them. Adding a blob-releasing `OnPreparingForDeletion` override to either of them would be a bug, not a fix.
+
+---
+
+## TD-012 · Role gates are checked twice — in the controller attribute and again in the handler — and the two copies have already drifted apart
+
+**Priority:** `medium` (a security check that describes behaviour the system does not have)
+
+**Current state.** Coarse role gates are declared on the controllers (`[Authorize(Roles = ...)]`, on nearly every non-public action) *and* re-implemented inside the handlers as `if (!currentUser.IsInRole(...)) return Result.Fail(new ForbiddenError(...))`. Around two dozen handlers carry such a check. The two layers are independent, and nothing keeps them in agreement.
+
+**Why it is a problem.** They have already drifted. `InstructorAnalyticsController` is gated on `[Authorize(Roles = Roles.Instructor)]`, while the analytics handlers check `IsInRole(Instructor) || IsInRole(Admin)` and answer with `"Only instructors can view analytics."` — a message that contradicts its own condition. The admin branch is unreachable: ASP.NET returns 403 before MediatR is ever reached. So the handler contains a documented, tested-looking capability ("admins can view analytics") that the system does not have, and would not work if the gate were opened, because the handler would then scope the query by the admin's own `UserId` and return an empty report. A duplicated check that has silently stopped matching its original is worse than no check: it is a false statement about who can do what, sitting in the place people read to find out who can do what.
+
+**Plan.** Decide the split explicitly and write it into `docs/backend/decisions/platform/AUTH.md`:
+
+1. **Coarse role gates belong to the controller.** They are static, need neither the database nor the target resource, are enforced before model binding, appear in Swagger, and are picked up by `npm run check:endpoints` — which means CI already fails when the authorization surface changes without the docs. Remove the duplicate `IsInRole` gate from the handlers.
+2. **Resource-scoped authorization stays in the handler.** `IsOwnerOrAdmin` and friends need the entity loaded (see ADR-BACK-AUTH-013, which rejected ASP.NET resource-based authorization precisely because it would load the course twice). These are *not* the duplication described here and must not be swept up in the cleanup.
+3. **Keep the authentication check** (`currentUser.UserId is null`) in the handlers. Its real job is not gatekeeping but turning `Guid?` into the `Guid` the handler works with — as in `InstructorAnalyticsQueryHandler`, where the base class hands `instructorId` to `HandleAsync` and forgetting it is a compile error rather than a security hole.
+
+**Counter-argument to weigh before doing this.** Defence in depth: if someone drops the attribute from a controller, the handler check is the last line — and handlers are also reachable from SignalR hubs and background work, where no controller attribute applies. The counter-counter-argument is this very entry: the copy that was supposed to defend us is the copy that went stale. If defence in depth is chosen, the two layers must be derived from one declaration rather than written twice — e.g. an `AuthorizationBehavior` reading a `[RequireRole]` attribute off the request, with the controller attribute generated from the same source. That is a bigger change and needs its own ADR.
+
+**Note.** `"Only instructors can view analytics."` is also a hardcoded string in a codebase that routes every other error message through `CommonMessages`. Whichever way this goes, it should not survive as a literal.

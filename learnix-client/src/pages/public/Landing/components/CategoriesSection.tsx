@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import { BookOpen } from 'lucide-react';
+import type { CategoryListItemDto } from '@/api/categories.api';
+import categoryFallback from '@/assets/categories/fallback.webp';
 import { QueryError } from '@/components/common/system/QueryError';
 import { TextLink } from '@/components/common/ui/TextLink';
 import { APP_ROUTES } from '@/routes/paths';
 import { viewportConfig } from '@/utils/animations';
-import { cn } from '@/utils/cn';
-import type { LandingCategory } from '@/utils/mocks/landing.mock';
 
 // Faster than the shared fadeUpVariant/staggerContainer — with 8 tiles in this grid,
 // the default timing made the last cards visibly lag in on load.
@@ -32,7 +32,7 @@ const categoryStaggerContainer: Variants = {
 };
 
 interface CategoriesSectionProps {
-    categories: LandingCategory[];
+    categories: CategoryListItemDto[];
     isLoading?: boolean;
     isError?: boolean;
     onRetry?: () => void;
@@ -94,43 +94,49 @@ export function CategoriesSection({
                 viewport={viewportConfig}
                 className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4"
             >
+                {/* h-full on both the wrapper and the Link inside it: the grid stretches the wrapper
+                    to the tallest card in the row, but the card the user sees is the Link, which
+                    would otherwise stay as short as its own text — so a row holding a two-line
+                    category name came out ragged. */}
                 {categories.map((cat) => (
-                    <motion.div variants={categoryFadeUpVariant} key={cat.id}>
+                    <motion.div variants={categoryFadeUpVariant} key={cat.id} className="h-full">
                         <Link
                             to={`/courses?categoryId=${cat.id}`}
-                            className="group relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-card/80 to-card/40 p-3 text-center backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_10px_40px_-10px_rgba(var(--primary),0.3)] sm:flex-row sm:items-start sm:gap-4 sm:p-4 sm:text-left"
+                            className="group relative flex h-full flex-col items-center gap-2 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-b from-card/80 to-card/40 p-3 text-center backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_10px_40px_-10px_rgba(var(--primary),0.3)] sm:flex-row sm:items-center sm:gap-4 sm:p-4 sm:text-left"
                         >
                             {/* Hover glow effect */}
                             <div className="absolute -right-8 -top-8 size-32 rounded-full bg-primary/10 opacity-0 blur-[30px] transition-opacity duration-500 group-hover:opacity-100" />
 
-                            {/* Icon */}
+                            {/* Icon — whatever the backend has for this category, or the bundled
+                                placeholder. A category the admin has not given an image to still
+                                gets a picture, and a category the admin invents tomorrow needs no
+                                code change: the slug→emoji table this used to consult only knew
+                                the slugs someone had thought to hardcode. */}
                             <div className="relative z-10 shrink-0">
-                                {cat.imageUrl ? (
-                                    <img
-                                        src={cat.imageUrl}
-                                        alt=""
-                                        className="size-10 rounded-xl object-cover shadow-sm transition-transform duration-500 group-hover:scale-110 sm:size-14"
-                                    />
-                                ) : (
-                                    <div
-                                        className={cn(
-                                            'grid size-10 place-items-center rounded-xl text-xl shadow-sm transition-transform duration-500 group-hover:scale-110 sm:size-14 sm:text-2xl',
-                                            cat.iconBgClass,
-                                            cat.iconTextClass,
-                                        )}
-                                    >
-                                        {cat.emoji}
-                                    </div>
-                                )}
+                                <img
+                                    src={cat.imageUrl ?? categoryFallback}
+                                    alt=""
+                                    className="size-10 rounded-xl object-cover shadow-sm transition-transform duration-500 group-hover:scale-110 sm:size-14"
+                                />
                             </div>
 
                             {/* Content */}
                             <div className="relative z-10 flex min-w-0 flex-1 flex-col py-1">
-                                <h3 className="truncate font-heading text-[15px] font-bold text-foreground/90 transition-colors group-hover:text-foreground sm:text-base">
+                                {/* Wraps rather than truncates: "Web Development" and "Language
+                                    Learning" are real category names, and a name clipped to
+                                    "Web Developm…" is worse than a name on two lines. The grid
+                                    equalises the row height, so a two-line card costs nothing. */}
+                                {/* Kept at 16px: a category tile is a smaller thing than a course card,
+                                    whose own title is text-lg — going bigger here made the tile shout
+                                    louder than the courses it points at. */}
+                                <h3 className="line-clamp-2 font-heading text-[15px] font-bold leading-tight text-foreground/90 transition-colors group-hover:text-foreground sm:text-base">
                                     {cat.name}
                                 </h3>
-                                <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground/70 transition-colors group-hover:text-muted-foreground">
-                                    {cat.coursesCount} {t('common:navigation.courses')}
+                                {/* A pluralised sentence, not a number glued to the navigation menu's
+                                    label — that read "1 Курси" in Ukrainian, where the noun has to
+                                    decline with the count. */}
+                                <p className="mt-1 truncate text-xs font-medium text-muted-foreground/70 transition-colors group-hover:text-muted-foreground sm:text-sm">
+                                    {t('categories.courseCount', { count: cat.coursesCount })}
                                 </p>
                             </div>
 
@@ -157,10 +163,12 @@ export function CategoriesSection({
         );
     };
 
+    // The stats section above already ends on 40px of its own padding, so the pt-20 this section used
+    // to carry stacked into a 120px void between it and the heading below.
     return (
-        <section id="categories" className="pb-12 pt-20">
+        <section id="categories" className="pb-12 pt-10 sm:pt-12">
             <div className="mx-auto max-w-7xl px-6">
-                <div className="mb-10 flex items-end justify-between">
+                <div className="mb-6 flex items-end justify-between sm:mb-8">
                     <div>
                         <h2 className="font-heading text-3xl font-bold md:text-4xl">
                             {t('categories.heading')}

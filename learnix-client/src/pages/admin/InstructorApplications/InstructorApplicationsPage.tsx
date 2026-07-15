@@ -94,7 +94,7 @@ export default function InstructorApplicationsPage() {
                             <div key={a.id} className="rounded-xl border border-border bg-card p-6">
                                 <div className="flex items-start gap-4">
                                     {/* Avatar */}
-                                    <div className="grid size-12 shrink-0 place-items-center rounded-full bg-accent/20 font-semibold text-accent">
+                                    <div className="grid size-12 shrink-0 place-items-center rounded-full bg-accent/20 font-semibold text-accent-strong">
                                         {applicantInitials(a)}
                                     </div>
 

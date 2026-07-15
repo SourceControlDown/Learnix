@@ -39,6 +39,9 @@ public sealed class UpdateCourseDetailsCommandHandler(
             newCategory.IncrementCoursesCount();
         }
 
+        //
+        // SAME AS IN CREATE COURSE. MOVE TO UTILS???
+        //
         var normalizedTags = request.Tags
             .Select(t => t.Trim())
             .Where(t => !string.IsNullOrWhiteSpace(t))

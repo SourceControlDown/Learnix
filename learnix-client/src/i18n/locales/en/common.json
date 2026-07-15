@@ -90,6 +90,13 @@
         "sortBy": "Sort by",
         "free": "Free"
     },
+    "lessonMeta": {
+        "durationSeconds": "{{n}}s",
+        "durationMinutes": "{{n}}m",
+        "durationHours": "{{h}}h {{m}}m",
+        "questionsCount_one": "{{count}} question",
+        "questionsCount_other": "{{count}} questions"
+    },
     "footer": {
         "description": "A modern learning platform built around the way developers actually learn — with AI assistance, real projects, and lifetime access.",
         "sections": {

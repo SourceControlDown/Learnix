@@ -22,11 +22,14 @@ export interface AdminCategoryListItemDto {
 export interface CreateCategoryRequest {
     name: string;
     slug: string;
+    imageBlobPath?: string;
 }
 
 export interface UpdateCategoryRequest {
     name: string;
     slug: string;
+    imageBlobPath?: string;
+    removeImage?: boolean;
 }
 
 export const categoriesApi = {
@@ -38,7 +41,4 @@ export const categoriesApi = {
     update: (id: string, data: UpdateCategoryRequest) =>
         api.put(`/categories/${id}`, data).then((r) => r.data),
     delete: (id: string) => api.delete(`/categories/${id}`).then((r) => r.data),
-    setImage: (id: string, blobPath: string) =>
-        api.post(`/categories/${id}/image`, { blobPath }).then((r) => r.data),
-    deleteImage: (id: string) => api.delete(`/categories/${id}/image`).then((r) => r.data),
 };

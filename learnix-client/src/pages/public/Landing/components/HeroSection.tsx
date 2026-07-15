@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { ACHIEVEMENT_IMAGES } from '@/assets/achievements';
 import { useContinueLearning } from '@/hooks/student/useContinueLearning';
 import { APP_ROUTES } from '@/routes/paths';
 import { useAuthStore } from '@/store/auth.store';
@@ -9,6 +10,9 @@ import { isInstructorOrAdmin } from '@/utils/roles';
 
 /** Decorative social-proof avatars; the seed picks the face the generator returns. */
 const AVATAR_SEEDS = [15, 16, 17, 18];
+
+/** The achievement the hero card previews. Any code from ACHIEVEMENT_IMAGES works. */
+const HERO_ACHIEVEMENT_CODE = 'LESSONS_200';
 
 export function HeroSection() {
     const { t } = useTranslation('landing');
@@ -54,10 +58,7 @@ export function HeroSection() {
                         {t('hero.heading.line1')}
                         <br />
                         {t('hero.heading.line2')}{' '}
-                        <span className="bg-gradient-to-r from-brand via-accent to-brand bg-clip-text text-transparent">
-                            {t('hero.heading.highlight')}
-                        </span>
-                        .
+                        <span className="text-brand">{t('hero.heading.highlight')}</span>.
                     </h1>
                     <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed text-muted-foreground/90 sm:text-lg md:mx-0 md:text-xl">
                         {t('hero.subtitle')}
@@ -140,7 +141,7 @@ export function HeroSection() {
                     <div className="relative w-full max-w-[540px]">
                         {/* AI Tutor Card - Top Right Corner - hidden on small mobile to avoid clutter */}
                         <div className="absolute -right-6 -top-8 z-20 hidden w-[290px] rounded-2xl border border-white/10 bg-card/95 p-4 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-transform duration-500 hover:-translate-y-1 lg:block">
-                            <div className="mb-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent">
+                            <div className="mb-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent-strong">
                                 ✨ {t('hero.aiTutorCard.label')}
                             </div>
                             <div className="flex flex-col gap-3">
@@ -197,21 +198,31 @@ export function HeroSection() {
                                 </p>
                             </div>
 
-                            {/* Achievement Card */}
+                            {/* Achievement Card — a preview of the real thing, so it has to be built from
+                                the real thing: the artwork, name and description of an actual achievement,
+                                in the achievement palette the unlock toast uses. It used to show a trophy
+                                emoji, a green success tint and "+50 XP" — a reward the platform does not
+                                grant, on a badge that does not exist. */}
                             <div className="flex flex-col justify-center rounded-2xl border border-white/10 bg-card/60 p-5 shadow-lg backdrop-blur-xl transition-transform duration-500 hover:-translate-y-1">
                                 <div className="flex items-center gap-4">
-                                    <div className="grid size-12 shrink-0 place-items-center rounded-xl border border-success/20 bg-gradient-to-br from-success/20 to-success/5 text-xl drop-shadow-sm">
-                                        🏆
+                                    <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-achievement/30 bg-achievement/10 drop-shadow-sm">
+                                        <img
+                                            src={ACHIEVEMENT_IMAGES[HERO_ACHIEVEMENT_CODE]}
+                                            alt=""
+                                            className="size-full object-cover"
+                                        />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="truncate text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                        <p className="truncate text-[10px] font-bold uppercase tracking-wider text-achievement">
                                             {t('hero.achievementCard.label')}
                                         </p>
                                         <p className="mt-0.5 truncate text-sm font-bold text-foreground">
-                                            {t('hero.achievementCard.title')}
+                                            {t(`achievements:meta.${HERO_ACHIEVEMENT_CODE}.name`)}
                                         </p>
-                                        <p className="mt-0.5 text-xs font-semibold text-success">
-                                            {t('hero.achievementCard.xp')}
+                                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                            {t(
+                                                `achievements:meta.${HERO_ACHIEVEMENT_CODE}.description`,
+                                            )}
                                         </p>
                                     </div>
                                 </div>

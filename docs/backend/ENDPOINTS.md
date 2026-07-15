@@ -76,11 +76,9 @@ the surface they add up to.
 |---|---|---|---|---|
 | `GET` | `/api/categories` | Anonymous | `Default` | Public category list for the catalog |
 | `GET` | `/api/categories/admin` | Admin | `Default` | Category list with course counts, for management |
-| `POST` | `/api/categories` | Admin | `Default` | Create a category |
-| `PUT` | `/api/categories/{id}` | Admin | `Default` | Rename a category |
+| `POST` | `/api/categories` | Admin | `Default` | Create a category; optionally attaches a cover image in the same call |
+| `PUT` | `/api/categories/{id}` | Admin | `Default` | Update a category — rename and optionally set or remove the cover image in a single call |
 | `DELETE` | `/api/categories/{id}` | Admin | `Default` | Delete a category |
-| `POST` | `/api/categories/{id}/image` | Admin | `Default` | Attach a cover image (blob path from the SAS upload flow) |
-| `DELETE` | `/api/categories/{id}/image` | Admin | `Default` | Remove the cover image; the blob is deleted via the Outbox |
 
 ## Certificates
 
@@ -138,6 +136,18 @@ the surface they add up to.
 | Method | Endpoint | Auth | Rate limit | Description |
 |---|---|---|---|---|
 | `GET` | `/api/instructor/earnings` | Instructor, Admin | `Default` | Instructor earnings grouped by course |
+
+## InstructorAnalytics
+
+| Method | Endpoint | Auth | Rate limit | Description |
+|---|---|---|---|---|
+| `GET` | `/api/instructor/analytics/summary` | Instructor | `Default` | Top-level KPIs: Total students, earnings, avg rating, certificates issued |
+| `GET` | `/api/instructor/analytics/dynamics` | Instructor | `Default` | Daily aggregated enrollments and earnings between startDate and endDate |
+| `GET` | `/api/instructor/analytics/courses/popularity` | Instructor | `Default` | List of courses ordered by enrollment count |
+| `GET` | `/api/instructor/analytics/courses/statuses` | Instructor | `Default` | Course count by status (Draft, Published, Archived) |
+| `GET` | `/api/instructor/analytics/reviews/distribution` | Instructor | `Default` | Distribution of 1 to 5 star ratings across all courses |
+| `GET` | `/api/instructor/analytics/reviews/recent` | Instructor | `Default` | List of recent student reviews across all courses |
+| `GET` | `/api/instructor/analytics/tests/performance` | Instructor | `Default` | Average test scores and pass rates per lesson |
 
 ## InstructorApplications
 

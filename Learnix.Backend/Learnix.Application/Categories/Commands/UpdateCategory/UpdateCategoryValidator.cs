@@ -14,5 +14,9 @@ public sealed class UpdateCategoryValidator : AbstractValidator<UpdateCategoryCo
 
         RuleFor(x => x.Slug)
             .ApplyCategorySlugRules();
+
+        RuleFor(x => x.ImageBlobPath)
+            .NotEmpty()
+            .When(x => x.ImageBlobPath is not null);
     }
 }

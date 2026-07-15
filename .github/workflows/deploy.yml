@@ -47,6 +47,8 @@ name: Deploy to Azure
 # (frontend)     VITE_API_URL                    — Production API URL for frontend build
 # (frontend)     VITE_SITE_URL                   — Public frontend origin, e.g. https://learnix.azurestaticapps.net
 #                                                  (canonical URLs, og:image, sitemap.xml)
+# (frontend)     VITE_SHOW_PROJECT_BANNER        — (Optional) 'false' hides the "portfolio project" notice
+#                                                  banner on the landing page and FAQ. Shown by default.
 # (domain)       CUSTOM_DOMAIN                   — (Optional) Custom frontend domain to show in README.md
 
 on:
@@ -316,6 +318,8 @@ jobs:
         VITE_API_URL: ${{ vars.VITE_API_URL }}
         VITE_GOOGLE_CLIENT_ID: ${{ vars.PROD_GOOGLE_CLIENT_ID }}
         VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
+        # Optional — banner shows by default; set the repo variable to 'false' to hide it.
+        VITE_SHOW_PROJECT_BANNER: ${{ vars.VITE_SHOW_PROJECT_BANNER }}
       run: |
         npm ci
         npm run build

@@ -25,7 +25,7 @@ export default function AchievementsPage() {
         if (unseenIds.length > 0) {
             unseenIds.forEach((id) => markSeen.mutate(id));
         }
-    }, [unseenIds.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [unseenIds.join(',')]);
 
     useEffect(() => {
         // Mark all achievement notifications as read when visiting this page
@@ -102,21 +102,25 @@ export default function AchievementsPage() {
 
                 {progress && (
                     <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        {/* Three counters of equal standing — lessons, courses, categories — so none of
+                            them gets to shout over the others. The colour on this page belongs to the
+                            progress bar above and to the badges below, which is where a student is
+                            meant to be looking. */}
                         <StatTile
                             icon={<BookOpen className="size-5" />}
-                            tone="brand"
+                            tone="accent"
                             label={t('page.statsLessons')}
                             value={String(progress.lessonsCompleted)}
                         />
                         <StatTile
                             icon={<GraduationCap className="size-5" />}
-                            tone="accent"
+                            tone="warning"
                             label={t('page.statsCourses')}
                             value={String(progress.coursesCompleted)}
                         />
                         <StatTile
                             icon={<Globe className="size-5" />}
-                            tone="success"
+                            tone="brand"
                             label={t('page.statsCategories')}
                             value={String(progress.distinctCategoriesCompleted)}
                         />

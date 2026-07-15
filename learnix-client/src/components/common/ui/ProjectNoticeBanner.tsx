@@ -4,6 +4,7 @@ import { FlaskConical } from 'lucide-react';
 import { GitHubIcon } from '@/components/common/icons/SocialIcons';
 import { EXTERNAL_LINKS } from '@/const/links.constants';
 import { APP_ROUTES } from '@/routes/paths';
+import { env } from '@/utils/env';
 
 /**
  * The one place that tells a first-time visitor Learnix is a portfolio project, and the
@@ -13,6 +14,8 @@ import { APP_ROUTES } from '@/routes/paths';
  */
 export function ProjectNoticeBanner() {
     const { t } = useTranslation('common');
+
+    if (!env.SHOW_PROJECT_BANNER) return null;
 
     const linkClass = 'flex shrink-0 items-center gap-1.5 font-medium hover:underline';
 

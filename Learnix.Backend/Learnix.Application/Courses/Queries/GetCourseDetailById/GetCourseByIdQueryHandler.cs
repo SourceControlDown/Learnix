@@ -60,7 +60,10 @@ public sealed class GetCourseByIdQueryHandler(
                             l.Id,
                             l.Title,
                             l.DisplayOrder,
-                            l.LessonType.ToString()))
+                            l.LessonType,
+                            l is Domain.Entities.VideoLesson vl ? vl.DurationSeconds : null,
+                            l is Domain.Entities.PostLesson pl ? pl.EstimatedReadingSeconds : null,
+                            l is Domain.Entities.TestLesson tl ? tl.QuestionsCount : null))
                         .ToList()))
                 .ToList(),
             course.CreatedAt,

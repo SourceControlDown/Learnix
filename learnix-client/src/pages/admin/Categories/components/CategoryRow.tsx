@@ -63,7 +63,6 @@ export function CategoryRow({
                     imageUrl={isEditing && editForm.removeImage ? null : category.imageUrl}
                     previewUrl={isEditing ? editForm.previewUrl : undefined}
                     isEditing={isEditing}
-                    slug={isEditing ? editForm.slug : category.slug}
                     onUpload={(blobPath, previewUrl) =>
                         onEditChange({
                             ...editForm,

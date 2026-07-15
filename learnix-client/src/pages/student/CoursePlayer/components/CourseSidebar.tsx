@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/common/ui/LanguageSwitcher';
 import { ThemeSwitcher } from '@/components/common/ui/ThemeSwitcher';
+import { useFormatDuration } from '@/hooks/shared/useFormatDuration';
 import { APP_ROUTES } from '@/routes/paths';
 import type { LessonProgressItemDto, SectionProgressDto } from '@/types/progress.types';
 import { cn } from '@/utils/cn';
@@ -37,20 +38,7 @@ export function CourseSidebar({
     onClose,
 }: CourseSidebarProps) {
     const { t } = useTranslation('lessonPlayer');
-
-    function formatDuration(seconds: number) {
-        // Below a minute, round to minutes and a 10-second clip claims to take a whole one.
-        if (seconds < 60) {
-            return t('sidebar.durationSeconds', { n: Math.max(1, Math.round(seconds)) });
-        }
-
-        const totalMinutes = Math.round(seconds / 60);
-        const hours = Math.floor(totalMinutes / 60);
-
-        return hours > 0
-            ? t('sidebar.durationHours', { h: hours, m: totalMinutes % 60 })
-            : t('sidebar.durationMinutes', { n: totalMinutes });
-    }
+    const formatDuration = useFormatDuration();
 
     /**
      * What sits under a lesson title: a length for video and post, a question count for a test.
@@ -59,7 +47,7 @@ export function CourseSidebar({
      */
     function formatMeta(lesson: LessonProgressItemDto) {
         if (lesson.questionCount != null) {
-            return t('testPreview.questionsCount', { count: lesson.questionCount });
+            return t('common:lessonMeta.questionsCount', { count: lesson.questionCount });
         }
 
         return lesson.durationSeconds != null ? formatDuration(lesson.durationSeconds) : null;

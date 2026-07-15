@@ -39,8 +39,17 @@ export default {
                     foreground: 'hsl(var(--muted-foreground))',
                 },
                 accent: {
+                    // Fills only (bg-accent, gradients, tints). For accent-coloured *text* and
+                    // icons use `strong` — see --accent / --accent-strong in styles/index.css.
                     DEFAULT: 'hsl(var(--accent))',
                     foreground: 'hsl(var(--accent-foreground))',
+                    strong: 'hsl(var(--accent-strong))',
+                },
+                // The neutral hover/focus surface for interactive elements. Distinct from
+                // `accent`, which is the brand colour — see --hover in styles/index.css.
+                hover: {
+                    DEFAULT: 'hsl(var(--hover))',
+                    foreground: 'hsl(var(--hover-foreground))',
                 },
                 destructive: {
                     DEFAULT: 'hsl(var(--destructive))',

@@ -45,6 +45,7 @@ public sealed class CourseSeeder(
 
     private static readonly SeedCourseDefinition[] SeedCourses =
     [
+        CSharpDemoVideoSeeder.GetDefinition(),
         CSharpFundamentalsSeeder.GetDefinition(),
         DesignPatternsSeeder.GetDefinition(),
         React19Seeder.GetDefinition(),
@@ -159,6 +160,20 @@ public sealed class CourseSeeder(
                     var catSlug = categorySlugs[random.Next(categorySlugs.Length)];
                     if (!categoryIdBySlug.TryGetValue(catSlug, out var catId)) continue;
 
+                    var hasVideo = random.NextDouble() > 0.5;
+                    var lessons = hasVideo
+                        ? new SeedLesson[]
+                        {
+                            new SeedVideo("Video Lesson 1", "Generic video lesson content."),
+                            new SeedPost("Post Lesson 2", "Generic post lesson content."),
+                            new SeedPost("Post Lesson 3", "Generic post lesson content.")
+                        }
+                        : new SeedLesson[]
+                        {
+                            new SeedPost("Post Lesson 1", "Generic post lesson content."),
+                            new SeedPost("Post Lesson 2", "Generic post lesson content.")
+                        };
+
                     var def = new SeedCourseDefinition(
                         catSlug,
                         $"Generic Test Course {i}",
@@ -166,11 +181,7 @@ public sealed class CourseSeeder(
                         random.NextDouble() > 0.5 ? 0m : 19.99m,
                         ["generic", "test"],
                         [
-                            new SeedSection("Section 1", [
-                                new SeedVideo("Video Lesson 1", "Generic video lesson content."),
-                                new SeedPost("Post Lesson 2", "Generic post lesson content."),
-                                new SeedPost("Post Lesson 3", "Generic post lesson content.")
-                            ])
+                            new SeedSection("Section 1", lessons)
                         ],
                         "generic_thumbnail.webp"
                     );
@@ -319,11 +330,12 @@ public sealed class CourseSeeder(
                     case SeedTest test:
                         var modes = Enum.GetValues<TestReviewMode>();
                         var randomMode = modes[Rng.Next(modes.Length)];
+                        var finalMode = test.ReviewMode ?? randomMode;
 
                         var tl = TestLesson.Create(
                             section.Id, test.Title,
                             test.Description, test.AttemptLimit,
-                            test.CooldownMinutes, test.PassingThreshold, randomMode);
+                            test.CooldownMinutes, test.PassingThreshold, finalMode);
                         tl.ReplaceQuestions(test.Questions);
                         course.AddLesson(tl);
                         break;

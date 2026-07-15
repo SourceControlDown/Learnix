@@ -45,6 +45,9 @@ public static class PersistenceModule
 
         if (enableDomainEvents)
         {
+            // PrepareForDeletion only exists to raise domain events, so it is pointless without a
+            // dispatcher — the DbMigrator runs with both off.
+            services.AddSingleton<PrepareForDeletionInterceptor>();
             services.AddSingleton<DomainEventsInterceptor>();
         }
 
@@ -53,6 +56,10 @@ public static class PersistenceModule
             var connectionString = configuration.GetConnectionString("Postgres")
                 ?? throw new InvalidOperationException("Connection string 'Postgres' is not configured.");
 
+            // EF Core runs SaveChanges interceptors in registration order, and this order is a contract,
+            // not a preference: PrepareForDeletion raises the domain events that DomainEvents then
+            // collects and dispatches, so it has to come first or those events are silently dropped.
+            // PrepareForDeletionInterceptorTests locks the order in.
             var interceptors = new List<IInterceptor>
             {
                 sp.GetRequiredService<AuditableInterceptor>(),
@@ -61,6 +68,7 @@ public static class PersistenceModule
 
             if (enableDomainEvents)
             {
+                interceptors.Add(sp.GetRequiredService<PrepareForDeletionInterceptor>());
                 interceptors.Add(sp.GetRequiredService<DomainEventsInterceptor>());
             }
 

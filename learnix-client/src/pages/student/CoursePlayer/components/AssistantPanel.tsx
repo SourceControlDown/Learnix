@@ -60,7 +60,7 @@ export function AssistantPanel({
 
     const aiTitle = (
         <div className="flex min-w-0 items-center gap-3">
-            <div className="grid size-9 shrink-0 place-items-center rounded-full bg-accent/20 text-sm text-accent">
+            <div className="grid size-9 shrink-0 place-items-center rounded-full bg-accent/20 text-sm text-accent-strong">
                 ✨
             </div>
             <div className="min-w-0">

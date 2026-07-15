@@ -2,6 +2,7 @@ using FluentResults;
 using Learnix.Application.Categories.Constants;
 using Learnix.Application.Common.Abstractions.Identity;
 using Learnix.Application.Common.Abstractions.Persistence;
+using Learnix.Application.Common.Abstractions.Storage;
 using Learnix.Application.Common.Constants;
 using Learnix.Application.Common.Errors;
 using Learnix.Application.Courses.Abstractions;
@@ -15,6 +16,7 @@ namespace Learnix.Application.Categories.Commands.CreateCategory;
 
 internal sealed class CreateCategoryCommandHandler(
     ICategoryRepository categoryRepository,
+    IBlobStorageService blobStorage,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
     IDistributedCache cache)
@@ -34,6 +36,17 @@ internal sealed class CreateCategoryCommandHandler(
             return Result.Fail(new ConflictError(CategoryMessages.CategorySlugInUse(slug)));
 
         var category = Category.Create(request.Name.Trim(), slug);
+
+        if (request.ImageBlobPath is not null)
+        {
+            var commitResult = await blobStorage.CommitUploadAsync(
+                request.ImageBlobPath, UploadTarget.CategoryImage, cancellationToken);
+
+            if (commitResult.IsFailed)
+                return Result.Fail(commitResult.Errors);
+
+            category.SetImage(commitResult.Value.BlobPath);
+        }
 
         await categoryRepository.AddAsync(category, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

@@ -16,7 +16,7 @@ export function AIAssistantSection() {
         >
             <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 md:grid-cols-2">
                 <div>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-accent/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-accent/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent-strong">
                         {t('aiAssistant.badge', { aiProvider: provider })}
                     </span>
                     <h2 className="mt-5 font-heading text-4xl font-bold leading-tight md:text-5xl">
@@ -42,7 +42,7 @@ export function AIAssistantSection() {
                 {/* Mock chat panel */}
                 <div className="overflow-hidden rounded-2xl border border-border bg-card text-foreground shadow-2xl">
                     <div className="flex items-center gap-3 border-b border-border p-4">
-                        <div className="grid size-8 place-items-center rounded-full bg-accent/20 text-sm text-accent">
+                        <div className="grid size-8 place-items-center rounded-full bg-accent/20 text-sm text-accent-strong">
                             ✨
                         </div>
                         <div>

@@ -1,7 +1,17 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/utils/cn';
 
-export type StatTone = 'brand' | 'accent' | 'success' | 'warning' | 'destructive';
+/**
+ * Colour here is a signal, not decoration. A row of tiles should carry at most one coloured tile —
+ * the figure that actually has to be seen first — and leave the rest `neutral`; `success` and
+ * `destructive` are reserved for tiles that genuinely mean succeeded / failed.
+ *
+ * Every row used to run brand → accent → success regardless of what the numbers were, which cost
+ * twice over: the accent and success tints sit next to each other on the colour wheel and blurred
+ * into one another, and the tile that mattered most (a test's passing threshold) was painted the
+ * quietest of the three. A tile row is not a palette showcase.
+ */
+export type StatTone = 'neutral' | 'brand' | 'accent' | 'success' | 'warning' | 'destructive';
 
 interface StatTileProps {
     icon: ReactNode;
@@ -15,12 +25,16 @@ interface StatTileProps {
 }
 
 const TONE_CLASSES: Record<StatTone, { chip: string; hover: string }> = {
+    neutral: {
+        chip: 'border-border bg-gradient-to-br from-muted-foreground/15 to-muted-foreground/5 text-muted-foreground',
+        hover: 'hover:border-muted-foreground/40',
+    },
     brand: {
         chip: 'border-brand/20 bg-gradient-to-br from-brand/20 to-brand/5 text-brand',
         hover: 'hover:border-brand/40',
     },
     accent: {
-        chip: 'border-accent/20 bg-gradient-to-br from-accent/20 to-accent/5 text-accent',
+        chip: 'border-accent/20 bg-gradient-to-br from-accent/20 to-accent/5 text-accent-strong',
         hover: 'hover:border-accent/40',
     },
     success: {
