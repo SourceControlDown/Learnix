@@ -17,10 +17,7 @@
         "sectionPrefix": "Section",
         "courseContent": "Course content",
         "lessonNumber": "{{n}}.",
-        "durationMinutes": "{{n}}min",
-        "durationHours": "{{h}}h {{m}}min",
-        "collapse": "Hide course content",
-        "durationSeconds": "{{n}}s"
+        "collapse": "Hide course content"
     },
     "actions": {
         "markComplete": "Mark as complete",
@@ -35,8 +32,6 @@
     },
     "testPreview": {
         "heading": "Test lesson",
-        "questionsCount_one": "{{count}} question",
-        "questionsCount_other": "{{count}} questions",
         "passThreshold": "Passing score: {{pct}}%",
         "attemptsLimit": "Attempt limit: {{n}}",
         "unlimitedAttempts": "Unlimited attempts",

@@ -90,6 +90,14 @@
         "sortBy": "Сортувати за",
         "free": "Безкоштовно"
     },
+    "lessonMeta": {
+        "durationSeconds": "{{n}}с",
+        "durationMinutes": "{{n}}хв",
+        "durationHours": "{{h}}год {{m}}хв",
+        "questionsCount_one": "{{count}} питання",
+        "questionsCount_few": "{{count}} питання",
+        "questionsCount_many": "{{count}} питань"
+    },
     "footer": {
         "description": "Сучасна навчальна платформа, створена для того, як розробники насправді навчаються — з допомогою ШІ, реальними проєктами та довічним доступом.",
         "sections": {
