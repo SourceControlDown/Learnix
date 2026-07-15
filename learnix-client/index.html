@@ -1,35 +1,41 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Learnix — Learn skills that actually ship</title>
-    <!-- Fallback metadata for scrapers that don't execute JS (Facebook, LinkedIn, Slack): they only
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learnix — Learn skills that actually ship</title>
+  <!-- Fallback metadata for scrapers that don't execute JS (Facebook, LinkedIn, Slack): they only
          ever see this raw HTML, never the per-page tags <Seo /> renders. %VITE_SITE_URL% is
          substituted at build time by the `learnix:inject-site-url` plugin.
 
          data-seo-fallback is the contract with main.tsx, which strips these once React boots —
          React 19 hoists <Seo />'s tags without deduplicating against index.html, so leaving them
          would ship two conflicting og:title/og:url per page and scrapers read the first. -->
-    <meta data-seo-fallback name="description" content="Master programming, design, and data science with hands-on courses. Join 85,000+ learners on Learnix — start free today." />
-    <meta data-seo-fallback property="og:type" content="website" />
-    <meta data-seo-fallback property="og:site_name" content="Learnix" />
-    <meta data-seo-fallback property="og:url" content="%VITE_SITE_URL%/" />
-    <meta data-seo-fallback property="og:title" content="Learnix — Learn skills that actually ship" />
-    <meta data-seo-fallback property="og:description" content="Master programming, design, and data science with hands-on courses. Join 85,000+ learners on Learnix — start free today." />
-    <meta data-seo-fallback property="og:image" content="%VITE_SITE_URL%/og-image.png" />
-    <meta data-seo-fallback property="og:image:width" content="1200" />
-    <meta data-seo-fallback property="og:image:height" content="630" />
-    <meta data-seo-fallback property="og:locale" content="en_US" />
-    <meta data-seo-fallback property="og:locale:alternate" content="uk_UA" />
-    <meta data-seo-fallback name="twitter:card" content="summary_large_image" />
-    <meta data-seo-fallback name="twitter:title" content="Learnix — Learn skills that actually ship" />
-    <meta data-seo-fallback name="twitter:description" content="Master programming, design, and data science with hands-on courses. Join 85,000+ learners on Learnix — start free today." />
-    <meta data-seo-fallback name="twitter:image" content="%VITE_SITE_URL%/og-image.png" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <meta data-seo-fallback name="description"
+    content="Master programming, design, and data science with hands-on courses. Join 85,000+ learners on Learnix — start free today." />
+  <meta data-seo-fallback property="og:type" content="website" />
+  <meta data-seo-fallback property="og:site_name" content="Learnix" />
+  <meta data-seo-fallback property="og:url" content="%VITE_SITE_URL%/" />
+  <meta data-seo-fallback property="og:title" content="Learnix — Learn skills that actually ship" />
+  <meta data-seo-fallback property="og:description"
+    content="Master programming, design, and data science with hands-on courses. Join 85,000+ learners on Learnix — start free today." />
+  <meta data-seo-fallback property="og:image" content="%VITE_SITE_URL%/og-image.png" />
+  <meta data-seo-fallback property="og:image:width" content="1200" />
+  <meta data-seo-fallback property="og:image:height" content="630" />
+  <meta data-seo-fallback property="og:locale" content="en_US" />
+  <meta data-seo-fallback property="og:locale:alternate" content="uk_UA" />
+  <meta data-seo-fallback name="twitter:card" content="summary_large_image" />
+  <meta data-seo-fallback name="twitter:title" content="Learnix — Learn skills that actually ship" />
+  <meta data-seo-fallback name="twitter:description"
+    content="Master programming, design, and data science with hands-on courses. Join 85,000+ learners on Learnix — start free today." />
+  <meta data-seo-fallback name="twitter:image" content="%VITE_SITE_URL%/og-image.png" />
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
