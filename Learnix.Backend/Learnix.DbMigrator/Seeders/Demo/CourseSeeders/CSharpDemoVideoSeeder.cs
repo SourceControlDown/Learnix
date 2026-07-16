@@ -28,8 +28,6 @@ internal static class CSharpDemoVideoSeeder
                 new SeedVideo(
                     "Setting Up the .NET Environment",
                     """
-                    # Setting Up the .NET Environment
-                    
                     In this video, we will walk you through the very basics of getting your local machine ready for C# development.
                     
                     ### What you will learn:
@@ -43,8 +41,6 @@ internal static class CSharpDemoVideoSeeder
                 new SeedPost(
                     "Memory Management & Garbage Collection",
                     """
-                    # Memory Management & Garbage Collection in C#
-                    
                     In modern programming languages, memory management can be a huge bottleneck if not understood correctly. C# is a **managed language**, meaning the **Garbage Collector (GC)** takes care of releasing memory for you. But how does it actually work?
                     
                     ## The Generational Model
@@ -83,8 +79,6 @@ internal static class CSharpDemoVideoSeeder
                         MC("Which keywords are used for exception handling in C#?", ["try", "catch", "finally"], ["throw", "error", "except"])
                     ],
                     """
-                    # Fundamentals Knowledge Check
-                    
                     Test your knowledge of the basics covered in this section. This test is extremely lenient and will show you the correct answers upon submission.
                     
                     **Topics included:**
@@ -100,8 +94,6 @@ internal static class CSharpDemoVideoSeeder
                 new SeedVideo(
                     "Asynchronous Programming Deep Dive",
                     """
-                    # Asynchronous Programming Deep Dive
-                    
                     Asynchronous programming is essential for building scalable applications. In this video, we'll dive straight into the deep end!
                     
                     ### Topics Covered:
@@ -115,8 +107,6 @@ internal static class CSharpDemoVideoSeeder
                 new SeedPost(
                     "Understanding Async/Await State Machines",
                     """
-                    # Understanding Async/Await State Machines
-                    
                     When you mark a method as `async` in C#, it isn't just a simple keyword—the compiler completely rewrites your method under the hood!
                     
                     ## The State Machine Transformation
@@ -162,8 +152,6 @@ internal static class CSharpDemoVideoSeeder
                         MC("Which scenarios benefit most from asynchronous programming?", ["I/O bound operations", "Network requests", "Database queries"], ["CPU-heavy calculations", "Simple arithmetic"])
                     ],
                     """
-                    # Advanced Knowledge Check
-                    
                     A slightly stricter test. You will see which answers you got right, but the correct answers won't be revealed if you make a mistake.
                     
                     **Topics included:**
